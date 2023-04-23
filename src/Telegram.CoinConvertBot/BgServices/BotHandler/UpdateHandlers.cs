@@ -306,13 +306,9 @@ USDT： <b>{USDT}</b>
         //通用回复
         static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         {
-            string usage = @$"欢迎使用货币兑换服务！
-当前支持兑换以下币种：
-<code>USDT-TRC20 --> TRX</code>
-
-本机器人为<a href='https://github.com/LightCountry'>LightCountry</a>旗下开源机器人！
-项目地址：<a href='https://github.com/LightCountry/CoinConvertBot'>Telegram.CoinConvertBot</a>
-
+            string usage = @$"欢迎使用TRX自助兑换机器人！
+使用帮助：① 点击菜单 - ② 点击兑换TRX；
+③ 给机器人收款地址转账USDT即可按实时汇率秒回TRX到原钱包地址                
 如有需要，请联系管理员： {AdminUserUrl}
 ";
 
