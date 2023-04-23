@@ -42,21 +42,21 @@ git clone -b v1.0.0 https://github.com/LightCountry/CoinConvertBot.git
 ```
 或者拉取`最新版本`源代码
 ```
-git clone https://github.com/LightCountry/CoinConvertBot.git
+git clone https://github.com/xiaobai2023123412412343/CoinConvertBot.git
 ```
 ### 3. 修改配置文件
 ```
-cd ~/code/CoinConvertBot/src/Telegram.CoinConvertBot
+cd ~/CoinConvertBot/src/Telegram.CoinConvertBot
 #重命名配置文件
 mv appsettings.Example.json appsettings.json
 # 可使用vi命令修改配置文件
 # 或者通过ftp工具修改
 # 或者在宝塔面板的文件功能内找到配置文件修改
-vi appsettings.json
+nano appsettings.json
 ```
 ### 3. 打包docker镜像
 ```
-cd ~/code/CoinConvertBot/src
+cd ~/CoinConvertBot/src
 docker build -t coin-convert-bot:latest .
 ```
 ### 4. 启动docker容器
