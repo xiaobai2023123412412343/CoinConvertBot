@@ -12,11 +12,7 @@
 
 >一款开源自动化USDT兑换TRX的Telegram机器人！
 
-## AD -- 免费领取国际信用卡
->免费领取VISA卡，万事达卡，充值USDT即可随便刷  
-可绑微信、支付宝、美区AppStore消费  
-快来领取你的可刷USDT的国际银行卡吧   
-➡️➡️➡️ [点击领取你的国际信用卡](https://depay.depay.one/web-app/register-h5?invitCode=949656&lang=zh-cn)
+
 
 ## AD -- 机器人推广
 查币机 - 链上信息查询：[查币机](https://t.me/QueryCoinBot)
@@ -74,9 +70,7 @@ CoinConvertBot
 ## 打赏
 如果该项目对您有所帮助，希望可以请我喝一杯咖啡☕️
 ```
-USDT-TRC20打赏地址: TKGTx4pCKiKQbk8evXHTborfZn754TGViP
-```
-<img src="wiki/imgs/usdt_thanks.jpg" width = "400" alt="usdt扫码打赏"/>
+
 
 ## 致谢
 感谢以下开源项目：
