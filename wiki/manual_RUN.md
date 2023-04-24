@@ -61,7 +61,7 @@ docker build -t coin-convert-bot:latest .
 ```
 ### 4. 启动docker容器
 ```
-docker run -itd --name coin-convert-bot coin-convert-bot:latest
+docker run -itd -e TZ=Asia/Shanghai --name coin-convert-bot coin-convert-bot:latest
 ```
 如果需要查看日志，可以使用以下命令
 ```
