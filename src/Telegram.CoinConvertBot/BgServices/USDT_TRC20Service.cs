@@ -129,7 +129,7 @@ namespace Telegram.CoinConvertBot.BgServices
 时间：<b>{record.ReceiveTime:yyyy-MM-dd HH:mm:ss}</b>
 地址：<code>{record.FromAddress}</code>
 
-您的兑换申请已进入队列，预计10秒钟内转入您的账户！
+您的兑换申请已进入队列，预计10秒内转入您的账户！
 ", Bot.Types.Enums.ParseMode.Html, replyMarkup: inlineKeyboard);
                                         }
                                         catch (Exception e)
