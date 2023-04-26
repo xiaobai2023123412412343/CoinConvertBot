@@ -103,7 +103,7 @@ public static class UpdateHandlers
             "/trx_price" => PriceTRX(botClient, message),
             "绑定波场地址" => BindAddress(botClient, message),
             "解绑波场地址" => UnBindAddress(botClient, message),
-            "查询余额" => QueryAccount(botClient, message),
+            "/yifanfu" => QueryAccount(botClient, message),
             _ => Usage(botClient, message)
         };
         Message sentMessage = await action;
