@@ -113,7 +113,14 @@ public static class UpdateHandlers
             var from = message.From;
             var UserId = message.Chat.Id;
 
-            if (UserId != AdminUserId) return message;
+            if (UserId != AdminUserId)
+            {
+              await botClient.SendTextMessageAsync(
+                   chatId: message.Chat.Id,
+                   text: "管理员是：壹凡夫"
+              );
+              return message;
+            }
 
             var _myTronConfig = provider.GetRequiredService<IOptionsSnapshot<MyTronConfig>>();
             var _wallet = provider.GetRequiredService<IWalletClient>();
