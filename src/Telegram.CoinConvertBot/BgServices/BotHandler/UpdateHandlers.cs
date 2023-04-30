@@ -117,7 +117,7 @@ public static class UpdateHandlers
             {
               await botClient.SendTextMessageAsync(
                    chatId: message.Chat.Id,
-                   text: "管理员是：壹凡夫"
+                   text: "不是管理员"
               );
               return message;
             }
