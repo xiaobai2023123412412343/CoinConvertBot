@@ -367,10 +367,12 @@ USDT： <b>{USDT}</b>
         //通用回复
         static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         {
-            string usage = @$"欢迎使用TRX自助兑换机器人！
-使用帮助：① 点击菜单 , ② 点击兑换TRX；
-③ 给机器人收款地址转账USDT即可按实时汇率秒回TRX到原钱包地址                
-如有需要，请联系管理员： {AdminUserUrl}
+            string username = message.From.FirstName;
+            string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
+使用方法：
+   点击菜单 选择U兑TRX
+   转账USDT到指定地址，即可秒回TRX
+   如有需要，请联系管理员： {AdminUserUrl}
 ";
             // 创建包含两行，每行两个按钮的虚拟键盘
             var keyboard = new ReplyKeyboardMarkup(new[]
