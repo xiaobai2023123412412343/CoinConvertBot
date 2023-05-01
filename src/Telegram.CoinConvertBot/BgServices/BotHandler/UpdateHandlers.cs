@@ -306,10 +306,28 @@ USDT： <b>{USDT}</b>
 转帐前，推荐您使用以下命令来接收入账通知
 <code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
 ";
+            // 创建包含两行，每行两个按钮的虚拟键盘
+            var keyboard = new ReplyKeyboardMarkup(new[]
+            {
+                new [] // 第一行
+                {
+                    new KeyboardButton("1"),
+                    new KeyboardButton("2"),
+                },   
+                new [] // 第二行
+                {
+                    new KeyboardButton("3"),
+                    new KeyboardButton("4"),
+                }    
+                
+            });
+            keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+            keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
+
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: msg,
                                                         parseMode: ParseMode.Html,
-                                                        replyMarkup: new ReplyKeyboardRemove());
+                                                        replyMarkup: keyboard);
         }
         //通用回复
         static async Task<Message> Start(ITelegramBotClient botClient, Message message)
