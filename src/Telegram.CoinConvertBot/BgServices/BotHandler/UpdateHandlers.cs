@@ -155,10 +155,26 @@ USDT： <b>{USDT}</b>
 带宽质押比：<b>100 TRX = {resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100:0.000} 带宽</b>
 能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>
 ";
+
+            var keyboard = new ReplyKeyboardMarkup(new[]
+            {
+                new [] // 第一行
+                {
+                    new KeyboardButton("1"),
+                    new KeyboardButton("2"),
+                },
+                new [] // 第二行
+                {
+                    new KeyboardButton("3"),
+                    new KeyboardButton("4"),
+                }   
+            });
+            keyboard.ResizeKeyboard = true;           
+            keyboard.OneTimeKeyboard = false;
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: msg,
                                                         parseMode: ParseMode.Html,
-                                                        replyMarkup: new ReplyKeyboardRemove());
+                                                        replyMarkup: keyboard);
         }
         async Task<Message> BindAddress(ITelegramBotClient botClient, Message message)
         {
