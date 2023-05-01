@@ -99,12 +99,14 @@ public static class UpdateHandlers
         {
             "/start" => Start(botClient, message),
             "/valuation" => Valuation(botClient, message),
-            "1" => Valuation(botClient, message), // 添加这一行
+            "\U0001F4B0U兑TRX" => ConvertCoinTRX(botClient, message), // 添加这一行
+            "\U0001F4AF实时汇率" => PriceTRX(botClient, message), // 添加这一行
+            "\U0001F4B9估算价值" => Valuation(botClient, message), // 添加这一行
             "/trx" => ConvertCoinTRX(botClient, message),
             "/trx_price" => PriceTRX(botClient, message),
             "绑定波场地址" => BindAddress(botClient, message),
             "解绑波场地址" => UnBindAddress(botClient, message),
-            "/yifanfu" => QueryAccount(botClient, message),
+            "\u260E联系管理" => QueryAccount(botClient, message),
             _ => Usage(botClient, message)
         };
         Message sentMessage = await action;
@@ -118,7 +120,7 @@ public static class UpdateHandlers
             {
               await botClient.SendTextMessageAsync(
                    chatId: message.Chat.Id,
-                   text: "不是管理员"
+                   text: "https://t.me/Yifanfu"
               );
               return message;
             }
@@ -160,13 +162,13 @@ USDT： <b>{USDT}</b>
             {
                 new [] // 第一行
                 {
-                    new KeyboardButton("1"),
-                    new KeyboardButton("2"),
+                    new KeyboardButton("\U0001F4B0U兑TRX"),
+                    new KeyboardButton("\U0001F4AF实时汇率"),
                 },
                 new [] // 第二行
                 {
-                    new KeyboardButton("3"),
-                    new KeyboardButton("4"),
+                    new KeyboardButton("\U0001F4B9估算价值"),
+                    new KeyboardButton("\u260E联系管理"),
                 }   
             });
             keyboard.ResizeKeyboard = true;           
@@ -292,13 +294,13 @@ USDT： <b>{USDT}</b>
             {
                 new [] // 第一行
                 {
-                    new KeyboardButton("1"),
-                    new KeyboardButton("2"),
+                    new KeyboardButton("\U0001F4B0U兑TRX"),
+                    new KeyboardButton("\U0001F4AF实时汇率"),
                 },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("3"),
-                    new KeyboardButton("4"),
+                    new KeyboardButton("\U0001F4B9估算价值"),
+                    new KeyboardButton("\u260E联系管理"),
                 }    
                 
             });
@@ -344,13 +346,13 @@ USDT： <b>{USDT}</b>
             {
                 new [] // 第一行
                 {
-                    new KeyboardButton("1"),
-                    new KeyboardButton("2"),
+                    new KeyboardButton("\U0001F4B0U兑TRX"),
+                    new KeyboardButton("\U0001F4AF实时汇率"),
                 },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("3"),
-                    new KeyboardButton("4"),
+                    new KeyboardButton("\U0001F4B9估算价值"),
+                    new KeyboardButton("\u260E联系管理"),
                 }    
                 
             });
@@ -375,13 +377,13 @@ USDT： <b>{USDT}</b>
             {
                 new [] // 第一行
                 {
-                    new KeyboardButton("1"),
-                    new KeyboardButton("2"),
+                    new KeyboardButton("\U0001F4B0U兑TRX"),
+                    new KeyboardButton("\U0001F4AF实时汇率"),
                 },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("3"),
-                    new KeyboardButton("4"),
+                    new KeyboardButton("\U0001F4B9估算价值"),
+                    new KeyboardButton("\u260E联系管理"),
                 }    
                 
             });
@@ -411,13 +413,13 @@ USDT： <b>{USDT}</b>
             {
                 new [] // 第一行
                 {
-                    new KeyboardButton("1"),
-                    new KeyboardButton("2"),
+                    new KeyboardButton("\U0001F4B0U兑TRX"),
+                    new KeyboardButton("\U0001F4AF实时汇率"),
                 },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("3"),
-                    new KeyboardButton("4"),
+                    new KeyboardButton("\U0001F4B9估算价值"),
+                    new KeyboardButton("\u260E联系管理"),
                 }    
                 
             });
