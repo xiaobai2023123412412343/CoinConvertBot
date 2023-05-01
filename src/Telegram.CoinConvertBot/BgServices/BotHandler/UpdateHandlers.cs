@@ -99,6 +99,7 @@ public static class UpdateHandlers
         {
             "/start" => Start(botClient, message),
             "/valuation" => Valuation(botClient, message),
+            "1" => Valuation(botClient, message), // 添加这一行
             "/trx" => ConvertCoinTRX(botClient, message),
             "/trx_price" => PriceTRX(botClient, message),
             "绑定波场地址" => BindAddress(botClient, message),
