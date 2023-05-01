@@ -318,12 +318,27 @@ USDT： <b>{USDT}</b>
 ③ 给机器人收款地址转账USDT即可按实时汇率秒回TRX到原钱包地址                
 如有需要，请联系管理员： {AdminUserUrl}
 ";
-
+            // 创建包含两行，每行两个按钮的虚拟键盘
+            var keyboard = new ReplyKeyboardMarkup(new[]
+            {
+                new [] // 第一行
+                {
+                    new KeyboardButton("1"),
+                    new KeyboardButton("2"),
+                },   
+                new [] // 第二行
+                {
+                    new KeyboardButton("3"),
+                    new KeyboardButton("4"),
+                }    
+                
+            });
+            keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: usage,
                                                         parseMode: ParseMode.Html,
                                                         disableWebPagePreview: true,
-                                                        replyMarkup: new ReplyKeyboardRemove());
+                                                        replyMarkup: keyboard);
         }
         //估价
         static async Task<Message> Valuation(ITelegramBotClient botClient, Message message)
