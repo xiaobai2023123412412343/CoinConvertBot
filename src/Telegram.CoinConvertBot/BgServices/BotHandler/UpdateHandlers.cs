@@ -100,7 +100,7 @@ public static class UpdateHandlers
             "/start" => Start(botClient, message),
             "/valuation" => Valuation(botClient, message),
             "\U0001F4B0U兑TRX" => ConvertCoinTRX(botClient, message), // 添加这一行
-            "\U0001F4AF实时汇率" => PriceTRX(botClient, message), // 添加这一行
+            "\U0001F570实时汇率" => PriceTRX(botClient, message), // 添加这一行
             "\U0001F4B9估算价值" => Valuation(botClient, message), // 添加这一行
             "/trx" => ConvertCoinTRX(botClient, message),
             "/trx_price" => PriceTRX(botClient, message),
@@ -163,7 +163,7 @@ USDT： <b>{USDT}</b>
                 new [] // 第一行
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
-                    new KeyboardButton("\U0001F4AF实时汇率"),
+                    new KeyboardButton("\U0001F570实时汇率"),
                 },
                 new [] // 第二行
                 {
@@ -295,7 +295,7 @@ USDT： <b>{USDT}</b>
                 new [] // 第一行
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
-                    new KeyboardButton("\U0001F4AF实时汇率"),
+                    new KeyboardButton("\U0001F570实时汇率"),
                 },   
                 new [] // 第二行
                 {
@@ -347,7 +347,7 @@ USDT： <b>{USDT}</b>
                 new [] // 第一行
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
-                    new KeyboardButton("\U0001F4AF实时汇率"),
+                    new KeyboardButton("\U0001F570实时汇率"),
                 },   
                 new [] // 第二行
                 {
@@ -378,7 +378,7 @@ USDT： <b>{USDT}</b>
                 new [] // 第一行
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
-                    new KeyboardButton("\U0001F4AF实时汇率"),
+                    new KeyboardButton("\U0001F570实时汇率"),
                 },   
                 new [] // 第二行
                 {
@@ -414,7 +414,7 @@ USDT： <b>{USDT}</b>
                 new [] // 第一行
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
-                    new KeyboardButton("\U0001F4AF实时汇率"),
+                    new KeyboardButton("\U0001F570实时汇率"),
                 },   
                 new [] // 第二行
                 {
