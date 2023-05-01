@@ -354,11 +354,28 @@ USDT： <b>{USDT}</b>
 
 如有需要，请联系管理员： {AdminUserUrl}
 ";
-
+    
+              // 创建包含两行，每行两个按钮的虚拟键盘
+            var keyboard = new ReplyKeyboardMarkup(new[]
+            {
+                new [] // 第一行
+                {
+                    new KeyboardButton("1"),
+                    new KeyboardButton("2"),
+                },   
+                new [] // 第二行
+                {
+                    new KeyboardButton("3"),
+                    new KeyboardButton("4"),
+                }    
+                
+            });
+            keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+            keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见  
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: usage,
                                                         parseMode: ParseMode.Html,
-                                                        replyMarkup: new ReplyKeyboardRemove());
+                                                        replyMarkup: keyboard);
         }
         //通用回复
         static async Task<Message> Usage(ITelegramBotClient botClient, Message message)
