@@ -335,6 +335,7 @@ USDT： <b>{USDT}</b>
                 
             });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+            keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: usage,
                                                         parseMode: ParseMode.Html,
