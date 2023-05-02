@@ -265,7 +265,22 @@ USDT： <b>{USDT}</b>
             {
                 await _bindRepository.DeleteAsync(bind);
             }
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您已成功解绑<b>{address}</b>！", parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+                var keyboard = new ReplyKeyboardMarkup(new[]
+                {
+                    new [] // 第一行
+                    {
+                        new KeyboardButton("\U0001F4B0U兑TRX"),
+                        new KeyboardButton("\U0001F570实时汇率"),
+                    },
+                    new [] // 第二行
+                    {
+                        new KeyboardButton("\U0001F4B9估算价值"),
+                        new KeyboardButton("\u260E联系管理"),
+                    }                                             
+                });
+                keyboard.ResizeKeyboard = true; // 调整键盘高度
+                keyboard.OneTimeKeyboard = false;
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您已成功解绑<b>{address}</b>！", parseMode: ParseMode.Html, replyMarkup: keyboard);
 
         }
         async Task<Message> ConvertCoinTRX(ITelegramBotClient botClient, Message message)
