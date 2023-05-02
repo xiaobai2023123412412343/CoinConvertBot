@@ -413,7 +413,7 @@ USDT： <b>{USDT}</b>
         static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         {
             // 先发送GIF
-            string gifUrl = "https://i.postimg.cc/hPKDHQwV/3.gif"; // 替换为您的GIF URL
+            string gifUrl = "https://i.postimg.cc/0QKYJ0Cb/333.gif"; // 替换为您的GIF URL
             await botClient.SendAnimationAsync(
                 chatId: message.Chat.Id,
                 animation: gifUrl
