@@ -210,10 +210,25 @@ USDT： <b>{USDT}</b>
                     bind.FullName = $"{from.FirstName} {from.LastName}";
                     await _bindRepository.UpdateAsync(bind);
                 }
+                var keyboard = new ReplyKeyboardMarkup(new[]
+                {
+                    new [] // 第一行
+                    {
+                        new KeyboardButton("\U0001F4B0U兑TRX"),
+                        new KeyboardButton("\U0001F570实时汇率"),
+                    },
+                    new [] // 第二行
+                    {
+                        new KeyboardButton("\U0001F4B9估算价值"),
+                        new KeyboardButton("\u260E联系管理"),
+                    }                                             
+                });
+                keyboard.ResizeKeyboard = true; // 调整键盘高度
+                keyboard.OneTimeKeyboard = false;
                 return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: @$"您已成功绑定<b>{address}</b>！
 当我们向您的钱包转账时，您将收到通知！
 如需解绑，请发送
-<code>解绑波场地址 Txxxxxxx</code>(您的钱包地址)", parseMode: ParseMode.Html, replyMarkup: new ReplyKeyboardRemove());
+<code>解绑波场地址 Txxxxxxx</code>(您的钱包地址)", parseMode: ParseMode.Html, replyMarkup: keyboard);
             }
             else
             {
