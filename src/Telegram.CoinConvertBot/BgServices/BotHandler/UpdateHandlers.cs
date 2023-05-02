@@ -302,6 +302,7 @@ USDT： <b>{USDT}</b>
             }
             var ReciveAddress = addressArray[UserId % addressArray.Length];
             var msg = @$"<b>请向此地址转入任意金额，机器人自动回款TRX</b>
+            
 机器人收款地址： <code>{ReciveAddress}</code>
 
 手续费说明：手续费用于支付转账所消耗的资源，及机器人运行成本。
@@ -321,7 +322,7 @@ USDT： <b>{USDT}</b>
             if (USDTFeeRate == 0)
             {
                 msg = @$"<b>请向此地址转入任意金额，机器人自动回款TRX</b>
-机器人收款地址： <code>{ReciveAddress}</code>
+机器人收款地址:(<b>↓点击自动复制↓</b>):<code>{ReciveAddress}</code>
 
 示例：
 <code>转入金额：<b>10 USDT</b>
@@ -385,7 +386,7 @@ USDT： <b>{USDT}</b>
 1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
 </code>
 
-机器人收款地址： <code>{ReciveAddress}</code>
+机器人收款地址:(<b>↓点击自动复制↓</b>):<code>{ReciveAddress}</code>
 
 注意：<b>暂时只支持{MinUSDT} USDT以上(不含{MinUSDT} USDT)的金额兑换，若转入{MinUSDT} USDT及以下金额，将无法退还！！！</b>
 
