@@ -412,6 +412,12 @@ USDT： <b>{USDT}</b>
         //通用回复
         static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         {
+            // 先发送GIF
+            string gifUrl = "https://i.postimg.cc/hPKDHQwV/3.gif"; // 替换为您的GIF URL
+            await botClient.SendAnimationAsync(
+                chatId: message.Chat.Id,
+                animation: gifUrl
+            );
             string username = message.From.FirstName;
             string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
 使用方法：
