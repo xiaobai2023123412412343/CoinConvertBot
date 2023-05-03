@@ -102,10 +102,10 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
     {
         botClient.SetMyCommandsAsync(new BotCommand[]
         {
-        //new BotCommand(){Command="start",Description="欢迎兑换本机器人"},
-        new BotCommand(){Command="trx",Description="USDT-TRC20兑换TRX"},
-        new BotCommand(){Command="trx_price",Description="实时价目表"},
-        new BotCommand(){Command="valuation",Description="估价"},
+        new BotCommand(){Command="start",Description="开始使用"},
+        new BotCommand(){Command="yi",Description="U兑TRX"},
+        new BotCommand(){Command="fan",Description="实时汇率"},
+        new BotCommand(){Command="fu",Description="估算价值"},
         }).GetAwaiter().GetResult();
     }
     Log.Logger.Information("Telegram机器人上线！机器人ID：{Id}({username})，机器人名字：{FirstName}.", me.Id, $"@{me.Username}", me.FirstName);
