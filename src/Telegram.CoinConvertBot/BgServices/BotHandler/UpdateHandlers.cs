@@ -118,10 +118,18 @@ public static class UpdateHandlers
 
             if (UserId != AdminUserId)
             {
+              // 发送第一个链接
               await botClient.SendTextMessageAsync(
-                   chatId: message.Chat.Id,
-                   text: "https://t.me/Yifanfu"
+                  chatId: message.Chat.Id,
+                  text: "管理员：https://t.me/Yifanfu"
               );
+
+              // 发送第二个链接
+              await botClient.SendTextMessageAsync(
+                  chatId: message.Chat.Id,
+                  text: "讨论群组:https://t.me/+b4NunT6Vwf0wZWI1" // 更改为您需要发送的第二个链接
+              );
+
               return message;
             }
 
