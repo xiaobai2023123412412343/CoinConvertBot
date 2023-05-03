@@ -98,12 +98,12 @@ public static class UpdateHandlers
         var action = messageText.Split(' ')[0] switch
         {
             "/start" => Start(botClient, message),
-            "/valuation" => Valuation(botClient, message),
+            "/fu" => Valuation(botClient, message),
             "\U0001F4B0U兑TRX" => ConvertCoinTRX(botClient, message), // 添加这一行
             "\U0001F570实时汇率" => PriceTRX(botClient, message), // 添加这一行
             "\U0001F4B9估算价值" => Valuation(botClient, message), // 添加这一行
-            "/trx" => ConvertCoinTRX(botClient, message),
-            "/trx_price" => PriceTRX(botClient, message),
+            "/yi" => ConvertCoinTRX(botClient, message),
+            "/fan" => PriceTRX(botClient, message),
             "绑定波场地址" => BindAddress(botClient, message),
             "解绑波场地址" => UnBindAddress(botClient, message),
             "\u260E联系管理" => QueryAccount(botClient, message),
