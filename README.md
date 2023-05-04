@@ -1,12 +1,4 @@
-<p align="center"><img src="wiki/imgs/logo.png" width="150"></p>
 
-<p align="center">
-<a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/badge/license-GPLV3-blue" alt="license GPLV3"></a>
-<a href="https://www.php.net/releases/7_4_0.php"><img src="https://img.shields.io/badge/.NET-6-orange" alt=".net6"></a>
-<a href="https://github.com/assimon/dujiaoka/releases/tag/1.0.0"><img src="https://img.shields.io/badge/version-1.0.0-red" alt="version 1.0.0"></a>
-<a href="https://t.me/CoinConvertChannel"><img src="https://img.shields.io/badge/官方频道-@CoinConvertChannel-blue" alt="官方频道：@CoinConvertChannel"></a>
-<a href="https://t.me/CoinConvertBot"><img src="https://img.shields.io/badge/官方Bot-@CoinConvertBot-blue" alt="官方机器人：@CoinConvertBot"></a>
-</p>
 
 ## 兑币机 - Telegram Bot
 
@@ -15,13 +7,9 @@
 
 
 ## AD -- 机器人推广
-查币机 - 链上信息查询：[查币机](https://t.me/QueryCoinBot)
-> 支持TRON、ETH、Polygon、BSC多链资产查询，也支持多种法币与区块链货币的实时汇率查询。
 
-USDT、TRX交易监控机器人：[USDT、TRX交易监控](https://t.me/CoinListenBot)
-> 监控波场地址余额变化，速度比钱包App的推送更快！！！
 
-兑币机 - TRX自动兑换：[兑币机](https://t.me/CoinConvertBot)
+兑币机 - TRX自动兑换：[兑币机](https://t.me/yifanfubot)
 > 自用兑币机，此开源项目脱胎于此机器人早期版本
 
 ## 项目简介
@@ -51,8 +39,8 @@ CoinConvertBot
 
 
 ## 加入交流/意见反馈
-- `CoinConvertBot`频道[https://t.me/CoinConvertChannel](https://t.me/CoinConvertChannel)
-- `CoinConvertBot`交流群组[https://t.me/CoinConvertChat](https://t.me/CoinConvertChat)
+- `CoinConvertBot`频道[https://t.me/lianghaonet](https://t.me/lianghaonet)
+- `CoinConvertBot`交流群组[https://t.me/+b4NunT6Vwf0wZWI1](https://t.me/+b4NunT6Vwf0wZWI1)
 
 ## 设计实现
 `CoinConvertBot`的实现方式与其他项目原理类似，都是通过监听`TRC20`网络的api或节点，      
