@@ -52,6 +52,10 @@ mv appsettings.Example.json appsettings.json
 # 可使用vi命令修改配置文件
 # 或者通过ftp工具修改
 # 或者在宝塔面板的文件功能内找到配置文件修改
+//安装nano编辑器
+sudo apt update
+sudo apt install nano
+编辑文件
 nano appsettings.json
 ```
 ### 3. 打包docker镜像
