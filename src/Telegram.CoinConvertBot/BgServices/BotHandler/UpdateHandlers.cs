@@ -107,6 +107,7 @@ public static class UpdateHandlers
             "绑定波场地址" => BindAddress(botClient, message),
             "解绑波场地址" => UnBindAddress(botClient, message),
             "\u260E联系管理" => QueryAccount(botClient, message),
+            "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
         };
         Message sentMessage = await action;
@@ -504,6 +505,17 @@ USDT： <b>{USDT}</b>
                                                         text: usage,
                                                         parseMode: ParseMode.Html,
                                                         replyMarkup: keyboard);
+        }
+        //估价
+        static async Task<Message> guanbi(ITelegramBotClient botClient, Message message)
+        {
+            string usage = @$"键盘已关闭
+";
+
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: usage,
+                                                        parseMode: ParseMode.Html,
+                                                        replyMarkup: new ReplyKeyboardRemove());
         }
         //通用回复
         static async Task<Message> Usage(ITelegramBotClient botClient, Message message)
