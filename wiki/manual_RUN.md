@@ -65,13 +65,17 @@ docker build -t coin-convert-bot:latest .
 ```
 
 快速：
-docker stop coin-convert-bot| 
-docker rm coin-convert-bot |
+docker stop coin-convert-bot
+
+docker rm coin-convert-bot 
+
 cd ~/CoinConvertBot/src/Telegram.CoinConvertBot/BgServices/BotHandler
+
 ls
 
-rm -r nano UpdateHandlers.cs|
-nano UpdateHandlers.cs|
+rm -r nano UpdateHandlers.cs
+
+nano UpdateHandlers.cs
 
 ### 4. 启动docker容器
 ```
