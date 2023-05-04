@@ -78,6 +78,14 @@ docker stop coin-convert-bot
 # 删除容器（需要先执行停止容器才能执行删除）
 docker rm coin-convert-bot
 ```
+其他指令：
+rm -rf CoinConvertBot 删除文件
+rm -r 目录 删除
+mkdir 目录 创建
+
+df -hT   检查服务器剩余空间
+sudo du -sh /var/lib/* 2>/dev/null | sort -h   检查镜像大小
+删除镜像的话必须先停止容器：sudo systemctl stop docker   再删除：sudo rm -rf /var/lib/docker
 
 ## 二、通过docker-compose启动
 
