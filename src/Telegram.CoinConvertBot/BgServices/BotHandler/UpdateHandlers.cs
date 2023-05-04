@@ -338,15 +338,16 @@ USDT： <b>{USDT}</b>
 获得TRX：<b>100 * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {100m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
 
 注意：<b>只支持{MinUSDT} USDT以上的金额兑换。</b>
+<b>只限钱包转账，收到u自动返回TRX，如需兑换到其它地址请联系管理</b>
 
 转帐前，推荐您使用以下命令来接收入账通知
 <code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
 
 
 <b>限时福利：</b>
-<code>一次性兑换：<b>600 USDT或以上金额,电报会员免费送!!!</b></code>
-<code>一次性兑换：<b>600 USDT或以上金额,电报会员免费送!!!</b></code>
-<code>一次性兑换：<b>600 USDT或以上金额,电报会员免费送!!!</b></code>
+<code>一次性兑换：<b>500 USDT或以上金额,电报会员免费送!!!</b></code>
+<code>一次性兑换：<b>500 USDT或以上金额,电报会员免费送!!!</b></code>
+<code>一次性兑换：<b>500 USDT或以上金额,电报会员免费送!!!</b></code>
 ";
             }
             // 创建包含两行，每行两个按钮的虚拟键盘
@@ -403,9 +404,9 @@ USDT： <b>{USDT}</b>
 
 
 <b>限时福利：</b>
-<code>一次性兑换：<b>600 USDT或以上金额,电报会员免费送!!!</b></code>
-<code>一次性兑换：<b>600 USDT或以上金额,电报会员免费送!!!</b></code>
-<code>一次性兑换：<b>600 USDT或以上金额,电报会员免费送!!!</b></code>
+<code>一次性兑换：<b>500 USDT或以上金额,电报会员免费送!!!</b></code>
+<code>一次性兑换：<b>500 USDT或以上金额,电报会员免费送!!!</b></code>
+<code>一次性兑换：<b>500 USDT或以上金额,电报会员免费送!!!</b></code>
 ";
             // 创建包含两行，每行两个按钮的虚拟键盘
             var keyboard = new ReplyKeyboardMarkup(new[]
