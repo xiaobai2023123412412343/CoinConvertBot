@@ -66,34 +66,3 @@ CoinConvertBot
 4.使用配置的钱包转此金额的TRX到转出USDT的地址
 5.交易成功后通知客户(需要客户已经在机器人处绑定钱包地址)和管理员
 ```
-
-## 打赏
-如果该项目对您有所帮助，希望可以请我喝一杯咖啡☕️
-```
-
-
-## 致谢
-感谢以下开源项目：
-
-[Serilog](https://github.com/serilog/serilog) ![Github stars](https://img.shields.io/github/stars/serilog/serilog?style=social)
-
-[FreeSql](https://github.com/dotnetcore/FreeSql) ![Github stars](https://img.shields.io/github/stars/dotnetcore/FreeSql?style=social)
-
-[Flurl](https://github.com/tmenier/Flurl) ![Github stars](https://img.shields.io/github/stars/tmenier/Flurl?style=social)
-
-[Telegram.Bot](https://github.com/TelegramBots/Telegram.Bot) ![Github stars](https://img.shields.io/github/stars/TelegramBots/Telegram.Bot?style=social)
-
-[TronNet](https://github.com/stoway/TronNet) ![Github stars](https://img.shields.io/github/stars/stoway/TronNet?style=social)
-
-## 声明
-`CoinConvertBot`为开源的产品，仅用于学习交流使用！       
-不可用于任何违反中华人民共和国(含台湾省)或使用者所在地区法律法规的用途。           
-因为作者即本人仅完成代码的开发和开源活动(开源即任何人都可以下载使用或修改分发)，从未参与用户的任何运营和盈利活动。       
-且不知晓用户后续将程序源代码用于何种用途，故用户使用过程中所带来的任何法律责任即由用户自己承担。            
-```
-！！！Warning！！！
-项目中所涉及区块链代币均为学习用途，作者并不赞成区块链所繁衍出代币的金融属性
-亦不鼓励和支持任何"挖矿"，"炒币"，"虚拟币ICO"等非法行为
-虚拟币市场行为不受监管要求和控制，投资交易需谨慎，仅供学习区块链知识
-```
-[![Stargazers over time](https://starchart.cc/LightCountry/CoinConvertBot.svg)](https://starchart.cc/LightCountry/CoinConvertBot)
