@@ -103,9 +103,9 @@ df -hT   检查服务器剩余空间
 
 sudo du -sh /var/lib/* 2>/dev/null | sort -h   检查镜像大小
 
-删除镜像的话必须先停止容器：sudo systemctl stop docker   
+删除镜像的话必须先停止容器：sudo systemctl stop docker   谨慎使用！！！！！
 
-再删除：sudo rm -rf /var/lib/docker
+再删除：sudo rm -rf /var/lib/docker   谨慎使用！！！！！谨慎使用！！！！！谨慎使用！！！！！谨慎使用！！！！！
 
 ## 二、通过docker-compose启动
 
