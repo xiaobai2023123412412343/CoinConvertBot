@@ -333,9 +333,9 @@ USDT： <b>{USDT}</b>
 机器人收款地址:(<b>↓点击自动复制↓</b>):<code>{ReciveAddress}</code>
 
 示例：
-<code>转入金额：<b>10 USDT</b>
+<code>转入金额：<b>100 USDT</b>
 实时汇率：<b>1 USDT = {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>
-获得TRX：<b>10 * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {10m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
+获得TRX：<b>100 * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {100m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
 
 注意：<b>只支持{MinUSDT} USDT以上的金额兑换。</b>
 
@@ -383,7 +383,7 @@ USDT： <b>{USDT}</b>
             var ReciveAddress = addressArray.Length == 0 ? "未配置" : addressArray[UserId % addressArray.Length];
             var msg = @$"<b>实时价目表</b>
 
-实时汇率：<b>1 USDT = {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>
+实时汇率：<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>
 ————————————————————<code>
    5 USDT = {(5m * 1).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
   10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
