@@ -339,7 +339,7 @@ USDT： <b>{USDT}</b>
 获得TRX：<b>100 * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {100m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
 
 注意：<b>只支持{MinUSDT} USDT以上的金额兑换。</b>
-<b>只限钱包转账，收到u自动返回TRX，如需兑换到其它地址请联系管理</b>
+<b>限钱包转账，收到u自动返回TRX，如需兑换到其它地址请联系管理。</b>
 
 转帐前，推荐您使用以下命令来接收入账通知
 <code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
