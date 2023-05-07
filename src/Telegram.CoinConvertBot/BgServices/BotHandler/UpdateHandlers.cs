@@ -15,6 +15,10 @@ using Telegram.CoinConvertBot.Helper;
 using Telegram.CoinConvertBot.Models;
 using TronNet;
 using TronNet.Contracts;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using Newtonsoft.Json.Linq;
+
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 
@@ -110,6 +114,36 @@ public static class UpdateHandlers
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
         };
+        async Task<decimal> GetTodayUSDTIncomeAsync(string ReciveAddress, string contractAddress)
+{
+    // 获取今天零点的时间戳
+    var todayMidnight = new DateTimeOffset(DateTime.Today).ToUnixTimeSeconds();
+
+    // 调用TronGrid API以获取交易记录
+    var httpClient = new HttpClient();
+    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+    string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{ReciveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={todayMidnight * 1000}&contract_address={contractAddress}";
+    var response = await httpClient.GetAsync(apiEndpoint);
+
+    if (!response.IsSuccessStatusCode)
+    {
+        // 请求失败，返回0
+        return 0;
+    }
+
+    var jsonResponse = await response.Content.ReadAsStringAsync();
+    JObject transactions = JObject.Parse(jsonResponse);
+
+    // 遍历交易记录并累计 USDT 收入
+    decimal usdtIncome = 0;
+    foreach (var tx in transactions["data"])
+    {
+        var rawAmount = (decimal)tx["value"];
+        usdtIncome += rawAmount / 1_000_000L;
+    }
+
+    return usdtIncome;
+}
         Message sentMessage = await action;
         async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
         {
@@ -153,7 +187,15 @@ public static class UpdateHandlers
             var TRX = Convert.ToDecimal(account.Balance) / 1_000_000L;
             var contractAddress = _myTronConfig.Value.USDTContractAddress;
             var contractClient = _contractClientFactory.CreateClient(ContractProtocol.TRC20);
+            //Log.Information("查询 USDT 余额...");
             var USDT = await contractClient.BalanceOfAsync(contractAddress, _wallet.GetAccount(_myTronConfig.Value.PrivateKey));
+            //Log.Information($"查询 USDT 余额: 合约地址: {contractAddress}, 查询地址: {_wallet.GetAccount(_myTronConfig.Value.PrivateKey).Address}, 余额: {USDT}");
+            
+             // 调用新方法获取今日收入
+            //Log.Information("查询今日收入...");
+            string targetReciveAddress = "TTn2zA1u1a6WVpD2auFZM83jFFLqk5TN2e";
+            decimal todayIncome = await GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
+            //Log.Information($"今日收入: {todayIncome}");
 
             var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
@@ -165,6 +207,8 @@ USDT： <b>{USDT}</b>
 ————————————————————
 带宽质押比：<b>100 TRX = {resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100:0.000} 带宽</b>
 能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>
+————————————————————
+今日承兑：<b>{todayIncome} USDT</b>
 ";
 
             var keyboard = new ReplyKeyboardMarkup(new[]
@@ -345,10 +389,10 @@ USDT： <b>{USDT}</b>
 <code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
 
 
-<b>兑换有礼：</b>
-<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
-<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
-<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<b>限时福利：</b>
+<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
 ";
             }
             // 创建包含两行，每行两个按钮的虚拟键盘
@@ -404,10 +448,10 @@ USDT： <b>{USDT}</b>
 <code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
 
 
-<b>兑换有礼：</b>
-<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
-<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
-<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<b>限时福利：</b>
+<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
 ";
             // 创建包含两行，每行两个按钮的虚拟键盘
             var keyboard = new ReplyKeyboardMarkup(new[]
