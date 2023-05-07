@@ -193,7 +193,7 @@ public static class UpdateHandlers
             
              // 调用新方法获取今日收入
             //Log.Information("查询今日收入...");
-            string targetReciveAddress = "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC";
+            string targetReciveAddress = "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC";//填写你想要监控收入的地址
             decimal todayIncome = await GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
             //Log.Information($"今日收入: {todayIncome}");
 
