@@ -345,10 +345,10 @@ USDT： <b>{USDT}</b>
 <code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
 
 
-<b>限时福利：</b>
-<code>当月累计兑换：<b>800 USDT或以上金额,电报会员免费送!!!</b></code>
-<code>当月累计兑换：<b>800 USDT或以上金额,电报会员免费送!!!</b></code>
-<code>当月累计兑换：<b>800 USDT或以上金额,电报会员免费送!!!</b></code>
+<b>兑换有礼：</b>
+<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
 ";
             }
             // 创建包含两行，每行两个按钮的虚拟键盘
@@ -404,10 +404,10 @@ USDT： <b>{USDT}</b>
 <code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
 
 
-<b>限时福利：</b>
-<code>当月累计兑换：<b>800 USDT或以上金额,电报会员免费送!!!</b></code>
-<code>当月累计兑换：<b>800 USDT或以上金额,电报会员免费送!!!</b></code>
-<code>当月累计兑换：<b>800 USDT或以上金额,电报会员免费送!!!</b></code>
+<b>兑换有礼：</b>
+<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<code>当月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
 ";
             // 创建包含两行，每行两个按钮的虚拟键盘
             var keyboard = new ReplyKeyboardMarkup(new[]
