@@ -73,7 +73,7 @@ cd ~/CoinConvertBot/src/Telegram.CoinConvertBot/BgServices/BotHandler
 
 ls
 
-rm -r nano UpdateHandlers.cs
+rm -r  UpdateHandlers.cs
 
 nano UpdateHandlers.cs
 
