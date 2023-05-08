@@ -488,9 +488,9 @@ USDT余额： <b>{USDT}</b>
 
 
 <b>限时福利：</b>
-<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
-<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
-<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
+<code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
+<code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
 ";
             }
             // 创建包含两行，每行两个按钮的虚拟键盘
@@ -547,9 +547,9 @@ USDT余额： <b>{USDT}</b>
 
 
 <b>限时福利：</b>
-<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
-<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
-<code>本月累计兑换满：<b>666 USDT,电报会员免费送!!!</b></code>
+<code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
+<code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
+<code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
 ";
             // 创建包含两行，每行两个按钮的虚拟键盘
             var keyboard = new ReplyKeyboardMarkup(new[]
