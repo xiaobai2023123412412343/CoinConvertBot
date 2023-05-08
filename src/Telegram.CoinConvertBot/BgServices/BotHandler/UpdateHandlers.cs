@@ -586,7 +586,7 @@ USDT余额： <b>{USDT}</b>
             string username = message.From.FirstName;
             string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
 使用方法：
-   点击菜单 选择U兑TRX
+   点击菜单 选择&#x1F4B0;U兑TRX
    转账USDT到指定地址，即可秒回TRX
    如有需要，请联系管理员： {AdminUserUrl}
 ";
