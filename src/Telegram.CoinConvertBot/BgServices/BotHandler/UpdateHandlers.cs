@@ -22,6 +22,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 
+
 public static class UpdateHandlers
 {
     public static string? BotUserName = null!;
@@ -40,6 +41,52 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+    
+    // 添加定时发送广告的方法
+    static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
+    {
+        const long groupId = -808389917;//指定的群通知
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+            decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
+
+            string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n\n" +
+       
+            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n\n"+//手动输入地址
+       
+             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n"+      
+             "\U0000267B请勿使用交易所或中心化钱包转账!\n"+
+             "\U0000267B有任何问题,请私聊联系群主!\n\n\n"+
+             "<b>另代开TG会员</b>:\n\n"+
+                "\u2708三月高级会员   24.99 u\n"+
+                "\u2708六月高级会员   39.99 u\n"+
+                "\u2708一年高级会员   70.99 u\n"+
+            "(<b>需要开通会员请联系群主,切记不要转TRX兑换地址!!!</b>)"
+           ;
+
+            await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html);
+            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+            
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                // 发送广告消息并获取响应
+                Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html);
+
+                // 等待 半小时
+                await Task.Delay(TimeSpan.FromSeconds(1800), cancellationToken);
+
+                // 撤回广告消息
+                await botClient.DeleteMessageAsync(groupId, sentMessage.MessageId);
+
+                // 等待 5 秒，再次发送广告
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+            }
+                
+        }
+    }
+
     public static Task PollingErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
         var ErrorMessage = exception switch
@@ -98,6 +145,14 @@ public static class UpdateHandlers
         {
             Log.Logger.Error(e, "更新Telegram用户信息失败！");
         }
+        // 检查是否接收到了 /start 消息
+        if (messageText.StartsWith("/start"))
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+            var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+            _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate);
+        }
+
         messageText = messageText.Replace($"@{BotUserName}", "");
         var action = messageText.Split(' ')[0] switch
         {
