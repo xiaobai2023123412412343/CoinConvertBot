@@ -177,6 +177,37 @@ public static class UpdateHandlers
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
         };
+        async Task<decimal> GetMonthlyUSDTIncomeAsync(string ReciveAddress, string contractAddress)
+{
+    // 获取本月1号零点的时间戳
+    var firstDayOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    var firstDayOfMonthMidnight = new DateTimeOffset(firstDayOfMonth).ToUnixTimeSeconds();
+
+    // 调用TronGrid API以获取交易记录
+    var httpClient = new HttpClient();
+    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+    string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{ReciveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={firstDayOfMonthMidnight * 1000}&contract_address={contractAddress}";
+    var response = await httpClient.GetAsync(apiEndpoint);
+
+    if (!response.IsSuccessStatusCode)
+    {
+        // 请求失败，返回0
+        return 0;
+    }
+
+    var jsonResponse = await response.Content.ReadAsStringAsync();
+    JObject transactions = JObject.Parse(jsonResponse);
+
+    // 遍历交易记录并累计 USDT 收入
+    decimal usdtIncome = 0;
+    foreach (var tx in transactions["data"])
+    {
+        var rawAmount = (decimal)tx["value"];
+        usdtIncome += rawAmount / 1_000_000L;
+    }
+
+    return usdtIncome;
+}
         async Task<decimal> GetTodayUSDTIncomeAsync(string ReciveAddress, string contractAddress)
 {
     // 获取今天零点的时间戳
@@ -259,6 +290,9 @@ public static class UpdateHandlers
             string targetReciveAddress = "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC";//填写你想要监控收入的地址
             decimal todayIncome = await GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
             //Log.Information($"今日收入: {todayIncome}");
+            
+            // 调用新方法获取本月收入
+            decimal monthlyIncome = await GetMonthlyUSDTIncomeAsync(targetReciveAddress, contractAddress);
 
             var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
@@ -272,6 +306,7 @@ USDT余额： <b>{USDT}</b>
 能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>
 ————————————————————
 今日承兑：<b>{todayIncome} USDT</b>
+本月承兑：<b>{monthlyIncome} USDT</b>
 ";
 
             var keyboard = new ReplyKeyboardMarkup(new[]
