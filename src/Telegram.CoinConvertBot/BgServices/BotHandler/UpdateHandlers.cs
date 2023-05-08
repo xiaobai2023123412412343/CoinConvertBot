@@ -695,10 +695,28 @@ USDT余额： <b>{USDT}</b>
                     msg = $"<b>{price} {fromCurrency} = {toPrice} {toCurrency}</b>";
                 }
             }
+                                      // 创建包含两行，每行两个按钮的虚拟键盘
+            var keyboard = new ReplyKeyboardMarkup(new[]
+            {
+                new [] // 第一行
+                {
+                    new KeyboardButton("\U0001F4B0U兑TRX"),
+                    new KeyboardButton("\U0001F570实时汇率"),
+                },   
+                new [] // 第二行
+                {
+                    new KeyboardButton("\U0001F4B9估算价值"),
+                    new KeyboardButton("\u260E联系管理"),
+                }    
+                
+            });
+            keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+            keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
+
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: msg,
                                                         parseMode: ParseMode.Html,
-                                                        replyMarkup: new ReplyKeyboardRemove());
+                                                        replyMarkup: keyboard);
         }
         async Task InsertOrUpdateUserAsync(ITelegramBotClient botClient, Message message)
         {
