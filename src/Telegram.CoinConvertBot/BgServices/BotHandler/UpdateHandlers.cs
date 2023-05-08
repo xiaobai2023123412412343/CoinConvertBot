@@ -153,8 +153,8 @@ public static class UpdateHandlers
         {
             Log.Logger.Error(e, "更新Telegram用户信息失败！");
         }
-        // 检查是否接收到了 /start 消息
-        if (messageText.StartsWith("/start"))
+        // 检查是否接收到了 /gg 消息，收到就启动广告
+        if (messageText.StartsWith("/gg"))
         {
             var cancellationTokenSource = new CancellationTokenSource();
             var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
