@@ -65,17 +65,25 @@ public static class UpdateHandlers
                 "\u2708一年高级会员   70.99 u\n"+
             "(<b>需要开通会员请联系群主,切记不要转TRX兑换地址!!!</b>)"
            ;
+            // 创建 InlineKeyboardButton 并设置文本和回调数据
+            var visitButton = new InlineKeyboardButton("点击访问")
+            {
+                Url = "https://example.com" // 将此链接替换为你想要跳转的链接
+            };
 
-            await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html);
-            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+            // 创建 InlineKeyboardMarkup 并添加按钮
+            var inlineKeyboard = new InlineKeyboardMarkup(new[] { new[] { visitButton } });
+
+            //await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
+            //await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
             
             while (!cancellationToken.IsCancellationRequested)
             {
                 // 发送广告消息并获取响应
-                Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html);
+                Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
 
                 // 等待 半小时
-                await Task.Delay(TimeSpan.FromSeconds(1800), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
 
                 // 撤回广告消息
                 await botClient.DeleteMessageAsync(groupId, sentMessage.MessageId);
