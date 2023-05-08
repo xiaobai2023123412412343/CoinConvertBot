@@ -42,58 +42,49 @@ public static class UpdateHandlers
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     
-    // 添加定时发送广告的方法
-    static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
+static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
+{
+    const long groupId = -1001862069013;//指定的群通知
+
+    while (!cancellationToken.IsCancellationRequested)
     {
-        const long groupId = -1001862069013;//指定的群通知
+        var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+        decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
 
-        while (!cancellationToken.IsCancellationRequested)
+        string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n\n" +
+            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n\n" + //手动输入地址
+            "\U0000267B进U即兑,全自动返TRX,10U起兑!\n" +
+            "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
+            "\U0000267B有任何问题,请私聊联系群主!\n\n\n" +
+            "<b>另代开TG会员</b>:\n\n" +
+            "\u2708三月高级会员   24.99 u\n" +
+            "\u2708六月高级会员   39.99 u\n" +
+            "\u2708一年高级会员   70.99 u\n" +
+            "(<b>需要开通会员请联系群主,切记不要转TRX兑换地址!!!</b>)";
+
+        // 创建 InlineKeyboardButton 并设置文本和回调数据
+        var visitButton = new InlineKeyboardButton("私聊群主")
         {
-            var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-            decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
+            Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的链接
+        };
 
-            string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n\n" +
-       
-            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n\n"+//手动输入地址
-       
-             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n"+      
-             "\U0000267B请勿使用交易所或中心化钱包转账!\n"+
-             "\U0000267B有任何问题,请私聊联系群主!\n\n\n"+
-             "<b>另代开TG会员</b>:\n\n"+
-                "\u2708三月高级会员   24.99 u\n"+
-                "\u2708六月高级会员   39.99 u\n"+
-                "\u2708一年高级会员   70.99 u\n"+
-            "(<b>需要开通会员请联系群主,切记不要转TRX兑换地址!!!</b>)"
-           ;
-            // 创建 InlineKeyboardButton 并设置文本和回调数据
-            var visitButton = new InlineKeyboardButton("私聊群主")
-            {
-                Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的链接
-            };
+        // 创建 InlineKeyboardMarkup 并添加按钮
+        var inlineKeyboard = new InlineKeyboardMarkup(new[] { new[] { visitButton } });
 
-            // 创建 InlineKeyboardMarkup 并添加按钮
-            var inlineKeyboard = new InlineKeyboardMarkup(new[] { new[] { visitButton } });
+        // 发送广告消息并获取响应
+        Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
 
-            //await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
-            //await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
-            
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                // 发送广告消息并获取响应
-                Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
+        // 等待15分钟
+        await Task.Delay(TimeSpan.FromSeconds(900), cancellationToken);
 
-                // 等待 半小时
-                await Task.Delay(TimeSpan.FromSeconds(900), cancellationToken);
+        // 撤回广告消息
+        await botClient.DeleteMessageAsync(groupId, sentMessage.MessageId);
 
-                // 撤回广告消息
-                await botClient.DeleteMessageAsync(groupId, sentMessage.MessageId);
-
-                // 等待 5 秒，再次发送广告
-                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
-            }
-                
-        }
+        // 等待5秒，再次发送广告
+        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
     }
+}
+
 
     public static Task PollingErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
