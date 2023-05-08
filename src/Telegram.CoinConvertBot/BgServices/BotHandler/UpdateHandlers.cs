@@ -61,21 +61,26 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             "\u2708六月高级会员   39.99 u\n" +
             "\u2708一年高级会员   70.99 u\n" +
             "(<b>需要开通会员请联系群主,切记不要转TRX兑换地址!!!</b>)";
-
+            
         // 创建 InlineKeyboardButton 并设置文本和回调数据
-        var visitButton = new InlineKeyboardButton("私聊群主")
+        var visitButton1 = new InlineKeyboardButton("\U0000267B 开始兑换")
         {
-            Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的链接
+            Url = "https://t.me/yifanfubot" // 将此链接替换为你想要跳转的左侧链接
         };
 
+        var visitButton2 = new InlineKeyboardButton("\U0001F5E3 私聊群主")
+        {
+            Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的右侧链接
+        };
+        
         // 创建 InlineKeyboardMarkup 并添加按钮
-        var inlineKeyboard = new InlineKeyboardMarkup(new[] { new[] { visitButton } });
-
+        var inlineKeyboard = new InlineKeyboardMarkup(new[] { new[] { visitButton1, visitButton2 } });
+        
         // 发送广告消息并获取响应
         Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
 
-        // 等待15分钟
-        await Task.Delay(TimeSpan.FromSeconds(900), cancellationToken);
+        // 等待10分钟
+        await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
 
         // 撤回广告消息
         await botClient.DeleteMessageAsync(groupId, sentMessage.MessageId);
