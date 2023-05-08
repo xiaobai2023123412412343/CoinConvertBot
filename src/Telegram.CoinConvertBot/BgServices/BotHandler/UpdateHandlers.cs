@@ -83,7 +83,7 @@ public static class UpdateHandlers
                 Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
 
                 // 等待 半小时
-                await Task.Delay(TimeSpan.FromSeconds(1800), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(900), cancellationToken);
 
                 // 撤回广告消息
                 await botClient.DeleteMessageAsync(groupId, sentMessage.MessageId);
