@@ -45,7 +45,7 @@ public static class UpdateHandlers
     // 添加定时发送广告的方法
     static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
     {
-        const long groupId = -808389917;//指定的群通知
+        const long groupId = -1001862069013;//指定的群通知
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -66,9 +66,9 @@ public static class UpdateHandlers
             "(<b>需要开通会员请联系群主,切记不要转TRX兑换地址!!!</b>)"
            ;
             // 创建 InlineKeyboardButton 并设置文本和回调数据
-            var visitButton = new InlineKeyboardButton("点击访问")
+            var visitButton = new InlineKeyboardButton("私聊群主")
             {
-                Url = "https://example.com" // 将此链接替换为你想要跳转的链接
+                Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的链接
             };
 
             // 创建 InlineKeyboardMarkup 并添加按钮
@@ -83,7 +83,7 @@ public static class UpdateHandlers
                 Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
 
                 // 等待 半小时
-                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(1800), cancellationToken);
 
                 // 撤回广告消息
                 await botClient.DeleteMessageAsync(groupId, sentMessage.MessageId);
