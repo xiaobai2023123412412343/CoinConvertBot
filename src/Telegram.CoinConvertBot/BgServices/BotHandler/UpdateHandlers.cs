@@ -262,8 +262,8 @@ public static class UpdateHandlers
 
             var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
-TRX： <b>{TRX}</b>
-USDT： <b>{USDT}</b>
+TRX余额： <b>{TRX}</b>
+USDT余额： <b>{USDT}</b>
 免费带宽： <b>{resource.FreeNetLimit - resource.FreeNetUsed}/{resource.FreeNetLimit}</b>
 质押带宽： <b>{resource.NetLimit - resource.NetUsed}/{resource.NetLimit}</b>
 质押能量： <b>{resource.EnergyUsed}/{resource.EnergyLimit}</b>
