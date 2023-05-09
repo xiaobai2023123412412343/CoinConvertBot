@@ -644,7 +644,7 @@ USDT余额： <b>{USDT}</b>
                                                         parseMode: ParseMode.Html,
                                                         replyMarkup: keyboard);
         }
-        //估价
+        //关闭虚拟键盘
         static async Task<Message> guanbi(ITelegramBotClient botClient, Message message)
         {
             string usage = @$"键盘已关闭
