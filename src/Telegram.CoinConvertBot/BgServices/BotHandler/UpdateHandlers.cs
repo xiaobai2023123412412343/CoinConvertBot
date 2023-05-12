@@ -44,7 +44,12 @@ public static class UpdateHandlers
     
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
-    const long groupId = -1001862069013;//指定的群通知
+    // 将多个群的群组 ID 存储在一个集合中
+    long[] groupIds = {
+        -1001862069013, // 群组 ID 1
+        //-838363978, // 群组 ID 2
+        // 更多群组 ID
+    };
 
     while (!cancellationToken.IsCancellationRequested)
     {
@@ -75,15 +80,25 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
         
         // 创建 InlineKeyboardMarkup 并添加按钮
         var inlineKeyboard = new InlineKeyboardMarkup(new[] { new[] { visitButton1, visitButton2 } });
-        
-        // 发送广告消息并获取响应
-        Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
+
+        // 用于存储已发送消息的字典
+        var sentMessages = new Dictionary<long, Message>();
+
+        // 遍历群组 ID 并发送广告消息
+        foreach (var groupId in groupIds)
+        {
+            Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
+            sentMessages[groupId] = sentMessage;
+        }
 
         // 等待10分钟
         await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
 
-        // 撤回广告消息
-        await botClient.DeleteMessageAsync(groupId, sentMessage.MessageId);
+        // 遍历已发送的消息并撤回
+        foreach (var sentMessage in sentMessages)
+        {
+            await botClient.DeleteMessageAsync(sentMessage.Key, sentMessage.Value.MessageId);
+        }
 
         // 等待5秒，再次发送广告
         await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
