@@ -18,6 +18,12 @@ using TronNet.Contracts;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json.Linq;
+using System.IO;
+using System.Net;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+
 
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
@@ -41,6 +47,95 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, Message message)
+{
+    var cryptoSymbols = new[] { "bitcoin", "ethereum", "binancecoin", "tether","ripple", "cardano", "dogecoin", "solana", "litecoin", "chainlink", "the-open-network" };
+    var (prices, changes) = await GetCryptoPricesAsync(cryptoSymbols);
+
+    var cryptoNames = new Dictionary<string, string>
+    {
+        { "bitcoin", "比特币" },
+        { "ethereum", "以太坊" },
+        { "binancecoin", "币安币" },
+        { "tether", "USDT泰达币" },
+        { "ripple", "瑞波币" },
+        { "cardano", "艾达币" },
+        { "dogecoin", "狗狗币" },
+        { "solana", "Sol" },
+        { "litecoin", "莱特币" },
+        { "chainlink", "link" },
+        { "the-open-network", "电报币" }
+    };
+
+    var text = "<b>币圈热门币种实时价格及涨跌幅:</b>\n\n";
+
+    for (int i = 0; i < cryptoSymbols.Length; i++)
+    {
+        var cryptoName = cryptoNames[cryptoSymbols[i]];
+        var changeText = changes[i] < 0 ? $"<b>-</b>{Math.Abs(changes[i]):0.##}%" : $"<b>+</b>{changes[i]:0.##}%";
+        text += $"<code>{cryptoName}: ${prices[i]:0.####}  {changeText}</code>\n";
+        // 添加分隔符
+        if (i < cryptoSymbols.Length - 1) // 防止在最后一行也添加分隔符
+        {
+            text += "———————————————\n";
+        }
+    }
+
+// 创建包含两行，每行两个按钮的虚拟键盘
+var keyboard = new ReplyKeyboardMarkup(new[]
+{
+    new [] // 第一行
+    {
+        new KeyboardButton("\U0001F4B0U兑TRX"),
+        new KeyboardButton("\U0001F570实时汇率"),
+        new KeyboardButton("\U0001F4B8币圈行情"),
+    },   
+    new [] // 第二行
+    {
+        new KeyboardButton("\U0001F4B9估算价值"),
+        new KeyboardButton("\u260E联系管理"),
+    }    
+});
+
+keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
+
+return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: text, // 你可以将 'text' 替换为需要发送的文本
+                                            parseMode: ParseMode.Html,
+                                            replyMarkup: keyboard);
+}
+
+static async Task<(decimal[], decimal[])> GetCryptoPricesAsync(string[] symbols)
+{
+    var apiUrl = "https://api.coingecko.com/api/v3/simple/price?ids=" + string.Join(",", symbols) + "&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=true&include_last_updated_at=false";
+
+    using var httpClient = new HttpClient();
+    var response = await httpClient.GetAsync(apiUrl);
+    var json = await response.Content.ReadAsStringAsync();
+    var prices = new decimal[symbols.Length];
+    var changes = new decimal[symbols.Length];
+
+    using var jsonDocument = JsonDocument.Parse(json);
+    for (int i = 0; i < symbols.Length; i++)
+    {
+        if (jsonDocument.RootElement.TryGetProperty(symbols[i], out JsonElement symbolElement) &&
+            symbolElement.TryGetProperty("usd", out JsonElement priceElement) &&
+            symbolElement.TryGetProperty("usd_24h_change", out JsonElement changeElement))
+        {
+            prices[i] = priceElement.GetDecimal();
+            changes[i] = changeElement.GetDecimal();
+        }
+        else
+        {
+            Log.Logger.Warning($"Price or change property not found for symbol {symbols[i]}");
+            prices[i] = -1m; // 使用 -1 表示无法获取价格
+            changes[i] = -1m; // 使用 -1 表示无法获取涨跌幅
+        }
+    }
+
+    return (prices, changes);
+}
     
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
@@ -170,6 +265,11 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             var cancellationTokenSource = new CancellationTokenSource();
             var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
             _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate);
+        }
+        // 添加这部分代码以处理 /crypto 指令
+        if (messageText.StartsWith("\U0001F4B8币圈行情", StringComparison.OrdinalIgnoreCase))
+        {
+            await SendCryptoPricesAsync(botClient, message);
         }
 
         messageText = messageText.Replace($"@{BotUserName}", "");
@@ -326,6 +426,7 @@ USDT余额： <b>{USDT}</b>
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
                     new KeyboardButton("\U0001F570实时汇率"),
+                    new KeyboardButton("\U0001F4B8币圈行情"),
                 },
                 new [] // 第二行
                 {
@@ -378,6 +479,7 @@ USDT余额： <b>{USDT}</b>
                     {
                         new KeyboardButton("\U0001F4B0U兑TRX"),
                         new KeyboardButton("\U0001F570实时汇率"),
+                        new KeyboardButton("\U0001F4B8币圈行情"),
                     },
                     new [] // 第二行
                     {
@@ -400,6 +502,7 @@ USDT余额： <b>{USDT}</b>
                     {
                         new KeyboardButton("\U0001F4B0U兑TRX"),
                         new KeyboardButton("\U0001F570实时汇率"),
+                        new KeyboardButton("\U0001F4B8币圈行情"),
                     },
                     new [] // 第二行
                     {
@@ -433,6 +536,7 @@ USDT余额： <b>{USDT}</b>
                     {
                         new KeyboardButton("\U0001F4B0U兑TRX"),
                         new KeyboardButton("\U0001F570实时汇率"),
+                        new KeyboardButton("\U0001F4B8币圈行情"),
                     },
                     new [] // 第二行
                     {
@@ -511,6 +615,7 @@ USDT余额： <b>{USDT}</b>
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
                     new KeyboardButton("\U0001F570实时汇率"),
+                    new KeyboardButton("\U0001F4B8币圈行情"),
                 },   
                 new [] // 第二行
                 {
@@ -569,6 +674,7 @@ USDT余额： <b>{USDT}</b>
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
                     new KeyboardButton("\U0001F570实时汇率"),
+                    new KeyboardButton("\U0001F4B8币圈行情"),
                 },   
                 new [] // 第二行
                 {
@@ -608,6 +714,7 @@ USDT余额： <b>{USDT}</b>
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
                     new KeyboardButton("\U0001F570实时汇率"),
+                    new KeyboardButton("\U0001F4B8币圈行情"),
                 },   
                 new [] // 第二行
                 {
@@ -644,6 +751,7 @@ USDT余额： <b>{USDT}</b>
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
                     new KeyboardButton("\U0001F570实时汇率"),
+                    new KeyboardButton("\U0001F4B8币圈行情"),
                 },   
                 new [] // 第二行
                 {
@@ -722,6 +830,7 @@ USDT余额： <b>{USDT}</b>
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
                     new KeyboardButton("\U0001F570实时汇率"),
+                    new KeyboardButton("\U0001F4B8币圈行情"),
                 },   
                 new [] // 第二行
                 {
