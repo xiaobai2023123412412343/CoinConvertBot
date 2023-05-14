@@ -22,7 +22,7 @@ using System.IO;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
-
+using System.Text.RegularExpressions;
 
 
 
@@ -47,6 +47,36 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+private static readonly Dictionary<string, string> CurrencyFullNames = new Dictionary<string, string>
+{
+    { "USD", "美元" },
+    { "JPY", "日元" },
+    { "GBP", "英镑" },
+    { "EUR", "欧元" },
+    { "AUD", "澳元" },
+    { "KRW", "韩元" },
+    { "THB", "泰铢" },
+    { "VND", "越南盾" },
+    { "INR", "卢比" },
+    { "SGD", "新币" },
+    { "KHR", "瑞尔" },
+    { "PHP", "披索" },
+    { "AED", "迪拉姆" },
+};    
+static bool TryGetRateByCurrencyCode(Dictionary<string, (decimal, string)> rates, string currencyCode, out KeyValuePair<string, (decimal, string)> rate)
+{
+    foreach (var entry in rates)
+    {
+        if (entry.Key.Contains(currencyCode))
+        {
+            rate = entry;
+            return true;
+        }
+    }
+
+    rate = default;
+    return false;
+}
 static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
 {
     var apiUrl = "https://api.exchangerate-api.com/v4/latest/CNY"; // CNY为人民币代号
@@ -311,7 +341,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
         {
             var rates = await GetCurrencyRatesAsync();
             var text = "<b>100元人民币兑换其他国家货币</b>:\n\n";
-
+          
             int count = 0;
             foreach (var rate in rates)
             {
@@ -332,6 +362,37 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
                                                  text: text,
                                                  parseMode: ParseMode.Html);
         }
+else
+{
+    var regex = new Regex(@"^(\d+)([a-zA-Z]{3}|[\u4e00-\u9fa5]+)$");
+    var match = regex.Match(message.Text);
+    if (match.Success)
+    {
+        int inputAmount = int.Parse(match.Groups[1].Value);
+        string inputCurrency = match.Groups[2].Value;
+
+        string inputCurrencyCode = null;
+        if (CurrencyFullNames.ContainsValue(inputCurrency))
+        {
+            inputCurrencyCode = CurrencyFullNames.FirstOrDefault(x => x.Value == inputCurrency).Key;
+        }
+        else
+        {
+            inputCurrencyCode = inputCurrency.ToUpper();
+        }
+
+        var rates = await GetCurrencyRatesAsync();
+        if (TryGetRateByCurrencyCode(rates, inputCurrencyCode, out var rate))
+        {
+            decimal convertedAmount = inputAmount / rate.Value.Item1;
+            string currencyFullName = CurrencyFullNames.ContainsKey(inputCurrencyCode) ? CurrencyFullNames[inputCurrencyCode] : inputCurrencyCode;
+            string text = $"<b>{inputAmount}{currencyFullName} ≈ {convertedAmount:0.##}元人民币</b>";
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                 text: text,
+                                                 parseMode: ParseMode.Html);
+        }
+    }
+}
         messageText = messageText.Replace($"@{BotUserName}", "");
         var action = messageText.Split(' ')[0] switch
         {
