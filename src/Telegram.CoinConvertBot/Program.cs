@@ -105,7 +105,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
         new BotCommand(){Command="start",Description="开始使用"},
         new BotCommand(){Command="yi",Description="U兑TRX"},
         new BotCommand(){Command="fan",Description="实时汇率"},
-        new BotCommand(){Command="fu",Description="估算价值"},
+        new BotCommand(){Command="fu",Description="能量换算"},
         new BotCommand(){Command="btc",Description="币圈行情"},
         }).GetAwaiter().GetResult();
     }
