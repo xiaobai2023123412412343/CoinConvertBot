@@ -106,6 +106,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
         new BotCommand(){Command="yi",Description="U兑TRX"},
         new BotCommand(){Command="fan",Description="实时汇率"},
         new BotCommand(){Command="fu",Description="估算价值"},
+        new BotCommand(){Command="btc",Description="币圈行情"},
         }).GetAwaiter().GetResult();
     }
     Log.Logger.Information("Telegram机器人上线！机器人ID：{Id}({username})，机器人名字：{FirstName}.", me.Id, $"@{me.Username}", me.FirstName);
