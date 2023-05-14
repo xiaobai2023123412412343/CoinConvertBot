@@ -49,7 +49,7 @@ public static class UpdateHandlers
     /// <returns></returns>
 static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, Message message)
 {
-    var cryptoSymbols = new[] { "bitcoin", "ethereum", "binancecoin", "tether","ripple", "cardano", "dogecoin", "solana", "litecoin", "chainlink", "the-open-network" };
+    var cryptoSymbols = new[] { "bitcoin", "ethereum", "binancecoin","bitget-token", "tether","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };
     var (prices, changes) = await GetCryptoPricesAsync(cryptoSymbols);
 
     var cryptoNames = new Dictionary<string, string>
@@ -57,10 +57,12 @@ static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, M
         { "bitcoin", "比特币" },
         { "ethereum", "以太坊" },
         { "binancecoin", "币安币" },
+        { "bitget-token", "BGB" },
         { "tether", "USDT泰达币" },
         { "ripple", "瑞波币" },
         { "cardano", "艾达币" },
         { "dogecoin", "狗狗币" },
+        { "shiba-inu", "shib" },
         { "solana", "Sol" },
         { "litecoin", "莱特币" },
         { "chainlink", "link" },
@@ -73,7 +75,7 @@ static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, M
     {
         var cryptoName = cryptoNames[cryptoSymbols[i]];
         var changeText = changes[i] < 0 ? $"<b>-</b>{Math.Abs(changes[i]):0.##}%" : $"<b>+</b>{changes[i]:0.##}%";
-        text += $"<code>{cryptoName}: ${prices[i]:0.####}  {changeText}</code>\n";
+        text += $"<code>{cryptoName}: ${prices[i]:0.######}  {changeText}</code>\n";
         // 添加分隔符
         if (i < cryptoSymbols.Length - 1) // 防止在最后一行也添加分隔符
         {
