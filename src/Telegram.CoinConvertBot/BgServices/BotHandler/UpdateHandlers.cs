@@ -47,6 +47,39 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
+{
+    var apiUrl = "https://api.exchangerate-api.com/v4/latest/CNY"; // CNY为人民币代号
+
+    using var httpClient = new HttpClient();
+    var response = await httpClient.GetAsync(apiUrl);
+    var json = await response.Content.ReadAsStringAsync();
+
+    using var jsonDocument = JsonDocument.Parse(json);
+    if (!jsonDocument.RootElement.TryGetProperty("rates", out JsonElement ratesElement))
+    {
+        throw new Exception("Rates property not found");
+    }
+
+    var rates = new Dictionary<string, (decimal, string)>
+    {
+        { "美元", (ratesElement.GetProperty("USD").GetDecimal(), "$") },
+        { "日元", (ratesElement.GetProperty("JPY").GetDecimal(), "¥") },
+        { "英镑", (ratesElement.GetProperty("GBP").GetDecimal(), "£") },
+        { "欧元", (ratesElement.GetProperty("EUR").GetDecimal(), "€") },
+        { "澳元", (ratesElement.GetProperty("AUD").GetDecimal(), "A$") },
+        { "韩元", (ratesElement.GetProperty("KRW").GetDecimal(), "₩") },
+        { "泰铢", (ratesElement.GetProperty("THB").GetDecimal(), "฿") },
+        { "越南盾", (ratesElement.GetProperty("VND").GetDecimal(), "₫") },
+        { "印度卢比", (ratesElement.GetProperty("INR").GetDecimal(), "₹") },
+        { "新加坡新币", (ratesElement.GetProperty("SGD").GetDecimal(), "S$") },
+        { "柬埔寨瑞尔", (ratesElement.GetProperty("KHR").GetDecimal(), "៛") },
+        { "菲律宾披索", (ratesElement.GetProperty("PHP").GetDecimal(), "₱") },
+        { "迪拜迪拉姆", (ratesElement.GetProperty("AED").GetDecimal(), "د.إ") }
+    };
+
+    return rates;
+} 
 static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, Message message)
 {
     var cryptoSymbols = new[] { "bitcoin", "ethereum", "binancecoin","bitget-token", "tether","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };
@@ -95,6 +128,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     new [] // 第二行
     {
         new KeyboardButton("\U0001F4B9估算价值"),
+        new KeyboardButton("\U0001F310外汇助手"),
         new KeyboardButton("\u260E联系管理"),
     }    
 });
@@ -273,7 +307,31 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
         {
             await SendCryptoPricesAsync(botClient, message);
         }
+        if (message.Text == "\U0001F310外汇助手") // 替换为你的指令
+        {
+            var rates = await GetCurrencyRatesAsync();
+            var text = "<b>100元人民币兑换其他国家货币</b>:\n\n";
 
+            int count = 0;
+            foreach (var rate in rates)
+            {
+                decimal convertedAmount = rate.Value.Item1 * 100;
+                decimal exchangeRate = 1 / rate.Value.Item1;
+                text += $"<code>{rate.Key}: {convertedAmount:0.#####} {rate.Value.Item2}  汇率≈{exchangeRate:0.######}</code>\n";
+
+                // 如果还有更多的汇率条目，添加分隔符
+                if (count < rates.Count - 1)
+                {
+                    text += "———————————————————\n";
+                }
+
+                count++;
+            }
+
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                 text: text,
+                                                 parseMode: ParseMode.Html);
+        }
         messageText = messageText.Replace($"@{BotUserName}", "");
         var action = messageText.Split(' ')[0] switch
         {
