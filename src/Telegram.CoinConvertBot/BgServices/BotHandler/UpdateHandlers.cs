@@ -268,8 +268,8 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
             _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate);
         }
-        // 添加这部分代码以处理 /crypto 指令
-        if (messageText.StartsWith("\U0001F4B8币圈行情", StringComparison.OrdinalIgnoreCase))
+        // 添加这部分代码以处理 /crypto 和 /btc 指令
+        if (messageText.StartsWith("\U0001F4B8币圈行情", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
         {
             await SendCryptoPricesAsync(botClient, message);
         }
