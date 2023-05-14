@@ -61,22 +61,22 @@ static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
         throw new Exception("Rates property not found");
     }
 
-    var rates = new Dictionary<string, (decimal, string)>
-    {
-        { "美元", (ratesElement.GetProperty("USD").GetDecimal(), "$") },
-        { "日元", (ratesElement.GetProperty("JPY").GetDecimal(), "¥") },
-        { "英镑", (ratesElement.GetProperty("GBP").GetDecimal(), "£") },
-        { "欧元", (ratesElement.GetProperty("EUR").GetDecimal(), "€") },
-        { "澳元", (ratesElement.GetProperty("AUD").GetDecimal(), "A$") },
-        { "韩元", (ratesElement.GetProperty("KRW").GetDecimal(), "₩") },
-        { "泰铢", (ratesElement.GetProperty("THB").GetDecimal(), "฿") },
-        { "越南盾", (ratesElement.GetProperty("VND").GetDecimal(), "₫") },
-        { "印度卢比", (ratesElement.GetProperty("INR").GetDecimal(), "₹") },
-        { "新加坡新币", (ratesElement.GetProperty("SGD").GetDecimal(), "S$") },
-        { "柬埔寨瑞尔", (ratesElement.GetProperty("KHR").GetDecimal(), "៛") },
-        { "菲律宾披索", (ratesElement.GetProperty("PHP").GetDecimal(), "₱") },
-        { "迪拜迪拉姆", (ratesElement.GetProperty("AED").GetDecimal(), "د.إ") }
-    };
+  var rates = new Dictionary<string, (decimal, string)>
+  {
+      { "美元 (USD)", (ratesElement.GetProperty("USD").GetDecimal(), "$") },
+      { "日元 (JPY)", (ratesElement.GetProperty("JPY").GetDecimal(), "¥") },
+      { "英镑 (GBP)", (ratesElement.GetProperty("GBP").GetDecimal(), "£") },
+      { "欧元 (EUR)", (ratesElement.GetProperty("EUR").GetDecimal(), "€") },
+      { "澳元 (AUD)", (ratesElement.GetProperty("AUD").GetDecimal(), "A$") },
+      { "韩元 (KRW)", (ratesElement.GetProperty("KRW").GetDecimal(), "₩") },
+      { "泰铢 (THB)", (ratesElement.GetProperty("THB").GetDecimal(), "฿") },
+      { "越南盾 (VND)", (ratesElement.GetProperty("VND").GetDecimal(), "₫") },
+      { "印度卢比 (INR)", (ratesElement.GetProperty("INR").GetDecimal(), "₹") },
+      { "新加坡新币 (SGD)", (ratesElement.GetProperty("SGD").GetDecimal(), "S$") },
+      { "柬埔寨瑞尔 (KHR)", (ratesElement.GetProperty("KHR").GetDecimal(), "៛") },
+      { "菲律宾披索 (PHP)", (ratesElement.GetProperty("PHP").GetDecimal(), "₱") },
+      { "迪拜迪拉姆 (AED)", (ratesElement.GetProperty("AED").GetDecimal(), "د.إ") }
+  };
 
     return rates;
 } 
@@ -322,7 +322,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
                 // 如果还有更多的汇率条目，添加分隔符
                 if (count < rates.Count - 1)
                 {
-                    text += "———————————————————\n";
+                    text += "——————————————————————\n";
                 }
 
                 count++;
