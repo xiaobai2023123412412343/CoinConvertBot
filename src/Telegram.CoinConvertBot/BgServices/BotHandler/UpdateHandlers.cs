@@ -216,12 +216,28 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
     {
         var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
         decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
+        // 获取比特币以太坊价格
+        var cryptoSymbols = new[] { "bitcoin", "ethereum" };
+        var (prices, _) = await GetCryptoPricesAsync(cryptoSymbols);
+        var bitcoinPrice = prices[0];
+        var ethereumPrice = prices[1];
+        // 获取美元汇率
+        var currencyRates = await GetCurrencyRatesAsync();
+        if (!currencyRates.TryGetValue("美元 (USD)", out var usdRateTuple)) 
+        {
+            Console.WriteLine("Could not find USD rate in response.");
+            return; // 或者你可以选择继续，只是不显示美元汇率
+        }
+        var usdRate = 1 / usdRateTuple.Item1;
 
-        string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n\n" +
+        string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
             "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n\n" + //手动输入地址
             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
             "\U0000267B有任何问题,请私聊联系群主!\n\n\n" +
+             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8美元汇率参考 ≈ {usdRate:#.####} </b>\n" +
+             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
+             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8以太坊价格 ≈ {ethereumPrice} USDT</b>\n\n\n" +
             "<b>另代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
