@@ -153,7 +153,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B0U兑TRX"),
         new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9能量换算"),
+        new KeyboardButton("\U0001F4B9汇率换算"),
     },   
     new [] // 第二行
     {
@@ -400,7 +400,7 @@ else
             "/fu" => Valuation(botClient, message),
             "\U0001F4B0U兑TRX" => ConvertCoinTRX(botClient, message), // 添加这一行
             "\U0001F570实时汇率" => PriceTRX(botClient, message), // 添加这一行
-            "\U0001F4B9能量换算" => Valuation(botClient, message), // 添加这一行
+            "\U0001F4B9汇率换算" => Valuation(botClient, message), // 添加这一行
             "/yi" => ConvertCoinTRX(botClient, message),
             "/fan" => PriceTRX(botClient, message),
             "绑定波场地址" => BindAddress(botClient, message),
@@ -547,7 +547,7 @@ USDT余额： <b>{USDT}</b>
                 {
                     new KeyboardButton("\U0001F4B0U兑TRX"),
                     new KeyboardButton("\U0001F570实时汇率"),
-                    new KeyboardButton("\U0001F4B9能量换算"),
+                    new KeyboardButton("\U0001F4B9汇率换算"),
                 },   
                 new [] // 第二行
                 {
@@ -602,7 +602,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B0U兑TRX"),
         new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9能量换算"),
+        new KeyboardButton("\U0001F4B9汇率换算"),
     },   
     new [] // 第二行
     {
@@ -627,7 +627,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B0U兑TRX"),
         new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9能量换算"),
+        new KeyboardButton("\U0001F4B9汇率换算"),
     },   
     new [] // 第二行
     {
@@ -663,7 +663,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B0U兑TRX"),
         new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9能量换算"),
+        new KeyboardButton("\U0001F4B9汇率换算"),
     },   
     new [] // 第二行
     {
@@ -743,7 +743,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B0U兑TRX"),
         new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9能量换算"),
+        new KeyboardButton("\U0001F4B9汇率换算"),
     },   
     new [] // 第二行
     {
@@ -802,7 +802,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B0U兑TRX"),
         new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9能量换算"),
+        new KeyboardButton("\U0001F4B9汇率换算"),
     },   
     new [] // 第二行
     {
@@ -842,7 +842,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B0U兑TRX"),
         new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9能量换算"),
+        new KeyboardButton("\U0001F4B9汇率换算"),
     },   
     new [] // 第二行
     {
@@ -879,7 +879,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B0U兑TRX"),
         new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9能量换算"),
+        new KeyboardButton("\U0001F4B9汇率换算"),
     },   
     new [] // 第二行
     {
@@ -958,7 +958,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B0U兑TRX"),
         new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9能量换算"),
+        new KeyboardButton("\U0001F4B9汇率换算"),
     },   
     new [] // 第二行
     {
