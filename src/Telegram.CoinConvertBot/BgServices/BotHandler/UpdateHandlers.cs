@@ -208,7 +208,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
     // 将多个群的群组 ID 存储在一个集合中
     long[] groupIds = {
         -1001862069013, // 群组 ID 1
-        //-838363978, // 群组 ID 2
+        //-919087628, // 群组 ID 2
         // 更多群组 ID
     };
 
@@ -244,19 +244,29 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             "\u2708一年高级会员   70.99 u\n" +
             "(<b>需要开通会员请联系群主,切记不要转TRX兑换地址!!!</b>)";
             
-        // 创建 InlineKeyboardButton 并设置文本和回调数据
-        var visitButton1 = new InlineKeyboardButton("\U0000267B 开始兑换")
-        {
-            Url = "https://t.me/yifanfubot" // 将此链接替换为你想要跳转的左侧链接
-        };
+string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
-        var visitButton2 = new InlineKeyboardButton("\U0001F5E3 私聊群主")
-        {
-            Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的右侧链接
-        };
-        
-        // 创建 InlineKeyboardMarkup 并添加按钮
-        var inlineKeyboard = new InlineKeyboardMarkup(new[] { new[] { visitButton1, visitButton2 } });
+// 创建 InlineKeyboardButton 并设置文本和回调数据
+var visitButton1 = new InlineKeyboardButton("\U0000267B 开始兑换")
+{
+    Url = "https://t.me/yifanfubot" // 将此链接替换为你想要跳转的左侧链接
+};
+
+var visitButton2 = new InlineKeyboardButton("\U0001F5E3 私聊群主")
+{
+    Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的右侧链接
+};
+
+var shareToGroupButton = InlineKeyboardButton.WithUrl("\U0001F449 分享到群组 \U0001F448", shareLink);
+
+// 创建 InlineKeyboardMarkup 并添加按钮
+var inlineKeyboard = new InlineKeyboardMarkup(new[]
+{
+    new[] { visitButton1, visitButton2 }, // 第一行按钮
+    new[] { shareToGroupButton } // 第二行按钮
+});
 
         // 用于存储已发送消息的字典
         var sentMessages = new Dictionary<long, Message>();
