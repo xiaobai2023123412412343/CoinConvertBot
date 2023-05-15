@@ -353,7 +353,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
         {
             await SendCryptoPricesAsync(botClient, message);
         }
-if (message.Text == "\U0001F310外汇助手") // 替换为你的指令
+if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添加 /usd 条件
 {
     var rates = await GetCurrencyRatesAsync();
     var text = "<b>100元人民币兑换其他国家货币</b>:\n\n";
