@@ -337,31 +337,48 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
         {
             await SendCryptoPricesAsync(botClient, message);
         }
-        if (message.Text == "\U0001F310外汇助手") // 替换为你的指令
+if (message.Text == "\U0001F310外汇助手") // 替换为你的指令
+{
+    var rates = await GetCurrencyRatesAsync();
+    var text = "<b>100元人民币兑换其他国家货币</b>:\n\n";
+
+    int count = 0;
+    foreach (var rate in rates)
+    {
+        decimal convertedAmount = rate.Value.Item1 * 100;
+        decimal exchangeRate = 1 / rate.Value.Item1;
+        text += $"<code>{rate.Key}: {convertedAmount:0.#####} {rate.Value.Item2}  汇率≈{exchangeRate:0.######}</code>\n";
+
+        // 如果还有更多的汇率条目，添加分隔符
+        if (count < rates.Count - 1)
         {
-            var rates = await GetCurrencyRatesAsync();
-            var text = "<b>100元人民币兑换其他国家货币</b>:\n\n";
-          
-            int count = 0;
-            foreach (var rate in rates)
-            {
-                decimal convertedAmount = rate.Value.Item1 * 100;
-                decimal exchangeRate = 1 / rate.Value.Item1;
-                text += $"<code>{rate.Key}: {convertedAmount:0.#####} {rate.Value.Item2}  汇率≈{exchangeRate:0.######}</code>\n";
-
-                // 如果还有更多的汇率条目，添加分隔符
-                if (count < rates.Count - 1)
-                {
-                    text += "——————————————————————\n";
-                }
-
-                count++;
-            }
-
-            await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                 text: text,
-                                                 parseMode: ParseMode.Html);
+            text += "——————————————————————\n";
         }
+
+        count++;
+    }
+
+    string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+    string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+    string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
+
+    // 创建一个虚拟键盘
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
+        {
+            InlineKeyboardButton.WithUrl("分享到群组", shareLink)
+        }
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: text,
+        parseMode: ParseMode.Html,
+        disableWebPagePreview: true,
+        replyMarkup: inlineKeyboard
+    );
+}
 else
 {
     var regex = new Regex(@"^(\d+)([a-zA-Z]{3}|[\u4e00-\u9fa5]+)$");
