@@ -439,6 +439,7 @@ else
             "绑定波场地址" => BindAddress(botClient, message),
             "解绑波场地址" => UnBindAddress(botClient, message),
             "\u260E联系管理" => QueryAccount(botClient, message),
+            "/boss" => QueryAccount(botClient, message), // 添加这一行
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
         };
