@@ -77,6 +77,10 @@ rm -r  UpdateHandlers.cs
 
 nano UpdateHandlers.cs
 
+rm -r Program.cs
+
+nano Program.cs
+
 ### 4. 启动docker容器
 ```
 docker run -itd -e TZ=Asia/Shanghai --name coin-convert-bot coin-convert-bot:latest
