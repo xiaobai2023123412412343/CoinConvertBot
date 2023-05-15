@@ -869,6 +869,10 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 如发送： <code>100 TRX</code>
 回复：<b>100 TRX = xxx USDT</b>
 
+查外汇直接发送<b>金额+货币或代码</b>
+如发送： <code>100美元</code>或<code>100usd</code>
+回复：<b>100美元 ≈  xxx 元人民币</b>
+
 如有需要，请联系管理员： {AdminUserUrl}
 ";
     
