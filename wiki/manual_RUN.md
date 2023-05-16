@@ -77,7 +77,8 @@ rm -r  UpdateHandlers.cs
 
 nano UpdateHandlers.cs
 
-—————————————————————————————————————————————
+————————————————————————————
+
 cd ~/CoinConvertBot/src/Telegram.CoinConvertBot
 
 rm -r Program.cs
