@@ -229,13 +229,14 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             return; // 或者你可以选择继续，只是不显示美元汇率
         }
         var usdRate = 1 / usdRateTuple.Item1;
-
+        
+        string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
         string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
             "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n\n" + //手动输入地址
             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
             "\U0000267B有任何问题,请私聊联系群主!\n\n\n" +
-             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8美元汇率参考 ≈ {usdRate:#.####} </b>\n" +
+             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\"> 钱庄问价</a></b>\n" +
              $"<b>\U0001F4B8\U0001F4B8\U0001F4B8比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
              $"<b>\U0001F4B8\U0001F4B8\U0001F4B8以太坊价格 ≈ {ethereumPrice} USDT</b>\n\n\n" +
             "<b>另代开TG会员</b>:\n\n" +
