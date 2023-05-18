@@ -23,7 +23,7 @@ using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-
+using System.Net.Http;
 
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
@@ -202,6 +202,38 @@ static async Task<(decimal[], decimal[])> GetCryptoPricesAsync(string[] symbols)
 
     return (prices, changes);
 }
+public static async Task<decimal> GetOkxPriceAsync(string baseCurrency, string quoteCurrency, string method)
+{
+    var client = new HttpClient();
+
+    var url = $"https://www.okx.com/v3/c2c/tradingOrders/books?quoteCurrency={quoteCurrency}&baseCurrency={baseCurrency}&side=sell&paymentMethod={method}&userType=blockTrade&showTrade=false&receivingAds=false&showFollow=false&showAlreadyTraded=false&isAbleFilter=false&urlId=2";
+
+    var response = await client.GetAsync(url);
+
+    if (response.IsSuccessStatusCode)
+    {
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var doc = JsonDocument.Parse(jsonString);
+
+        if (doc.RootElement.TryGetProperty("data", out var data) && data.TryGetProperty("sell", out var sell))
+        {
+            var sellArray = sell.EnumerateArray();
+
+            if (sellArray.MoveNext())
+            {
+                var firstElement = sellArray.Current;
+
+                if (firstElement.TryGetProperty("price", out var price))
+                {
+                    return decimal.Parse(price.GetString());
+                }
+            }
+        }
+    }
+
+    throw new Exception("Could not get price from OKX API.");
+}
+
 static async Task SendAdvertisementOnce(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate, long chatId)
 {    
         var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
@@ -219,6 +251,7 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
             return; // 或者你可以选择继续，只是不显示美元汇率
         }
         var usdRate = 1 / usdRateTuple.Item1;
+        decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
         string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
@@ -226,9 +259,10 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
             "\U0000267B有任何问题,请私聊联系群主!\n\n\n" +
-             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\"> 钱庄问价</a></b>\n" +
-             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
-             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8以太坊价格 ≈ {ethereumPrice} USDT</b>\n\n\n" +
+             $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\">  白资兑换</a></b>\n" +
+             $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
+             $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT</b>\n" +
+             $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n\n" +
             "<b>另代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
@@ -277,7 +311,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
     // 将多个群的群组 ID 存储在一个集合中
     long[] groupIds = {
         -1001862069013, // 群组 ID 1
-        //-919087628, // 群组 ID 2
+        //-797373841, // 群组 ID 2
         // 更多群组 ID
     };
 
@@ -298,6 +332,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             return; // 或者你可以选择继续，只是不显示美元汇率
         }
         var usdRate = 1 / usdRateTuple.Item1;
+        decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
         string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
@@ -305,9 +340,10 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
             "\U0000267B有任何问题,请私聊联系群主!\n\n\n" +
-             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\"> 钱庄问价</a></b>\n" +
-             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
-             $"<b>\U0001F4B8\U0001F4B8\U0001F4B8以太坊价格 ≈ {ethereumPrice} USDT</b>\n\n\n" +
+             $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\">  白资兑换</a></b>\n" +
+             $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
+             $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT</b>\n" +
+             $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n\n" +
             "<b>另代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
