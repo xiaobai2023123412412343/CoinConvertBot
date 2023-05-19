@@ -1108,6 +1108,11 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 如发送： <code>100美元</code>或<code>100usd</code>
 回复：<b>100美元 ≈  xxx 元人民币</b>
 
+需要数字计算<b>对话框直接发送</b>
+如发送：1+1
+回复： <code>1+1=2</code>
+注：<b>群内计算需要@机器人或设置机器人为管理</b>
+
 如有需要，请联系管理员： {AdminUserUrl}
 ";
     
