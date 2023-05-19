@@ -305,15 +305,28 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
             }),
         cancellationToken: cancellationToken);
 }
+public static class GroupManager
+{
+    private static HashSet<long> groupIds = new HashSet<long>();
+
+    static GroupManager()
+    {
+        // 添加初始群组 ID
+        groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
+    }
+
+    public static IReadOnlyCollection<long> GroupIds => groupIds.ToList().AsReadOnly();
+
+    public static void AddGroupId(long id)
+    {
+        groupIds.Add(id);
+    }
+}
+
 
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
-    // 将多个群的群组 ID 存储在一个集合中
-    long[] groupIds = {
-        -1001862069013, // 群组 ID 1
-        //-797373841, // 群组 ID 2
-        // 更多群组 ID
-    };
+  
 
     while (!cancellationToken.IsCancellationRequested)
     {
@@ -378,11 +391,13 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         var sentMessages = new Dictionary<long, Message>();
 
         // 遍历群组 ID 并发送广告消息
+        var groupIds = GroupManager.GroupIds;
         foreach (var groupId in groupIds)
         {
             Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
             sentMessages[groupId] = sentMessage;
         }
+
 
         // 等待10分钟
         await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
@@ -424,6 +439,23 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
             UpdateType.Message => BotOnMessageReceived(botClient, update.Message!),
             _ => UnknownUpdateHandlerAsync(botClient, update)
         };
+    if (update.Type == UpdateType.Message)
+    {
+        var message = update.Message;
+
+        // 在这里处理消息更新...
+    }
+    else if (update.Type == UpdateType.MyChatMember)
+    {
+        var chatMemberUpdated = update.MyChatMember;
+
+        // 检查机器人的新状态是否是“member”，这意味着机器人刚刚被添加到群组
+        if (chatMemberUpdated.NewChatMember.Status == ChatMemberStatus.Member)
+        {
+            // 保存这个群组的ID
+            GroupManager.AddGroupId(chatMemberUpdated.Chat.Id);
+        }
+    }  
 
         try
         {
