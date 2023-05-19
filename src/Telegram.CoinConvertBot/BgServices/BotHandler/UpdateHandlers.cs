@@ -24,6 +24,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Net.Http;
+using System.Data;
 
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
@@ -528,6 +529,31 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
             await SendCryptoPricesAsync(botClient, message);
         }
+else
+{
+    // 修改了正则表达式
+    var calculatorPattern = @"^([-+]?[0-9]*\.?[0-9]+(\s*[-+*/]\s*[-+]?[0-9]*\.?[0-9]+)*)$";
+    if (Regex.IsMatch(messageText, calculatorPattern))
+    {
+        // 原始问题备份
+        var originalQuestion = messageText;
+
+        // 使用 DataTable.Compute 方法计算表达式，该方法能够考虑运算符优先级
+        var result = new DataTable().Compute(messageText, null);
+
+        // 发送最终计算结果
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            // 使用 HTML 语法加粗结果，并附带原始问题
+            text: $"<code>{System.Net.WebUtility.HtmlEncode(originalQuestion)}={result}</code>",
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+        );
+    }
+    else
+    {
+        // 在这里处理非计算器相关的信息
+    }
+}        
 if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添加 /usd 条件
 {
     var rates = await GetCurrencyRatesAsync();
