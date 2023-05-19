@@ -321,7 +321,13 @@ public static class GroupManager
     {
         groupIds.Add(id);
     }
+
+    public static void RemoveGroupId(long id)  // 这是新添加的方法
+    {
+        groupIds.Remove(id);
+    }
 }
+
 
 
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
@@ -389,15 +395,25 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         // 用于存储已发送消息的字典
         var sentMessages = new Dictionary<long, Message>();
-
+       
         // 遍历群组 ID 并发送广告消息
-        var groupIds = GroupManager.GroupIds;
+        // 遍历群组 ID 并发送广告消息
+        var groupIds = GroupManager.GroupIds.ToList();
         foreach (var groupId in groupIds)
         {
-            Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
-            sentMessages[groupId] = sentMessage;
+            try
+            {
+                Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
+                sentMessages[groupId] = sentMessage;
+            }
+            catch
+            {
+                // 如果在尝试发送消息时出现错误，就从 groupIds 列表中移除这个群组
+                GroupManager.RemoveGroupId(groupId);
+                // 然后继续下一个群组，而不是停止整个任务
+                continue;
+            }
         }
-
 
         // 等待10分钟
         await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
@@ -449,13 +465,17 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         var chatMemberUpdated = update.MyChatMember;
 
-        // 检查机器人的新状态是否是“member”，这意味着机器人刚刚被添加到群组
         if (chatMemberUpdated.NewChatMember.Status == ChatMemberStatus.Member)
         {
             // 保存这个群组的ID
             GroupManager.AddGroupId(chatMemberUpdated.Chat.Id);
         }
-    }  
+        else if (chatMemberUpdated.NewChatMember.Status == ChatMemberStatus.Kicked || chatMemberUpdated.NewChatMember.Status == ChatMemberStatus.Left)  // 这是新添加的判断语句
+        {
+            // 如果机器人被踢出群组或者离开群组，我们移除这个群组的 ID
+            GroupManager.RemoveGroupId(chatMemberUpdated.Chat.Id);
+        }
+    }
 
         try
         {
