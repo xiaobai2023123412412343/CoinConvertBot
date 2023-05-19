@@ -258,7 +258,7 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
             "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n\n" + //手动输入地址
             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
-            "\U0000267B有任何问题,请私聊联系群主!\n\n\n" +
+            "\U0000267B有任何问题,请私聊联系机器人管理员!\n\n\n" +
              $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\">  白资兑换</a></b>\n" +
              $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
              $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT</b>\n" +
@@ -279,7 +279,7 @@ var visitButton1 = new InlineKeyboardButton("\U0000267B 开始兑换")
     Url = "https://t.me/yifanfubot" // 将此链接替换为你想要跳转的左侧链接
 };
 
-var visitButton2 = new InlineKeyboardButton("\U0001F5E3 私聊群主")
+var visitButton2 = new InlineKeyboardButton("\U0001F5E3 私聊管理")
 {
     Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的右侧链接
 };
@@ -352,7 +352,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n\n" + //手动输入地址
             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
-            "\U0000267B有任何问题,请私聊联系群主!\n\n\n" +
+            "\U0000267B有任何问题,请私聊联系机器人管理员!\n\n\n" +
              $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\">  白资兑换</a></b>\n" +
              $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
              $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT</b>\n" +
@@ -373,7 +373,7 @@ var visitButton1 = new InlineKeyboardButton("\U0000267B 开始兑换")
     Url = "https://t.me/yifanfubot" // 将此链接替换为你想要跳转的左侧链接
 };
 
-var visitButton2 = new InlineKeyboardButton("\U0001F5E3 私聊群主")
+var visitButton2 = new InlineKeyboardButton("\U0001F5E3 私聊管理")
 {
     Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的右侧链接
 };
