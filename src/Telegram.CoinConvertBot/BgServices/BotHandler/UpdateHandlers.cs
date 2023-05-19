@@ -267,7 +267,7 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
             "\u2708一年高级会员   70.99 u\n" +
-            "(<b>需要开通会员请联系群主,切记不要转TRX兑换地址!!!</b>)";
+            "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)";
             
 string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
@@ -367,7 +367,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
             "\u2708一年高级会员   70.99 u\n" +
-            "(<b>需要开通会员请联系群主,切记不要转TRX兑换地址!!!</b>)";
+            "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)";
             
 string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
