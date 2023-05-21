@@ -1131,7 +1131,6 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 回复： <code>1+1=2</code>
 注：<b>群内计算需要@机器人或设置机器人为管理</b>
 
-如有需要，请联系管理员： {AdminUserUrl}
 ";
     
 // 创建包含两行，每行两个按钮的虚拟键盘
