@@ -394,39 +394,49 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     new[] { shareToGroupButton } // 第二行按钮
 });
 
-        // 用于存储已发送消息的字典
-        var sentMessages = new Dictionary<long, Message>();
+        try
+        {
+            // 用于存储已发送消息的字典
+            var sentMessages = new Dictionary<long, Message>();
        
-        // 遍历群组 ID 并发送广告消息
-        // 遍历群组 ID 并发送广告消息
-        var groupIds = GroupManager.GroupIds.ToList();
-        foreach (var groupId in groupIds)
-        {
-            try
+            // 遍历群组 ID 并发送广告消息
+            var groupIds = GroupManager.GroupIds.ToList();
+            foreach (var groupId in groupIds)
             {
-                Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
-                sentMessages[groupId] = sentMessage;
+                try
+                {
+                    Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
+                    sentMessages[groupId] = sentMessage;
+                }
+                catch
+                {
+                    // 如果在尝试发送消息时出现错误，就从 groupIds 列表中移除这个群组
+                    GroupManager.RemoveGroupId(groupId);
+                    // 然后继续下一个群组，而不是停止整个任务
+                    continue;
+                }
             }
-            catch
+
+            // 等待10分钟
+            await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
+
+            // 遍历已发送的消息并撤回
+            foreach (var sentMessage in sentMessages)
             {
-                // 如果在尝试发送消息时出现错误，就从 groupIds 列表中移除这个群组
-                GroupManager.RemoveGroupId(groupId);
-                // 然后继续下一个群组，而不是停止整个任务
-                continue;
+                await botClient.DeleteMessageAsync(sentMessage.Key, sentMessage.Value.MessageId);
             }
+
+            // 等待5秒，再次发送广告
+            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
         }
-
-        // 等待10分钟
-        await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
-
-        // 遍历已发送的消息并撤回
-        foreach (var sentMessage in sentMessages)
+        catch (Exception ex)
         {
-            await botClient.DeleteMessageAsync(sentMessage.Key, sentMessage.Value.MessageId);
-        }
+            // 发送广告过程中出现异常
+            Console.WriteLine("Error in advertisement loop: " + ex.Message);
 
-        // 等待5秒，再次发送广告
-        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+            // 等10秒重启广告服务
+            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+        }
     }
 }
 
