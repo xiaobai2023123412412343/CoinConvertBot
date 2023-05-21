@@ -1080,8 +1080,11 @@ var keyboard = new ReplyKeyboardMarkup(new[]
             string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
             string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
             string groupFunctionText = $"<a href=\"{shareLink}\">把机器人拉进群聊解锁更多功能</a>";
-
-            string usage = @$"<b>{username}</b> (ID:<code>{userId}</code>) 你好，欢迎使用TRX自助兑换机器人！
+            
+            //1带ID  2不带
+            //string usage = @$"<b>{username}</b> (ID:<code>{userId}</code>) 你好，欢迎使用TRX自助兑换机器人！
+            string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
+            
 使用方法：
    点击菜单 选择&#x1F4B0;U兑TRX
    转账USDT到指定地址，即可秒回TRX
