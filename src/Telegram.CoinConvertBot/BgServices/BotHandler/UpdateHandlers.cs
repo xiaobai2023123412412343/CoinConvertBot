@@ -48,6 +48,35 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static DateTime ConvertToBeijingTime(DateTime utcDateTime)
+{
+    var timeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+    return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, timeZone);
+}
+    
+public static async Task<DateTime> GetLastTransactionTimeAsync(string address)
+{
+    using var httpClient = new HttpClient();
+    var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{address}/transactions");
+    var json = await response.Content.ReadAsStringAsync();
+
+    var jsonDocument = JsonDocument.Parse(json);
+    var lastTimestamp = 0L;
+
+    if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
+    {
+        var lastElement = dataElement[0];
+
+        if (lastElement.TryGetProperty("block_timestamp", out JsonElement lastTimeElement))
+        {
+            lastTimestamp = lastTimeElement.GetInt64();
+        }
+    }
+
+    var utcDateTime = DateTimeOffset.FromUnixTimeMilliseconds(lastTimestamp).DateTime;
+    return ConvertToBeijingTime(utcDateTime);
+}
+    
 public static async Task<DateTime> GetAccountCreationTimeAsync(string address)
 {
     using var httpClient = new HttpClient();
@@ -67,8 +96,10 @@ public static async Task<DateTime> GetAccountCreationTimeAsync(string address)
         }
     }
 
-    return DateTimeOffset.FromUnixTimeMilliseconds(creationTimestamp).DateTime;
-}    
+    var utcDateTime = DateTimeOffset.FromUnixTimeMilliseconds(creationTimestamp).DateTime;
+    return ConvertToBeijingTime(utcDateTime);
+}  
+   
 public static async Task<(decimal UsdtBalance, decimal TrxBalance)> GetBalancesAsync(string address)
 {
     using var httpClient = new HttpClient();
@@ -127,11 +158,13 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var (usdtTotal, transferCount) = await GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");//修改为你自己的收款地址
     var (usdtBalance, trxBalance) = await GetBalancesAsync(tronAddress);
     var creationTime = await GetAccountCreationTimeAsync(tronAddress); 
+    var lastTransactionTime = await GetLastTransactionTimeAsync(tronAddress);
 
     await botClient.SendTextMessageAsync(
         message.Chat.Id,
         $"查询地址：<code>{tronAddress}</code>\n" +
         $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示创建时间，精确到时分秒
+        $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示最后一次交易时间
         $"USDT余额：<b>{usdtBalance}</b>\n" +
         $"TRX余额：<b>{trxBalance}</b>\n" +
         $"累计兑换：<b>{usdtTotal} USDT</b>\n" +
@@ -449,8 +482,8 @@ public static class GroupManager
     static GroupManager()
     {
         // 添加初始群组 ID
-        groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
-        //groupIds.Add(-797373841);  // 添加第二个初始群组 ID
+        //groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
+        groupIds.Add(-797373841);  // 添加第二个初始群组 ID
     }
 
     public static IReadOnlyCollection<long> GroupIds => groupIds.ToList().AsReadOnly();
@@ -555,7 +588,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
             }
 
             // 等待10分钟
-            await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
 
             // 遍历已发送的消息并撤回
             foreach (var sentMessage in sentMessages)
