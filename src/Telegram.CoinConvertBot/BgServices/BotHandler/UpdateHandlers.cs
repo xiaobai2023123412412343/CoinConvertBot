@@ -48,6 +48,62 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static async Task<decimal> GetTotalIncomeAsync(string address, bool isTrx)
+{
+    var apiUrl = $"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20?only_confirmed=true&only_to=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+    using var httpClient = new HttpClient();
+
+    decimal totalIncome = 0m;
+    string fingerprint = null;
+
+    while (true)
+    {
+        var currentUrl = apiUrl + (fingerprint != null ? $"&fingerprint={fingerprint}" : "");
+        var response = await httpClient.GetAsync(currentUrl);
+        var json = await response.Content.ReadAsStringAsync();
+        var jsonDocument = JsonDocument.Parse(json);
+
+        if (!jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement))
+        {
+            break;
+        }
+
+        foreach (var transactionElement in dataElement.EnumerateArray())
+        {
+            if (!transactionElement.TryGetProperty("to", out var toAddressElement))
+            {
+                continue;
+            }
+            var toAddress = toAddressElement.GetString();
+
+            if (toAddress != address)
+            {
+                continue;
+            }
+
+            if (!transactionElement.TryGetProperty("value", out var valueElement))
+            {
+                continue;
+            }
+            var value = valueElement.GetString();
+
+            totalIncome += decimal.Parse(value) / 1_000_000; //假设USDT有6位小数
+
+            if (transactionElement.TryGetProperty("transaction_hash", out var transactionIdElement))
+            {
+                fingerprint = transactionIdElement.GetString();
+            }
+        }
+
+        if (!jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) || !hasNextElement.GetBoolean())
+        {
+            break;
+        }
+    }
+
+    return totalIncome;
+}
+    
 public static DateTime ConvertToBeijingTime(DateTime utcDateTime)
 {
     var timeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
@@ -161,30 +217,34 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var getBalancesTask = GetBalancesAsync(tronAddress);
     var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
     var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
+    var getUsdtTotalIncomeTask = GetTotalIncomeAsync(tronAddress, false);
+
 
     // 等待所有的任务都完成
-    await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask);
+    await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getUsdtTotalIncomeTask);
 
     // 使用结果
     var (usdtTotal, transferCount) = getUsdtTransferTotalTask.Result;
     var (usdtBalance, trxBalance) = getBalancesTask.Result;
     var creationTime = getAccountCreationTimeTask.Result;
     var lastTransactionTime = getLastTransactionTimeTask.Result;
+    var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
 
-    await botClient.SendTextMessageAsync(
-        message.Chat.Id,
-        $"查询地址：<code>{tronAddress}</code>\n" +
-        $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示创建时间，精确到时分秒
-        $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示最后一次交易时间
-        $"USDT余额：<b>{usdtBalance}</b>\n" +
-        $"TRX余额：<b>{trxBalance}</b>\n" +
-        $"累计兑换：<b>{usdtTotal} USDT</b>\n" +
-        $"兑换次数：<b>{transferCount} 次</b>\n" +  // 显示兑换次数
-        $"<a href=\"https://tronscan.org/#/address/{tronAddress}\">详细信息</a>",
-        parseMode: ParseMode.Html,
-        disableWebPagePreview: true);
+await botClient.SendTextMessageAsync(
+    message.Chat.Id,
+    $"查询地址：<code>{tronAddress}</code>\n" +
+    $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示创建时间，精确到时分秒
+    $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示最后一次交易时间
+    $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" + // "N2" 代表小数点后保留两位
+    $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" + // "N2" 代表小数点后保留两位
+    $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" + // "N2" 代表小数点后保留两位
+    $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
+    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +  // 显示兑换次数
+    $"<a href=\"https://tronscan.org/#/address/{tronAddress}\">详细信息</a>",
+    parseMode: ParseMode.Html,
+    disableWebPagePreview: true);
+
 }
-
 
 public static async Task<(decimal UsdtTotal, int TransferCount)> GetUsdtTransferTotalAsync(string fromAddress, string toAddress)
 {
