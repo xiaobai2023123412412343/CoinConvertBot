@@ -130,12 +130,12 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
 
     await botClient.SendTextMessageAsync(
         message.Chat.Id,
-        $"<b>查询地址：</b><code>{tronAddress}</code>\n" +
-        $"<b>注册时间：{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示创建时间，精确到时分秒
-        $"<b>USDT余额：{usdtBalance}</b>\n" +
-        $"<b>TRX余额：{trxBalance}</b>\n" +
-        $"<b>历史兑换：{usdtTotal} USDT</b>\n" +
-        $"<b>兑换次数：{transferCount} 次</b>\n" +  // 显示兑换次数
+        $"查询地址：<code>{tronAddress}</code>\n" +
+        $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示创建时间，精确到时分秒
+        $"USDT余额：<b>{usdtBalance}</b>\n" +
+        $"TRX余额：<b>{trxBalance}</b>\n" +
+        $"累计兑换：<b>{usdtTotal} USDT</b>\n" +
+        $"兑换次数：<b>{transferCount} 次</b>\n" +  // 显示兑换次数
         $"<a href=\"https://tronscan.org/#/address/{tronAddress}\">详细信息</a>",
         parseMode: ParseMode.Html,
         disableWebPagePreview: true);
