@@ -48,6 +48,27 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static async Task<DateTime> GetAccountCreationTimeAsync(string address)
+{
+    using var httpClient = new HttpClient();
+    var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{address}");
+    var json = await response.Content.ReadAsStringAsync();
+
+    var jsonDocument = JsonDocument.Parse(json);
+    var creationTimestamp = 0L;
+
+    if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
+    {
+        var firstElement = dataElement[0];
+
+        if (firstElement.TryGetProperty("create_time", out JsonElement createTimeElement))
+        {
+            creationTimestamp = createTimeElement.GetInt64();
+        }
+    }
+
+    return DateTimeOffset.FromUnixTimeMilliseconds(creationTimestamp).DateTime;
+}    
 public static async Task<(decimal UsdtBalance, decimal TrxBalance)> GetBalancesAsync(string address)
 {
     using var httpClient = new HttpClient();
@@ -105,10 +126,12 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var tronAddress = match.Groups[1].Value;
     var (usdtTotal, transferCount) = await GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");//修改为你自己的收款地址
     var (usdtBalance, trxBalance) = await GetBalancesAsync(tronAddress);
+    var creationTime = await GetAccountCreationTimeAsync(tronAddress); 
 
     await botClient.SendTextMessageAsync(
         message.Chat.Id,
         $"<b>查询地址：</b><code>{tronAddress}</code>\n" +
+        $"<b>注册时间：{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示创建时间，精确到时分秒
         $"<b>USDT余额：{usdtBalance}</b>\n" +
         $"<b>TRX余额：{trxBalance}</b>\n" +
         $"<b>历史兑换：{usdtTotal} USDT</b>\n" +
