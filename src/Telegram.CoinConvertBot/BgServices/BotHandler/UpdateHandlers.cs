@@ -211,6 +211,8 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     }
 
     var tronAddress = match.Groups[1].Value;
+    // 回复用户正在查询
+    await botClient.SendTextMessageAsync(message.Chat.Id, "正在查询，请稍后...");
     
     // 将所有的任务一起启动
     var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");
@@ -235,6 +237,7 @@ await botClient.SendTextMessageAsync(
     $"查询地址：<code>{tronAddress}</code>\n" +
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示创建时间，精确到时分秒
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示最后一次交易时间
+    $"———————————————\n"+
     $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" + // "N2" 代表小数点后保留两位
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" + // "N2" 代表小数点后保留两位
     $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" + // "N2" 代表小数点后保留两位
