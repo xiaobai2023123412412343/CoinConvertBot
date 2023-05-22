@@ -48,6 +48,119 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static async Task<(decimal UsdtBalance, decimal TrxBalance)> GetBalancesAsync(string address)
+{
+    using var httpClient = new HttpClient();
+    var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{address}");
+    var json = await response.Content.ReadAsStringAsync();
+
+    // 打印API响应
+    //Console.WriteLine("API response for GetBalancesAsync:");
+    //Console.WriteLine(json);
+
+    var jsonDocument = JsonDocument.Parse(json);
+
+    var usdtBalance = 0m;
+    var trxBalance = 0m;
+
+    if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
+    {
+        var firstElement = dataElement[0];
+
+        if (firstElement.TryGetProperty("balance", out JsonElement trxBalanceElement))
+        {
+            trxBalance = trxBalanceElement.GetDecimal() / 1_000_000;
+        }
+
+        if (firstElement.TryGetProperty("trc20", out JsonElement trc20Element))
+        {
+            foreach (var token in trc20Element.EnumerateArray())
+            {
+                foreach (var property in token.EnumerateObject())
+                {
+                    if (property.Name == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t") //这是USDT合约地址 可以换成任意合约地址
+                    {
+                        usdtBalance = decimal.Parse(property.Value.GetString()) / 1_000_000;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    return (usdtBalance, trxBalance);
+}
+
+
+public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
+{
+    var text = message.Text;
+    var match = Regex.Match(text, @"查\s*(T[A-Za-z0-9]{33})"); // Tron地址格式验证
+    if (!match.Success)
+    {
+        await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址错误，请重新输入");
+        return;
+    }
+
+    var tronAddress = match.Groups[1].Value;
+    var (usdtTotal, transferCount) = await GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");//修改为你自己的收款地址
+    var (usdtBalance, trxBalance) = await GetBalancesAsync(tronAddress);
+
+    await botClient.SendTextMessageAsync(
+        message.Chat.Id,
+        $"<b>查询地址：</b><code>{tronAddress}</code>\n" +
+        $"<b>USDT余额：{usdtBalance}</b>\n" +
+        $"<b>TRX余额：{trxBalance}</b>\n" +
+        $"<b>历史兑换：{usdtTotal} USDT</b>\n" +
+        $"<b>兑换次数：{transferCount} 次</b>\n" +  // 显示兑换次数
+        $"<a href=\"https://tronscan.org/#/address/{tronAddress}\">详细信息</a>",
+        parseMode: ParseMode.Html,
+        disableWebPagePreview: true);
+}
+
+public static async Task<(decimal UsdtTotal, int TransferCount)> GetUsdtTransferTotalAsync(string fromAddress, string toAddress)
+{
+    // 假设USDT合约地址为: TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
+    var apiUrl = $"https://api.trongrid.io/v1/accounts/{fromAddress}/transactions/trc20?only_confirmed=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+    using var httpClient = new HttpClient();
+
+    var usdtTotal = 0m;
+    var transferCount = 0;  // 添加计数器用于统计转账次数
+    string fingerprint = null;
+
+    while (true)
+    {
+        var currentUrl = apiUrl + (fingerprint != null ? $"&fingerprint={fingerprint}" : "");
+        var response = await httpClient.GetAsync(currentUrl);
+        var json = await response.Content.ReadAsStringAsync();
+        var jsonDocument = JsonDocument.Parse(json);
+
+        if (!jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement))
+        {
+            break;
+        }
+
+        foreach (var transactionElement in dataElement.EnumerateArray())
+        {
+            if (transactionElement.TryGetProperty("to", out JsonElement toElement) && toElement.GetString() == toAddress)
+            {
+                var value = transactionElement.GetProperty("value").GetString();
+                usdtTotal += decimal.Parse(value) / 1_000_000; // 假设USDT有6位小数
+                transferCount++;  // 当找到符合条件的转账时，计数器加一
+            }
+            fingerprint = transactionElement.GetProperty("transaction_id").GetString();
+        }
+
+        if (!jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) || !hasNextElement.GetBoolean())
+        {
+            break;
+        }
+    }
+
+    return (usdtTotal, transferCount);
+}
+
+    
 private static readonly Dictionary<string, string> CurrencyFullNames = new Dictionary<string, string>
 {
     { "USD", "美元" },
@@ -472,6 +585,19 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         var message = update.Message;
 
         // 在这里处理消息更新...
+    }
+        if (update.Type == UpdateType.Message)
+    {
+        var message = update.Message;
+        if (message?.Text != null && message.Text.StartsWith("查"))
+
+        {
+            await HandleQueryCommandAsync(botClient, message); // Here we handle the query command
+        }
+        else
+        {
+            // handle other message types...
+        }
     }
     else if (update.Type == UpdateType.MyChatMember)
     {
