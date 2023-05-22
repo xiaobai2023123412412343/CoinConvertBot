@@ -155,10 +155,21 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     }
 
     var tronAddress = match.Groups[1].Value;
-    var (usdtTotal, transferCount) = await GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");//修改为你自己的收款地址
-    var (usdtBalance, trxBalance) = await GetBalancesAsync(tronAddress);
-    var creationTime = await GetAccountCreationTimeAsync(tronAddress); 
-    var lastTransactionTime = await GetLastTransactionTimeAsync(tronAddress);
+    
+    // 将所有的任务一起启动
+    var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");
+    var getBalancesTask = GetBalancesAsync(tronAddress);
+    var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
+    var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
+
+    // 等待所有的任务都完成
+    await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask);
+
+    // 使用结果
+    var (usdtTotal, transferCount) = getUsdtTransferTotalTask.Result;
+    var (usdtBalance, trxBalance) = getBalancesTask.Result;
+    var creationTime = getAccountCreationTimeTask.Result;
+    var lastTransactionTime = getLastTransactionTimeTask.Result;
 
     await botClient.SendTextMessageAsync(
         message.Chat.Id,
@@ -173,6 +184,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
         parseMode: ParseMode.Html,
         disableWebPagePreview: true);
 }
+
 
 public static async Task<(decimal UsdtTotal, int TransferCount)> GetUsdtTransferTotalAsync(string fromAddress, string toAddress)
 {
