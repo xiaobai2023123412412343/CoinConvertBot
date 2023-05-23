@@ -215,7 +215,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     await botClient.SendTextMessageAsync(message.Chat.Id, "正在查询，请稍后...");
     
     // 将所有的任务一起启动
-    var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");
+    var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");//改成自己的收款地址
     var getBalancesTask = GetBalancesAsync(tronAddress);
     var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
     var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
