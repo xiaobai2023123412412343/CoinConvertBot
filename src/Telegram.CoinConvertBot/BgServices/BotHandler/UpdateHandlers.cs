@@ -232,9 +232,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var lastTransactionTime = getLastTransactionTimeTask.Result;
     var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
 
-await botClient.SendTextMessageAsync(
-    message.Chat.Id,
-    $"查询地址：<code>{tronAddress}</code>\n" +
+    string resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示创建时间，精确到时分秒
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示最后一次交易时间
     $"———————————————\n"+
@@ -243,10 +241,16 @@ await botClient.SendTextMessageAsync(
     $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" + // "N2" 代表小数点后保留两位
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +  // 显示兑换次数
-    $"<a href=\"https://tronscan.org/#/address/{tronAddress}\">详细信息</a>",
-    parseMode: ParseMode.Html,
-    disableWebPagePreview: true);
+    $"<a href=\"https://tronscan.org/#/address/{tronAddress}\">详细信息</a>";
 
+    // 发送GIF和文本
+    string gifUrl = "https://i.postimg.cc/Jzrm1m9c/277574078-352558983556639-7702866525169266409-n.png"; // 替换为您要发送的GIF的URL
+    await botClient.SendPhotoAsync(
+    chatId: message.Chat.Id,
+    photo: new InputOnlineFile(gifUrl),
+    caption: resultText, // 将文本作为图片说明发送
+    parseMode: ParseMode.Html
+);
 }
 
 public static async Task<(decimal UsdtTotal, int TransferCount)> GetUsdtTransferTotalAsync(string fromAddress, string toAddress)
