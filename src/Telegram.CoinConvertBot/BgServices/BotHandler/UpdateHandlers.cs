@@ -203,7 +203,7 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance)> GetBalancesA
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
-    var match = Regex.Match(text, @"查\s*(T[A-Za-z0-9]{33})"); // Tron地址格式验证
+    var match = Regex.Match(text, @"查\s*(T[A-Za-z0-9]{33})"); // 验证Tron地址格式
     if (!match.Success)
     {
         await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址错误，请重新输入");
@@ -211,21 +211,21 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     }
 
     var tronAddress = match.Groups[1].Value;
+
     // 回复用户正在查询
     await botClient.SendTextMessageAsync(message.Chat.Id, "正在查询，请稍后...");
-    
-    // 将所有的任务一起启动
-    var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");//改成自己的收款地址
+
+    // 同时启动所有任务
+    var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");
     var getBalancesTask = GetBalancesAsync(tronAddress);
     var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
     var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
     var getUsdtTotalIncomeTask = GetTotalIncomeAsync(tronAddress, false);
 
-
-    // 等待所有的任务都完成
+    // 等待所有任务完成
     await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getUsdtTotalIncomeTask);
 
-    // 使用结果
+    // 处理结果
     var (usdtTotal, transferCount) = getUsdtTransferTotalTask.Result;
     var (usdtBalance, trxBalance) = getBalancesTask.Result;
     var creationTime = getAccountCreationTimeTask.Result;
@@ -233,25 +233,40 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
 
     string resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
-    $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示创建时间，精确到时分秒
-    $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +  // 显示最后一次交易时间
+    $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"———————————————\n"+
-    $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" + // "N2" 代表小数点后保留两位
-    $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" + // "N2" 代表小数点后保留两位
-    $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" + // "N2" 代表小数点后保留两位
+    $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" +
+    $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
+    $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" +
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
-    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +  // 显示兑换次数
-    $"<a href=\"https://tronscan.org/#/address/{tronAddress}\">详细信息</a>";
+    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n";
 
-    // 发送GIF和文本
-    string gifUrl = "https://i.postimg.cc/Jzrm1m9c/277574078-352558983556639-7702866525169266409-n.png"; // 替换为您要发送的GIF的URL
+        // 创建内联键盘
+    string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+    string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+    string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
+
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
+        {
+            InlineKeyboardButton.WithUrl("详情信息", $"https://tronscan.org/#/address/{tronAddress}"), // 链接到Tron地址的详细信息
+            InlineKeyboardButton.WithUrl("群内查询", shareLink) // 添加机器人到群组的链接
+        }
+    });
+
+    // 发送GIF和带按钮的文本
+    string gifUrl = "https://i.postimg.cc/Jzrm1m9c/277574078-352558983556639-7702866525169266409-n.png";
     await botClient.SendPhotoAsync(
-    chatId: message.Chat.Id,
-    photo: new InputOnlineFile(gifUrl),
-    caption: resultText, // 将文本作为图片说明发送
-    parseMode: ParseMode.Html
-);
+        chatId: message.Chat.Id,
+        photo: new InputOnlineFile(gifUrl),
+        caption: resultText, // 将文本作为图片说明发送
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard // 添加内联键盘
+    );
 }
+
 
 public static async Task<(decimal UsdtTotal, int TransferCount)> GetUsdtTransferTotalAsync(string fromAddress, string toAddress)
 {
