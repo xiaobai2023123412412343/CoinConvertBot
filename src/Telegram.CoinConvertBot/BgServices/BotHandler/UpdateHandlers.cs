@@ -502,11 +502,13 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
 {    
         var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
         decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
-        // 获取比特币以太坊价格
+        // 获取比特币以太坊价格和涨跌幅
         var cryptoSymbols = new[] { "bitcoin", "ethereum" };
-        var (prices, _) = await GetCryptoPricesAsync(cryptoSymbols);
+        var (prices, changes) = await GetCryptoPricesAsync(cryptoSymbols);
         var bitcoinPrice = prices[0];
         var ethereumPrice = prices[1];
+        var bitcoinChange = changes[0];
+        var ethereumChange = changes[1];
         // 获取美元汇率
         var currencyRates = await GetCurrencyRatesAsync();
         if (!currencyRates.TryGetValue("美元 (USD)", out var usdRateTuple)) 
@@ -524,8 +526,8 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
             "\U0000267B有任何问题,请私聊联系机器人管理员!\n\n\n" +
              $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\">  白资兑换</a></b>\n" +
-             $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
-             $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT</b>\n" +
+             $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT     {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </b>\n" +
+             $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" +
              $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n\n" +
             "<b>另代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
@@ -663,11 +665,13 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
     {
         var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
         decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
-        // 获取比特币以太坊价格
+        // 获取比特币以太坊价格和涨跌幅
         var cryptoSymbols = new[] { "bitcoin", "ethereum" };
-        var (prices, _) = await GetCryptoPricesAsync(cryptoSymbols);
+        var (prices, changes) = await GetCryptoPricesAsync(cryptoSymbols);
         var bitcoinPrice = prices[0];
         var ethereumPrice = prices[1];
+        var bitcoinChange = changes[0];
+        var ethereumChange = changes[1];
         // 获取美元汇率
         var currencyRates = await GetCurrencyRatesAsync();
         if (!currencyRates.TryGetValue("美元 (USD)", out var usdRateTuple)) 
@@ -689,12 +693,12 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
             "\U0000267B有任何问题,请私聊联系机器人管理员!\n\n\n" +
              $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\">  白资兑换</a></b>\n" +
-             $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
-             $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT</b>\n" +
+             $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT     {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </b>\n" +
+             $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" +
              $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n" +
              $"<b>\U0001F4B8 24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</b>\n" + // 添加新的一行
              $"<b>\U0001F4B0 比特币24小时合约：{btcLongRate:#.##}% 做多  {btcShortRate:#.##}% 做空</b>\n" + // 添加新的一行
-             $"<b>\U0001F4B0 以太坊1小时合约：{ethLongRate:#.##}% 做多  {ethShortRate:#.##}% 做空</b>\n\n" + // 添加新的一行
+             $"<b>\U0001F4B0 以太坊1小时合约：  {ethLongRate:#.##}% 做多  {ethShortRate:#.##}% 做空</b>\n\n" + // 添加新的一行
             "<b>另代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
