@@ -693,8 +693,8 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
              $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT</b>\n" +
              $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n" +
              $"<b>\U0001F4B8 24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</b>\n" + // 添加新的一行
-             $"<b>\U0001F4B0 比特币24小时合约：{btcLongRate:#.##} % 做多  {btcShortRate:#.##} % 做空</b>\n" + // 添加新的一行
-             $"<b>\U0001F4B0 以太坊1小时合约：{ethLongRate:#.##} % 做多  {ethShortRate:#.##} % 做空</b>\n\n" + // 添加新的一行
+             $"<b>\U0001F4B0 比特币24小时合约：{btcLongRate:#.##}% 做多  {btcShortRate:#.##}% 做空</b>\n" + // 添加新的一行
+             $"<b>\U0001F4B0 以太坊1小时合约：{ethLongRate:#.##}% 做多  {ethShortRate:#.##}% 做空</b>\n\n" + // 添加新的一行
             "<b>另代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
