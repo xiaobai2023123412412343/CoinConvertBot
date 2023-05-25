@@ -251,8 +251,8 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     {
         new [] // 第一行按钮
         {
-            InlineKeyboardButton.WithUrl("查看详细信息", $"https://tronscan.org/#/address/{tronAddress}"), // 链接到Tron地址的详细信息
-            InlineKeyboardButton.WithUrl("拉我进群使用", shareLink) // 添加机器人到群组的链接
+            InlineKeyboardButton.WithUrl("详细信息", $"https://tronscan.org/#/address/{tronAddress}"), // 链接到Tron地址的详细信息
+            InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
         }
     });
 
