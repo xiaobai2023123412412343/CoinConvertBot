@@ -631,6 +631,30 @@ private static async Task<(decimal longRate, decimal shortRate)> GetH24LongShort
 
     return (longRate, shortRate);
 }
+// 新方法获取以太坊1小时长短期利率
+private static async Task<(decimal longRate, decimal shortRate)> GetH1EthLongShortAsync(string apiUrl, string apiKey)
+{
+    using var httpClient = new HttpClient();
+    httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+    httpClient.DefaultRequestHeaders.Add("coinglassSecret", apiKey);
+
+    var response = await httpClient.GetAsync(apiUrl);
+    response.EnsureSuccessStatusCode();
+
+    var jsonString = await response.Content.ReadAsStringAsync();
+    var jsonObject = JObject.Parse(jsonString);
+
+    var data = jsonObject["data"].FirstOrDefault(d => d["symbol"].ToString() == "ETH");
+    if (data == null)
+    {
+        throw new Exception("ETH 数据在响应中未找到。");
+    }
+
+    decimal longRate = data["longRate"].ToObject<decimal>();
+    decimal shortRate = data["shortRate"].ToObject<decimal>();
+
+    return (longRate, shortRate);
+}
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
   
@@ -656,6 +680,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
          // 获取24小时爆仓信息
         decimal h24TotalVolUsd = await GetH24TotalVolUsdAsync("https://open-api.coinglass.com/public/v2/liquidation_info?time_type=h24&symbol=all", "9e8ff0ca25f14355a015972f21f162de");
         (decimal btcLongRate, decimal btcShortRate) = await GetH24LongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h24&symbol=BTC", "9e8ff0ca25f14355a015972f21f162de");
+        (decimal ethLongRate, decimal ethShortRate) = await GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
         string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
@@ -667,8 +692,9 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
              $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
              $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT</b>\n" +
              $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n" +
-             $"<b>\U0001F4B0 24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</b>\n" + // 添加新的一行
-             $"<b>\U0001F4B0 比特币24小时合约：{btcLongRate:#.##} % 做多  {btcShortRate:#.##} % 做空</b>\n\n" + // 添加新的一行
+             $"<b>\U0001F4B8 24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</b>\n" + // 添加新的一行
+             $"<b>\U0001F4B0 比特币24小时合约：{btcLongRate:#.##} % 做多  {btcShortRate:#.##} % 做空</b>\n" + // 添加新的一行
+             $"<b>\U0001F4B0 以太坊1小时合约：{ethLongRate:#.##} % 做多  {ethShortRate:#.##} % 做空</b>\n\n" + // 添加新的一行
             "<b>另代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
