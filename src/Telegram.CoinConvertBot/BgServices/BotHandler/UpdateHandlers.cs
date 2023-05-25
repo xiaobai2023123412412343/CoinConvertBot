@@ -593,7 +593,20 @@ public static class GroupManager
     }
 }
 
-
+private static async Task<decimal> GetH24TotalVolUsdAsync(string apiUrl, string apiKey)
+{
+    using var httpClient = new HttpClient();
+    httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+    httpClient.DefaultRequestHeaders.Add("coinglassSecret", apiKey);
+    
+    var response = await httpClient.GetAsync(apiUrl);
+    response.EnsureSuccessStatusCode();
+    
+    var jsonString = await response.Content.ReadAsStringAsync();
+    var jsonObject = JObject.Parse(jsonString);
+    
+    return jsonObject["data"]["h24TotalVolUsd"].ToObject<decimal>();
+}
 
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
@@ -617,6 +630,8 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
         }
         var usdRate = 1 / usdRateTuple.Item1;
         decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
+         // 获取24小时爆仓信息
+        decimal h24TotalVolUsd = await GetH24TotalVolUsdAsync("https://open-api.coinglass.com/public/v2/liquidation_info?time_type=h24&symbol=all", "9e8ff0ca25f14355a015972f21f162de");
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
         string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
@@ -627,7 +642,8 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
              $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\">  白资兑换</a></b>\n" +
              $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT</b>\n" +
              $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT</b>\n" +
-             $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n\n" +
+             $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +
+             $"<b>\U0001F4B0 24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</b>\n\n\n" + // 添加新的一行
             "<b>另代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
