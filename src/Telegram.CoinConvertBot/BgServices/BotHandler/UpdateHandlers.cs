@@ -532,9 +532,10 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
             "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)\n" +  
             "———————————————\n" +
             $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\">  白资兑换</a></b>\n" +
+            $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +
             $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT     {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </b>\n" +
-            $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" +
-            $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n\n" ;
+            $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" ;
+            
             
 string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
