@@ -85,6 +85,10 @@ rm -r Program.cs
 
 nano Program.cs
 
+<b> 加粗</b>
+
+<code>复制</code>
+
 ### 4. 启动docker容器
 ```
 docker run -itd -e TZ=Asia/Shanghai --name coin-convert-bot coin-convert-bot:latest
