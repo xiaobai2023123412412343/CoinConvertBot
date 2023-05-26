@@ -85,9 +85,13 @@ rm -r Program.cs
 
 nano Program.cs
 
-<1b> 加粗</b>
+<b> 加粗
 
-<1code>复制</code>
+</b>
+
+<code>复制
+
+</code>
 
 ### 4. 启动docker容器
 ```
