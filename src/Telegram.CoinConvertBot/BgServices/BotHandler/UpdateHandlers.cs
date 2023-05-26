@@ -198,8 +198,19 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance)> GetBalancesA
 
     return (usdtBalance, trxBalance);
 }
+public static async Task<(double remainingBandwidth, double totalBandwidth)> GetBandwidthAsync(string address)
+{
+    string url = $"https://apilist.tronscanapi.com/api/accountv2?address={address}";
+    using var httpClient = new HttpClient();
+    var result = await httpClient.GetStringAsync(url);
 
+    // 解析返回的 JSON 数据
+    var jsonResult = JObject.Parse(result);
+    double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
+    double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
 
+    return (freeNetRemaining, freeNetLimit);
+}
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
@@ -221,9 +232,12 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
     var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
     var getUsdtTotalIncomeTask = GetTotalIncomeAsync(tronAddress, false);
+    var getBandwidthTask = GetBandwidthAsync(tronAddress);
+
 
     // 等待所有任务完成
-    await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getUsdtTotalIncomeTask);
+    await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getUsdtTotalIncomeTask, getBandwidthTask);
+
 
     // 处理结果
     var (usdtTotal, transferCount) = getUsdtTransferTotalTask.Result;
@@ -231,6 +245,8 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var creationTime = getAccountCreationTimeTask.Result;
     var lastTransactionTime = getLastTransactionTimeTask.Result;
     var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
+    var (remainingBandwidth, totalBandwidth) = getBandwidthTask.Result;
+
     // 根据USDT余额判断用户标签
     string userLabel;
     if (usdtBalance < 100_000)
@@ -254,6 +270,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" +
+    $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n";
 
