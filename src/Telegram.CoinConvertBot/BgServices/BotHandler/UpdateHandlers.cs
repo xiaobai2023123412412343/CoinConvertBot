@@ -198,7 +198,7 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance)> GetBalancesA
 
     return (usdtBalance, trxBalance);
 }
-public static async Task<(double remainingBandwidth, double totalBandwidth)> GetBandwidthAsync(string address)
+public static async Task<(double remainingBandwidth, double totalBandwidth, int transactions, int transactionsIn, int transactionsOut)> GetBandwidthAsync(string address)
 {
     string url = $"https://apilist.tronscanapi.com/api/accountv2?address={address}";
     using var httpClient = new HttpClient();
@@ -208,8 +208,11 @@ public static async Task<(double remainingBandwidth, double totalBandwidth)> Get
     var jsonResult = JObject.Parse(result);
     double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
     double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
+    int transactions = jsonResult["transactions"].ToObject<int>();
+    int transactionsIn = jsonResult["transactions_in"].ToObject<int>();
+    int transactionsOut = jsonResult["transactions_out"].ToObject<int>();
 
-    return (freeNetRemaining, freeNetLimit);
+    return (freeNetRemaining, freeNetLimit, transactions, transactionsIn, transactionsOut);
 }
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
@@ -245,7 +248,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var creationTime = getAccountCreationTimeTask.Result;
     var lastTransactionTime = getLastTransactionTimeTask.Result;
     var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
-    var (remainingBandwidth, totalBandwidth) = getBandwidthTask.Result;
+    var (remainingBandwidth, totalBandwidth, transactions, transactionsIn, transactionsOut) = getBandwidthTask.Result;
 
     // 根据USDT余额判断用户标签
     string userLabel;
@@ -267,6 +270,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel}</b>\n" +
+    $"交易笔数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
     $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" +
