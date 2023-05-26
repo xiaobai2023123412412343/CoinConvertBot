@@ -702,7 +702,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
              "———————————————\n" +
              $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} <a href=\"{channelLink}\">  白资兑换</a></b>\n" +
              $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n" +
-             $"<code>\U0001F4B8 24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</code>\n" + // 添加新的一行
+             $"<code>\U0001F4B8 24小时全网合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</code>\n" + // 添加新的一行
              $"<code>\U0001F4B8 比特币价格 ≈ {bitcoinPrice} USDT    {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </code>\n" +
              $"<code>\U0001F4B8 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </code>\n" +
              $"<code>\U0001F4B8 比特币24小时合约：{btcLongRate:#.##}% 做多  {btcShortRate:#.##}% 做空</code>\n" + // 添加新的一行
