@@ -231,11 +231,26 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var creationTime = getAccountCreationTimeTask.Result;
     var lastTransactionTime = getLastTransactionTimeTask.Result;
     var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
+    // 根据USDT余额判断用户标签
+    string userLabel;
+    if (usdtBalance < 100_000)
+    {
+        userLabel = "普通用户";
+    }
+    else if (usdtBalance >= 100_000 && usdtBalance < 1_000_000)
+    {
+        userLabel = "土豪大佬";
+    }
+    else
+    {
+        userLabel = "远古巨鲸";
+    }
 
     string resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"———————————————\n"+
+    $"用户标签：<b>{userLabel}</b>\n" +
     $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" +
