@@ -265,7 +265,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     string resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-    $"———————————————\n"+
+    $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel}</b>\n" +
     $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
