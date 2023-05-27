@@ -570,7 +570,7 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
             "\u2708六月高级会员   39.99 u\n" +
             "\u2708一年高级会员   70.99 u\n" +
             "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)\n"+
-             "———————————————\n" +
+             $"————————<b>其它汇率</b>————————\n" +
              $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####}</b>\n" +
              $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n" +
              $"<code>\U0001F4B8 全网24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</code>\n" + // 添加新的一行
@@ -750,7 +750,7 @@ string startParameter = ""; // 如果你希望机器人在被添加到群组时�
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
 // 创建 InlineKeyboardButton 并设置文本和回调数据
-var visitButton1 = new InlineKeyboardButton("\U0000267B 更多精彩")
+var visitButton1 = new InlineKeyboardButton("\U0000267B 更多汇率")
 {
     Url = "https://t.me/yifanfubot" // 将此链接替换为你想要跳转的左侧链接
 };
