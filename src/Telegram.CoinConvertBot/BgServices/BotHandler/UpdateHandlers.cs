@@ -585,9 +585,9 @@ string startParameter = ""; // 如果你希望机器人在被添加到群组时�
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
 // 创建 InlineKeyboardButton 并设置文本和回调数据
-var visitButton1 = new InlineKeyboardButton("\U0000267B 开始兑换")
+var visitButton1 = new InlineKeyboardButton("\U0000267B 进交流群")
 {
-    Url = "https://t.me/yifanfubot" // 将此链接替换为你想要跳转的左侧链接
+    Url = "https://t.me/+b4NunT6Vwf0wZWI1" // 将此链接替换为你想要跳转的左侧链接
 };
 
 var visitButton2 = new InlineKeyboardButton("\u2B50 会员代开")
