@@ -666,8 +666,8 @@ public static class GroupManager
     static GroupManager()
     {
         // 添加初始群组 ID
-        //groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
-        groupIds.Add(-1001885354740);  // 添加第二个初始群组 ID
+        groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
+        //groupIds.Add(-1001885354740);  // 添加第二个初始群组 ID
     }
 
     public static IReadOnlyCollection<long> GroupIds => groupIds.ToList().AsReadOnly();
@@ -836,7 +836,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
             }
 
             // 等待10分钟
-            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
 
             // 遍历已发送的消息并撤回
             foreach (var sentMessage in sentMessages)
