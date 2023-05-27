@@ -962,8 +962,8 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
     {
         new [] // 第一行按钮
         {
-            InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
-            InlineKeyboardButton.WithUrl("交流群", "https://t.me/+b4NunT6Vwf0wZWI1"),
+            //InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
+            InlineKeyboardButton.WithUrl("进群交流", "https://t.me/+b4NunT6Vwf0wZWI1"),
             InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions")
         }
     });
@@ -1232,8 +1232,8 @@ if (UserId != AdminUserId)
     {
         new [] // 第一行按钮
         {
-            InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
-            InlineKeyboardButton.WithUrl("交流群", "https://t.me/+b4NunT6Vwf0wZWI1"),
+            //InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
+            InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1"),
             InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions") // 新增按钮
         }
     });
