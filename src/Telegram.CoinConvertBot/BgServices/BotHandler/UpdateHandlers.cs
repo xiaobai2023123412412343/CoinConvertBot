@@ -1152,23 +1152,25 @@ else
             var from = message.From;
             var UserId = message.Chat.Id;
 
-            if (UserId != AdminUserId)
+    if (UserId != AdminUserId)
+    {
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // 第一行按钮
             {
-              // 发送第一个链接
-              await botClient.SendTextMessageAsync(
-                  chatId: message.Chat.Id,
-                  text: "管理员：https://t.me/Yifanfu"
-              );
-
-              // 发送第二个链接
-              await botClient.SendTextMessageAsync(
-                  chatId: message.Chat.Id,
-                  text: "讨论群组:https://t.me/+b4NunT6Vwf0wZWI1" // 更改为您需要发送的第二个链接
-              );
-
-              return message;
+                InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
+                InlineKeyboardButton.WithUrl("交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
             }
+        });
 
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "使用过程中有任务疑问都可咨询：",
+            replyMarkup: inlineKeyboard
+        );
+
+        return message;
+    }
             var _myTronConfig = provider.GetRequiredService<IOptionsSnapshot<MyTronConfig>>();
             var _wallet = provider.GetRequiredService<IWalletClient>();
             var _transactionClient = provider.GetRequiredService<ITransactionClient>();
