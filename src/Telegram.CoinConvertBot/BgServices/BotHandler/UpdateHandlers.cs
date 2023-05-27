@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Net.Http;
 using System.Data;
+using System.Text;
 
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
@@ -48,6 +49,28 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public class GoogleTranslateFree
+{
+    private const string GoogleTranslateUrl = "https://translate.google.com/translate_a/single?client=gtx&sl=auto&tl={0}&dt=t&q={1}";
+    
+    public static async Task<string> TranslateAsync(string text, string targetLanguage)
+    {
+        using var httpClient = new HttpClient();
+
+        var url = string.Format(GoogleTranslateUrl, Uri.EscapeDataString(targetLanguage), Uri.EscapeDataString(text));
+        var response = await httpClient.GetAsync(url);
+        var json = await response.Content.ReadAsStringAsync();
+        var jsonArray = JArray.Parse(json);
+
+        var translatedTextBuilder = new StringBuilder();
+        foreach (var segment in jsonArray[0])
+        {
+            translatedTextBuilder.Append(segment[0].ToString());
+        }
+
+        return translatedTextBuilder.ToString();
+    }
+}   
 public static async Task<decimal> GetTotalIncomeAsync(string address, bool isTrx)
 {
     var apiUrl = $"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20?only_confirmed=true&only_to=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
@@ -898,9 +921,20 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
             await HandleQueryCommandAsync(botClient, message); // Here we handle the query command
         }
-        else
+        else if (message?.Text != null && message.Text.StartsWith("翻译", StringComparison.OrdinalIgnoreCase))
         {
-            // handle other message types...
+            var inputText = message.Text.Substring(2).Trim();
+            var targetLanguage = "zh-CN"; // Set the target language to Simplified Chinese
+
+            if (string.IsNullOrWhiteSpace(inputText))
+            {
+                await botClient.SendTextMessageAsync(message.Chat.Id, "请输入要翻译的文本。");
+            }
+            else
+            {
+                var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
+                await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：{translatedText}");
+            }
         }
     }
 if(update.CallbackQuery != null && update.CallbackQuery.Data == "membershipOptions")
