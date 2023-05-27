@@ -206,6 +206,14 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, int 
 
     // 解析返回的 JSON 数据
     var jsonResult = JObject.Parse(result);
+
+    // 检查是否为空的 JSON 对象
+    if (!jsonResult.HasValues)
+    {
+        // 如果为空，直接返回默认值
+        return (0, 0, 0, 0, 0);
+    }
+
     double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
     double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
     int transactions = jsonResult["transactions"].ToObject<int>();
@@ -214,6 +222,7 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, int 
 
     return (freeNetRemaining, freeNetLimit, transactions, transactionsIn, transactionsOut);
 }
+
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
