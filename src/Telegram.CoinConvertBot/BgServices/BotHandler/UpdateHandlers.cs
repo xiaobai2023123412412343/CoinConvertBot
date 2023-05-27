@@ -1165,7 +1165,7 @@ else
 
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: "使用过程中有任务疑问都可咨询：",
+            text: "欢迎使用本机器人,请选择下方按钮操作：",
             replyMarkup: inlineKeyboard
         );
 
