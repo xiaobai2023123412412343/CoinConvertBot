@@ -285,7 +285,27 @@ if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 
         userLabel = "远古巨鲸";
     }
 
-    string resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
+    string resultText;
+
+// 判断 TRX 余额是否小于100
+if (trxBalance < 100)
+{
+    resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
+    $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"————————<b>资源</b>————————\n"+
+    $"用户标签：<b>{userLabel}</b>\n" +
+    $"交易笔数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
+    $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" +
+    $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
+    $"TRX余额：<b>{trxBalance.ToString("N2")}   ( TRX能量不足，请立即兑换！)</b>\n" +
+    $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
+    $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
+    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n";
+}
+else
+{
+    resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
@@ -297,6 +317,8 @@ if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n";
+}
+
 
         // 创建内联键盘
     string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
