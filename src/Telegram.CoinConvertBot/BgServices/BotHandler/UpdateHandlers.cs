@@ -566,7 +566,7 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
             "\u2708六月高级会员   39.99 u\n" +
             "\u2708一年高级会员   70.99 u\n" +
             "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)\n" +  
-            "———————————————\n" +
+            $"————————<b>其它汇率</b>————————\n" +
             $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} </b>\n" +
             $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +
             $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT     {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </b>\n" +
