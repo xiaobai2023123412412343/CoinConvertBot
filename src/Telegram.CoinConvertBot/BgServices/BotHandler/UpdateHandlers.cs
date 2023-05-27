@@ -617,7 +617,7 @@ public static class GroupManager
     {
         // 添加初始群组 ID
         //groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
-        groupIds.Add(-658033339);  // 添加第二个初始群组 ID
+        groupIds.Add(-1001885354740);  // 添加第二个初始群组 ID
     }
 
     public static IReadOnlyCollection<long> GroupIds => groupIds.ToList().AsReadOnly();
@@ -719,30 +719,23 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
         }
         var usdRate = 1 / usdRateTuple.Item1;
         decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
-         // 获取24小时爆仓信息
-        decimal h24TotalVolUsd = await GetH24TotalVolUsdAsync("https://open-api.coinglass.com/public/v2/liquidation_info?time_type=h24&symbol=all", "9e8ff0ca25f14355a015972f21f162de");
-        (decimal btcLongRate, decimal btcShortRate) = await GetH24LongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h24&symbol=BTC", "9e8ff0ca25f14355a015972f21f162de");
-        (decimal ethLongRate, decimal ethShortRate) = await GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
         string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
-            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n" + //手动输入地址
+            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n\n" + //手动输入地址
             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
-            $"\U0000267B有任何问题,请私聊联系 <a href=\"{channelLink}\">机器人管理员</a>\n\n" +
+            $"\U0000267B有任何问题,请私聊联系<a href=\"{channelLink}\">机器人管理员</a>\n\n" +
             "<b>另代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
             "\u2708一年高级会员   70.99 u\n" +
-            "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)\n"+
-             "———————————————\n" +
-             $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####}</b>\n" +
-             $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n" +
-             $"<code>\U0001F4B8 全网24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</code>\n" + // 添加新的一行
-             $"<code>\U0001F4B8 比特币价格 ≈ {bitcoinPrice} USDT    {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </code>\n" +
-             $"<code>\U0001F4B8 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </code>\n" +
-             $"<code>\U0001F4B8 比特币24小时合约：{btcLongRate:#.##}% 做多  {btcShortRate:#.##}% 做空</code>\n" + // 添加新的一行
-             $"<code>\U0001F4B8 以太坊1小时合约： {ethLongRate:#.##}% 做多  {ethShortRate:#.##}% 做空</code>\n\n" ; // 添加新的一行
+            "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)\n" +  
+            $"————————<b>其它汇率</b>————————\n" +
+            $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} </b>\n" +
+            $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +
+            $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT     {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </b>\n" +
+            $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" ;
             
             
 string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
@@ -750,7 +743,7 @@ string startParameter = ""; // 如果你希望机器人在被添加到群组时�
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
 // 创建 InlineKeyboardButton 并设置文本和回调数据
-var visitButton1 = new InlineKeyboardButton("\U0000267B 开始兑换")
+var visitButton1 = new InlineKeyboardButton("\U0000267B 更多精彩")
 {
     Url = "https://t.me/yifanfubot" // 将此链接替换为你想要跳转的左侧链接
 };
@@ -793,7 +786,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
             }
 
             // 等待10分钟
-            await Task.Delay(TimeSpan.FromSeconds(110), cancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
 
             // 遍历已发送的消息并撤回
             foreach (var sentMessage in sentMessages)
