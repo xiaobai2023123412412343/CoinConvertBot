@@ -330,6 +330,7 @@ else
         new [] // 第一行按钮
         {
             InlineKeyboardButton.WithUrl("详细信息", $"https://tronscan.org/#/address/{tronAddress}"), // 链接到Tron地址的详细信息
+            InlineKeyboardButton.WithUrl("链上天眼", $"https://www.oklink.com/cn/trx/address/{tronAddress}"), // 链接到欧意地址的详细信息
             InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
         }
     });
