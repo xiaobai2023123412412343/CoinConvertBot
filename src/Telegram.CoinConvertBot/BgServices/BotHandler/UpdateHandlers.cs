@@ -928,7 +928,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
             if (string.IsNullOrWhiteSpace(inputText))
             {
-                await botClient.SendTextMessageAsync(message.Chat.Id, "请输入要翻译的文本。");
+                await botClient.SendTextMessageAsync(message.Chat.Id, "请输入要翻译的文本，如：翻译hello");
             }
             else
             {
