@@ -931,8 +931,6 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "membershipOptio
         replyMarkup: membershipKeyboard
     );
 }
-// 在处理用户消息的地方，你需要增加一个对 CallbackQuery 的处理
-
 if (update.CallbackQuery != null &&
     (update.CallbackQuery.Data == "3months" || update.CallbackQuery.Data == "6months" || update.CallbackQuery.Data == "1year"))
 {
@@ -945,8 +943,9 @@ if (update.CallbackQuery != null &&
         }
     });
 
-    await botClient.SendTextMessageAsync(
+    await botClient.EditMessageTextAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
+        messageId: update.CallbackQuery.Message.MessageId,
         text: "<b>收款地址</b>：<code>TJ4c6esQYEM7jn5s8DD5zk2DBYJTLHnFR3</code>",
         parseMode: ParseMode.Html,
         replyMarkup: inlineKeyboard
