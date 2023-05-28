@@ -920,26 +920,32 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         {
             await HandleQueryCommandAsync(botClient, message); // Here we handle the query command
-        }
+        }       
         else
         {
             var inputText = message.Text.Trim();
 
             if (!string.IsNullOrWhiteSpace(inputText))
             {
-                // Check if the input text contains at least one letter
-                var containsLetter = Regex.IsMatch(inputText, @"[a-zA-Z\u4e00-\u9fa5]");
+                // 检查输入文本是否以指定的命令开头或包含指定的关键词
+                var containsKeywordsOrCommands = Regex.IsMatch(inputText, @"^\/(start|yi|fan|fu|btc|usd|boss|cny)|联系管理|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手");
 
-                if (containsLetter)
+                if (!containsKeywordsOrCommands)
                 {
-                    // Check if the input text contains any non-Chinese characters
-                    var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
+                    // 检查输入文本是否包含至少一个字母
+                    var containsLetter = Regex.IsMatch(inputText, @"[a-zA-Z\u4e00-\u9fa5]");
 
-                    if (containsNonChinese)
+                    if (containsLetter)
                     {
-                        var targetLanguage = "zh-CN"; // Set the target language to Simplified Chinese
-                        var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
-                        await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：{translatedText}");
+                        // 检查输入文本是否包含任何非中文字符
+                        var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
+
+                        if (containsNonChinese)
+                        {
+                            var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
+                            var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
+                            await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：{translatedText}");
+                        }
                     }
                 }
             }
