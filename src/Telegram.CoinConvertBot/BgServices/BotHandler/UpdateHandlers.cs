@@ -921,19 +921,21 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
             await HandleQueryCommandAsync(botClient, message); // Here we handle the query command
         }
-        else if (message?.Text != null && message.Text.StartsWith("翻译", StringComparison.OrdinalIgnoreCase))
+        else
         {
-            var inputText = message.Text.Substring(2).Trim();
-            var targetLanguage = "zh-CN"; // Set the target language to Simplified Chinese
+            var inputText = message.Text.Trim();
 
-            if (string.IsNullOrWhiteSpace(inputText))
+            if (!string.IsNullOrWhiteSpace(inputText))
             {
-                await botClient.SendTextMessageAsync(message.Chat.Id, "请输入要翻译的文本，如：翻译hello");
-            }
-            else
-            {
-                var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
-                await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：{translatedText}");
+                // Check if the input text contains any non-Chinese characters
+                var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
+
+                if (containsNonChinese)
+                {
+                    var targetLanguage = "zh-CN"; // Set the target language to Simplified Chinese
+                    var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
+                    await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：{translatedText}");
+                }
             }
         }
     }
