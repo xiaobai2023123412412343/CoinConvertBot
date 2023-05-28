@@ -49,6 +49,61 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClient, Message message)
+{
+    // 从消息中提取目标语言和待翻译文本
+    var match = Regex.Match(message.Text, @"转([\u4e00-\u9fa5]+)\s+(.+)");
+
+    if (match.Success)
+    {
+        var targetLanguageName = match.Groups[1].Value;
+        var textToTranslate = match.Groups[2].Value;
+
+        if (LanguageCodes.TryGetValue(targetLanguageName, out string targetLanguageCode))
+        {
+            // 使用 GoogleTranslateFree 或其他翻译服务进行翻译
+            var translatedText = await GoogleTranslateFree.TranslateAsync(textToTranslate, targetLanguageCode);
+            await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：\n\n<code>{translatedText}</code>", parseMode: ParseMode.Html);
+        }
+        else
+        {
+            // 如果目标语言不在字典中，返回不支持的消息
+            var supportedLanguages = string.Join("、", LanguageCodes.Keys);
+            await botClient.SendTextMessageAsync(message.Chat.Id, $"暂不支持该语种转换，目前转换语言支持：{supportedLanguages}");
+        }
+    }
+    else
+    {
+        // 如果消息格式不正确，返回错误消息
+        await botClient.SendTextMessageAsync(message.Chat.Id, "无法识别的翻译命令，请确保您的输入格式正确，例如：\"转英语 你好\"");
+    }
+}
+private static readonly Dictionary<string, string> LanguageCodes = new Dictionary<string, string>
+{
+    { "英语", "en" },
+    { "日语", "ja" },
+    { "韩语", "ko" },
+    { "越南语", "vi" },
+    { "高棉语", "km" },
+    { "泰语", "th" },
+    { "菲律宾语", "tl" },
+    { "阿拉伯语", "ar" },
+    { "老挝语", "lo" },
+    { "马来西亚语", "ms" },
+    { "西班牙语", "es" },
+    { "印地语", "hi" },
+    { "孟加拉文", "bn" },
+    { "葡萄牙语", "pt" },
+    { "俄罗斯语", "ru" },
+    { "旁遮普文", "pa" },
+    { "马拉地文", "mr" },
+    { "泰米尔文", "ta" },
+    { "土耳其语", "tr" },
+    { "法语", "fr" },
+    { "卡纳达文", "kn" },
+    { "泰卢固文", "te" },
+    { "乌尔都语", "ur" },
+};    
 public class GoogleTranslateFree
 {
     private const string GoogleTranslateUrl = "https://translate.google.com/translate_a/single?client=gtx&sl=auto&tl={0}&dt=t&q={1}";
@@ -920,7 +975,12 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         {
             await HandleQueryCommandAsync(botClient, message); // Here we handle the query command
-        }       
+        }
+        // 检查消息文本是否以 "转" 开头
+        if (message?.Text != null && message.Text.StartsWith("转"))
+        {
+            await HandleTranslateCommandAsync(botClient, message); // 在这里处理翻译命令
+        }          
         else
         {
             var inputText = message.Text.Trim();
@@ -939,7 +999,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
                     {
                         var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
                         var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
-                        await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：\n<code>{translatedText}</code>", parseMode: ParseMode.Html);
+                        await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：\n\n<code>{translatedText}</code>", parseMode: ParseMode.Html);
                     }
                 }
             }
