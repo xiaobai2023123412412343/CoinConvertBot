@@ -939,7 +939,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
                     {
                         var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
                         var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
-                        await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：{translatedText}");
+                        await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：\n<code>{translatedText}</code>", parseMode: ParseMode.Html);
                     }
                 }
             }
