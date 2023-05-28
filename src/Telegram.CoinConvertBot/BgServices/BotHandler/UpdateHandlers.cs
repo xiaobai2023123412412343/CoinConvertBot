@@ -49,6 +49,62 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static async Task<string> GetTransactionRecordsAsync()
+{
+    string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
+    string outcomeUrl = $"https://apilist.tronscan.org/api/transaction?address={outcomeAddress}&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=50&page=1";
+
+    using (var httpClient = new HttpClient())
+    {
+        var outcomeResponse = await httpClient.GetStringAsync(outcomeUrl);
+        var outcomeTransactions = ParseTransactions(outcomeResponse, "TRX");
+        return FormatTransactionRecords(outcomeTransactions);
+    }
+}
+
+private static List<(DateTime timestamp, string token, decimal amount)> ParseTransactions(string jsonResponse, string token)
+{
+    var transactions = new List<(DateTime timestamp, string token, decimal amount)>();
+
+    var json = JObject.Parse(jsonResponse);
+    var dataArray = json["data"] as JArray;
+
+    if (dataArray != null)
+    {
+        foreach (var data in dataArray)
+        {
+            // 添加检查发送方地址的条件
+            if (data["ownerAddress"] != null && data["ownerAddress"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
+                data["timestamp"] != null && data["contractData"] != null && data["contractData"]["amount"] != null)
+            {
+                var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["timestamp"]).LocalDateTime;
+                var amount = decimal.Parse(data["contractData"]["amount"].ToString()) / 1000000;
+
+                if (amount > 1) // 添加条件，只添加金额大于1的交易记录
+                {
+                    transactions.Add((timestamp, token, amount));
+                }
+            }
+        }
+    }
+
+    return transactions;
+}
+
+private static string FormatTransactionRecords(List<(DateTime timestamp, string token, decimal amount)> outcomeTransactions)
+{
+    var sb = new StringBuilder();
+    int numOfRecords = 0;
+
+    for (int i = 0; i < outcomeTransactions.Count && numOfRecords < 10; i++)
+    {
+        sb.AppendLine($"支出：{outcomeTransactions[i].timestamp:yyyy-MM-dd HH:mm:ss} 支出{outcomeTransactions[i].token} {outcomeTransactions[i].amount}");
+        sb.AppendLine("————————————————");
+        numOfRecords++;
+    }
+
+    return sb.ToString();
+}    
 private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClient, Message message)
 {
     // 从消息中提取目标语言和待翻译文本
@@ -1153,6 +1209,12 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
         {
             Log.Logger.Error(e, "更新Telegram用户信息失败！");
         }
+// 在处理回调的地方
+if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
+{
+    var transactionRecords = await UpdateHandlers.GetTransactionRecordsAsync();
+    await botClient.SendTextMessageAsync(message.Chat.Id, transactionRecords);
+}        
         // 检查是否接收到了 /gg 消息，收到就启动广告
         if (messageText.StartsWith("/gg"))
         {
