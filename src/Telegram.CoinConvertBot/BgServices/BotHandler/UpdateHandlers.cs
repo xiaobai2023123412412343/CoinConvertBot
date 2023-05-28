@@ -927,10 +927,10 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
             if (!string.IsNullOrWhiteSpace(inputText))
             {
-                // 检查输入文本是否以指定的命令开头或包含指定的关键词
-                var containsKeywordsOrCommands = Regex.IsMatch(inputText, @"^\/(start|yi|fan|fu|btc|usd|boss|cny)|联系管理|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手");
+                // 检查输入文本是否以指定的命令开头、包含指定的关键词或为纯数字
+                var containsKeywordsOrCommandsOrNumbers = Regex.IsMatch(inputText, @"^\/(start|yi|fan|fu|btc|usd|boss|cny)|联系管理|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手|^[\d\+\-\*/\s]+$");
 
-                if (!containsKeywordsOrCommands)
+                if (!containsKeywordsOrCommandsOrNumbers)
                 {
                     // 检查输入文本是否包含任何非中文字符
                     var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
