@@ -75,7 +75,7 @@ private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClie
     else
     {
         // 如果消息格式不正确，返回错误消息
-        await botClient.SendTextMessageAsync(message.Chat.Id, "无法识别的翻译命令，请确保您的输入格式正确，例如：\"转英语 你好\"");
+        await botClient.SendTextMessageAsync(message.Chat.Id, "无法识别的翻译命令，请确保您的输入格式正确，例如：<code>转英语 你好</code>", parseMode: ParseMode.Html);
     }
 }
 private static readonly Dictionary<string, string> LanguageCodes = new Dictionary<string, string>
