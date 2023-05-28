@@ -927,14 +927,20 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
             if (!string.IsNullOrWhiteSpace(inputText))
             {
-                // Check if the input text contains any non-Chinese characters
-                var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
+                // Check if the input text contains at least one letter
+                var containsLetter = Regex.IsMatch(inputText, @"[a-zA-Z\u4e00-\u9fa5]");
 
-                if (containsNonChinese)
+                if (containsLetter)
                 {
-                    var targetLanguage = "zh-CN"; // Set the target language to Simplified Chinese
-                    var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
-                    await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：{translatedText}");
+                    // Check if the input text contains any non-Chinese characters
+                    var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
+
+                    if (containsNonChinese)
+                    {
+                        var targetLanguage = "zh-CN"; // Set the target language to Simplified Chinese
+                        var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
+                        await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：{translatedText}");
+                    }
                 }
             }
         }
