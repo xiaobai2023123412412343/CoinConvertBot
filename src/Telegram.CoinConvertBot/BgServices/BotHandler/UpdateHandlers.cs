@@ -932,20 +932,14 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
                 if (!containsKeywordsOrCommands)
                 {
-                    // 检查输入文本是否包含至少一个字母
-                    var containsLetter = Regex.IsMatch(inputText, @"[a-zA-Z\u4e00-\u9fa5]");
+                    // 检查输入文本是否包含任何非中文字符
+                    var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
 
-                    if (containsLetter)
+                    if (containsNonChinese)
                     {
-                        // 检查输入文本是否包含任何非中文字符
-                        var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
-
-                        if (containsNonChinese)
-                        {
-                            var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
-                            var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
-                            await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：{translatedText}");
-                        }
+                        var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
+                        var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
+                        await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：{translatedText}");
                     }
                 }
             }
