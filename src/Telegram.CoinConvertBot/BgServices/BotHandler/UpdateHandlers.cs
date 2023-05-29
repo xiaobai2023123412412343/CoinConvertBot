@@ -1328,8 +1328,24 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
 if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
 {
     var transactionRecords = await UpdateHandlers.GetTransactionRecordsAsync();
-    await botClient.SendTextMessageAsync(message.Chat.Id, transactionRecords);
-}        
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        // 创建一个内联按钮数组，每个数组表示一行按钮
+        new []
+        {
+            // 创建一个内联按钮，设置按钮的文本和回调数据
+            // 当用户点击该按钮时，机器人将收到一个带有回调数据的回调查询  跳转到机器人界面
+            InlineKeyboardButton.WithUrl("\u2705 收入支出全公开，请放心兑换！\u2705", "https://t.me/yifanfubot")
+        }
+    });
+
+    // 将内联键盘添加到发送消息的参数中
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: transactionRecords,
+        replyMarkup: inlineKeyboard
+    );
+}      
         // 检查是否接收到了 /gg 消息，收到就启动广告
         if (messageText.StartsWith("/gg"))
         {
