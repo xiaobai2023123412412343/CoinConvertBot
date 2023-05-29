@@ -53,7 +53,10 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
 {
     if (message.Text.Contains("帮助"))
     {
-        string helpText = "关于兑换：<code>点击U兑TRX，给收款地址转10u以上的任意金额，机器人自动返回TRX到原付款地址，过程全自动，无人工干预！(点击机器人任意菜单只要有反应即可正常兑换，无需联系管理二次确认)</code>\n\n实时汇率：<code>TRX能量跟包括比特币在内的所有数字货币一样，价格起起落落有涨有跌，受市场行情影响，机器人的兑换汇率自动跟随市场行情进行波动！</code>\n\n查询地址：<code>发送任意TRC20波场地址自动查询地址详情并返回近期USDT交易记录！</code>\n\n关于翻译：<code>发送任意外文自动翻译成简体中文并返回(本功能调用谷歌翻译)</code>\n\n中文转外文：<code>发送例如：\"转英语 你好\" 自动将你好翻译成英语：hello</code>\n\n被动查看：<code>如果想实时自动获取TRX-比特币-美元-USDT等在内的所有汇率，把机器人拉到群里即可，机器人24小时自动推送！</code>\n\n群里使用：<code>所有功能都可在机器人私聊使用，如果在群里，需要设置机器人为管理员或者@机器人才可使用！</code>\n\n机器人兑换公平公正公开，交易记录全公开，发送：<code>兑换记录</code> 自动返回近期USDT收入以及TRX转出记录，欢迎监督！\n\n\U0001F449        本机器人源码出售，如有需要可联系！      \U0001F448";
+        string adminLink = "https://t.me/yifanfu";
+        string adminLinkText = $"<a href=\"{adminLink}\">管理员！</a>";
+
+        string helpText = "关于兑换：<code>点击U兑TRX，给收款地址转10u以上的任意金额，机器人自动返回TRX到原付款地址，过程全自动，无人工干预！(点击机器人任意菜单只要有反应即可正常兑换，无需联系管理二次确认)</code>\n\n实时汇率：<code>TRX能量跟包括比特币在内的所有数字货币一样，价格起起落落有涨有跌，受市场行情影响，机器人的兑换汇率自动跟随市场行情进行波动！</code>\n\n查询地址：<code>发送任意TRC20波场地址自动查询地址详情并返回近期USDT交易记录！</code>\n\n关于翻译：<code>发送任意外文自动翻译成简体中文并返回(本功能调用谷歌翻译)</code>\n\n中文转外文：<code>发送例如：\"转英语 你好\" 自动将你好翻译成英语：hello</code>\n\n被动查看：<code>如果想实时自动获取TRX-比特币-美元-USDT等在内的所有汇率，把机器人拉到群里即可，机器人24小时自动推送！</code>\n\n群里使用：<code>所有功能都可在机器人私聊使用，如果在群里，需要设置机器人为管理或者@机器人才可使用！</code>\n\n机器人兑换公平公正公开，交易记录全公开，发送：<code>兑换记录</code> 自动返回近期USDT收入以及TRX转出记录，欢迎监督！\n\n\U0001F449        本机器人源码出售，如有需要可联系" + adminLinkText + "      \U0001F448";
 
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
@@ -61,7 +64,7 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
             parseMode: ParseMode.Html
         );
     }
-}   
+}  
 public static async Task<string> GetTransactionRecordsAsync()
 {
     string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";//监控转账TRX地址交易并返回TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv
