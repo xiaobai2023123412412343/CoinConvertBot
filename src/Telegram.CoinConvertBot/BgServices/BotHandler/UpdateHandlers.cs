@@ -1482,6 +1482,12 @@ else
     decimal usdtIncome = 0;
     foreach (var tx in transactions["data"])
     {
+        // 只统计 type 为 "Transfer" 的交易
+        if ((string)tx["type"] != "Transfer")
+        {
+            continue;
+        }
+        
         var rawAmount = (decimal)tx["value"];
         usdtIncome += rawAmount / 1_000_000L;
     }
@@ -1512,6 +1518,12 @@ else
     decimal usdtIncome = 0;
     foreach (var tx in transactions["data"])
     {
+        // 只统计 type 为 "Transfer" 的交易
+        if ((string)tx["type"] != "Transfer")
+        {
+            continue;
+        }        
+        
         var rawAmount = (decimal)tx["value"];
         usdtIncome += rawAmount / 1_000_000L;
     }
