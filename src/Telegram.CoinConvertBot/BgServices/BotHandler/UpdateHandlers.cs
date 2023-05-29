@@ -54,11 +54,17 @@ public static async Task<string> GetTransactionRecordsAsync()
     string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
     string outcomeUrl = $"https://apilist.tronscan.org/api/transaction?address={outcomeAddress}&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=50&page=1";
 
+    string usdtUrl = $"https://api.trongrid.io/v1/accounts/TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC/transactions/trc20?only_confirmed=true&limit=10&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&min_timestamp=0&max_timestamp={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+
     using (var httpClient = new HttpClient())
     {
         var outcomeResponse = await httpClient.GetStringAsync(outcomeUrl);
         var outcomeTransactions = ParseTransactions(outcomeResponse, "TRX");
-        return FormatTransactionRecords(outcomeTransactions);
+
+        var usdtResponse = await httpClient.GetStringAsync(usdtUrl);
+        var usdtTransactions = ParseTransactions(usdtResponse, "USDT");
+
+        return FormatTransactionRecords(outcomeTransactions.Concat(usdtTransactions).ToList());
     }
 }
 
@@ -73,15 +79,28 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
     {
         foreach (var data in dataArray)
         {
-            // 添加检查发送方地址的条件出库地址交易记录
-            if (data["ownerAddress"] != null && data["ownerAddress"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
-                data["timestamp"] != null && data["contractData"] != null && data["contractData"]["amount"] != null)
+            if (token == "TRX")
             {
-                var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["timestamp"]).LocalDateTime;
-                var amount = decimal.Parse(data["contractData"]["amount"].ToString()) / 1000000;
-
-                if (amount > 1) // 添加条件，只添加金额大于1的交易记录
+                if (data["ownerAddress"] != null && data["ownerAddress"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
+                    data["timestamp"] != null && data["contractData"] != null && data["contractData"]["amount"] != null)
                 {
+                    var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["timestamp"]).LocalDateTime;
+                    var amount = decimal.Parse(data["contractData"]["amount"].ToString()) / 1000000;
+
+                    if (amount > 1) // 添加条件，只添加金额大于1的交易记录
+                    {
+                        transactions.Add((timestamp, token, amount));
+                    }
+                }
+            }
+            else if (token == "USDT")
+            {
+                if (data["to"] != null && data["to"].ToString() == "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC" &&
+                    data["block_timestamp"] != null && data["value"] != null)
+                {
+                    var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["block_timestamp"]).LocalDateTime;
+                    var amount = decimal.Parse(data["value"].ToString()) / 1000000;
+
                     transactions.Add((timestamp, token, amount));
                 }
             }
@@ -91,20 +110,39 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
     return transactions;
 }
 
-private static string FormatTransactionRecords(List<(DateTime timestamp, string token, decimal amount)> outcomeTransactions)
+private static string FormatTransactionRecords(List<(DateTime timestamp, string token, decimal amount)> transactions)
 {
     var sb = new StringBuilder();
-    int numOfRecords = 0;
+    var incomeTransactions = transactions.Where(t => t.token == "USDT").OrderByDescending(t => t.timestamp).ToList();
+    var outcomeTransactions = transactions.Where(t => t.token == "TRX").OrderByDescending(t => t.timestamp).ToList();
 
-    for (int i = 0; i < outcomeTransactions.Count && numOfRecords < 10; i++)
+    int numOfIncomeRecords = 0;
+    int numOfOutcomeRecords = 0;
+    int totalPairs = 0;
+
+    while ((numOfIncomeRecords < incomeTransactions.Count || numOfOutcomeRecords < outcomeTransactions.Count) && totalPairs < 8)
     {
-        sb.AppendLine($"支出：{outcomeTransactions[i].timestamp:yyyy-MM-dd HH:mm:ss} 支出{outcomeTransactions[i].token} {outcomeTransactions[i].amount}");
-        sb.AppendLine("————————————————");
-        numOfRecords++;
+        if (numOfIncomeRecords < incomeTransactions.Count)
+        {
+            sb.AppendLine($"收入：{incomeTransactions[numOfIncomeRecords].timestamp:yyyy-MM-dd HH:mm:ss} 收入{incomeTransactions[numOfIncomeRecords].token} {incomeTransactions[numOfIncomeRecords].amount}");
+            numOfIncomeRecords++;
+        }
+
+        if (numOfOutcomeRecords < outcomeTransactions.Count)
+        {
+            sb.AppendLine($"支出：{outcomeTransactions[numOfOutcomeRecords].timestamp:yyyy-MM-dd HH:mm:ss} 支出{outcomeTransactions[numOfOutcomeRecords].token} {outcomeTransactions[numOfOutcomeRecords].amount}");
+            numOfOutcomeRecords++;
+        }
+
+        if (numOfIncomeRecords > 0 && numOfOutcomeRecords > 0)
+        {
+            sb.AppendLine("————————————————");
+            totalPairs++;
+        }
     }
 
     return sb.ToString();
-}    
+}
 private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClient, Message message)
 {
     // 从消息中提取目标语言和待翻译文本
