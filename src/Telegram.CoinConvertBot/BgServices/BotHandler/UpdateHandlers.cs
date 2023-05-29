@@ -73,7 +73,7 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
     {
         foreach (var data in dataArray)
         {
-            // 添加检查发送方地址的条件
+            // 添加检查发送方地址的条件出库地址交易记录
             if (data["ownerAddress"] != null && data["ownerAddress"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
                 data["timestamp"] != null && data["contractData"] != null && data["contractData"]["amount"] != null)
             {
