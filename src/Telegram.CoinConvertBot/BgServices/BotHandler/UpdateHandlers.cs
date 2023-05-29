@@ -482,7 +482,7 @@ if (trxBalance < 100)
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
-    $"——————<b>最近交易</b>——————\n" +
+    $"———————<b>最近交易</b>———————\n" +
     $"{lastFiveTransactions}\n";
 }
 else
@@ -499,7 +499,7 @@ else
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
-    $"——————<b>最近交易</b>——————\n" +
+    $"———————<b>最近交易</b>———————\n" +
     $"{lastFiveTransactions}\n";
 }
 
