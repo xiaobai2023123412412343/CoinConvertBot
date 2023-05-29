@@ -360,7 +360,7 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, int 
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
-    var match = Regex.Match(text, @"查\s*(T[A-Za-z0-9]{33})"); // 验证Tron地址格式
+    var match = Regex.Match(text, @"(T[A-Za-z0-9]{33})"); // 验证Tron地址格式
     if (!match.Success)
     {
         await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址错误，请重新输入");
@@ -1026,12 +1026,11 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     }
         if (update.Type == UpdateType.Message)
     {
-        var message = update.Message;
-        if (message?.Text != null && message.Text.StartsWith("查"))
-
-        {
-            await HandleQueryCommandAsync(botClient, message); // Here we handle the query command
-        }
+var message = update.Message;
+if (message?.Text != null)
+{
+    await HandleQueryCommandAsync(botClient, message); // Here we handle the query command
+}
         // 检查消息文本是否以 "转" 开头
         if (message?.Text != null && message.Text.StartsWith("转"))
         {
