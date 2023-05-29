@@ -1946,8 +1946,8 @@ var keyboard = new ReplyKeyboardMarkup(new[]
             
 使用方法：
    点击菜单 选择&#x1F4B0;U兑TRX
-   转账USDT到指定地址，即可秒回TRX
-   发送<code>帮助</code>即可体验完整功能    
+   转账USDT到指定地址，即可秒回TRX！
+   如需了解机器人功能介绍，直接发送：<code>帮助</code> 
    
    {groupFunctionText}
    
