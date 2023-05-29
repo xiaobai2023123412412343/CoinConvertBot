@@ -356,7 +356,51 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, int 
 
     return (freeNetRemaining, freeNetLimit, transactions, transactionsIn, transactionsOut);
 }
+public static async Task<string> GetLastFiveTransactionsAsync(string tronAddress)
+{
+    int limit = 5;
+    string tokenId = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT合约地址
+    string url = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_confirmed=true&limit={limit}&token_id={tokenId}";
 
+    using (var httpClient = new HttpClient())
+    {
+        HttpResponseMessage response = await httpClient.GetAsync(url);
+        string jsonString = await response.Content.ReadAsStringAsync();
+        JObject jsonResponse = JObject.Parse(jsonString);
+
+        JArray transactions = (JArray)jsonResponse["data"];
+        StringBuilder transactionTextBuilder = new StringBuilder();
+
+        foreach (var transaction in transactions)
+        {
+            // 获取交易时间，并转换为北京时间
+            long blockTimestamp = (long)transaction["block_timestamp"];
+            DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(blockTimestamp).DateTime;
+            DateTime transactionTimeBeijing = TimeZoneInfo.ConvertTime(transactionTimeUtc, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
+
+            // 判断交易是收入还是支出
+            string type;
+            string fromAddress = (string)transaction["from"];
+            if (tronAddress.Equals(fromAddress, StringComparison.OrdinalIgnoreCase))
+            {
+                type = "支出";
+            }
+            else
+            {
+                type = "收入";
+            }
+
+            // 获取交易金额，并转换为USDT
+            string value = (string)transaction["value"];
+            decimal usdtAmount = decimal.Parse(value) / 1_000_000;
+
+            // 构建交易文本
+            transactionTextBuilder.AppendLine($"<code>{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}   {type}{usdtAmount:N2} USDT</code>");
+        }
+
+        return transactionTextBuilder.ToString();
+    }
+}
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
@@ -379,10 +423,11 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
     var getUsdtTotalIncomeTask = GetTotalIncomeAsync(tronAddress, false);
     var getBandwidthTask = GetBandwidthAsync(tronAddress);
+    var getLastFiveTransactionsTask = GetLastFiveTransactionsAsync(tronAddress);
 
 
     // 等待所有任务完成
-    await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getUsdtTotalIncomeTask, getBandwidthTask);
+    await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getUsdtTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask);
 
 
     // 处理结果
@@ -392,6 +437,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var lastTransactionTime = getLastTransactionTimeTask.Result;
     var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
     var (remainingBandwidth, totalBandwidth, transactions, transactionsIn, transactionsOut) = getBandwidthTask.Result;
+    string lastFiveTransactions = getLastFiveTransactionsTask.Result;
     
     // 判断是否所有返回的数据都是0
 if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
@@ -435,7 +481,9 @@ if (trxBalance < 100)
     $"TRX余额：<b>{trxBalance.ToString("N2")}   ( TRX能量不足，请立即兑换！)</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
-    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n";
+    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
+    $"———————<b>最近交易</b>———————\n" +
+    $"{lastFiveTransactions}\n";
 }
 else
 {
@@ -450,7 +498,9 @@ else
     $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
-    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n";
+    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
+    $"———————<b>最近交易</b>———————\n" +
+    $"{lastFiveTransactions}\n";
 }
 
 
