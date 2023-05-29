@@ -358,7 +358,7 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, int 
 }
 public static async Task<string> GetLastFiveTransactionsAsync(string tronAddress)
 {
-    int limit = 5;
+    int limit = 20; // 可以增加 limit 以获取更多的交易记录
     string tokenId = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT合约地址
     string url = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_confirmed=true&limit={limit}&token_id={tokenId}";
 
@@ -369,6 +369,13 @@ public static async Task<string> GetLastFiveTransactionsAsync(string tronAddress
         JObject jsonResponse = JObject.Parse(jsonString);
 
         JArray transactions = (JArray)jsonResponse["data"];
+        
+        // 筛选与Tether相关的交易
+        transactions = new JArray(transactions.Where(t => (string)t["token_info"]["name"] == "Tether USD"));
+
+        // 取筛选后的前5笔交易
+        transactions = new JArray(transactions.Take(5));
+
         StringBuilder transactionTextBuilder = new StringBuilder();
 
         foreach (var transaction in transactions)
