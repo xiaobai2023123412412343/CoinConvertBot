@@ -51,9 +51,10 @@ public static class UpdateHandlers
     /// <returns></returns>
 public static async Task<string> GetTransactionRecordsAsync()
 {
-    string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
+    string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";//监控转账TRX地址交易并返回TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv
     string outcomeUrl = $"https://apilist.tronscan.org/api/transaction?address={outcomeAddress}&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=50&page=1";
-
+    
+    //监控收款地址交易并返回TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC
     string usdtUrl = $"https://api.trongrid.io/v1/accounts/TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC/transactions/trc20?only_confirmed=true&limit=20&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&min_timestamp=0&max_timestamp={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
 
     using (var httpClient = new HttpClient())
