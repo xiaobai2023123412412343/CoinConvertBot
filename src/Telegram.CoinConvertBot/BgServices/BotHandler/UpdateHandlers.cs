@@ -375,7 +375,7 @@ public static async Task<string> GetLastFiveTransactionsAsync(string tronAddress
         {
             // 获取交易时间，并转换为北京时间
             long blockTimestamp = (long)transaction["block_timestamp"];
-            DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(blockTimestamp).DateTime;
+            DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(blockTimestamp).UtcDateTime;
             DateTime transactionTimeBeijing = TimeZoneInfo.ConvertTime(transactionTimeUtc, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
 
             // 判断交易是收入还是支出
