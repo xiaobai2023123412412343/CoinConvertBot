@@ -95,6 +95,12 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
             }
             else if (token == "USDT")
             {
+                // 只统计 type 为 "Transfer" 的交易
+                if (data["type"] != null && data["type"].ToString() != "Transfer")
+                {
+                    continue;
+                }
+
                 if (data["to"] != null && data["to"].ToString() == "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC" &&
                     data["block_timestamp"] != null && data["value"] != null)
                 {
