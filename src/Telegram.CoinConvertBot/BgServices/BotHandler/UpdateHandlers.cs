@@ -150,6 +150,7 @@ private static string FormatTransactionRecords(List<(DateTime timestamp, string 
 
     return sb.ToString();
 }
+//以上3个方法是监控收款地址以及出款地址的交易记录并返回！    
 private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClient, Message message)
 {
     // 从消息中提取目标语言和待翻译文本
