@@ -1029,7 +1029,17 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 var message = update.Message;
 if (message?.Text != null)
 {
-    await HandleQueryCommandAsync(botClient, message); // Here we handle the query command
+    // 检查输入文本是否为 Tron 地址
+    var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
+
+    if (isTronAddress)
+    {
+        await HandleQueryCommandAsync(botClient, message); // 当满足条件时，调用查询方法
+    }
+    else
+    {
+        // 在这里处理其他文本消息
+    }
 }
         // 检查消息文本是否以 "转" 开头
         if (message?.Text != null && message.Text.StartsWith("转"))
