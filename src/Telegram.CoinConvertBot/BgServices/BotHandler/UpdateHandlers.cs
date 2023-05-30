@@ -353,47 +353,51 @@ public static async Task<DateTime> GetAccountCreationTimeAsync(string address)
     return ConvertToBeijingTime(utcDateTime);
 }  
    
-public static async Task<(decimal UsdtBalance, decimal TrxBalance)> GetBalancesAsync(string address)
+public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)> GetBalancesAsync(string address)
 {
-    using var httpClient = new HttpClient();
-    var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{address}");
-    var json = await response.Content.ReadAsStringAsync();
-
-    // 打印API响应
-    //Console.WriteLine("API response for GetBalancesAsync:");
-    //Console.WriteLine(json);
-
-    var jsonDocument = JsonDocument.Parse(json);
-
-    var usdtBalance = 0m;
-    var trxBalance = 0m;
-
-    if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
+    try
     {
-        var firstElement = dataElement[0];
+        using var httpClient = new HttpClient();
+        var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{address}");
+        var json = await response.Content.ReadAsStringAsync();
 
-        if (firstElement.TryGetProperty("balance", out JsonElement trxBalanceElement))
-        {
-            trxBalance = trxBalanceElement.GetDecimal() / 1_000_000;
-        }
+        var jsonDocument = JsonDocument.Parse(json);
 
-        if (firstElement.TryGetProperty("trc20", out JsonElement trc20Element))
+        var usdtBalance = 0m;
+        var trxBalance = 0m;
+
+        if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
         {
-            foreach (var token in trc20Element.EnumerateArray())
+            var firstElement = dataElement[0];
+
+            if (firstElement.TryGetProperty("balance", out JsonElement trxBalanceElement))
             {
-                foreach (var property in token.EnumerateObject())
+                trxBalance = trxBalanceElement.GetDecimal() / 1_000_000;
+            }
+
+            if (firstElement.TryGetProperty("trc20", out JsonElement trc20Element))
+            {
+                foreach (var token in trc20Element.EnumerateArray())
                 {
-                    if (property.Name == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t") //这是USDT合约地址 可以换成任意合约地址
+                    foreach (var property in token.EnumerateObject())
                     {
-                        usdtBalance = decimal.Parse(property.Value.GetString()) / 1_000_000;
-                        break;
+                        if (property.Name == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t") //这是USDT合约地址 可以换成任意合约地址
+                        {
+                            usdtBalance = decimal.Parse(property.Value.GetString()) / 1_000_000;
+                            break;
+                        }
                     }
                 }
             }
         }
-    }
 
-    return (usdtBalance, trxBalance);
+        return (usdtBalance, trxBalance, false); // 如果没有发生错误，返回结果和IsError=false
+    }
+    catch (Exception ex)
+    {
+        // 发生错误时，返回零余额和IsError=true
+        return (0m, 0m, true);
+    }
 }
 public static async Task<(double remainingBandwidth, double totalBandwidth, int transactions, int transactionsIn, int transactionsOut, bool isError)> GetBandwidthAsync(string address)
 {
@@ -526,15 +530,17 @@ var (remainingBandwidth, totalBandwidth, transactions, transactionsIn, transacti
 var getLastFiveTransactionsResult = getLastFiveTransactionsTask.Result;
 var (lastFiveTransactions, isErrorGetLastFiveTransactions) = getLastFiveTransactionsResult;
 
+var getBalancesResult = getBalancesTask.Result;
+var (usdtBalance, trxBalance, isErrorGetBalances) = getBalancesResult;
+
 // 检查是否发生了请求错误
-if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions)
+if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances)
 {
     await botClient.SendTextMessageAsync(message.Chat.Id, "接口维护中，请稍等重试！");
     return;
 }
 
 // 如果没有发生错误，则继续处理结果
-var (usdtBalance, trxBalance) = getBalancesTask.Result;
 var creationTime = getAccountCreationTimeTask.Result;
 var lastTransactionTime = getLastTransactionTimeTask.Result;
 var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
