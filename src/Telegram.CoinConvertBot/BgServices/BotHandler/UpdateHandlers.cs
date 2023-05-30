@@ -427,7 +427,7 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, int 
         return (0, 0, 0, 0, 0, true);
     }
 }
-public static async Task<string> GetLastFiveTransactionsAsync(string tronAddress)
+public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tronAddress)
 {
     int limit = 20; // 可以增加 limit 以获取更多的交易记录
     string tokenId = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT合约地址
@@ -435,48 +435,56 @@ public static async Task<string> GetLastFiveTransactionsAsync(string tronAddress
 
     using (var httpClient = new HttpClient())
     {
-        HttpResponseMessage response = await httpClient.GetAsync(url);
-        string jsonString = await response.Content.ReadAsStringAsync();
-        JObject jsonResponse = JObject.Parse(jsonString);
-
-        JArray transactions = (JArray)jsonResponse["data"];
-        
-        // 筛选与Tether相关的交易
-        transactions = new JArray(transactions.Where(t => (string)t["token_info"]["name"] == "Tether USD"));
-
-        // 取筛选后的前5笔交易
-        transactions = new JArray(transactions.Take(5));
-
-        StringBuilder transactionTextBuilder = new StringBuilder();
-
-        foreach (var transaction in transactions)
+        try
         {
-            // 获取交易时间，并转换为北京时间
-            long blockTimestamp = (long)transaction["block_timestamp"];
-            DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(blockTimestamp).UtcDateTime;
-            DateTime transactionTimeBeijing = TimeZoneInfo.ConvertTime(transactionTimeUtc, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
+            HttpResponseMessage response = await httpClient.GetAsync(url);
+            string jsonString = await response.Content.ReadAsStringAsync();
+            JObject jsonResponse = JObject.Parse(jsonString);
 
-            // 判断交易是收入还是支出
-            string type;
-            string fromAddress = (string)transaction["from"];
-            if (tronAddress.Equals(fromAddress, StringComparison.OrdinalIgnoreCase))
+            JArray transactions = (JArray)jsonResponse["data"];
+
+            // 筛选与Tether相关的交易
+            transactions = new JArray(transactions.Where(t => (string)t["token_info"]["name"] == "Tether USD"));
+
+            // 取筛选后的前5笔交易
+            transactions = new JArray(transactions.Take(5));
+
+            StringBuilder transactionTextBuilder = new StringBuilder();
+
+            foreach (var transaction in transactions)
             {
-                type = "支出";
-            }
-            else
-            {
-                type = "收入";
+                // 获取交易时间，并转换为北京时间
+                long blockTimestamp = (long)transaction["block_timestamp"];
+                DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(blockTimestamp).UtcDateTime;
+                DateTime transactionTimeBeijing = TimeZoneInfo.ConvertTime(transactionTimeUtc, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
+
+                // 判断交易是收入还是支出
+                string type;
+                string fromAddress = (string)transaction["from"];
+                if (tronAddress.Equals(fromAddress, StringComparison.OrdinalIgnoreCase))
+                {
+                    type = "支出";
+                }
+                else
+                {
+                    type = "收入";
+                }
+
+                // 获取交易金额，并转换为USDT
+                string value = (string)transaction["value"];
+                decimal usdtAmount = decimal.Parse(value) / 1_000_000;
+
+                // 构建交易文本
+                transactionTextBuilder.AppendLine($"<code>{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}   {type}{usdtAmount:N2} USDT</code>");
             }
 
-            // 获取交易金额，并转换为USDT
-            string value = (string)transaction["value"];
-            decimal usdtAmount = decimal.Parse(value) / 1_000_000;
-
-            // 构建交易文本
-            transactionTextBuilder.AppendLine($"<code>{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}   {type}{usdtAmount:N2} USDT</code>");
+            return (transactionTextBuilder.ToString(), false); // 如果没有发生错误，返回结果和IsError=false
         }
-
-        return transactionTextBuilder.ToString();
+        catch (Exception ex)
+        {
+            // 发生错误时，返回空字符串和IsError=true
+            return (string.Empty, true);
+        }
     }
 }
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
@@ -515,8 +523,11 @@ var (usdtTotal, transferCount, isErrorUsdtTransferTotal) = usdtTransferTotalResu
 var getBandwidthResult = getBandwidthTask.Result;
 var (remainingBandwidth, totalBandwidth, transactions, transactionsIn, transactionsOut, isErrorGetBandwidth) = getBandwidthResult;
 
+var getLastFiveTransactionsResult = getLastFiveTransactionsTask.Result;
+var (lastFiveTransactions, isErrorGetLastFiveTransactions) = getLastFiveTransactionsResult;
+
 // 检查是否发生了请求错误
-if (isErrorUsdtTransferTotal || isErrorGetBandwidth)
+if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions)
 {
     await botClient.SendTextMessageAsync(message.Chat.Id, "接口维护中，请稍等重试！");
     return;
@@ -527,7 +538,6 @@ var (usdtBalance, trxBalance) = getBalancesTask.Result;
 var creationTime = getAccountCreationTimeTask.Result;
 var lastTransactionTime = getLastTransactionTimeTask.Result;
 var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
-string lastFiveTransactions = getLastFiveTransactionsTask.Result;
     
     // 判断是否所有返回的数据都是0
 if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
