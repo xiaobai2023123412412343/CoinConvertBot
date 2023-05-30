@@ -245,60 +245,68 @@ public class GoogleTranslateFree
         return translatedTextBuilder.ToString();
     }
 }   
-public static async Task<decimal> GetTotalIncomeAsync(string address, bool isTrx)
+public static async Task<(decimal TotalIncome, bool IsError)> GetTotalIncomeAsync(string address, bool isTrx)
 {
-    var apiUrl = $"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20?only_confirmed=true&only_to=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-    using var httpClient = new HttpClient();
-
-    decimal totalIncome = 0m;
-    string fingerprint = null;
-
-    while (true)
+    try
     {
-        var currentUrl = apiUrl + (fingerprint != null ? $"&fingerprint={fingerprint}" : "");
-        var response = await httpClient.GetAsync(currentUrl);
-        var json = await response.Content.ReadAsStringAsync();
-        var jsonDocument = JsonDocument.Parse(json);
+        var apiUrl = $"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20?only_confirmed=true&only_to=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        using var httpClient = new HttpClient();
 
-        if (!jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement))
+        decimal totalIncome = 0m;
+        string fingerprint = null;
+
+        while (true)
         {
-            break;
+            var currentUrl = apiUrl + (fingerprint != null ? $"&fingerprint={fingerprint}" : "");
+            var response = await httpClient.GetAsync(currentUrl);
+            var json = await response.Content.ReadAsStringAsync();
+            var jsonDocument = JsonDocument.Parse(json);
+
+            if (!jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement))
+            {
+                break;
+            }
+
+            foreach (var transactionElement in dataElement.EnumerateArray())
+            {
+                if (!transactionElement.TryGetProperty("to", out var toAddressElement))
+                {
+                    continue;
+                }
+                var toAddress = toAddressElement.GetString();
+
+                if (toAddress != address)
+                {
+                    continue;
+                }
+
+                if (!transactionElement.TryGetProperty("value", out var valueElement))
+                {
+                    continue;
+                }
+                var value = valueElement.GetString();
+
+                totalIncome += decimal.Parse(value) / 1_000_000; // 假设USDT有6位小数
+
+                if (transactionElement.TryGetProperty("transaction_hash", out var transactionIdElement))
+                {
+                    fingerprint = transactionIdElement.GetString();
+                }
+            }
+
+            if (!jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) || !hasNextElement.GetBoolean())
+            {
+                break;
+            }
         }
 
-        foreach (var transactionElement in dataElement.EnumerateArray())
-        {
-            if (!transactionElement.TryGetProperty("to", out var toAddressElement))
-            {
-                continue;
-            }
-            var toAddress = toAddressElement.GetString();
-
-            if (toAddress != address)
-            {
-                continue;
-            }
-
-            if (!transactionElement.TryGetProperty("value", out var valueElement))
-            {
-                continue;
-            }
-            var value = valueElement.GetString();
-
-            totalIncome += decimal.Parse(value) / 1_000_000; //假设USDT有6位小数
-
-            if (transactionElement.TryGetProperty("transaction_hash", out var transactionIdElement))
-            {
-                fingerprint = transactionIdElement.GetString();
-            }
-        }
-
-        if (!jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) || !hasNextElement.GetBoolean())
-        {
-            break;
-        }
+        return (totalIncome, false); // 如果没有发生错误，返回结果和IsError=false
     }
-
-    return totalIncome;
+    catch (Exception ex)
+    {
+        // 发生错误时，返回默认值和IsError=true
+        return (0m, true);
+    }
 }
     
 public static DateTime ConvertToBeijingTime(DateTime utcDateTime)
@@ -555,15 +563,15 @@ var (creationTime, isErrorGetAccountCreationTime) = getAccountCreationTimeResult
 var getLastTransactionTimeResult = getLastTransactionTimeTask.Result;
 var (lastTransactionTime, isErrorGetLastTransactionTime) = getLastTransactionTimeResult;
 
+var getUsdtTotalIncomeResult = getUsdtTotalIncomeTask.Result;
+var (usdtTotalIncome, isErrorGetUsdtTotalIncome) = getUsdtTotalIncomeResult;
+
 // 检查是否发生了请求错误
-if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime)
+if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances|| isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetUsdtTotalIncome)
 {
-    await botClient.SendTextMessageAsync(message.Chat.Id, "接口维护中，请稍等重试！");
+    await botClient.SendTextMessageAsync(message.Chat.Id, "接口维护中，请稍后重试！");
     return;
 }
-
-// 如果没有发生错误，则继续处理结果
-var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
     
     // 判断是否所有返回的数据都是0
 if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
