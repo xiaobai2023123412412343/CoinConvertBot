@@ -395,29 +395,37 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance)> GetBalancesA
 
     return (usdtBalance, trxBalance);
 }
-public static async Task<(double remainingBandwidth, double totalBandwidth, int transactions, int transactionsIn, int transactionsOut)> GetBandwidthAsync(string address)
+public static async Task<(double remainingBandwidth, double totalBandwidth, int transactions, int transactionsIn, int transactionsOut, bool isError)> GetBandwidthAsync(string address)
 {
-    string url = $"https://apilist.tronscanapi.com/api/accountv2?address={address}";
-    using var httpClient = new HttpClient();
-    var result = await httpClient.GetStringAsync(url);
-
-    // 解析返回的 JSON 数据
-    var jsonResult = JObject.Parse(result);
-
-    // 检查是否为空的 JSON 对象
-    if (!jsonResult.HasValues)
+    try
     {
-        // 如果为空，直接返回默认值
-        return (0, 0, 0, 0, 0);
+        string url = $"https://apilist.tronscanapi.com/api/accountv2?address={address}";
+        using var httpClient = new HttpClient();
+        var result = await httpClient.GetStringAsync(url);
+
+        // 解析返回的 JSON 数据
+        var jsonResult = JObject.Parse(result);
+
+        // 检查是否为空的 JSON 对象
+        if (!jsonResult.HasValues)
+        {
+            // 如果为空，直接返回默认值
+            return (0, 0, 0, 0, 0, false);
+        }
+
+        double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
+        double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
+        int transactions = jsonResult["transactions"].ToObject<int>();
+        int transactionsIn = jsonResult["transactions_in"].ToObject<int>();
+        int transactionsOut = jsonResult["transactions_out"].ToObject<int>();
+
+        return (freeNetRemaining, freeNetLimit, transactions, transactionsIn, transactionsOut, false);
     }
-
-    double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
-    double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
-    int transactions = jsonResult["transactions"].ToObject<int>();
-    int transactionsIn = jsonResult["transactions_in"].ToObject<int>();
-    int transactionsOut = jsonResult["transactions_out"].ToObject<int>();
-
-    return (freeNetRemaining, freeNetLimit, transactions, transactionsIn, transactionsOut);
+    catch
+    {
+        // 如果发生异常，返回一个特殊的元组值
+        return (0, 0, 0, 0, 0, true);
+    }
 }
 public static async Task<string> GetLastFiveTransactionsAsync(string tronAddress)
 {
@@ -506,8 +514,15 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var creationTime = getAccountCreationTimeTask.Result;
     var lastTransactionTime = getLastTransactionTimeTask.Result;
     var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
-    var (remainingBandwidth, totalBandwidth, transactions, transactionsIn, transactionsOut) = getBandwidthTask.Result;
+    var (remainingBandwidth, totalBandwidth, transactions, transactionsIn, transactionsOut, isError) = getBandwidthTask.Result;
     string lastFiveTransactions = getLastFiveTransactionsTask.Result;
+    
+    // 检查是否发生了请求错误
+    if (isError)
+    {
+        await botClient.SendTextMessageAsync(message.Chat.Id, "接口维护中，请稍等重试！");
+        return;
+    }    
     
     // 判断是否所有返回的数据都是0
 if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
