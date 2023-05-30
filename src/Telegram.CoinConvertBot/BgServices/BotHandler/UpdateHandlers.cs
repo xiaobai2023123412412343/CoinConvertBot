@@ -330,28 +330,36 @@ public static async Task<DateTime> GetLastTransactionTimeAsync(string address)
     return ConvertToBeijingTime(utcDateTime);
 }
     
-public static async Task<DateTime> GetAccountCreationTimeAsync(string address)
+public static async Task<(DateTime CreationTime, bool IsError)> GetAccountCreationTimeAsync(string address)
 {
-    using var httpClient = new HttpClient();
-    var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{address}");
-    var json = await response.Content.ReadAsStringAsync();
-
-    var jsonDocument = JsonDocument.Parse(json);
-    var creationTimestamp = 0L;
-
-    if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
+    try
     {
-        var firstElement = dataElement[0];
+        using var httpClient = new HttpClient();
+        var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{address}");
+        var json = await response.Content.ReadAsStringAsync();
 
-        if (firstElement.TryGetProperty("create_time", out JsonElement createTimeElement))
+        var jsonDocument = JsonDocument.Parse(json);
+        var creationTimestamp = 0L;
+
+        if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
         {
-            creationTimestamp = createTimeElement.GetInt64();
-        }
-    }
+            var firstElement = dataElement[0];
 
-    var utcDateTime = DateTimeOffset.FromUnixTimeMilliseconds(creationTimestamp).DateTime;
-    return ConvertToBeijingTime(utcDateTime);
-}  
+            if (firstElement.TryGetProperty("create_time", out JsonElement createTimeElement))
+            {
+                creationTimestamp = createTimeElement.GetInt64();
+            }
+        }
+
+        var utcDateTime = DateTimeOffset.FromUnixTimeMilliseconds(creationTimestamp).DateTime;
+        return (ConvertToBeijingTime(utcDateTime), false); // 如果没有发生错误，返回结果和IsError=false
+    }
+    catch (Exception ex)
+    {
+        // 发生错误时，返回默认值和IsError=true
+        return (DateTime.MinValue, true);
+    }
+} 
    
 public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)> GetBalancesAsync(string address)
 {
@@ -533,15 +541,17 @@ var (lastFiveTransactions, isErrorGetLastFiveTransactions) = getLastFiveTransact
 var getBalancesResult = getBalancesTask.Result;
 var (usdtBalance, trxBalance, isErrorGetBalances) = getBalancesResult;
 
+var getAccountCreationTimeResult = getAccountCreationTimeTask.Result;
+var (creationTime, isErrorGetAccountCreationTime) = getAccountCreationTimeResult;
+
 // 检查是否发生了请求错误
-if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances)
+if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime)
 {
     await botClient.SendTextMessageAsync(message.Chat.Id, "接口维护中，请稍等重试！");
     return;
 }
 
 // 如果没有发生错误，则继续处理结果
-var creationTime = getAccountCreationTimeTask.Result;
 var lastTransactionTime = getLastTransactionTimeTask.Result;
 var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
     
