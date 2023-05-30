@@ -68,21 +68,27 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
 }  
 public static async Task<string> GetTransactionRecordsAsync()
 {
-    string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";//监控转账TRX地址交易并返回TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv
-    string outcomeUrl = $"https://apilist.tronscan.org/api/transaction?address={outcomeAddress}&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=50&page=1";
-    
-    //监控收款地址交易并返回TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC
-    string usdtUrl = $"https://api.trongrid.io/v1/accounts/TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC/transactions/trc20?only_confirmed=true&limit=20&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&min_timestamp=0&max_timestamp={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
-
-    using (var httpClient = new HttpClient())
+    try
     {
-        var outcomeResponse = await httpClient.GetStringAsync(outcomeUrl);
-        var outcomeTransactions = ParseTransactions(outcomeResponse, "TRX");
+        string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
+        string outcomeUrl = $"https://apilist.tronscan.org/api/transaction?address={outcomeAddress}&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=50&page=1";
 
-        var usdtResponse = await httpClient.GetStringAsync(usdtUrl);
-        var usdtTransactions = ParseTransactions(usdtResponse, "USDT");
+        string usdtUrl = $"https://api.trongrid.io/v1/accounts/TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC/transactions/trc20?only_confirmed=true&limit=20&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&min_timestamp=0&max_timestamp={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
 
-        return FormatTransactionRecords(outcomeTransactions.Concat(usdtTransactions).ToList());
+        using (var httpClient = new HttpClient())
+        {
+            var outcomeResponse = await httpClient.GetStringAsync(outcomeUrl);
+            var outcomeTransactions = ParseTransactions(outcomeResponse, "TRX");
+
+            var usdtResponse = await httpClient.GetStringAsync(usdtUrl);
+            var usdtTransactions = ParseTransactions(usdtResponse, "USDT");
+
+            return FormatTransactionRecords(outcomeTransactions.Concat(usdtTransactions).ToList());
+        }
+    }
+    catch (Exception ex)
+    {
+        return $"获取交易记录时发生错误：{ex.Message}";
     }
 }
 
@@ -1417,27 +1423,33 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
             Log.Logger.Error(e, "更新Telegram用户信息失败！");
         }
 await SendHelpMessageAsync(botClient, message);        
-// 在处理回调的地方
+// 获取交易记录
 if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
 {
-    var transactionRecords = await UpdateHandlers.GetTransactionRecordsAsync();
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    try
     {
-        // 创建一个内联按钮数组，每个数组表示一行按钮
-        new []
+        var transactionRecords = await UpdateHandlers.GetTransactionRecordsAsync();
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-            // 创建一个内联按钮，设置按钮的文本和回调数据
-            // 当用户点击该按钮时，机器人将收到一个带有回调数据的回调查询  跳转到机器人界面
-            InlineKeyboardButton.WithUrl("\u2705 收入支出全公开，请放心兑换！\u2705", "https://t.me/yifanfubot")
-        }
-    });
+            new []
+            {
+                InlineKeyboardButton.WithUrl("\u2705 收入支出全公开，请放心兑换！\u2705", "https://t.me/yifanfubot")
+            }
+        });
 
-    // 将内联键盘添加到发送消息的参数中
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: transactionRecords,
-        replyMarkup: inlineKeyboard
-    );
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: transactionRecords,
+            replyMarkup: inlineKeyboard
+        );
+    }
+    catch (Exception ex)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"获取交易记录时发生错误：{ex.Message}"
+        );
+    }
 }      
         // 检查是否接收到了 /gg 消息，收到就启动广告
         if (messageText.StartsWith("/gg"))
