@@ -477,8 +477,8 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
 
             JArray transactions = (JArray)jsonResponse["data"];
 
-            // 筛选与Tether相关的交易
-            transactions = new JArray(transactions.Where(t => (string)t["token_info"]["name"] == "Tether USD"));
+            // 筛选与Tether相关的交易，并过滤金额小于1USDT的交易
+            transactions = new JArray(transactions.Where(t => (string)t["token_info"]["name"] == "Tether USD" && decimal.Parse((string)t["value"]) >= 1_000_000));
 
             // 取筛选后的前5笔交易
             transactions = new JArray(transactions.Take(5));
