@@ -508,21 +508,26 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getUsdtTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask);
 
 
-    // 处理结果
-    var (usdtTotal, transferCount) = getUsdtTransferTotalTask.Result;
-    var (usdtBalance, trxBalance) = getBalancesTask.Result;
-    var creationTime = getAccountCreationTimeTask.Result;
-    var lastTransactionTime = getLastTransactionTimeTask.Result;
-    var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
-    var (remainingBandwidth, totalBandwidth, transactions, transactionsIn, transactionsOut, isError) = getBandwidthTask.Result;
-    string lastFiveTransactions = getLastFiveTransactionsTask.Result;
-    
-    // 检查是否发生了请求错误
-    if (isError)
-    {
-        await botClient.SendTextMessageAsync(message.Chat.Id, "接口维护中，请稍等重试！");
-        return;
-    }    
+// 处理结果
+var usdtTransferTotalResult = getUsdtTransferTotalTask.Result;
+var (usdtTotal, transferCount, isErrorUsdtTransferTotal) = usdtTransferTotalResult;
+
+var getBandwidthResult = getBandwidthTask.Result;
+var (remainingBandwidth, totalBandwidth, transactions, transactionsIn, transactionsOut, isErrorGetBandwidth) = getBandwidthResult;
+
+// 检查是否发生了请求错误
+if (isErrorUsdtTransferTotal || isErrorGetBandwidth)
+{
+    await botClient.SendTextMessageAsync(message.Chat.Id, "接口维护中，请稍等重试！");
+    return;
+}
+
+// 如果没有发生错误，则继续处理结果
+var (usdtBalance, trxBalance) = getBalancesTask.Result;
+var creationTime = getAccountCreationTimeTask.Result;
+var lastTransactionTime = getLastTransactionTimeTask.Result;
+var usdtTotalIncome = getUsdtTotalIncomeTask.Result;
+string lastFiveTransactions = getLastFiveTransactionsTask.Result;
     
     // 判断是否所有返回的数据都是0
 if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
@@ -616,46 +621,54 @@ else
 }
 
 
-public static async Task<(decimal UsdtTotal, int TransferCount)> GetUsdtTransferTotalAsync(string fromAddress, string toAddress)
+public static async Task<(decimal UsdtTotal, int TransferCount, bool IsError)> GetUsdtTransferTotalAsync(string fromAddress, string toAddress)
 {
-    // 假设USDT合约地址为: TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
-    var apiUrl = $"https://api.trongrid.io/v1/accounts/{fromAddress}/transactions/trc20?only_confirmed=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-    using var httpClient = new HttpClient();
-
-    var usdtTotal = 0m;
-    var transferCount = 0;  // 添加计数器用于统计转账次数
-    string fingerprint = null;
-
-    while (true)
+    try
     {
-        var currentUrl = apiUrl + (fingerprint != null ? $"&fingerprint={fingerprint}" : "");
-        var response = await httpClient.GetAsync(currentUrl);
-        var json = await response.Content.ReadAsStringAsync();
-        var jsonDocument = JsonDocument.Parse(json);
+        // 假设USDT合约地址为: TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
+        var apiUrl = $"https://api.trongrid.io/v1/accounts/{fromAddress}/transactions/trc20?only_confirmed=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        using var httpClient = new HttpClient();
 
-        if (!jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement))
-        {
-            break;
-        }
+        var usdtTotal = 0m;
+        var transferCount = 0;  // 添加计数器用于统计转账次数
+        string fingerprint = null;
 
-        foreach (var transactionElement in dataElement.EnumerateArray())
+        while (true)
         {
-            if (transactionElement.TryGetProperty("to", out JsonElement toElement) && toElement.GetString() == toAddress)
+            var currentUrl = apiUrl + (fingerprint != null ? $"&fingerprint={fingerprint}" : "");
+            var response = await httpClient.GetAsync(currentUrl);
+            var json = await response.Content.ReadAsStringAsync();
+            var jsonDocument = JsonDocument.Parse(json);
+
+            if (!jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement))
             {
-                var value = transactionElement.GetProperty("value").GetString();
-                usdtTotal += decimal.Parse(value) / 1_000_000; // 假设USDT有6位小数
-                transferCount++;  // 当找到符合条件的转账时，计数器加一
+                break;
             }
-            fingerprint = transactionElement.GetProperty("transaction_id").GetString();
+
+            foreach (var transactionElement in dataElement.EnumerateArray())
+            {
+                if (transactionElement.TryGetProperty("to", out JsonElement toElement) && toElement.GetString() == toAddress)
+                {
+                    var value = transactionElement.GetProperty("value").GetString();
+                    usdtTotal += decimal.Parse(value) / 1_000_000; // 假设USDT有6位小数
+                    transferCount++;  // 当找到符合条件的转账时，计数器加一
+                }
+                fingerprint = transactionElement.GetProperty("transaction_id").GetString();
+            }
+
+            if (!jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) || !hasNextElement.GetBoolean())
+            {
+                break;
+            }
         }
 
-        if (!jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) || !hasNextElement.GetBoolean())
-        {
-            break;
-        }
+        return (usdtTotal, transferCount, false);
     }
-
-    return (usdtTotal, transferCount);
+    catch (Exception)
+    {
+        // 当发生异常时，返回一个特殊的结果，表示发生了错误
+        return (0, 0, true);
+    }
 }
 
     
