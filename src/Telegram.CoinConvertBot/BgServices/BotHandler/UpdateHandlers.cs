@@ -77,11 +77,13 @@ public static async Task<string> GetTransactionRecordsAsync()
 
         using (var httpClient = new HttpClient())
         {
-            var outcomeResponse = await httpClient.GetStringAsync(outcomeUrl);
-            var outcomeTransactions = ParseTransactions(outcomeResponse, "TRX");
+            var outcomeResponseTask = httpClient.GetStringAsync(outcomeUrl);
+            var usdtResponseTask = httpClient.GetStringAsync(usdtUrl);
 
-            var usdtResponse = await httpClient.GetStringAsync(usdtUrl);
-            var usdtTransactions = ParseTransactions(usdtResponse, "USDT");
+            await Task.WhenAll(outcomeResponseTask, usdtResponseTask);
+
+            var outcomeTransactions = ParseTransactions(outcomeResponseTask.Result, "TRX");
+            var usdtTransactions = ParseTransactions(usdtResponseTask.Result, "USDT");
 
             return FormatTransactionRecords(outcomeTransactions.Concat(usdtTransactions).ToList());
         }
