@@ -120,7 +120,19 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
             else if (token == "USDT")
             {
                 // 只统计 type 为 "Transfer" 的交易
-                if (data["type"] != null && data["type"].ToString() != "Transfer")
+                if (data["type"] == null || data["type"].ToString() != "Transfer")
+                {
+                    continue;
+                }
+
+                // 添加条件，只统计名字为 "Tether USD" 的交易
+                bool isTetherUSD = false;
+                if (data["token_info"] != null && data["token_info"]["name"] != null)
+                {
+                    isTetherUSD = data["token_info"]["name"].ToString() == "Tether USD";
+                }
+
+                if (!isTetherUSD)
                 {
                     continue;
                 }
