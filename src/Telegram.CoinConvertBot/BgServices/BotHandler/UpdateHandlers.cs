@@ -472,10 +472,20 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
         try
         {
             HttpResponseMessage response = await httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                return (string.Empty, false); // 如果没有返回消息或服务器在维护，返回空字符串且IsError=false
+            }
+
             string jsonString = await response.Content.ReadAsStringAsync();
             JObject jsonResponse = JObject.Parse(jsonString);
 
             JArray transactions = (JArray)jsonResponse["data"];
+
+            if (transactions == null || !transactions.HasValues)
+            {
+                return (string.Empty, false); // 如果没有交易数据，返回空字符串且IsError=false
+            }
 
             // 筛选与Tether相关的交易，并过滤金额小于1USDT的交易
             transactions = new JArray(transactions.Where(t => (string)t["token_info"]["name"] == "Tether USD" && decimal.Parse((string)t["value"]) >= 1_000_000));
