@@ -26,6 +26,9 @@ using System.Text.RegularExpressions;
 using System.Net.Http;
 using System.Data;
 using System.Text;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
@@ -191,6 +194,40 @@ private static string FormatTransactionRecords(List<(DateTime timestamp, string 
     return sb.ToString();
 }
 //以上3个方法是监控收款地址以及出款地址的交易记录并返回！    
+public class GoogleTranslateFree
+{
+    private const string GoogleTranslateUrl = "https://translate.google.com/translate_a/single?client=gtx&sl=auto&tl={0}&dt=t&q={1}";
+
+    public static async Task<(string TranslatedText, string Pronunciation)> TranslateAsync(string text, string targetLanguage)
+    {
+        using var httpClient = new HttpClient();
+
+        var url = string.Format(GoogleTranslateUrl, Uri.EscapeDataString(targetLanguage), Uri.EscapeDataString(text));
+        var response = await httpClient.GetAsync(url);
+        var json = await response.Content.ReadAsStringAsync();
+
+        var jsonArray = JsonSerializer.Deserialize<JsonElement>(json);
+
+        var translatedTextBuilder = new StringBuilder();
+        foreach (var segment in jsonArray[0].EnumerateArray())
+        {
+            translatedTextBuilder.Append(segment[0].ToString());
+        }
+
+        var translatedText = translatedTextBuilder.ToString();
+        var pronunciation = jsonArray[0][0][1].ToString();
+
+        return (translatedText, pronunciation);
+    }
+
+    public static string GetPronunciationAudioUrl(string text, string languageCode)
+    {
+        var encodedText = Uri.EscapeDataString(text);
+        var audioUrl = $"https://translate.google.com/translate_tts?ie=UTF-8&total=1&idx=0&textlen={text.Length}&client=tw-ob&q={encodedText}&tl={languageCode}";
+        return audioUrl;
+    }
+}
+
 private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClient, Message message)
 {
     // 从消息中提取目标语言和待翻译文本
@@ -204,8 +241,14 @@ private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClie
         if (LanguageCodes.TryGetValue(targetLanguageName, out string targetLanguageCode))
         {
             // 使用 GoogleTranslateFree 或其他翻译服务进行翻译
-            var translatedText = await GoogleTranslateFree.TranslateAsync(textToTranslate, targetLanguageCode);
-            await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：\n\n<code>{translatedText}</code>", parseMode: ParseMode.Html);
+            var (translatedText, _) = await GoogleTranslateFree.TranslateAsync(textToTranslate, targetLanguageCode);
+            var responseText = $"翻译结果：\n\n<code>{translatedText}</code>";
+
+            await botClient.SendTextMessageAsync(message.Chat.Id, responseText, parseMode: ParseMode.Html);
+
+            // 发送发音音频
+            var audioUrl = GoogleTranslateFree.GetPronunciationAudioUrl(translatedText, targetLanguageCode);
+            await botClient.SendAudioAsync(message.Chat.Id, new InputOnlineFile(audioUrl));
         }
         else
         {
@@ -220,6 +263,7 @@ private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClie
         await botClient.SendTextMessageAsync(message.Chat.Id, "无法识别的翻译命令，请确保您的输入格式正确，例如：<code>转英语 你好</code>", parseMode: ParseMode.Html);
     }
 }
+
 private static readonly Dictionary<string, string> LanguageCodes = new Dictionary<string, string>
 {
     { "英语", "en" },
@@ -236,38 +280,55 @@ private static readonly Dictionary<string, string> LanguageCodes = new Dictionar
     { "印地语", "hi" },
     { "孟加拉文", "bn" },
     { "葡萄牙语", "pt" },
-    { "俄罗斯语", "ru" },
-    { "旁遮普文", "pa" },
-    { "马拉地文", "mr" },
-    { "泰米尔文", "ta" },
-    { "土耳其语", "tr" },
+    { "俄语", "ru" },
+    { "德语", "de" },
     { "法语", "fr" },
-    { "卡纳达文", "kn" },
-    { "泰卢固文", "te" },
+    { "意大利语", "it" },
+    { "荷兰语", "nl" },
+    { "土耳其语", "tr" },
+    { "希腊语", "el" },
+    { "匈牙利语", "hu" },
+    { "波兰语", "pl" },
+    { "瑞典语", "sv" },
+    { "挪威语", "no" },
+    { "丹麦语", "da" },
+    { "芬兰语", "fi" },
+    { "捷克语", "cs" },
+    { "罗马尼亚语", "ro" },
+    { "斯洛文尼亚语", "sl" },
+    { "克罗地亚语", "hr" },
+    { "保加利亚语", "bg" },
+    { "塞尔维亚语", "sr" },
+    { "斯洛伐克语", "sk" },
+    { "立陶宛语", "lt" },
+    { "拉脱维亚语", "lv" },
+    { "爱沙尼亚语", "et" },
+    { "乌克兰语", "uk" },
+    { "格鲁吉亚语", "ka" },
+    { "亚美尼亚语", "hy" },
+    { "阿塞拜疆语", "az" },
+    { "波斯语", "fa" },
     { "乌尔都语", "ur" },
-};    
-public class GoogleTranslateFree
-{
-    private const string GoogleTranslateUrl = "https://translate.google.com/translate_a/single?client=gtx&sl=auto&tl={0}&dt=t&q={1}";
-    
-    public static async Task<string> TranslateAsync(string text, string targetLanguage)
-    {
-        using var httpClient = new HttpClient();
-
-        var url = string.Format(GoogleTranslateUrl, Uri.EscapeDataString(targetLanguage), Uri.EscapeDataString(text));
-        var response = await httpClient.GetAsync(url);
-        var json = await response.Content.ReadAsStringAsync();
-        var jsonArray = JArray.Parse(json);
-
-        var translatedTextBuilder = new StringBuilder();
-        foreach (var segment in jsonArray[0])
-        {
-            translatedTextBuilder.Append(segment[0].ToString());
-        }
-
-        return translatedTextBuilder.ToString();
-    }
-}   
+    { "帕什图语", "ps" },
+    { "哈萨克语", "kk" },
+    { "乌兹别克语", "uz" },
+    { "塔吉克语", "tg" },
+    { "藏语", "bo" },
+    { "蒙古语", "mn" },
+    { "白俄罗斯语", "be" },
+    { "阿尔巴尼亚语", "sq" },
+    { "马其顿语", "mk" },
+    { "卢森堡语", "lb" },
+    { "爱尔兰语", "ga" },
+    { "威尔士语", "cy" },
+    { "巴斯克语", "eu" },
+    { "冰岛语", "is" },
+    { "马耳他语", "mt" },
+    { "加利西亚语", "gl" },
+    { "塞尔维亚克罗地亚语", "sh" },
+    { "斯瓦希里语", "sw" },
+    { "印尼语", "id" }
+};
 public static async Task<(decimal TotalIncome, bool IsError)> GetTotalIncomeAsync(string address, bool isTrx)
 {
     try
