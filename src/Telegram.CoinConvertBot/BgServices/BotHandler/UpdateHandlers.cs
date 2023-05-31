@@ -66,8 +66,11 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
         );
     }
 }  
-public static async Task<string> GetTransactionRecordsAsync()
+public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient botClient, Message message)
 {
+     // 回复用户正在统计
+    await botClient.SendTextMessageAsync(message.Chat.Id, "正在统计，请稍后...");
+    
     try
     {
         string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
@@ -1450,7 +1453,8 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
 {
     try
     {
-        var transactionRecords = await UpdateHandlers.GetTransactionRecordsAsync();
+        // 调用GetTransactionRecordsAsync时传递botClient和message参数
+        var transactionRecords = await UpdateHandlers.GetTransactionRecordsAsync(botClient, message);
         var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
             new []
