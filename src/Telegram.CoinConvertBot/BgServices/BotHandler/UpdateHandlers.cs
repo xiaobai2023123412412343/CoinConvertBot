@@ -697,18 +697,15 @@ public static async Task<(decimal UsdtTotal, int TransferCount, bool IsError)> G
 {
     try
     {
-        // 假设USDT合约地址为: TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
-        var apiUrl = $"https://api.trongrid.io/v1/accounts/{fromAddress}/transactions/trc20?only_confirmed=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        var apiUrl = $"https://api.trongrid.io/v1/accounts/{toAddress}/transactions/trc20?only_confirmed=true&limit=200&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
         using var httpClient = new HttpClient();
 
         var usdtTotal = 0m;
-        var transferCount = 0;  // 添加计数器用于统计转账次数
-        string fingerprint = null;
+        var transferCount = 0;
 
         while (true)
         {
-            var currentUrl = apiUrl + (fingerprint != null ? $"&fingerprint={fingerprint}" : "");
-            var response = await httpClient.GetAsync(currentUrl);
+            var response = await httpClient.GetAsync(apiUrl);
             var json = await response.Content.ReadAsStringAsync();
             var jsonDocument = JsonDocument.Parse(json);
 
@@ -719,19 +716,20 @@ public static async Task<(decimal UsdtTotal, int TransferCount, bool IsError)> G
 
             foreach (var transactionElement in dataElement.EnumerateArray())
             {
-                if (transactionElement.TryGetProperty("to", out JsonElement toElement) && toElement.GetString() == toAddress)
+                if (transactionElement.TryGetProperty("from", out JsonElement fromElement) && fromElement.GetString() == fromAddress)
                 {
                     var value = transactionElement.GetProperty("value").GetString();
                     usdtTotal += decimal.Parse(value) / 1_000_000; // 假设USDT有6位小数
                     transferCount++;  // 当找到符合条件的转账时，计数器加一
                 }
-                fingerprint = transactionElement.GetProperty("transaction_id").GetString();
             }
 
             if (!jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) || !hasNextElement.GetBoolean())
             {
                 break;
             }
+
+            apiUrl = $"https://api.trongrid.io/v1/accounts/{toAddress}/transactions/trc20?only_confirmed=true&limit=200&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&fingerprint={jsonDocument.RootElement.GetProperty("fingerprint").GetString()}";
         }
 
         return (usdtTotal, transferCount, false);
