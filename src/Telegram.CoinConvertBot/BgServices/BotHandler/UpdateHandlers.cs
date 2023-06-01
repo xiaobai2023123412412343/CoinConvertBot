@@ -1352,7 +1352,7 @@ else
                 if (containsNonChinese)
                 {
                     var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
-                    var translatedText = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
+                    var (translatedText, _) = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
                     await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：\n\n<code>{translatedText}</code>", parseMode: ParseMode.Html);
                 }
             }
