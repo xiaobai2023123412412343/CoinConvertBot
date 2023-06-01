@@ -33,6 +33,10 @@ using System.Text;
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 
+//yifanfu或@yifanfu或t.me/yifanfu为管理员ID
+//yifanfubot或t.me/yifanfubot或@yifanfubot为机器人ID
+//TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC为监控的收款地址
+//TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv为监控的转账地址
 
 public static class UpdateHandlers
 {
