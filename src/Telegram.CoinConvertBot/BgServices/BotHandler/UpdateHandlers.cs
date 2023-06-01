@@ -1886,13 +1886,18 @@ if (UserId != AdminUserId)
              // 调用新方法获取今日收入
             //Log.Information("查询今日收入...");
             string targetReciveAddress = "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC";//填写你想要监控收入的地址
-            decimal todayIncome = await GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
-            //Log.Information($"今日收入: {todayIncome}");
-            
-            // 调用新方法获取本月收入
-            decimal monthlyIncome = await GetMonthlyUSDTIncomeAsync(targetReciveAddress, contractAddress);
-            // 调用新方法获取总收入
-            decimal totalIncome = await GetTotalUSDTIncomeAsync(targetReciveAddress, contractAddress);
+            // 同时运行三个任务（今日收入，本月收入，总收入）
+            Task<decimal> todayIncomeTask = GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
+            Task<decimal> monthlyIncomeTask = GetMonthlyUSDTIncomeAsync(targetReciveAddress, contractAddress);
+            Task<decimal> totalIncomeTask = GetTotalUSDTIncomeAsync(targetReciveAddress, contractAddress);
+
+            // 等待所有任务完成
+            await Task.WhenAll(todayIncomeTask, monthlyIncomeTask, totalIncomeTask);
+
+            // 获取任务的结果
+            decimal todayIncome = todayIncomeTask.Result;
+            decimal monthlyIncome = monthlyIncomeTask.Result;
+            decimal totalIncome = totalIncomeTask.Result;
 
             var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
