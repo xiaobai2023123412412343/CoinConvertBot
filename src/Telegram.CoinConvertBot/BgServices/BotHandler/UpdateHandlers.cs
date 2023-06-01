@@ -1727,6 +1727,39 @@ else
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
         };
+async Task<decimal> GetTotalUSDTIncomeAsync(string ReciveAddress, string contractAddress)
+{
+    // 调用TronGrid API以获取交易记录
+    var httpClient = new HttpClient();
+    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+    string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{ReciveAddress}/transactions/trc20?only_confirmed=true&only_to=true&contract_address={contractAddress}";
+    var response = await httpClient.GetAsync(apiEndpoint);
+
+    if (!response.IsSuccessStatusCode)
+    {
+        // 请求失败，返回0
+        return 0;
+    }
+
+    var jsonResponse = await response.Content.ReadAsStringAsync();
+    JObject transactions = JObject.Parse(jsonResponse);
+
+    // 遍历交易记录并累计 USDT 收入
+    decimal usdtIncome = 0;
+    foreach (var tx in transactions["data"])
+    {
+        // 只统计 type 为 "Transfer" 的交易
+        if ((string)tx["type"] != "Transfer")
+        {
+            continue;
+        }
+
+        var rawAmount = (decimal)tx["value"];
+        usdtIncome += rawAmount / 1_000_000L;
+    }
+
+    return usdtIncome;
+}        
         async Task<decimal> GetMonthlyUSDTIncomeAsync(string ReciveAddress, string contractAddress)
 {
     // 获取本月1号零点的时间戳
@@ -1858,6 +1891,8 @@ if (UserId != AdminUserId)
             
             // 调用新方法获取本月收入
             decimal monthlyIncome = await GetMonthlyUSDTIncomeAsync(targetReciveAddress, contractAddress);
+            // 调用新方法获取总收入
+            decimal totalIncome = await GetTotalUSDTIncomeAsync(targetReciveAddress, contractAddress);
 
             var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
@@ -1872,6 +1907,7 @@ USDT余额： <b>{USDT}</b>
 ————————————————————
 今日承兑：<b>{todayIncome} USDT</b>
 本月承兑：<b>{monthlyIncome} USDT</b>
+累计承兑：<b>{totalIncome} USDT</b>                
 ";
             // 创建包含两行，每行两个按钮的虚拟键盘
             var keyboard = new ReplyKeyboardMarkup(new[]
