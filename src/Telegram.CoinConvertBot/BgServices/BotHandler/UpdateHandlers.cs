@@ -281,7 +281,20 @@ private static bool IsValidUrl(string urlString)
     return Uri.TryCreate(urlString, UriKind.Absolute, out Uri uriResult)
         && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 }
+public static class EmojiHelper
+{
+    private static readonly Regex EmojiRegex = new Regex(@"\p{Cs}", RegexOptions.Compiled);
 
+    public static bool ContainsEmoji(string input)
+    {
+        return EmojiRegex.IsMatch(input);
+    }
+
+    public static bool IsOnlyEmoji(string input)
+    {
+        return EmojiRegex.Replace(input, "").Length == 0;
+    }
+}
 private static readonly Dictionary<string, string> LanguageCodes = new Dictionary<string, string>
 {
     { "英语", "en" },
@@ -1362,7 +1375,10 @@ else
             // 检查输入文本是否为 Tron 地址
             var isTronAddress = Regex.IsMatch(inputText, @"^(T[A-Za-z0-9]{33})$");
 
-            if (!containsKeywordsOrCommandsOrNumbers && !isTronAddress)
+            // 检查输入文本是否仅包含表情符号
+            var isOnlyEmoji = EmojiHelper.IsOnlyEmoji(inputText);
+
+            if (!containsKeywordsOrCommandsOrNumbers && !isTronAddress && !isOnlyEmoji)
             {
                 // 检查输入文本是否包含任何非中文字符
                 var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
