@@ -52,6 +52,24 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+private static async Task BotOnCallbackQueryReceived(ITelegramBotClient botClient, CallbackQuery callbackQuery)
+{
+    var callbackData = callbackQuery.Data;
+
+    if (callbackData == "show_address")
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: callbackQuery.Message.Chat.Id,
+            text: "诚信兑 放心换 (兑换地址点击自动复制)"
+        );
+
+        await botClient.SendTextMessageAsync(
+            chatId: callbackQuery.Message.Chat.Id,
+            text: "<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>",
+            parseMode: ParseMode.Html
+        );
+    }
+}    
 private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Message message)
 {
     if (message.Text.Contains("帮助"))
@@ -1331,6 +1349,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         var handler = update.Type switch
         {
             UpdateType.Message => BotOnMessageReceived(botClient, update.Message!),
+            UpdateType.CallbackQuery => BotOnCallbackQueryReceived(botClient, update.CallbackQuery!),    
             _ => UnknownUpdateHandlerAsync(botClient, update)
         };
     if (update.Type == UpdateType.Message)
@@ -1554,7 +1573,7 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         {
             new []
             {
-                InlineKeyboardButton.WithUrl("\u2705 收入支出全公开，请放心兑换！\u2705", "https://t.me/yifanfubot")
+                InlineKeyboardButton.WithCallbackData("\u2705 收入支出全公开，请放心兑换！\u2705", "show_address")
             }
         });
 
