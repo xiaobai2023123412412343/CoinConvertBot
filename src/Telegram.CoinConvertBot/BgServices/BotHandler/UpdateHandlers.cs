@@ -1614,8 +1614,8 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         }
 else
 {
-    // 修改了正则表达式
-    var calculatorPattern = @"^([-+]?[0-9]*\.?[0-9]+(\s*[-+*/]\s*[-+]?[0-9]*\.?[0-9]+)*)$";
+    // 修改了正则表达式，确保至少有一个运算符
+    var calculatorPattern = @"^(?=.*[-+*/])[-+]?[0-9]*\.?[0-9]+(\s*[-+*/]\s*[-+]?[0-9]*\.?[0-9]+)*$";
     if (Regex.IsMatch(messageText, calculatorPattern))
     {
         // 原始问题备份
@@ -1636,7 +1636,7 @@ else
     {
         // 在这里处理非计算器相关的信息
     }
-}        
+}       
 if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添加 /usd 条件
 {
     var rates = await GetCurrencyRatesAsync();
