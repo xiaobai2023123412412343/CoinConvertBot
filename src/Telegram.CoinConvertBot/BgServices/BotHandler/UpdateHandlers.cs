@@ -60,7 +60,8 @@ private static async Task BotOnCallbackQueryReceived(ITelegramBotClient botClien
     {
         await botClient.SendTextMessageAsync(
             chatId: callbackQuery.Message.Chat.Id,
-            text: "诚信兑 放心换 (兑换地址点击自动复制)"
+            text: "\u2705诚信兑 放心换\u2705 <b>点击地址自动复制</b>",
+            parseMode: ParseMode.Html
         );
 
         await botClient.SendTextMessageAsync(
@@ -69,7 +70,7 @@ private static async Task BotOnCallbackQueryReceived(ITelegramBotClient botClien
             parseMode: ParseMode.Html
         );
     }
-}    
+}  
 private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Message message)
 {
     if (message.Text.Contains("帮助"))
