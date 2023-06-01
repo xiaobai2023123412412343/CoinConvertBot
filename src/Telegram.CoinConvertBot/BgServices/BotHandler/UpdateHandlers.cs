@@ -230,13 +230,13 @@ public class GoogleTranslateFree
 
 private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClient, Message message)
 {
-    // 从消息中提取目标语言和待翻译文本
-    var match = Regex.Match(message.Text, @"转([\u4e00-\u9fa5]+)\s+(.+)");
+    // 修改正则表达式以匹配多行文本
+    var match = Regex.Match(message.Text, @"转([\u4e00-\u9fa5]+)(\s+)(?<textToTranslate>(?:.|\n)+)", RegexOptions.Multiline);
 
     if (match.Success)
     {
         var targetLanguageName = match.Groups[1].Value;
-        var textToTranslate = match.Groups[2].Value;
+        var textToTranslate = match.Groups["textToTranslate"].Value; // 使用命名捕获组获取待翻译文本
 
         if (LanguageCodes.TryGetValue(targetLanguageName, out string targetLanguageCode))
         {
@@ -248,7 +248,19 @@ private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClie
 
             // 发送发音音频
             var audioUrl = GoogleTranslateFree.GetPronunciationAudioUrl(translatedText, targetLanguageCode);
-            await botClient.SendAudioAsync(message.Chat.Id, new InputOnlineFile(audioUrl));
+
+            // 检查音频 URL 是否有效
+            if (IsValidUrl(audioUrl))
+            {
+                try
+                {
+                    await botClient.SendAudioAsync(message.Chat.Id, new InputOnlineFile(audioUrl));
+                }
+                catch (ApiRequestException)
+                {
+                    // 如果发送音频失败，忽略错误并继续
+                }
+            }
         }
         else
         {
@@ -262,6 +274,12 @@ private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClie
         // 如果消息格式不正确，返回错误消息
         await botClient.SendTextMessageAsync(message.Chat.Id, "无法识别的翻译命令，请确保您的输入格式正确，例如：<code>转英语 你好</code>", parseMode: ParseMode.Html);
     }
+}
+
+private static bool IsValidUrl(string urlString)
+{
+    return Uri.TryCreate(urlString, UriKind.Absolute, out Uri uriResult)
+        && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 }
 
 private static readonly Dictionary<string, string> LanguageCodes = new Dictionary<string, string>
