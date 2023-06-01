@@ -60,7 +60,7 @@ private static async Task BotOnCallbackQueryReceived(ITelegramBotClient botClien
     {
         await botClient.SendTextMessageAsync(
             chatId: callbackQuery.Message.Chat.Id,
-            text: "\u2705诚信兑 放心换\u2705 <b>兑换地址点击自动复制</b>\U0001F447",
+            text: "\u2705诚信兑 放心换\u2705 <b>\U0001F447兑换地址点击自动复制</b>\U0001F447",
             parseMode: ParseMode.Html
         );
 
