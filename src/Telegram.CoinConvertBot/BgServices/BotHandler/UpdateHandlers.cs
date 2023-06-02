@@ -64,6 +64,7 @@ public static int ChineseToArabic(string chineseNumber)
     int number = 0;
     int tempNumber = 0;
     int unit = 1;
+    int sectionNumber = 0;
 
     for (int i = 0; i < chineseNumber.Length; i++)
     {
@@ -71,23 +72,34 @@ public static int ChineseToArabic(string chineseNumber)
         if (chnUnitChar.ContainsKey(c))
         {
             unit = chnUnitChar[c];
+
             if (unit == 10000 || unit == 100000000)
             {
-                if (tempNumber == 0 && unit == 10000)
+                if (tempNumber == 0)
                 {
-                    tempNumber = 1;
+                    sectionNumber += 1;
                 }
-                number += tempNumber * unit;
+                else
+                {
+                    sectionNumber += tempNumber;
+                }
+                sectionNumber *= unit;
+                number += sectionNumber;
+                sectionNumber = 0;
                 tempNumber = 0;
             }
             else
             {
+                if (tempNumber == 0 && unit == 10)
+                {
+                    tempNumber = 1;
+                }
                 tempNumber *= unit;
             }
         }
         else if (chnNumChar.ContainsKey(c))
         {
-            tempNumber += chnNumChar[c] * unit;
+            tempNumber = chnNumChar[c];
             unit = 1;
         }
         else if (char.IsDigit(c))
@@ -97,7 +109,7 @@ public static int ChineseToArabic(string chineseNumber)
         }
     }
 
-    number += tempNumber;
+    number += tempNumber + sectionNumber;
     return number;
 }
     
@@ -1846,7 +1858,7 @@ if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添�
 
 else
 {
-    var regex = new Regex(@"^((\d+|[零一二三四五六七八九十百千万亿]+)+)\s*([a-zA-Z]{3}|[\u4e00-\u9fa5]+)$"); // 修改这里: 添加中文数字匹配
+    var regex = new Regex(@"^((\d+|[零一二三四五六七八九十百千万亿]+)+)\s*(([a-zA-Z]{3}|[\u4e00-\u9fa5]+)\s*)+$"); // 修改这里: 添加中文数字匹配
     var match = regex.Match(message.Text);
     if (match.Success)
     {
