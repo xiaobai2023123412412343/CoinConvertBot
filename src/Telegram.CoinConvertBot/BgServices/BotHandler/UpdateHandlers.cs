@@ -881,6 +881,8 @@ public static async Task<(decimal UsdtTotal, int TransferCount, bool IsError)> G
 private static readonly Dictionary<string, string> CurrencyFullNames = new Dictionary<string, string>
 {
     { "USD", "美元" },
+    { "HKD", "港币" },
+    { "TWD", "台币" },
     { "JPY", "日元" },
     { "GBP", "英镑" },
     { "EUR", "欧元" },
@@ -896,7 +898,7 @@ private static readonly Dictionary<string, string> CurrencyFullNames = new Dicti
     { "LAK", "老挝币" },
     { "MMK", "缅甸币" },
     { "MYR", "马来西亚币" },
-};  
+};
 static bool TryGetRateByCurrencyCode(Dictionary<string, (decimal, string)> rates, string currencyCode, out KeyValuePair<string, (decimal, string)> rate)
 {
     foreach (var entry in rates)
@@ -942,6 +944,8 @@ static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
         rates = new Dictionary<string, (decimal, string)>
         {
             { "美元 (USD)", (ratesElement.GetProperty("USD").GetDecimal(), "$") },
+            { "港币 (HKD)", (ratesElement.GetProperty("HKD").GetDecimal(), "HK$") },
+            { "台币 (TWD)", (ratesElement.GetProperty("TWD").GetDecimal(), "NT$") },
             { "日元 (JPY)", (ratesElement.GetProperty("JPY").GetDecimal(), "¥") },
             { "英镑 (GBP)", (ratesElement.GetProperty("GBP").GetDecimal(), "£") },
             { "欧元 (EUR)", (ratesElement.GetProperty("EUR").GetDecimal(), "€") },
