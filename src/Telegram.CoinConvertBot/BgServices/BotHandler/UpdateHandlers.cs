@@ -1724,7 +1724,7 @@ if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添�
 }
 else
 {
-    var regex = new Regex(@"^(\d+)([a-zA-Z]{3}|[\u4e00-\u9fa5]+)$");
+    var regex = new Regex(@"^(\d+)\s*([a-zA-Z]{3}|[\u4e00-\u9fa5]+)$"); // 修改这里: 添加 \s*
     var match = regex.Match(message.Text);
     if (match.Success)
     {
