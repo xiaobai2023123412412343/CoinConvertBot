@@ -208,11 +208,11 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
                     continue;
                 }
 
-                // 添加条件，只统计名字为 "Tether USD" 的交易
+                // 添加条件，只统计名字为 "Tether USD" 的交易且合约地址为 "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
                 bool isTetherUSD = false;
-                if (data["token_info"] != null && data["token_info"]["name"] != null)
+                if (data["token_info"] != null && data["token_info"]["name"] != null && data["token_info"]["address"] != null)
                 {
-                    isTetherUSD = data["token_info"]["name"].ToString() == "Tether USD";
+                    isTetherUSD = data["token_info"]["name"].ToString() == "Tether USD" && data["token_info"]["address"].ToString() == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
                 }
 
                 if (!isTetherUSD)
