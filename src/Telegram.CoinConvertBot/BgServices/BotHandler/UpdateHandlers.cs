@@ -221,12 +221,21 @@ public class GoogleTranslateFree
 {
     private const string GoogleTranslateUrl = "https://translate.google.com/translate_a/single?client=gtx&sl=auto&tl={0}&dt=t&q={1}";
 
-    public static async Task<(string TranslatedText, string Pronunciation)> TranslateAsync(string text, string targetLanguage)
+    public static async Task<(string TranslatedText, string Pronunciation, bool IsError)> TranslateAsync(string text, string targetLanguage)
     {
         using var httpClient = new HttpClient();
 
-        var url = string.Format(GoogleTranslateUrl, Uri.EscapeDataString(targetLanguage), Uri.EscapeDataString(text));
-        var response = await httpClient.GetAsync(url);
+        HttpResponseMessage response;
+        try
+        {
+            var url = string.Format(GoogleTranslateUrl, Uri.EscapeDataString(targetLanguage), Uri.EscapeDataString(text));
+            response = await httpClient.GetAsync(url);
+        }
+        catch (Exception)
+        {
+            return (string.Empty, string.Empty, true);
+        }
+
         var json = await response.Content.ReadAsStringAsync();
 
         var jsonArray = JsonSerializer.Deserialize<JsonElement>(json);
@@ -240,7 +249,7 @@ public class GoogleTranslateFree
         var translatedText = translatedTextBuilder.ToString();
         var pronunciation = jsonArray[0][0][1].ToString();
 
-        return (translatedText, pronunciation);
+        return (translatedText, pronunciation, false);
     }
 
     public static string GetPronunciationAudioUrl(string text, string languageCode)
@@ -264,24 +273,32 @@ private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClie
         if (LanguageCodes.TryGetValue(targetLanguageName, out string targetLanguageCode))
         {
             // 使用 GoogleTranslateFree 或其他翻译服务进行翻译
-            var (translatedText, _) = await GoogleTranslateFree.TranslateAsync(textToTranslate, targetLanguageCode);
-            var responseText = $"翻译结果：\n\n<code>{translatedText}</code>";
+            var (translatedText, _, isError) = await GoogleTranslateFree.TranslateAsync(textToTranslate, targetLanguageCode);
 
-            await botClient.SendTextMessageAsync(message.Chat.Id, responseText, parseMode: ParseMode.Html);
-
-            // 发送发音音频
-            var audioUrl = GoogleTranslateFree.GetPronunciationAudioUrl(translatedText, targetLanguageCode);
-
-            // 检查音频 URL 是否有效
-            if (IsValidUrl(audioUrl))
+            if (isError)
             {
-                try
+                await botClient.SendTextMessageAsync(message.Chat.Id, "翻译服务异常，请稍后重试。");
+            }
+            else
+            {
+                var responseText = $"翻译结果：\n\n<code>{translatedText}</code>";
+
+                await botClient.SendTextMessageAsync(message.Chat.Id, responseText, parseMode: ParseMode.Html);
+
+                // 发送发音音频
+                var audioUrl = GoogleTranslateFree.GetPronunciationAudioUrl(translatedText, targetLanguageCode);
+
+                // 检查音频 URL 是否有效
+                if (IsValidUrl(audioUrl))
                 {
-                    await botClient.SendAudioAsync(message.Chat.Id, new InputOnlineFile(audioUrl));
-                }
-                catch (ApiRequestException)
-                {
-                    // 如果发送音频失败，忽略错误并继续
+                    try
+                    {
+                        await botClient.SendAudioAsync(message.Chat.Id, new InputOnlineFile(audioUrl));
+                    }
+                    catch (ApiRequestException)
+                    {
+                        // 如果发送音频失败，忽略错误并继续
+                    }
                 }
             }
         }
@@ -298,7 +315,6 @@ private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClie
         await botClient.SendTextMessageAsync(message.Chat.Id, "无法识别的翻译命令，请确保您的输入格式正确，例如：<code>转英语 你好</code>", parseMode: ParseMode.Html);
     }
 }
-
 private static bool IsValidUrl(string urlString)
 {
     return Uri.TryCreate(urlString, UriKind.Absolute, out Uri uriResult)
@@ -1426,8 +1442,15 @@ else
                 if (containsNonChinese)
                 {
                     var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
-                    var (translatedText, _) = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
-                    await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：\n\n<code>{translatedText}</code>", parseMode: ParseMode.Html);
+                    var (translatedText, _, isError) = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage); // 修改这里
+                    if (isError) // 添加这个 if-else 语句
+                    {
+                        await botClient.SendTextMessageAsync(message.Chat.Id, "翻译服务异常，请稍后重试。");
+                    }
+                    else
+                    {
+                        await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：\n\n<code>{translatedText}</code>", parseMode: ParseMode.Html);
+                    }
                 }
             }
         }
