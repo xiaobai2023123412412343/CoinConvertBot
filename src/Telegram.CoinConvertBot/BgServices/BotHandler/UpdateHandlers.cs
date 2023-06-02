@@ -877,7 +877,10 @@ private static readonly Dictionary<string, string> CurrencyFullNames = new Dicti
     { "KHR", "瑞尔" },
     { "PHP", "披索" },
     { "AED", "迪拉姆" },
-};    
+    { "LAK", "老挝币" },
+    { "MMK", "缅甸币" },
+    { "MYR", "马来西亚币" },
+};  
 static bool TryGetRateByCurrencyCode(Dictionary<string, (decimal, string)> rates, string currencyCode, out KeyValuePair<string, (decimal, string)> rate)
 {
     foreach (var entry in rates)
@@ -897,7 +900,17 @@ static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
     var apiUrl = "https://api.exchangerate-api.com/v4/latest/CNY"; // CNY为人民币代号
 
     using var httpClient = new HttpClient();
-    var response = await httpClient.GetAsync(apiUrl);
+    HttpResponseMessage response;
+    try
+    {
+        response = await httpClient.GetAsync(apiUrl);
+    }
+    catch (Exception)
+    {
+        Console.WriteLine("API异常，暂无法访问。");
+        return new Dictionary<string, (decimal, string)>();
+    }
+
     var json = await response.Content.ReadAsStringAsync();
 
     using var jsonDocument = JsonDocument.Parse(json);
@@ -906,22 +919,25 @@ static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
         throw new Exception("Rates property not found");
     }
 
-  var rates = new Dictionary<string, (decimal, string)>
-  {
-      { "美元 (USD)", (ratesElement.GetProperty("USD").GetDecimal(), "$") },
-      { "日元 (JPY)", (ratesElement.GetProperty("JPY").GetDecimal(), "¥") },
-      { "英镑 (GBP)", (ratesElement.GetProperty("GBP").GetDecimal(), "£") },
-      { "欧元 (EUR)", (ratesElement.GetProperty("EUR").GetDecimal(), "€") },
-      { "澳元 (AUD)", (ratesElement.GetProperty("AUD").GetDecimal(), "A$") },
-      { "韩元 (KRW)", (ratesElement.GetProperty("KRW").GetDecimal(), "₩") },
-      { "泰铢 (THB)", (ratesElement.GetProperty("THB").GetDecimal(), "฿") },
-      { "越南盾 (VND)", (ratesElement.GetProperty("VND").GetDecimal(), "₫") },
-      { "印度卢比 (INR)", (ratesElement.GetProperty("INR").GetDecimal(), "₹") },
-      { "新加坡新币 (SGD)", (ratesElement.GetProperty("SGD").GetDecimal(), "S$") },
-      { "柬埔寨瑞尔 (KHR)", (ratesElement.GetProperty("KHR").GetDecimal(), "៛") },
-      { "菲律宾披索 (PHP)", (ratesElement.GetProperty("PHP").GetDecimal(), "₱") },
-      { "迪拜迪拉姆 (AED)", (ratesElement.GetProperty("AED").GetDecimal(), "د.إ") }
-  };
+    var rates = new Dictionary<string, (decimal, string)>
+    {
+        { "美元 (USD)", (ratesElement.GetProperty("USD").GetDecimal(), "$") },
+        { "日元 (JPY)", (ratesElement.GetProperty("JPY").GetDecimal(), "¥") },
+        { "英镑 (GBP)", (ratesElement.GetProperty("GBP").GetDecimal(), "£") },
+        { "欧元 (EUR)", (ratesElement.GetProperty("EUR").GetDecimal(), "€") },
+        { "澳元 (AUD)", (ratesElement.GetProperty("AUD").GetDecimal(), "A$") },
+        { "韩元 (KRW)", (ratesElement.GetProperty("KRW").GetDecimal(), "₩") },
+        { "泰铢 (THB)", (ratesElement.GetProperty("THB").GetDecimal(), "฿") },
+        { "越南盾 (VND)", (ratesElement.GetProperty("VND").GetDecimal(), "₫") },
+        { "印度卢比 (INR)", (ratesElement.GetProperty("INR").GetDecimal(), "₹") },
+        { "新加坡新币 (SGD)", (ratesElement.GetProperty("SGD").GetDecimal(), "S$") },
+        { "柬埔寨瑞尔 (KHR)", (ratesElement.GetProperty("KHR").GetDecimal(), "៛") },
+        { "菲律宾披索 (PHP)", (ratesElement.GetProperty("PHP").GetDecimal(), "₱") },
+        { "迪拜迪拉姆 (AED)", (ratesElement.GetProperty("AED").GetDecimal(), "د.إ") },
+        { "老挝币 (LAK)", (ratesElement.GetProperty("LAK").GetDecimal(), "₭") },
+        { "缅甸币 (MMK)", (ratesElement.GetProperty("MMK").GetDecimal(), "K") },
+        { "马来西亚币 (MYR)", (ratesElement.GetProperty("MYR").GetDecimal(), "RM") }
+    };
 
     return rates;
 } 
