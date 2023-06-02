@@ -1231,65 +1231,89 @@ public static class GroupManager
 
 private static async Task<decimal> GetH24TotalVolUsdAsync(string apiUrl, string apiKey)
 {
-    using var httpClient = new HttpClient();
-    httpClient.DefaultRequestHeaders.Add("accept", "application/json");
-    httpClient.DefaultRequestHeaders.Add("coinglassSecret", apiKey);
-    
-    var response = await httpClient.GetAsync(apiUrl);
-    response.EnsureSuccessStatusCode();
-    
-    var jsonString = await response.Content.ReadAsStringAsync();
-    var jsonObject = JObject.Parse(jsonString);
-    
-    return jsonObject["data"]["h24TotalVolUsd"].ToObject<decimal>();
+    try
+    {
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+        httpClient.DefaultRequestHeaders.Add("coinglassSecret", apiKey);
+
+        var response = await httpClient.GetAsync(apiUrl);
+        response.EnsureSuccessStatusCode();
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var jsonObject = JObject.Parse(jsonString);
+
+        return jsonObject["data"]["h24TotalVolUsd"].ToObject<decimal>();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"获取24小时交易量时发生异常：{ex.Message}");
+        return 0;
+    }
 }
-// 新方法获取比特币24小时长短期利率
+
 private static async Task<(decimal longRate, decimal shortRate)> GetH24LongShortAsync(string apiUrl, string apiKey)
 {
-    using var httpClient = new HttpClient();
-    httpClient.DefaultRequestHeaders.Add("accept", "application/json");
-    httpClient.DefaultRequestHeaders.Add("coinglassSecret", apiKey);
-
-    var response = await httpClient.GetAsync(apiUrl);
-    response.EnsureSuccessStatusCode();
-
-    var jsonString = await response.Content.ReadAsStringAsync();
-    var jsonObject = JObject.Parse(jsonString);
-
-    var data = jsonObject["data"].FirstOrDefault(d => d["symbol"].ToString() == "BTC");
-    if (data == null)
+    try
     {
-        throw new Exception("BTC 数据在响应中未找到。");
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+        httpClient.DefaultRequestHeaders.Add("coinglassSecret", apiKey);
+
+        var response = await httpClient.GetAsync(apiUrl);
+        response.EnsureSuccessStatusCode();
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var jsonObject = JObject.Parse(jsonString);
+
+        var data = jsonObject["data"].FirstOrDefault(d => d["symbol"].ToString() == "BTC");
+        if (data == null)
+        {
+            throw new Exception("BTC 数据在响应中未找到。");
+        }
+
+        decimal longRate = data["longRate"].ToObject<decimal>();
+        decimal shortRate = data["shortRate"].ToObject<decimal>();
+
+        return (longRate, shortRate);
     }
-
-    decimal longRate = data["longRate"].ToObject<decimal>();
-    decimal shortRate = data["shortRate"].ToObject<decimal>();
-
-    return (longRate, shortRate);
+    catch (Exception ex)
+    {
+        Console.WriteLine($"获取比特币24小时长短期利率时发生异常：{ex.Message}");
+        return (0, 0);
+    }
 }
-// 新方法获取以太坊1小时长短期利率
+
 private static async Task<(decimal longRate, decimal shortRate)> GetH1EthLongShortAsync(string apiUrl, string apiKey)
 {
-    using var httpClient = new HttpClient();
-    httpClient.DefaultRequestHeaders.Add("accept", "application/json");
-    httpClient.DefaultRequestHeaders.Add("coinglassSecret", apiKey);
-
-    var response = await httpClient.GetAsync(apiUrl);
-    response.EnsureSuccessStatusCode();
-
-    var jsonString = await response.Content.ReadAsStringAsync();
-    var jsonObject = JObject.Parse(jsonString);
-
-    var data = jsonObject["data"].FirstOrDefault(d => d["symbol"].ToString() == "ETH");
-    if (data == null)
+    try
     {
-        throw new Exception("ETH 数据在响应中未找到。");
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+        httpClient.DefaultRequestHeaders.Add("coinglassSecret", apiKey);
+
+        var response = await httpClient.GetAsync(apiUrl);
+        response.EnsureSuccessStatusCode();
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var jsonObject = JObject.Parse(jsonString);
+
+        var data = jsonObject["data"].FirstOrDefault(d => d["symbol"].ToString() == "ETH");
+        if (data == null)
+        {
+            throw new Exception("ETH 数据在响应中未找到。");
+        }
+
+        decimal longRate = data["longRate"].ToObject<decimal>();
+        decimal shortRate = data["shortRate"].ToObject<decimal>();
+
+        return (longRate, shortRate);
     }
-
-    decimal longRate = data["longRate"].ToObject<decimal>();
-    decimal shortRate = data["shortRate"].ToObject<decimal>();
-
-    return (longRate, shortRate);
+    catch (Exception ex)
+    {
+        Console.WriteLine($"获取以太坊1小时长短期利率时发生异常：{ex.Message}");
+        return (0, 0);
+    }
 }
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
