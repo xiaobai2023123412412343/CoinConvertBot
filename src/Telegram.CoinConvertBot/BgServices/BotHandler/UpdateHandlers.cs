@@ -1498,13 +1498,19 @@ else
             // 检查输入文本是否以指定的命令开头、包含指定的关键词、为纯数字或以 @ 符号开头
             var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|fu|btc|usd|boss|cny)|联系管理|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手|^[\d\+\-\*/\s]+$|^@");
 
+            // 检查输入文本是否为数字+货币的组合
+            var isNumberCurrency = Regex.IsMatch(inputText, @"^\d+\s*[A-Za-z\u4e00-\u9fa5]+$");
+
+            // 检查输入文本是否为纯中文文本带空格
+            var isChineseTextWithSpaces = Regex.IsMatch(inputText, @"^[\u4e00-\u9fa5\s]+$");
+
             // 检查输入文本是否为 Tron 地址
             var isTronAddress = Regex.IsMatch(inputText, @"^(T[A-Za-z0-9]{33})$");
 
             // 检查输入文本是否仅包含表情符号
             var isOnlyEmoji = EmojiHelper.IsOnlyEmoji(inputText);
 
-            if (!containsKeywordsOrCommandsOrNumbersOrAtSign && !isTronAddress && !isOnlyEmoji)
+            if (!containsKeywordsOrCommandsOrNumbersOrAtSign && !isTronAddress && !isOnlyEmoji && !isNumberCurrency && !isChineseTextWithSpaces)
             {
                 // 检查输入文本是否包含任何非中文字符
                 var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
