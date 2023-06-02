@@ -1143,7 +1143,7 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
         }
         var usdRate = 1 / usdRateTuple.Item1;
         decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
-         // 获取24小时爆仓信息
+         // 获取24小时爆仓信息 后面为网站秘钥 coinglass注册免费获取
         decimal h24TotalVolUsd = await GetH24TotalVolUsdAsync("https://open-api.coinglass.com/public/v2/liquidation_info?time_type=h24&symbol=all", "9e8ff0ca25f14355a015972f21f162de");
         (decimal btcLongRate, decimal btcShortRate) = await GetH24LongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h24&symbol=BTC", "9e8ff0ca25f14355a015972f21f162de");
         (decimal ethLongRate, decimal ethShortRate) = await GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
@@ -1228,7 +1228,7 @@ public static class GroupManager
         groupIds.Remove(id);
     }
 }
-
+//获取24小时全网合约爆仓
 private static async Task<decimal> GetH24TotalVolUsdAsync(string apiUrl, string apiKey)
 {
     try
@@ -1251,7 +1251,7 @@ private static async Task<decimal> GetH24TotalVolUsdAsync(string apiUrl, string 
         return 0;
     }
 }
-
+//获取24小时比特币合约
 private static async Task<(decimal longRate, decimal shortRate)> GetH24LongShortAsync(string apiUrl, string apiKey)
 {
     try
@@ -1283,7 +1283,7 @@ private static async Task<(decimal longRate, decimal shortRate)> GetH24LongShort
         return (0, 0);
     }
 }
-
+//获取以太坊1小时合约
 private static async Task<(decimal longRate, decimal shortRate)> GetH1EthLongShortAsync(string apiUrl, string apiKey)
 {
     try
