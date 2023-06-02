@@ -1212,8 +1212,8 @@ public static class GroupManager
     static GroupManager()
     {
         // 添加初始群组 ID
-        //groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
-        groupIds.Add(-994581226);  // 添加第二个初始群组 ID
+        groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
+        //groupIds.Add(-994581226);  // 添加第二个初始群组 ID
     }
 
     public static IReadOnlyCollection<long> GroupIds => groupIds.ToList().AsReadOnly();
