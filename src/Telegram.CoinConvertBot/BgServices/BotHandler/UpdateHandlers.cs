@@ -1079,30 +1079,48 @@ public static async Task<decimal> GetOkxPriceAsync(string baseCurrency, string q
 
     var url = $"https://www.okx.com/v3/c2c/tradingOrders/books?quoteCurrency={quoteCurrency}&baseCurrency={baseCurrency}&side=sell&paymentMethod={method}&userType=blockTrade&showTrade=false&receivingAds=false&showFollow=false&showAlreadyTraded=false&isAbleFilter=false&urlId=2";
 
-    var response = await client.GetAsync(url);
+    HttpResponseMessage response;
+    try
+    {
+        response = await client.GetAsync(url);
+    }
+    catch (Exception)
+    {
+        Console.WriteLine("API异常，暂无法访问。");
+        return default; // 返回默认值（0）
+    }
 
     if (response.IsSuccessStatusCode)
     {
-        var jsonString = await response.Content.ReadAsStringAsync();
-        var doc = JsonDocument.Parse(jsonString);
-
-        if (doc.RootElement.TryGetProperty("data", out var data) && data.TryGetProperty("sell", out var sell))
+        try
         {
-            var sellArray = sell.EnumerateArray();
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var doc = JsonDocument.Parse(jsonString);
 
-            if (sellArray.MoveNext())
+            if (doc.RootElement.TryGetProperty("data", out var data) && data.TryGetProperty("sell", out var sell))
             {
-                var firstElement = sellArray.Current;
+                var sellArray = sell.EnumerateArray();
 
-                if (firstElement.TryGetProperty("price", out var price))
+                if (sellArray.MoveNext())
                 {
-                    return decimal.Parse(price.GetString());
+                    var firstElement = sellArray.Current;
+
+                    if (firstElement.TryGetProperty("price", out var price))
+                    {
+                        return decimal.Parse(price.GetString());
+                    }
                 }
             }
         }
+        catch (Exception)
+        {
+            Console.WriteLine("获取价格数据异常。");
+            return default; // 返回默认值（0）
+        }
     }
 
-    throw new Exception("Could not get price from OKX API.");
+    Console.WriteLine("无法从OKX API获取价格。");
+    return default; // 返回默认值（0）
 }
 
 static async Task SendAdvertisementOnce(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate, long chatId)
@@ -1194,8 +1212,8 @@ public static class GroupManager
     static GroupManager()
     {
         // 添加初始群组 ID
-        groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
-        //groupIds.Add(-994581226);  // 添加第二个初始群组 ID
+        //groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
+        groupIds.Add(-994581226);  // 添加第二个初始群组 ID
     }
 
     public static IReadOnlyCollection<long> GroupIds => groupIds.ToList().AsReadOnly();
