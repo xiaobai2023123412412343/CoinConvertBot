@@ -1880,7 +1880,7 @@ else
         {
             decimal convertedAmount = inputAmount / rate.Value.Item1;
             string currencyFullName = CurrencyFullNames.ContainsKey(inputCurrencyCode) ? CurrencyFullNames[inputCurrencyCode] : inputCurrencyCode;
-            string text = $"<b>{inputAmount}{currencyFullName} ≈ {convertedAmount:0.##}元人民币</b>";
+            string text = $"<b>{inputAmount.ToString("N0")}{currencyFullName} ≈ {convertedAmount.ToString("N2")}元人民币</b>";
             await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                  text: text,
                                                  parseMode: ParseMode.Html);
