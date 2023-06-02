@@ -56,6 +56,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//处理中文单位转换货币方法    
 public static int ChineseToArabic(string chineseNumber)
 {
     var chnUnitChar = new Dictionary<char, int> { { '十', 10 }, { '百', 100 }, { '千', 1000 }, { '万', 10000 }, { '亿', 100000000 } };
@@ -63,7 +64,6 @@ public static int ChineseToArabic(string chineseNumber)
 
     int number = 0;
     int tempNumber = 0;
-    int unit = 1;
     int sectionNumber = 0;
 
     for (int i = 0; i < chineseNumber.Length; i++)
@@ -71,18 +71,11 @@ public static int ChineseToArabic(string chineseNumber)
         var c = chineseNumber[i];
         if (chnUnitChar.ContainsKey(c))
         {
-            unit = chnUnitChar[c];
+            int unit = chnUnitChar[c];
 
-            if (unit == 10000 || unit == 100000000)
+            if (unit >= 10000)
             {
-                if (tempNumber == 0)
-                {
-                    sectionNumber += 1;
-                }
-                else
-                {
-                    sectionNumber += tempNumber;
-                }
+                sectionNumber += tempNumber;
                 sectionNumber *= unit;
                 number += sectionNumber;
                 sectionNumber = 0;
@@ -90,22 +83,24 @@ public static int ChineseToArabic(string chineseNumber)
             }
             else
             {
-                if (tempNumber == 0 && unit == 10)
+                if (tempNumber != 0)
                 {
-                    tempNumber = 1;
+                    sectionNumber += tempNumber * unit;
+                    tempNumber = 0;
                 }
-                tempNumber *= unit;
+                else
+                {
+                    sectionNumber += unit;
+                }
             }
         }
         else if (chnNumChar.ContainsKey(c))
         {
             tempNumber = chnNumChar[c];
-            unit = 1;
         }
         else if (char.IsDigit(c))
         {
             tempNumber = tempNumber * 10 + (c - '0');
-            unit = 1;
         }
     }
 
