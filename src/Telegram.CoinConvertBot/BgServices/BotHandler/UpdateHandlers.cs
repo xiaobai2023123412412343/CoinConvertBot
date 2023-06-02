@@ -56,6 +56,51 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static int ChineseToArabic(string chineseNumber)
+{
+    var chnUnitChar = new Dictionary<char, int> { { '十', 10 }, { '百', 100 }, { '千', 1000 }, { '万', 10000 }, { '亿', 100000000 } };
+    var chnNumChar = new Dictionary<char, int> { { '零', 0 }, { '一', 1 }, { '二', 2 }, { '三', 3 }, { '四', 4 }, { '五', 5 }, { '六', 6 }, { '七', 7 }, { '八', 8 }, { '九', 9 } };
+
+    int number = 0;
+    int tempNumber = 0;
+    int unit = 1;
+
+    for (int i = 0; i < chineseNumber.Length; i++)
+    {
+        var c = chineseNumber[i];
+        if (chnUnitChar.ContainsKey(c))
+        {
+            unit = chnUnitChar[c];
+            if (unit == 10000 || unit == 100000000)
+            {
+                if (tempNumber == 0 && unit == 10000)
+                {
+                    tempNumber = 1;
+                }
+                number += tempNumber * unit;
+                tempNumber = 0;
+            }
+            else
+            {
+                tempNumber *= unit;
+            }
+        }
+        else if (chnNumChar.ContainsKey(c))
+        {
+            tempNumber += chnNumChar[c] * unit;
+            unit = 1;
+        }
+        else if (char.IsDigit(c))
+        {
+            tempNumber = tempNumber * 10 + (c - '0');
+            unit = 1;
+        }
+    }
+
+    number += tempNumber;
+    return number;
+}
+    
 private static async Task BotOnCallbackQueryReceived(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
     var callbackData = callbackQuery.Data;
@@ -1798,14 +1843,27 @@ if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添�
         replyMarkup: inlineKeyboard
     );
 }
+
 else
 {
-    var regex = new Regex(@"^(\d+)\s*([a-zA-Z]{3}|[\u4e00-\u9fa5]+)$"); // 修改这里: 添加 \s*
+    var regex = new Regex(@"^((\d+|[零一二三四五六七八九十百千万亿]+)+)\s*([a-zA-Z]{3}|[\u4e00-\u9fa5]+)$"); // 修改这里: 添加中文数字匹配
     var match = regex.Match(message.Text);
     if (match.Success)
     {
-        int inputAmount = int.Parse(match.Groups[1].Value);
-        string inputCurrency = match.Groups[2].Value;
+        string inputAmountStr = match.Groups[1].Value;
+        int inputAmount;
+
+        // 检查输入值是否为中文数字
+        if (inputAmountStr.Any(c => c >= 0x4e00 && c <= 0x9fa5))
+        {
+            inputAmount = ChineseToArabic(inputAmountStr);
+        }
+        else
+        {
+            inputAmount = int.Parse(inputAmountStr);
+        }
+
+        string inputCurrency = match.Groups[3].Value;
 
         string inputCurrencyCode = null;
         if (CurrencyFullNames.ContainsValue(inputCurrency))
