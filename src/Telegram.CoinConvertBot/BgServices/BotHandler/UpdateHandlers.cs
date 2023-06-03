@@ -475,6 +475,11 @@ public static async Task<(decimal TotalIncome, bool IsError)> GetTotalIncomeAsyn
 
             foreach (var transactionElement in dataElement.EnumerateArray())
             {
+                if (!transactionElement.TryGetProperty("type", out var typeElement) || typeElement.GetString() != "Transfer")
+                {
+                    continue;
+                }
+
                 if (!transactionElement.TryGetProperty("to", out var toAddressElement))
                 {
                     continue;
