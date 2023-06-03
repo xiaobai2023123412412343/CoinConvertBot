@@ -28,7 +28,7 @@ using System.Data;
 using System.Text;
 using System;
 using System.Collections.Generic;
-using System.Text;
+
 
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
