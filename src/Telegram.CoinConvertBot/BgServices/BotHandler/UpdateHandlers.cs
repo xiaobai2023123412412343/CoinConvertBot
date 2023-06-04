@@ -2023,8 +2023,24 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
 if (messageText.StartsWith("/zjdh"))
 {
     var transferHistoryText = await TronscanHelper.GetTransferHistoryAsync();
-    await botClient.SendTextMessageAsync(message.Chat.Id, transferHistoryText, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
-}       
+    
+    // 创建内联键盘按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new[] // 第一行按钮
+        {
+            InlineKeyboardButton.WithUrl("承兑地址详情", "https://www.oklink.com/cn/trx/address/TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
+        }
+    });
+
+    // 发送带有内联按钮的消息
+    await botClient.SendTextMessageAsync(
+        message.Chat.Id,
+        transferHistoryText,
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}      
     // 检查是否接收到了 /cny 消息，收到就在当前聊天中发送广告
     else if (messageText.StartsWith("/cny"))
     {
