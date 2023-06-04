@@ -866,7 +866,7 @@ if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 
 string addressPermissionText;
 if (string.IsNullOrEmpty(ownerPermissionAddress))
 {
-    addressPermissionText = "无法获取地址权限";
+    addressPermissionText = $"<b>无法获取地址权限</b>";
 }
 else if (ownerPermissionAddress.Equals(tronAddress, StringComparison.OrdinalIgnoreCase))
 {
@@ -874,7 +874,7 @@ else if (ownerPermissionAddress.Equals(tronAddress, StringComparison.OrdinalIgno
 }
 else
 {
-    addressPermissionText = $"<b>{ownerPermissionAddress}</b>";
+    addressPermissionText = $"<code>{ownerPermissionAddress}</code>";
 }
     // 根据USDT余额判断用户标签
     string userLabel;
