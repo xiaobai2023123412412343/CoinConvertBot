@@ -88,7 +88,7 @@ public static class TronscanHelper
                     index++;
                 }
 
-                resultText += $"最近不同地址承兑记录\n\n";
+                resultText += $"最近不同地址兑换记录\n\n";
 
                 for (int i = 0; i < recentTransfers.Count; i++)
                 {
