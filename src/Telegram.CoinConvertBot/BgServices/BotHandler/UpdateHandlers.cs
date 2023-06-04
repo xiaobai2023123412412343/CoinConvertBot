@@ -59,74 +59,99 @@ public static class UpdateHandlers
     /// <returns></returns>
 public static class TronscanHelper
 {
-    public async static Task<string> GetTransferHistoryAsync()
-    {
-        string apiUrlTemplate = "https://apilist.tronscan.org/api/transfer?address=TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv&token=TRX&only_confirmed=true&limit=200&start={0}";
-        string resultText = "";
+public async static Task<string> GetTransferHistoryAsync()
+{
+    string apiUrlTemplate = "https://apilist.tronscan.org/api/transfer?address=TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv&token=TRX&only_confirmed=true&limit=200&start={0}";
+    string resultText = "";
 
-        // 获取最近的10个转账记录
-        string recentTransfersApiUrl = string.Format(apiUrlTemplate, 0);
+    try
+    {
+        // 获取最近的转账记录
+        int start = 0;
+        int maxAttempts = 5;
+        int attempt = 0;
+
+        Dictionary<string, TransferRecord>uniqueTransfers = new Dictionary<string, TransferRecord>();
+
         using (HttpClient client = new HttpClient())
         {
-            var response = await client.GetAsync(recentTransfersApiUrl);
-            if (response.IsSuccessStatusCode)
+            while (uniqueTransfers.Count < 10 && attempt < maxAttempts)
             {
-                string jsonResult = await response.Content.ReadAsStringAsync();
-                var transferList = JsonSerializer.Deserialize<TransferList>(jsonResult);
-
-                List<TransferRecord> recentTransfers = new List<TransferRecord>();
-                int index = 0;
-                int count = 0;
-                while (recentTransfers.Count < 10 && index < transferList.Data.Count)
+                string recentTransfersApiUrl = string.Format(apiUrlTemplate, start);
+                var response = await client.GetAsync(recentTransfersApiUrl);
+                if (response.IsSuccessStatusCode)
                 {
-                    var transfer = transferList.Data[index];
-                    if (transfer.TransferFromAddress == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
+                    string jsonResult = await response.Content.ReadAsStringAsync();
+                    var transferList = JsonSerializer.Deserialize<TransferList>(jsonResult);
+
+                    int index = 0;
+                    while (uniqueTransfers.Count < 10 && index < transferList.Data.Count)
                     {
-                        recentTransfers.Add(transfer);
-                        count++;
+                        var transfer = transferList.Data[index];
+                        if (transfer.TransferFromAddress == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
+                            !uniqueTransfers.ContainsKey(transfer.TransferToAddress))
+                        {
+                            uniqueTransfers.Add(transfer.TransferToAddress, transfer);
+                        }
+                        index++;
                     }
-                    index++;
+
+                    start += transferList.Data.Count; // Update the start index for next API call
                 }
-
-                List<string> addresses = recentTransfers.Select(rt => rt.TransferToAddress).ToList();
-                string balancesText = await GetTransferBalancesAsync(recentTransfers);
-                resultText += balancesText;
-
-                return resultText;
+                attempt++; // Increment the attempt count
             }
         }
 
+        List<TransferRecord> recentTransfers = uniqueTransfers.Values.ToList();
+
+        string balancesText = await GetTransferBalancesAsync(recentTransfers);
+        resultText += balancesText;
+
         return resultText;
     }
+    catch (Exception ex)
+    {
+        return "API接口维护中，请稍后重试！";
+    }
+
+    return resultText;
+}
 
     public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
     {
         string apiUrlTemplate = "https://apilist.tronscan.org/api/account?address={0}";
         string resultText = $"<b> 最近兑换：</b>\n\n";
 
-        using (HttpClient client = new HttpClient())
+        try
         {
-            for (int i = 0; i < transfers.Count; i++)
+            using (HttpClient client = new HttpClient())
             {
-                string apiUrl = string.Format(apiUrlTemplate, transfers[i].TransferToAddress);
-                var response = await client.GetAsync(apiUrl);
-                if (response.IsSuccessStatusCode)
+                for (int i = 0; i < transfers.Count; i++)
                 {
-                    string jsonResult = await response.Content.ReadAsStringAsync();
-                    var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
-
-                    decimal balanceInTrx = Math.Round(accountInfo.Balance / 1_000_000m, 2);
-                    DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfers[i].Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
-                    decimal amountInTrx = transfers[i].Amount / 1_000_000m;
-                    resultText += $"兑换地址：<code>{transfers[i].TransferToAddress}</code>\n";
-                    resultText += $"兑换时间：{transferTime:yyyy-MM-dd HH:mm:ss}\n";
-                    resultText += $"兑换金额：{amountInTrx} trx   <b> 余额：{balanceInTrx} TRX</b>\n";
-                    if (i < transfers.Count - 1)
+                    string apiUrl = string.Format(apiUrlTemplate, transfers[i].TransferToAddress);
+                    var response = await client.GetAsync(apiUrl);
+                    if (response.IsSuccessStatusCode)
                     {
-                        resultText += "————————————————\n";
+                        string jsonResult = await response.Content.ReadAsStringAsync();
+                        var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
+
+                        decimal balanceInTrx = Math.Round(accountInfo.Balance / 1_000_000m, 2);
+                        DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfers[i].Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
+                        decimal amountInTrx = transfers[i].Amount / 1_000_000m;
+                        resultText += $"兑换地址：<code>{transfers[i].TransferToAddress}</code>\n";
+                        resultText += $"兑换时间：{transferTime:yyyy-MM-dd HH:mm:ss}\n";
+                        resultText += $"兑换金额：{amountInTrx} trx   <b> 余额：{balanceInTrx} TRX</b>\n";
+                        if (i < transfers.Count - 1)
+                        {
+                            resultText += "————————————————\n";
+                        }
                     }
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            return "API接口维护中，请稍后重试！";
         }
 
         return resultText;
