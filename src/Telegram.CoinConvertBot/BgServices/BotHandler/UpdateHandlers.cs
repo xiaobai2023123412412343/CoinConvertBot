@@ -120,7 +120,7 @@ public async static Task<string> GetTransferHistoryAsync()
     public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
     {
         string apiUrlTemplate = "https://apilist.tronscan.org/api/account?address={0}";
-        string resultText = $"<b> 最近兑换：</b>\n\n";
+        string resultText = $"<b> 承兑地址：</b><code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n";
 
         try
         {
