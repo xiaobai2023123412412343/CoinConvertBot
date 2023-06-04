@@ -28,6 +28,7 @@ using System.Data;
 using System.Text;
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 
 
@@ -56,6 +57,89 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class TronscanHelper
+{
+    public async static Task<string> GetTransferHistoryAsync()
+    {
+        string apiUrlTemplate = "https://apilist.tronscan.org/api/transfer?address=TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv&token=TRX&only_confirmed=true&limit=200&start={0}";
+        string resultText = "";
+
+        // 获取最近的10个转账记录
+        string recentTransfersApiUrl = string.Format(apiUrlTemplate, 0);
+        using (HttpClient client = new HttpClient())
+        {
+            var response = await client.GetAsync(recentTransfersApiUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResult = await response.Content.ReadAsStringAsync();
+                var transferList = JsonSerializer.Deserialize<TransferList>(jsonResult);
+
+                List<TransferRecord> recentTransfers = new List<TransferRecord>();
+                int index = 0;
+                int count = 0;
+                while (recentTransfers.Count < 10 && index < transferList.Data.Count)
+                {
+                    var transfer = transferList.Data[index];
+                    if (transfer.TransferFromAddress == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
+                    {
+                        recentTransfers.Add(transfer);
+                        count++;
+                    }
+                    index++;
+                }
+
+                resultText += $"最近不同地址承兑记录\n\n";
+
+                for (int i = 0; i < recentTransfers.Count; i++)
+                {
+                    var transfer = recentTransfers[i];
+                    DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfer.Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
+                    decimal amountInTrx = transfer.Amount / 1_000_000m;
+                    resultText += $"地址：<code>{transfer.TransferToAddress}</code>\n";
+                    resultText += $"时间：{transferTime:yyyy-MM-dd HH:mm:ss}  兑：{amountInTrx} trx\n";
+                    if (i < recentTransfers.Count - 1)
+                    {
+                        resultText += "————————————————\n";
+                    }
+                }
+            }
+        }
+
+        return resultText;
+    }
+
+    public class TransferList
+    {
+        [JsonPropertyName("data")]
+        public List<TransferRecord> Data { get; set; }
+
+        [JsonPropertyName("total")]
+        public int Total { get; set; }
+
+        [JsonPropertyName("rangeTotal")]
+        public int RangeTotal { get; set; }
+    }
+
+    public class TransferRecord
+    {
+        [JsonPropertyName("amount")]
+        public long Amount { get; set; }
+
+        [JsonPropertyName("timestamp")]
+        public long Timestamp { get; set; }
+
+        [JsonPropertyName("transferToAddress")]
+        public string TransferToAddress { get; set; }
+
+        [JsonPropertyName("transferFromAddress")]
+        public string TransferFromAddress { get; set; }
+
+        [JsonPropertyName("tokenName")]
+        public string TokenName { get; set; }
+
+        // 如果有其他需要的属性，请根据需要添加
+    }
+}
 //处理中文单位转换货币方法    
 public static int ChineseToArabic(string chineseNumber)
 {
@@ -1848,7 +1932,11 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
             var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
             _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate);
         }
-        
+if (messageText.StartsWith("/zjdh"))
+{
+    var transferHistoryText = await TronscanHelper.GetTransferHistoryAsync();
+    await botClient.SendTextMessageAsync(message.Chat.Id, transferHistoryText, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+}       
     // 检查是否接收到了 /cny 消息，收到就在当前聊天中发送广告
     else if (messageText.StartsWith("/cny"))
     {
