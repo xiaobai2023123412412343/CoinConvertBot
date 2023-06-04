@@ -736,6 +736,59 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
         }
     }
 }
+public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddress)
+{
+    try
+    {
+        using var httpClient = new HttpClient();
+        var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            var json = JObject.Parse(content);
+
+            if (json.ContainsKey("data") && json["data"] is JArray dataArray && dataArray.Count > 0)
+            {
+                var accountData = dataArray[0] as JObject;
+                if (accountData != null && accountData.ContainsKey("owner_permission") &&
+                    accountData["owner_permission"]["keys"] is JArray keysArray && keysArray.Count > 0)
+                {
+                    // 获取第一个签名地址
+                    string firstSignAddress = keysArray[0]["address"].ToString();
+                    return (firstSignAddress, false);
+                }
+                else
+                {
+                    return ("无法获取地址权限", false);
+                }
+            }
+            else
+            {
+                return ("无法获取地址权限", false);
+            }
+        }
+        else
+        {
+            return (string.Empty, true);
+        }
+    }
+    catch (HttpRequestException)
+    {
+        // 当发生 HttpRequestException 时，返回一个指示错误的元组值
+        return (string.Empty, true);
+    }
+    catch (JsonException)
+    {
+        // 当发生 JsonException 时，返回一个指示错误的元组值
+        return (string.Empty, true);
+    }
+    catch (Exception)
+    {
+        // 当发生其他异常时，返回一个指示错误的元组值
+        return (string.Empty, true);
+    }
+}
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
@@ -759,10 +812,12 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     var getUsdtTotalIncomeTask = GetTotalIncomeAsync(tronAddress, false);
     var getBandwidthTask = GetBandwidthAsync(tronAddress);
     var getLastFiveTransactionsTask = GetLastFiveTransactionsAsync(tronAddress);
+    var getOwnerPermissionTask = GetOwnerPermissionAsync(tronAddress);
+
 
 
     // 等待所有任务完成
-    await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getUsdtTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask);
+    await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getUsdtTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask, getOwnerPermissionTask);
 
 
 // 处理结果
@@ -786,9 +841,12 @@ var (lastTransactionTime, isErrorGetLastTransactionTime) = getLastTransactionTim
 
 var getUsdtTotalIncomeResult = getUsdtTotalIncomeTask.Result;
 var (usdtTotalIncome, isErrorGetUsdtTotalIncome) = getUsdtTotalIncomeResult;
-
+    
+var getOwnerPermissionResult = getOwnerPermissionTask.Result;
+var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResult;
+    
 // 检查是否发生了请求错误
-if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances|| isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetUsdtTotalIncome)
+if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetUsdtTotalIncome || isErrorGetOwnerPermission)
 {
     await botClient.SendTextMessageAsync(message.Chat.Id, "接口维护中，请稍后重试！");
     return;
@@ -804,7 +862,20 @@ if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 
     await botClient.SendTextMessageAsync(message.Chat.Id, warningText);
     return;
 }
-
+// 添加地址权限的信息
+string addressPermissionText;
+if (string.IsNullOrEmpty(ownerPermissionAddress))
+{
+    addressPermissionText = "无法获取地址权限";
+}
+else if (ownerPermissionAddress.Equals(tronAddress, StringComparison.OrdinalIgnoreCase))
+{
+    addressPermissionText = "当前地址未多签";
+}
+else
+{
+    addressPermissionText = $"<b>{ownerPermissionAddress}</b>";
+}
     // 根据USDT余额判断用户标签
     string userLabel;
     if (usdtBalance < 100_000)
@@ -826,6 +897,7 @@ if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 
 if (trxBalance < 100)
 {
     resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
+    $"地址权限：<b>{addressPermissionText}</b>\n" +    
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
@@ -843,6 +915,7 @@ if (trxBalance < 100)
 else
 {
     resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
+    $"地址权限：<b>{addressPermissionText}</b>\n" +    
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
