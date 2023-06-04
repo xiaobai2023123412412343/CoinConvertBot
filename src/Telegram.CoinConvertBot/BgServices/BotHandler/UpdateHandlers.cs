@@ -117,45 +117,67 @@ public async static Task<string> GetTransferHistoryAsync()
     return resultText;
 }
 
-    public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
+public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
+{
+    string apiUrlTemplate = "https://apilist.tronscan.org/api/account?address={0}";
+    string resultText = $"<b> 承兑地址：</b><code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n";
+
+    try
     {
-        string apiUrlTemplate = "https://apilist.tronscan.org/api/account?address={0}";
-        string resultText = $"<b> 承兑地址：</b><code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n";
-
-        try
+        using (HttpClient client = new HttpClient())
         {
-            using (HttpClient client = new HttpClient())
-            {
-                for (int i = 0; i < transfers.Count; i++)
-                {
-                    string apiUrl = string.Format(apiUrlTemplate, transfers[i].TransferToAddress);
-                    var response = await client.GetAsync(apiUrl);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        string jsonResult = await response.Content.ReadAsStringAsync();
-                        var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
+            // 创建一个任务列表来存储所有的查询任务
+            List<Task<AccountInfo>> tasks = new List<Task<AccountInfo>>();
 
-                        decimal balanceInTrx = Math.Round(accountInfo.Balance / 1_000_000m, 2);
-                        DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfers[i].Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
-                        decimal amountInTrx = transfers[i].Amount / 1_000_000m;
-                        resultText += $"兑换地址：<code>{transfers[i].TransferToAddress}</code>\n";
-                        resultText += $"兑换时间：{transferTime:yyyy-MM-dd HH:mm:ss}\n";
-                        resultText += $"兑换金额：{amountInTrx} trx   <b> 余额：{balanceInTrx} TRX</b>\n";
-                        if (i < transfers.Count - 1)
-                        {
-                            resultText += "————————————————\n";
-                        }
-                    }
+            // 为每个转账记录创建一个查询任务并添加到任务列表中
+            foreach (var transfer in transfers)
+            {
+                string apiUrl = string.Format(apiUrlTemplate, transfer.TransferToAddress);
+                tasks.Add(GetAccountInfoAsync(client, apiUrl));
+            }
+
+            // 等待所有任务完成
+            AccountInfo[] accountInfos = await Task.WhenAll(tasks);
+
+            // 处理查询结果并生成结果文本
+            for (int i = 0; i < accountInfos.Length; i++)
+            {
+                decimal balanceInTrx = Math.Round(accountInfos[i].Balance / 1_000_000m, 2);
+                DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfers[i].Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
+                decimal amountInTrx = transfers[i].Amount / 1_000_000m;
+                resultText += $"兑换地址：<code>{transfers[i].TransferToAddress}</code>\n";
+                resultText += $"兑换时间：{transferTime:yyyy-MM-dd HH:mm:ss}\n";
+                resultText += $"兑换金额：{amountInTrx} trx   <b> 余额：{balanceInTrx} TRX</b>\n";
+                if (i < transfers.Count - 1)
+                {
+                    resultText += "————————————————\n";
                 }
             }
         }
-        catch (Exception ex)
-        {
-            return "API接口维护中，请稍后重试！";
-        }
-
-        return resultText;
     }
+    catch (Exception ex)
+    {
+        return "API接口维护中，请稍后重试！";
+    }
+
+    return resultText;
+}
+
+// 异步获取账户信息的方法
+private async static Task<AccountInfo> GetAccountInfoAsync(HttpClient client, string apiUrl)
+{
+    var response = await client.GetAsync(apiUrl);
+    if (response.IsSuccessStatusCode)
+    {
+        string jsonResult = await response.Content.ReadAsStringAsync();
+        var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
+        return accountInfo;
+    }
+    else
+    {
+        throw new Exception("获取账户信息失败");
+    }
+}
 
     public class AccountInfo
     {
