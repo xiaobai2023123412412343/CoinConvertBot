@@ -2740,9 +2740,9 @@ var keyboard = new ReplyKeyboardMarkup(new[]
                                                         replyMarkup: keyboard);
         }
         //估价
-        static async Task<Message> Valuation(ITelegramBotClient botClient, Message message)
-        {
-            string usage = @$"如需换算请直接发送<b>金额+币种</b>
+       static async Task<Message> Valuation(ITelegramBotClient botClient, Message message)
+{
+    string usage = @$"如需换算请直接发送<b>金额+币种</b>
 如发送： <code>10 USDT</code>
 回复：<b>10 USDT = xxx TRX</b>
 
@@ -2759,30 +2759,61 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 注：<b>群内计算需要@机器人或设置机器人为管理</b>
 
 ";
-    
-// 创建包含两行，每行两个按钮的虚拟键盘
-var keyboard = new ReplyKeyboardMarkup(new[]
+
+    if (message.Chat.Id == AdminUserId)
+    {
+        return await ExecuteZjdhMethodAsync(botClient, message);
+    }
+    else
+    {
+        // 创建包含两行，每行两个按钮的虚拟键盘
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
+            {
+                new KeyboardButton("\U0001F4B0U兑TRX"),
+                new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F4B9汇率换算"),
+            },   
+            new [] // 第二行
+            {
+                new KeyboardButton("\U0001F4B8币圈行情"),
+                new KeyboardButton("\U0001F310外汇助手"),
+                new KeyboardButton("\u260E联系管理"),
+            }    
+        });
+
+        keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+        keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
+
+        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                    text: usage,
+                                                    parseMode: ParseMode.Html,
+                                                    replyMarkup: keyboard);
+    }
+}
+
+static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, Message message)
 {
-    new [] // 第一行
+    var transferHistoryText = await TronscanHelper.GetTransferHistoryAsync();
+
+    // 创建内联键盘按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        new KeyboardButton("\U0001F4B0U兑TRX"),
-        new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9汇率换算"),
-    },   
-    new [] // 第二行
-    {
-        new KeyboardButton("\U0001F4B8币圈行情"),
-        new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u260E联系管理"),
-    }    
-});
-            keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
-            keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见  
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: usage,
-                                                        parseMode: ParseMode.Html,
-                                                        replyMarkup: keyboard);
+        new[] // 第一行按钮
+        {
+            InlineKeyboardButton.WithUrl("承兑地址详情", "https://www.oklink.com/cn/trx/address/TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
         }
+    });
+
+    // 发送带有内联按钮的消息
+    return await botClient.SendTextMessageAsync(
+        message.Chat.Id,
+        transferHistoryText,
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}
         //关闭虚拟键盘
         static async Task<Message> guanbi(ITelegramBotClient botClient, Message message)
         {
