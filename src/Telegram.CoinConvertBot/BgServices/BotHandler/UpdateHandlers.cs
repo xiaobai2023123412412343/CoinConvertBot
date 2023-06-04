@@ -88,16 +88,40 @@ public static class TronscanHelper
                     index++;
                 }
 
-                resultText += $"最近不同地址兑换记录\n\n";
+                List<string> addresses = recentTransfers.Select(rt => rt.TransferToAddress).ToList();
+                string balancesText = await GetTransferBalancesAsync(recentTransfers);
+                resultText += balancesText;
 
-                for (int i = 0; i < recentTransfers.Count; i++)
+                return resultText;
+            }
+        }
+
+        return resultText;
+    }
+
+    public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
+    {
+        string apiUrlTemplate = "https://apilist.tronscan.org/api/account?address={0}";
+        string resultText = $"<b> 最近兑换：</b>\n\n";
+
+        using (HttpClient client = new HttpClient())
+        {
+            for (int i = 0; i < transfers.Count; i++)
+            {
+                string apiUrl = string.Format(apiUrlTemplate, transfers[i].TransferToAddress);
+                var response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
                 {
-                    var transfer = recentTransfers[i];
-                    DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfer.Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
-                    decimal amountInTrx = transfer.Amount / 1_000_000m;
-                    resultText += $"地址：<code>{transfer.TransferToAddress}</code>\n";
-                    resultText += $"时间：{transferTime:yyyy-MM-dd HH:mm:ss}  兑：{amountInTrx} trx\n";
-                    if (i < recentTransfers.Count - 1)
+                    string jsonResult = await response.Content.ReadAsStringAsync();
+                    var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
+
+                    decimal balanceInTrx = Math.Round(accountInfo.Balance / 1_000_000m, 2);
+                    DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfers[i].Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
+                    decimal amountInTrx = transfers[i].Amount / 1_000_000m;
+                    resultText += $"兑换地址：<code>{transfers[i].TransferToAddress}</code>\n";
+                    resultText += $"兑换时间：{transferTime:yyyy-MM-dd HH:mm:ss}\n";
+                    resultText += $"兑换金额：{amountInTrx} trx   <b> 余额：{balanceInTrx} TRX</b>\n";
+                    if (i < transfers.Count - 1)
                     {
                         resultText += "————————————————\n";
                     }
@@ -108,10 +132,27 @@ public static class TronscanHelper
         return resultText;
     }
 
+    public class AccountInfo
+    {
+        [JsonPropertyName("address")]
+        public string Address { get; set; }
+
+        [JsonPropertyName("balance")]
+        public long Balance { get; set; }
+
+        [JsonPropertyName("timestamp")]
+        public long Timestamp { get; set; }
+
+        [JsonPropertyName("amount")]
+        public long Amount { get; set; }
+
+        // 如果有其他需要的属性，请根据需要添加
+    }
+
     public class TransferList
     {
         [JsonPropertyName("data")]
-        public List<TransferRecord> Data { get; set; }
+        public List<TransferRecord> Data { get;set; }
 
         [JsonPropertyName("total")]
         public int Total { get; set; }
