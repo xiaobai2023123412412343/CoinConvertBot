@@ -61,7 +61,7 @@ public static class TronscanHelper
 {
 public async static Task<string> GetTransferHistoryAsync()
 {
-    string apiUrlTemplate = "https://apilist.tronscan.org/api/transfer?address=TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv&token=TRX&only_confirmed=true&limit=200&start={0}";
+    string apiUrlTemplate = "https://apilist.tronscan.org/api/transfer?address=TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv&token=TRX&only_confirmed=true&limit=50&start={0}";
     string resultText = "";
 
     try
@@ -71,7 +71,7 @@ public async static Task<string> GetTransferHistoryAsync()
         int maxAttempts = 5;
         int attempt = 0;
 
-        Dictionary<string, TransferRecord>uniqueTransfers = new Dictionary<string, TransferRecord>();
+        Dictionary<string, TransferRecord> uniqueTransfers = new Dictionary<string, TransferRecord>();
 
         using (HttpClient client = new HttpClient())
         {
@@ -96,9 +96,9 @@ public async static Task<string> GetTransferHistoryAsync()
                         index++;
                     }
 
-                    start += transferList.Data.Count; // Update the start index for next API call
+                    start += transferList.Data.Count; // 更新下一次API调用的起始索引
                 }
-                attempt++; // Increment the attempt count
+                attempt++; // 增加尝试次数
             }
         }
 
@@ -113,8 +113,6 @@ public async static Task<string> GetTransferHistoryAsync()
     {
         return "API接口维护中，请稍后重试！";
     }
-
-    return resultText;
 }
 
 public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
@@ -175,7 +173,7 @@ private async static Task<AccountInfo> GetAccountInfoAsync(HttpClient client, st
     }
     else
     {
-        throw new Exception("获取账户信息失败");
+        throw new Exception("查询账户信息失败");
     }
 }
 
