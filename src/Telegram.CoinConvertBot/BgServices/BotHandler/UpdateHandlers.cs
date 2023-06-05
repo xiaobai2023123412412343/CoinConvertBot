@@ -59,26 +59,26 @@ public static class UpdateHandlers
     /// <returns></returns>
 public static class TronscanHelper
 {
-public async static Task<string> GetTransferHistoryAsync()
-{
-    string apiUrlTemplate = "https://apilist.tronscan.org/api/transfer?address=TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv&token=TRX&only_confirmed=true&limit=50&start={0}";
-    string resultText = "";
+    private static readonly HttpClient httpClient = new HttpClient();
 
-    try
+    public async static Task<string> GetTransferHistoryAsync()
     {
-        // 获取最近的转账记录
-        int start = 0;
-        int maxAttempts = 5;
-        int attempt = 0;
+        string apiUrlTemplate = "https://apilist.tronscan.org/api/transfer?address=TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv&token=TRX&only_confirmed=true&limit=50&start={0}";
+        string resultText = "";
 
-        Dictionary<string, TransferRecord> uniqueTransfers = new Dictionary<string, TransferRecord>();
-
-        using (HttpClient client = new HttpClient())
+        try
         {
+            // 获取最近的转账记录
+            int start = 0;
+            int maxAttempts = 5;
+            int attempt = 0;
+
+            Dictionary<string, TransferRecord> uniqueTransfers = new Dictionary<string, TransferRecord>();
+
             while (uniqueTransfers.Count < 10 && attempt < maxAttempts)
             {
                 string recentTransfersApiUrl = string.Format(apiUrlTemplate, start);
-                var response = await client.GetAsync(recentTransfersApiUrl);
+                var response = await httpClient.GetAsync(recentTransfersApiUrl);
                 if (response.IsSuccessStatusCode)
                 {
                     string jsonResult = await response.Content.ReadAsStringAsync();
@@ -100,29 +100,26 @@ public async static Task<string> GetTransferHistoryAsync()
                 }
                 attempt++; // 增加尝试次数
             }
+
+            List<TransferRecord> recentTransfers = uniqueTransfers.Values.ToList();
+
+            string balancesText = await GetTransferBalancesAsync(recentTransfers);
+            resultText += balancesText;
+
+            return resultText;
         }
-
-        List<TransferRecord> recentTransfers = uniqueTransfers.Values.ToList();
-
-        string balancesText = await GetTransferBalancesAsync(recentTransfers);
-        resultText += balancesText;
-
-        return resultText;
+        catch (Exception ex)
+        {
+            return "API接口维护中，请稍后重试！";
+        }
     }
-    catch (Exception ex)
-    {
-        return "API接口维护中，请稍后重试！";
-    }
-}
 
-public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
-{
-    string apiUrlTemplate = "https://apilist.tronscan.org/api/account?address={0}";
-    string resultText = $"<b> 承兑地址：</b><code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n";
-
-    try
+    public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
     {
-        using (HttpClient client = new HttpClient())
+        string apiUrlTemplate = "https://apilist.tronscan.org/api/account?address={0}";
+        string resultText = $"<b> 承兑地址：</b><code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n";
+
+        try
         {
             // 创建一个任务列表来存储所有的查询任务
             List<Task<AccountInfo>> tasks = new List<Task<AccountInfo>>();
@@ -131,7 +128,7 @@ public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> t
             foreach (var transfer in transfers)
             {
                 string apiUrl = string.Format(apiUrlTemplate, transfer.TransferToAddress);
-                tasks.Add(GetAccountInfoAsync(client, apiUrl));
+                tasks.Add(GetAccountInfoAsync(httpClient, apiUrl));
             }
 
             // 等待所有任务完成
@@ -152,30 +149,29 @@ public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> t
                 }
             }
         }
-    }
-    catch (Exception ex)
-    {
-        return "API接口维护中，请稍后重试！";
+        catch (Exception ex)
+        {
+            return "API接口维护中，请稍后重试！";
+        }
+
+        return resultText;
     }
 
-    return resultText;
-}
+    private async static Task<AccountInfo> GetAccountInfoAsync(HttpClient client, string apiUrl)
+    {
+        var response = await client.GetAsync(apiUrl);
+        if (response.IsSuccessStatusCode)
+        {
+            string jsonResult = await response.Content.ReadAsStringAsync();
+            var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
+            return accountInfo;
+        }
+        else
+        {
+            throw new Exception("获取账户信息失败");
+        }
+    }
 
-// 异步获取账户信息的方法
-private async static Task<AccountInfo> GetAccountInfoAsync(HttpClient client, string apiUrl)
-{
-    var response = await client.GetAsync(apiUrl);
-    if (response.IsSuccessStatusCode)
-    {
-        string jsonResult = await response.Content.ReadAsStringAsync();
-        var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
-        return accountInfo;
-    }
-    else
-    {
-        throw new Exception("查询账户信息失败");
-    }
-}
 
     public class AccountInfo
     {
