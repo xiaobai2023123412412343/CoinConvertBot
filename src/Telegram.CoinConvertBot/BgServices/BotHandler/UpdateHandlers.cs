@@ -29,7 +29,8 @@ using System.Text;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-
+using System.Numerics;
+using System.Globalization;
 
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
@@ -57,6 +58,85 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 创建一个静态函数，用于计算包含大数字的表达式
+static BigInteger EvaluateExpression(string expression)
+{
+    int Precedence(char op)
+    {
+        switch (op)
+        {
+            case '+':
+            case '-':
+                return 1;
+            case '*':
+                return 2;
+            case '/':
+                return 2;
+            default:
+                return -1;
+        }
+    }
+
+    BigInteger ApplyOperator(char op, BigInteger left, BigInteger right)
+    {
+        switch (op)
+        {
+            case '+':
+                return left + right;
+            case '-':
+                return left - right;
+            case '*':
+                return left * right;
+            case '/':
+                return left / right;
+            default:
+                throw new ArgumentException($"Invalid operator: {op}");
+        }
+    }
+
+    var values = new Stack<BigInteger>();
+    var operators = new Stack<char>();
+    int i = 0;
+
+    while (i < expression.Length)
+    {
+        if (char.IsWhiteSpace(expression[i]))
+        {
+            i++;
+            continue;
+        }
+
+        if (char.IsDigit(expression[i]))
+        {
+            int start = i;
+            while (i < expression.Length && (char.IsDigit(expression[i]) || expression[i] == '.'))
+            {
+                i++;
+            }
+            values.Push(BigInteger.Parse(expression.Substring(start, i - start)));
+        }
+        else
+        {
+            while (operators.Count > 0 && Precedence(operators.Peek()) >= Precedence(expression[i]))
+            {
+                var right = values.Pop();
+                var left = values.Pop();
+                values.Push(ApplyOperator(operators.Pop(), left, right));
+            }
+            operators.Push(expression[i]);
+            i++;
+        }
+    }
+
+    while (operators.Count > 0)
+    {
+        var right = values.Pop();
+        var left = values.Pop();
+        values.Push(ApplyOperator(operators.Pop(), left, right));
+    }
+
+    return values.Pop();
+} 
 public static class TronscanHelper
 {
     private static readonly HttpClient httpClient = new HttpClient();
@@ -2049,29 +2129,28 @@ if (messageText.StartsWith("/zjdh"))
         }
 else
 {
-    // 修改了正则表达式，确保至少有一个运算符
-    var calculatorPattern = @"^(?=.*[-+*/])[-+]?[0-9]*\.?[0-9]+(\s*[-+*/]\s*[-+]?[0-9]*\.?[0-9]+)*$";
-    if (Regex.IsMatch(messageText, calculatorPattern))
+    // 修改正则表达式以检测至少一个运算符
+    var calculatorPattern = @"^[-+]?\d+(\.\d+)?\s*([-+*/]\s*[-+]?\d+(\.\d+)?)+$";
+    if (Regex.IsMatch(messageText, calculatorPattern) && messageText.IndexOfAny(new[] { '+', '-', '*', '/' }) != -1)
     {
         // 原始问题备份
         var originalQuestion = messageText;
 
-        // 使用 DataTable.Compute 方法计算表达式，该方法能够考虑运算符优先级
-        var result = new DataTable().Compute(messageText, null);
+        // 使用自定义的 EvaluateExpression 方法计算表达式
+        BigInteger result = EvaluateExpression(messageText);
+
+        // 将结果转换为包含逗号分隔符的字符串
+        string formattedResult = string.Format(CultureInfo.InvariantCulture, "{0:n0}", result);
 
         // 发送最终计算结果
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             // 使用 HTML 语法加粗结果，并附带原始问题
-            text: $"<code>{System.Net.WebUtility.HtmlEncode(originalQuestion)}={result}</code>",
+            text: $"<code>{System.Net.WebUtility.HtmlEncode(originalQuestion)}={formattedResult}</code>",
             parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
         );
     }
-    else
-    {
-        // 在这里处理非计算器相关的信息
-    }
-}       
+}      
 if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添加 /usd 条件
 {
     var rates = await GetCurrencyRatesAsync();
