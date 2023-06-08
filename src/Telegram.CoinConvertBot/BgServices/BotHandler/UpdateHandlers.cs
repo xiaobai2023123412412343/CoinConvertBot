@@ -2141,7 +2141,7 @@ else
         double result = EvaluateExpression(messageText);
 
         // 将结果转换为包含逗号分隔符的字符串
-        string formattedResult = string.Format(CultureInfo.InvariantCulture, "{0:n0}", result);
+        string formattedResult = string.Format(CultureInfo.InvariantCulture, "{0:n}", result);
 
         // 发送最终计算结果
         await botClient.SendTextMessageAsync(
@@ -2151,7 +2151,7 @@ else
             parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
         );
     }
-}    
+}   
 if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添加 /usd 条件
 {
     var rates = await GetCurrencyRatesAsync();
