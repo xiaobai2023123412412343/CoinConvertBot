@@ -137,6 +137,7 @@ static double EvaluateExpression(string expression)
 
     return values.Pop();
 }
+//查询最近兑换地址记录及TRX余额    
 public static class TronscanHelper
 {
     private static readonly HttpClient httpClient = new HttpClient();
