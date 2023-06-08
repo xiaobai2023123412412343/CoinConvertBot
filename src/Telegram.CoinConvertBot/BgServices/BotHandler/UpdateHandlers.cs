@@ -59,7 +59,7 @@ public static class UpdateHandlers
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
 // 创建一个静态函数，用于计算包含大数字的表达式
-static BigInteger EvaluateExpression(string expression)
+static double EvaluateExpression(string expression)
 {
     int Precedence(char op)
     {
@@ -77,7 +77,7 @@ static BigInteger EvaluateExpression(string expression)
         }
     }
 
-    BigInteger ApplyOperator(char op, BigInteger left, BigInteger right)
+    double ApplyOperator(char op, double left, double right)
     {
         switch (op)
         {
@@ -94,7 +94,7 @@ static BigInteger EvaluateExpression(string expression)
         }
     }
 
-    var values = new Stack<BigInteger>();
+    var values = new Stack<double>();
     var operators = new Stack<char>();
     int i = 0;
 
@@ -113,7 +113,7 @@ static BigInteger EvaluateExpression(string expression)
             {
                 i++;
             }
-            values.Push(BigInteger.Parse(expression.Substring(start, i - start)));
+            values.Push(double.Parse(expression.Substring(start, i - start)));
         }
         else
         {
@@ -136,7 +136,7 @@ static BigInteger EvaluateExpression(string expression)
     }
 
     return values.Pop();
-} 
+}
 public static class TronscanHelper
 {
     private static readonly HttpClient httpClient = new HttpClient();
@@ -2137,7 +2137,7 @@ else
         var originalQuestion = messageText;
 
         // 使用自定义的 EvaluateExpression 方法计算表达式
-        BigInteger result = EvaluateExpression(messageText);
+        double result = EvaluateExpression(messageText);
 
         // 将结果转换为包含逗号分隔符的字符串
         string formattedResult = string.Format(CultureInfo.InvariantCulture, "{0:n0}", result);
@@ -2150,7 +2150,7 @@ else
             parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
         );
     }
-}      
+}    
 if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添加 /usd 条件
 {
     var rates = await GetCurrencyRatesAsync();
