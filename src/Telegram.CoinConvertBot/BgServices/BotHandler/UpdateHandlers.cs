@@ -2140,8 +2140,16 @@ else
         // 使用自定义的 EvaluateExpression 方法计算表达式
         double result = EvaluateExpression(messageText);
 
+        // 获取用户发送的最大小数点位数
+        var decimalMatches = Regex.Matches(messageText, @"\.\d+");
+        int maxDecimalPlaces = 2;
+        foreach (Match match in decimalMatches)
+        {
+            maxDecimalPlaces = Math.Max(maxDecimalPlaces, match.Value.Length - 1);
+        }
+
         // 根据结果是否为整数选择适当的格式字符串
-        string formatString = (result == (int)result) ? "{0:n0}" : "{0:n2}";
+        string formatString = (result == (int)result) ? "{0:n0}" : "{0:n" + maxDecimalPlaces + "}";
 
         // 将结果转换为包含逗号分隔符的字符串
         string formattedResult = string.Format(CultureInfo.InvariantCulture, formatString, result);
