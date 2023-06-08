@@ -141,11 +141,11 @@ static double EvaluateExpression(string expression)
 public static class TronscanHelper
 {
     private static readonly HttpClient httpClient = new HttpClient();
+    private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(5); // 限制最大并发数为 5
 
     public async static Task<string> GetTransferHistoryAsync()
     {
         string apiUrlTemplate = "https://apilist.tronscan.org/api/transfer?address=TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv&token=TRX&only_confirmed=true&limit=50&start={0}";
-        string resultText = "";
 
         try
         {
@@ -185,9 +185,8 @@ public static class TronscanHelper
             List<TransferRecord> recentTransfers = uniqueTransfers.Values.ToList();
 
             string balancesText = await GetTransferBalancesAsync(recentTransfers);
-            resultText += balancesText;
 
-            return resultText;
+            return balancesText;
         }
         catch (Exception ex)
         {
@@ -238,70 +237,56 @@ public static class TronscanHelper
         return resultText;
     }
 
-    private async static Task<AccountInfo> GetAccountInfoAsync(HttpClient client, string apiUrl)
+    private static async Task<AccountInfo> GetAccountInfoAsync(HttpClient httpClient, string apiUrl)
     {
-        var response = await client.GetAsync(apiUrl);
-        if (response.IsSuccessStatusCode)
+        await semaphore.WaitAsync(); // 等待信号量
+
+        try
         {
-            string jsonResult = await response.Content.ReadAsStringAsync();
-            var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
-            return accountInfo;
+            var response = await httpClient.GetAsync(apiUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResult = await response.Content.ReadAsStringAsync();
+                var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
+                return accountInfo;
+            }
+            else
+            {
+                throw new Exception("获取账户信息失败");
+            }
         }
-        else
+        finally
         {
-            throw new Exception("获取账户信息失败");
+            semaphore.Release(); // 释放信号量
         }
     }
+}
 
+public class TransferList
+{
+    [JsonPropertyName("data")]
+    public List<TransferRecord> Data { get; set; }
+}
 
-    public class AccountInfo
-    {
-        [JsonPropertyName("address")]
-        public string Address { get; set; }
+public class TransferRecord
+{
+    [JsonPropertyName("transferFromAddress")]
+    public string TransferFromAddress { get; set; }
 
-        [JsonPropertyName("balance")]
-        public long Balance { get; set; }
+    [JsonPropertyName("transferToAddress")]
+    public string TransferToAddress { get; set; }
 
-        [JsonPropertyName("timestamp")]
-        public long Timestamp { get; set; }
+    [JsonPropertyName("timestamp")]
+    public long Timestamp { get; set; }
 
-        [JsonPropertyName("amount")]
-        public long Amount { get; set; }
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+}
 
-        // 如果有其他需要的属性，请根据需要添加
-    }
-
-    public class TransferList
-    {
-        [JsonPropertyName("data")]
-        public List<TransferRecord> Data { get;set; }
-
-        [JsonPropertyName("total")]
-        public int Total { get; set; }
-
-        [JsonPropertyName("rangeTotal")]
-        public int RangeTotal { get; set; }
-    }
-
-    public class TransferRecord
-    {
-        [JsonPropertyName("amount")]
-        public long Amount { get; set; }
-
-        [JsonPropertyName("timestamp")]
-        public long Timestamp { get; set; }
-
-        [JsonPropertyName("transferToAddress")]
-        public string TransferToAddress { get; set; }
-
-        [JsonPropertyName("transferFromAddress")]
-        public string TransferFromAddress { get; set; }
-
-        [JsonPropertyName("tokenName")]
-        public string TokenName { get; set; }
-
-        // 如果有其他需要的属性，请根据需要添加
-    }
+public class AccountInfo
+{
+    [JsonPropertyName("balance")]
+    public decimal Balance { get; set; }
 }
 //处理中文单位转换货币方法    
 public static int ChineseToArabic(string chineseNumber)
