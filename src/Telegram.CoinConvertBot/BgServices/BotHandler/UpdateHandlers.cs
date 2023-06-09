@@ -866,36 +866,42 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
         return (0m, 0m, true);
     }
 }
-public static async Task<(double remainingBandwidth, double totalBandwidth, int transactions, int transactionsIn, int transactionsOut, bool isError)> GetBandwidthAsync(string address)
+public static async Task<(double remainingBandwidth, double totalBandwidth, double netRemaining, double netLimit, double energyRemaining, double energyLimit, int transactions, int transactionsIn, int transactionsOut, bool isError)> GetBandwidthAsync(string address)
 {
     try
     {
+        // 构建请求URL
         string url = $"https://apilist.tronscanapi.com/api/accountv2?address={address}";
         using var httpClient = new HttpClient();
+        // 发送请求并获取结果
         var result = await httpClient.GetStringAsync(url);
 
-        // 解析返回的 JSON 数据
+        // 解析返回的JSON数据
         var jsonResult = JObject.Parse(result);
 
-        // 检查是否为空的 JSON 对象
+        // 检查JSON对象是否为空
         if (!jsonResult.HasValues)
         {
-            // 如果为空，直接返回默认值
-            return (0, 0, 0, 0, 0, false);
+            // 如果为空，则返回默认值
+            return (0, 0, 0, 0, 0, 0, 0, 0, 0, false);
         }
 
         double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
         double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
+        double netRemaining = jsonResult["bandwidth"]["netRemaining"].ToObject<double>();
+        double netLimit = jsonResult["bandwidth"]["netLimit"].ToObject<double>();
+        double energyRemaining = jsonResult["bandwidth"]["energyRemaining"].ToObject<double>();
+        double energyLimit = jsonResult["bandwidth"]["energyLimit"].ToObject<double>();
         int transactions = jsonResult["transactions"].ToObject<int>();
         int transactionsIn = jsonResult["transactions_in"].ToObject<int>();
         int transactionsOut = jsonResult["transactions_out"].ToObject<int>();
 
-        return (freeNetRemaining, freeNetLimit, transactions, transactionsIn, transactionsOut, false);
+        return (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, false);
     }
     catch
     {
         // 如果发生异常，返回一个特殊的元组值
-        return (0, 0, 0, 0, 0, true);
+        return (0, 0, 0, 0, 0, 0, 0, 0, 0, true);
     }
 }
 public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tronAddress)
@@ -1057,7 +1063,7 @@ var usdtTransferTotalResult = getUsdtTransferTotalTask.Result;
 var (usdtTotal, transferCount, isErrorUsdtTransferTotal) = usdtTransferTotalResult;
 
 var getBandwidthResult = getBandwidthTask.Result;
-var (remainingBandwidth, totalBandwidth, transactions, transactionsIn, transactionsOut, isErrorGetBandwidth) = getBandwidthResult;
+var (remainingBandwidth, totalBandwidth, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, isErrorGetBandwidth) = getBandwidthResult;
 
 var getLastFiveTransactionsResult = getLastFiveTransactionsTask.Result;
 var (lastFiveTransactions, isErrorGetLastFiveTransactions) = getLastFiveTransactionsResult;
@@ -1139,6 +1145,8 @@ if (trxBalance < 100)
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}   ( TRX能量不足，请立即兑换！)</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
+    $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
+    $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +   
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
     $"———————<b>最近交易</b>———————\n" +
@@ -1157,6 +1165,8 @@ else
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
+    $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
+    $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +       
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
     $"———————<b>最近交易</b>———————\n" +
