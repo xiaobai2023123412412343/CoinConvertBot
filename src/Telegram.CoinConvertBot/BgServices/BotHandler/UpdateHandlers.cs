@@ -1086,7 +1086,7 @@ var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResu
 // 检查是否发生了请求错误
 if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetUsdtTotalIncome || isErrorGetOwnerPermission)
 {
-    await botClient.SendTextMessageAsync(message.Chat.Id, "接口维护中，请稍后重试！");
+    await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址有误或接口维护中，请稍后重试！");
     return;
 }
     
