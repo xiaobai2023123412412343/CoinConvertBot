@@ -2110,7 +2110,24 @@ if (messageText.StartsWith("/zjdh"))
         parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
         replyMarkup: inlineKeyboard
     );
-}      
+}  
+// 如果用户发送的文本包含"多签"两个字
+if (messageText.Contains("多签"))
+{
+    // 向用户发送多签介绍
+    string multisigText = @"什么是多签功能？
+
+在了解多签之前，先来看一下单签功能。
+
+在加密数字货币领域，一般的交易，比如转账、授权、买卖等行为都需签名，这种理解为单签。因为只需要使用者一个人签名授权即可完成交易。
+
+这就不难理解多签功能了，是指在交易的过程中需要多人完成签名后，该笔交易才能执行成功，否则就会失败。比如张三、李四、王麻子三个人共同管理了一个多签钱包A，张三想从A钱包转1000TRX到B钱包，此时如果李四或王麻子不同意，那张三就无法转走这笔资产。只有在李四、王麻子都同意并签名的情况下，该笔资产才能顺利转出。
+
+TRX（波场币）多重签名（Multisig）是一种安全机制，允许多个签名者共同控制一个地址。在多重签名地址中，执行交易需要一定数量的签名者的私钥签名才能完成。这种方法可以提高资产安全性，防止因单个私钥被盗用而导致资产损失。
+
+如果需要开通多签功能，可联系管理员协助开通！";
+    await botClient.SendTextMessageAsync(message.Chat.Id, multisigText);
+}        
     // 检查是否接收到了 /cny 消息，收到就在当前聊天中发送广告
     else if (messageText.StartsWith("/cny"))
     {
