@@ -1135,7 +1135,7 @@ else
 if (trxBalance < 100)
 {
     resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
-    $"地址权限：<b>{addressPermissionText}</b>\n" +    
+    $"多签地址：<b>{addressPermissionText}</b>\n" +    
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
@@ -1155,7 +1155,7 @@ if (trxBalance < 100)
 else
 {
     resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
-    $"地址权限：<b>{addressPermissionText}</b>\n" +    
+    $"多签地址：<b>{addressPermissionText}</b>\n" +    
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
