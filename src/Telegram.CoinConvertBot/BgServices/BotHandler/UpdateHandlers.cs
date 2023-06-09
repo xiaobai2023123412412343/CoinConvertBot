@@ -696,9 +696,10 @@ public static async Task<(decimal TotalIncome, decimal MonthlyIncome, decimal Da
         string fingerprint = null;
 
         // 获取当月1号和今天的日期
-        DateTime now = DateTime.Now;
-        DateTime firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
-        DateTime today = now.Date;
+        DateTime nowInUtc = DateTime.UtcNow;
+        DateTime nowInBeijing = nowInUtc.AddHours(8);
+        DateTime firstDayOfMonth = new DateTime(nowInBeijing.Year, nowInBeijing.Month, 1);
+        DateTime today = nowInBeijing.Date;
 
         while (true)
         {
@@ -743,14 +744,15 @@ public static async Task<(decimal TotalIncome, decimal MonthlyIncome, decimal Da
                 if (transactionElement.TryGetProperty("block_timestamp", out var timestampElement))
                 {
                     var timestamp = timestampElement.GetInt64();
-                    DateTime transactionTime = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).DateTime;
+                    DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).UtcDateTime;
+                    DateTime transactionTimeInBeijing = transactionTimeUtc.AddHours(8);
 
                     // 判断是否属于当月和今天的收入
-                    if (transactionTime >= firstDayOfMonth)
+                    if (transactionTimeInBeijing >= firstDayOfMonth)
                     {
                         monthlyIncome += income;
 
-                        if (transactionTime >= today)
+                        if (transactionTimeInBeijing >= today)
                         {
                             dailyIncome += income;
                         }
