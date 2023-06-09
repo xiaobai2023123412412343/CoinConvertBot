@@ -1165,7 +1165,7 @@ if (trxBalance < 100)
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel}</b>\n" +
     $"交易笔数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
-    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")} | 本月：{monthlyIncome.ToString("N2")} | 今日：{dailyIncome.ToString("N2")}</b>\n" +
+    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}   ( TRX能量不足，请立即兑换！)</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
@@ -1185,7 +1185,7 @@ else
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel}</b>\n" +
     $"交易笔数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
-    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")} | 本月：{monthlyIncome.ToString("N2")} | 今日：{dailyIncome.ToString("N2")}</b>\n" +
+    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
