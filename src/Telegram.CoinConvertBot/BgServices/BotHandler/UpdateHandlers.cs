@@ -683,7 +683,7 @@ private static readonly Dictionary<string, string> LanguageCodes = new Dictionar
     { "斯瓦希里语", "sw" },
     { "印尼语", "id" }
 };
-public static async Task<(decimal TotalIncome, bool IsError)> GetTotalIncomeAsync(string address, bool isTrx)
+public static async Task<(decimal TotalIncome, decimal MonthlyIncome, decimal DailyIncome, bool IsError)> GetTotalIncomeAsync(string address, bool isTrx)
 {
     try
     {
@@ -691,7 +691,14 @@ public static async Task<(decimal TotalIncome, bool IsError)> GetTotalIncomeAsyn
         using var httpClient = new HttpClient();
 
         decimal totalIncome = 0m;
+        decimal monthlyIncome = 0m;
+        decimal dailyIncome = 0m;
         string fingerprint = null;
+
+        // 获取当月1号和今天的日期
+        DateTime now = DateTime.Now;
+        DateTime firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+        DateTime today = now.Date;
 
         while (true)
         {
@@ -729,7 +736,26 @@ public static async Task<(decimal TotalIncome, bool IsError)> GetTotalIncomeAsyn
                 }
                 var value = valueElement.GetString();
 
-                totalIncome += decimal.Parse(value) / 1_000_000; // 假设USDT有6位小数
+                decimal income = decimal.Parse(value) / 1_000_000; // 假设USDT有6位小数
+                totalIncome += income;
+
+                // 获取交易时间
+                if (transactionElement.TryGetProperty("block_timestamp", out var timestampElement))
+                {
+                    var timestamp = timestampElement.GetInt64();
+                    DateTime transactionTime = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).DateTime;
+
+                    // 判断是否属于当月和今天的收入
+                    if (transactionTime >= firstDayOfMonth)
+                    {
+                        monthlyIncome += income;
+
+                        if (transactionTime >= today)
+                        {
+                            dailyIncome += income;
+                        }
+                    }
+                }
 
                 if (transactionElement.TryGetProperty("transaction_hash", out var transactionIdElement))
                 {
@@ -743,12 +769,13 @@ public static async Task<(decimal TotalIncome, bool IsError)> GetTotalIncomeAsyn
             }
         }
 
-        return (totalIncome, false); // 如果没有发生错误，返回结果和IsError=false
+        // 如果没有发生错误，返回结果和IsError=false
+        return (totalIncome, monthlyIncome, dailyIncome, false);
     }
     catch (Exception ex)
     {
         // 发生错误时，返回默认值和IsError=true
-        return (0m, true);
+        return (0m, 0m, 0m, true);
     }
 }
     
@@ -1042,21 +1069,18 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     // 回复用户正在查询
     await botClient.SendTextMessageAsync(message.Chat.Id, "正在查询，请稍后...");
 
-    // 同时启动所有任务
-    var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");
-    var getBalancesTask = GetBalancesAsync(tronAddress);
-    var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
-    var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
-    var getUsdtTotalIncomeTask = GetTotalIncomeAsync(tronAddress, false);
-    var getBandwidthTask = GetBandwidthAsync(tronAddress);
-    var getLastFiveTransactionsTask = GetLastFiveTransactionsAsync(tronAddress);
-    var getOwnerPermissionTask = GetOwnerPermissionAsync(tronAddress);
+// 同时启动所有任务
+var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");
+var getBalancesTask = GetBalancesAsync(tronAddress);
+var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
+var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
+var getTotalIncomeTask = GetTotalIncomeAsync(tronAddress, false);
+var getBandwidthTask = GetBandwidthAsync(tronAddress);
+var getLastFiveTransactionsTask = GetLastFiveTransactionsAsync(tronAddress);
+var getOwnerPermissionTask = GetOwnerPermissionAsync(tronAddress);
 
-
-
-    // 等待所有任务完成
-    await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getUsdtTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask, getOwnerPermissionTask);
-
+// 等待所有任务完成
+await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask, getOwnerPermissionTask);
 
 // 处理结果
 var usdtTransferTotalResult = getUsdtTransferTotalTask.Result;
@@ -1077,14 +1101,14 @@ var (creationTime, isErrorGetAccountCreationTime) = getAccountCreationTimeResult
 var getLastTransactionTimeResult = getLastTransactionTimeTask.Result;
 var (lastTransactionTime, isErrorGetLastTransactionTime) = getLastTransactionTimeResult;
 
-var getUsdtTotalIncomeResult = getUsdtTotalIncomeTask.Result;
-var (usdtTotalIncome, isErrorGetUsdtTotalIncome) = getUsdtTotalIncomeResult;
-    
+var getTotalIncomeResult = getTotalIncomeTask.Result;
+var (usdtTotalIncome, monthlyIncome, dailyIncome, isErrorGetTotalIncome) = getTotalIncomeResult;
+
 var getOwnerPermissionResult = getOwnerPermissionTask.Result;
 var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResult;
-    
+
 // 检查是否发生了请求错误
-if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetUsdtTotalIncome || isErrorGetOwnerPermission)
+if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetTotalIncome || isErrorGetOwnerPermission)
 {
     await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址有误或接口维护中，请稍后重试！");
     return;
@@ -1141,7 +1165,7 @@ if (trxBalance < 100)
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel}</b>\n" +
     $"交易笔数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
-    $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" +
+    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")} | 本月：{monthlyIncome.ToString("N2")} | 今日：{dailyIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}   ( TRX能量不足，请立即兑换！)</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
@@ -1161,7 +1185,7 @@ else
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel}</b>\n" +
     $"交易笔数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
-    $"USDT收入：<b>{usdtTotalIncome.ToString("N2")}</b>\n" +
+    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")} | 本月：{monthlyIncome.ToString("N2")} | 今日：{dailyIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
