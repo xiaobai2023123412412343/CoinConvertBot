@@ -1056,6 +1056,28 @@ public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddr
         return (string.Empty, true);
     }
 }
+// 计算连续相同字符数量的方法
+private static int CountConsecutiveIdenticalChars(string input)
+{
+    int count = 1;
+    char currentChar = input[input.Length - 1];
+
+    // 从倒数第二个字符开始遍历
+    for (int i = input.Length - 2; i >= 0; i--)
+    {
+        // 如果当前字符与上一个字符相同，计数器加1
+        if (input[i] == currentChar)
+        {
+            count++;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return count;
+}  
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
@@ -1126,6 +1148,14 @@ if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 
     await botClient.SendTextMessageAsync(message.Chat.Id, warningText);
     return;
 }
+// 计算地址末尾连续相同字符的数量
+int consecutiveIdenticalCharsCount = CountConsecutiveIdenticalChars(tronAddress);
+
+// 当连续相同字符数量大于等于4且小于等于地址长度时，添加“靓号”信息
+string userLabelSuffix = consecutiveIdenticalCharsCount >= 4 && consecutiveIdenticalCharsCount <= tronAddress.Length
+    ? $" {consecutiveIdenticalCharsCount}连靓号"
+    : "";
+    
 // 添加地址权限的信息
 string addressPermissionText;
 if (string.IsNullOrEmpty(ownerPermissionAddress))
@@ -1165,7 +1195,7 @@ if (trxBalance < 100)
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
-    $"用户标签：<b>{userLabel}</b>\n" +
+    $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
     $"交易笔数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
     $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
@@ -1185,7 +1215,7 @@ else
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
-    $"用户标签：<b>{userLabel}</b>\n" +
+    $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
     $"交易笔数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
     $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")}</b>\n" +
