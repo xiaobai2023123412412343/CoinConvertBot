@@ -1150,15 +1150,18 @@ if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 
     await botClient.SendTextMessageAsync(message.Chat.Id, warningText);
     return;
 }
-// 计算地址末尾连续相同字符的数量
+// 计算地址末尾连续相同字符的数量（忽略大小写）
 int consecutiveIdenticalCharsCount = CountConsecutiveIdenticalChars(tronAddress);
 
-string fireEmoji = "\uD83D\uDD25";
-
 // 当连续相同字符数量大于等于4且小于等于地址长度时，添加“靓号”信息
-string userLabelSuffix = consecutiveIdenticalCharsCount >= 4 && consecutiveIdenticalCharsCount <= tronAddress.Length
-    ? $" {fireEmoji}{consecutiveIdenticalCharsCount}连靓号{fireEmoji}"
-    : "";
+string fireEmoji = "\uD83D\uDD25";
+string userLabelSuffix = "";
+
+if (consecutiveIdenticalCharsCount >= 4 && consecutiveIdenticalCharsCount <= tronAddress.Length)
+{
+    string buyLink = "https://t.me/lianghaonet";
+    userLabelSuffix = $" {fireEmoji}{consecutiveIdenticalCharsCount}连靓号{fireEmoji} <a href=\"{buyLink}\">购买靓号</a>";
+}
     
 // 添加地址权限的信息
 string addressPermissionText;
