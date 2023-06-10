@@ -977,13 +977,18 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
                 // 判断交易是收入还是支出
                 string type;
                 string fromAddress = (string)transaction["from"];
+                string toAddress = (string)transaction["to"];
+                string transactionPartyAddress;
+                
                 if (tronAddress.Equals(fromAddress, StringComparison.OrdinalIgnoreCase))
                 {
                     type = "支出";
+                    transactionPartyAddress = toAddress;
                 }
                 else
                 {
                     type = "收入";
+                    transactionPartyAddress = fromAddress;
                 }
 
                 // 获取交易金额，并转换为USDT
@@ -991,7 +996,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
                 decimal usdtAmount = decimal.Parse(value) / 1_000_000;
 
                 // 构建交易文本
-                transactionTextBuilder.AppendLine($"<code>{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}   {type}{usdtAmount:N2} USDT</code>");
+                transactionTextBuilder.AppendLine($"<code>{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {transactionPartyAddress.Substring(0, 4)}**{transactionPartyAddress.Substring(transactionPartyAddress.Length - 6, 6)}  {type}{usdtAmount:N2} USDT</code>");
             }
 
             return (transactionTextBuilder.ToString(), false); // 如果没有发生错误，返回结果和IsError=false
