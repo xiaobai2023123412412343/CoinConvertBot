@@ -2066,6 +2066,23 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
     private static async Task BotOnMessageReceived(ITelegramBotClient botClient, Message message)
     {
         Log.Information($"Receive message type: {message.Type}");
+     // 检查机器人是否被添加到新的群组
+    if (message.Type == MessageType.ChatMembersAdded)
+    {
+        var me = await botClient.GetMeAsync();
+        foreach (var newUser in message.NewChatMembers)
+        {
+            if (newUser.Id == me.Id)
+            {
+                // 发送欢迎消息
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "感谢把我拉进群，各位老板10分钟后开始推送行情面板。\n\n如需跟我互动，请@我或者设置为管理员即可！"
+                );
+                return;
+            }
+        }
+    }
         if (message.Text is not { } messageText)
             return;
         var scope = serviceScopeFactory.CreateScope();
