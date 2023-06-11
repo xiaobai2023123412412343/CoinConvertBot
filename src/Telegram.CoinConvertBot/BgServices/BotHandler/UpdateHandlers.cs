@@ -1153,15 +1153,15 @@ if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransac
 }
     
     // 判断是否所有返回的数据都是0
-if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
-    usdtTotalIncome == 0 && remainingBandwidth == 0 && totalBandwidth == 0 && 
-    transactions == 0 && transactionsIn == 0 && transactionsOut == 0)
-{
+//if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
+    //usdtTotalIncome == 0 && remainingBandwidth == 0 && totalBandwidth == 0 && 
+    //transactions == 0 && transactionsIn == 0 && transactionsOut == 0)
+//{
     // 如果都是0，那么添加提醒用户的语句
-    string warningText = "查询地址有误或地址未激活，请激活后重试！";
-    await botClient.SendTextMessageAsync(message.Chat.Id, warningText);
-    return;
-}
+    //string warningText = "查询地址有误或地址未激活，请激活后重试！";
+    //await botClient.SendTextMessageAsync(message.Chat.Id, warningText);
+    //return;
+//}
 // 计算地址末尾连续相同字符的数量（忽略大小写）
 int consecutiveIdenticalCharsCount = CountConsecutiveIdenticalChars(tronAddress);
 
