@@ -969,6 +969,9 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
 
             foreach (var transaction in transactions)
             {
+                // 获取交易哈希值
+                string txHash = (string)transaction["transaction_id"];
+
                 // 获取交易时间，并转换为北京时间
                 long blockTimestamp = (long)transaction["block_timestamp"];
                 DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(blockTimestamp).UtcDateTime;
@@ -992,8 +995,8 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
                 string value = (string)transaction["value"];
                 decimal usdtAmount = decimal.Parse(value) / 1_000_000;
 
-                // 构建交易文本
-                transactionTextBuilder.AppendLine($"<code>{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}{usdtAmount:N2} USDT</code>");
+                // 构建交易文本并添加链接
+                transactionTextBuilder.AppendLine($"<a href=\"https://tronscan.org/#/transaction/{txHash}\">{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}{usdtAmount:N2} USDT</a>");
             }
 
             return (transactionTextBuilder.ToString(), false); // 如果没有发生错误，返回结果和IsError=false
