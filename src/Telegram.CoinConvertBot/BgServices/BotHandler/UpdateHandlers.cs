@@ -996,7 +996,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
                 decimal usdtAmount = decimal.Parse(value) / 1_000_000;
 
                 // 构建交易文本并添加链接
-                transactionTextBuilder.AppendLine($"<a href=\"https://tronscan.org/#/transaction/{txHash}\">{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}{usdtAmount:N2} USDT</a>");
+                transactionTextBuilder.AppendLine($"<a href=\"https://tronscan.org/#/transaction/{txHash}\">{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}   {type}{usdtAmount:N2} USDT</a>");
             }
 
             return (transactionTextBuilder.ToString(), false); // 如果没有发生错误，返回结果和IsError=false
