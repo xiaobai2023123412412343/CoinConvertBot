@@ -1539,9 +1539,9 @@ public static async Task<decimal> GetOkxPriceAsync(string baseCurrency, string q
     {
         response = await client.GetAsync(url);
     }
-    catch (Exception)
+    catch (Exception ex) // 修改了这里
     {
-        Console.WriteLine("API异常，暂无法访问。");
+        Console.WriteLine($"API异常，暂无法访问。错误信息：{ex.Message}"); // 修改了这里
         return default; // 返回默认值（0）
     }
 
@@ -1567,9 +1567,9 @@ public static async Task<decimal> GetOkxPriceAsync(string baseCurrency, string q
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex) // 修改了这里
         {
-            Console.WriteLine("获取价格数据异常。");
+            Console.WriteLine($"获取价格数据异常。错误信息：{ex.Message}"); // 修改了这里
             return default; // 返回默认值（0）
         }
     }
