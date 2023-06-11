@@ -1165,7 +1165,7 @@ string userLabelSuffix = "";
 if (consecutiveIdenticalCharsCount >= 4 && consecutiveIdenticalCharsCount <= tronAddress.Length)
 {
     string buyLink = "https://t.me/lianghaonet";
-    userLabelSuffix = $" {fireEmoji}{consecutiveIdenticalCharsCount}连靓号{fireEmoji} <a href=\"{buyLink}\">购买靓号</a>";
+    userLabelSuffix = $" {fireEmoji}{consecutiveIdenticalCharsCount}连靓号{fireEmoji} <a href=\"{buyLink}\">我也要靓号</a>";
 }
     
 // 添加地址权限的信息
