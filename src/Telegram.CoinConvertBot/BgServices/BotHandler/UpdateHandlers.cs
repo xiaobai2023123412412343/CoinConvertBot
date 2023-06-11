@@ -1146,6 +1146,8 @@ var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResu
     
  // 计算人民币余额
  decimal cnyBalance = usdtBalance * okxPrice;
+// 计算可供转账的次数
+int availableTransferCount = (int)(trxBalance / 13.3959m);    
     
 // 检查是否发生了请求错误
 if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetTotalIncome || isErrorGetOwnerPermission)
@@ -1242,7 +1244,7 @@ else
     $"交易笔数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
     $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
-    $"TRX余额：<b>{trxBalance.ToString("N2")}</b>\n" +
+    $"TRX余额：<b>{trxBalance.ToString("N2")}   ( 可供转账{availableTransferCount}次 )</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
     $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
     $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +       
