@@ -994,7 +994,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
                 // 获取交易金额，并转换为USDT
                 string value = (string)transaction["value"];
                 decimal usdtAmount = decimal.Parse(value) / 1_000_000;
-                // 输出API返回的数据
+                // 输出API返回的数据，在解析JSON响应之后添加
                 //Console.WriteLine(jsonString);
 
                 // 构建交易文本并添加链接
