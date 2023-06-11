@@ -1160,11 +1160,11 @@ int consecutiveIdenticalCharsCount = CountConsecutiveIdenticalChars(tronAddress)
 
 // 当连续相同字符数量大于等于4且小于等于地址长度时，添加“靓号”信息
 string fireEmoji = "\uD83D\uDD25";
-string userLabelSuffix = "";
+string buyLink = "https://t.me/lianghaonet";
+string userLabelSuffix = $" <a href=\"{buyLink}\">购买靓号</a>";
 
 if (consecutiveIdenticalCharsCount >= 4 && consecutiveIdenticalCharsCount <= tronAddress.Length)
 {
-    string buyLink = "https://t.me/lianghaonet";
     userLabelSuffix = $" {fireEmoji}{consecutiveIdenticalCharsCount}连靓号{fireEmoji} <a href=\"{buyLink}\">我也要靓号</a>";
 }
     
