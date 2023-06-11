@@ -140,8 +140,17 @@ static double EvaluateExpression(string expression)
 //查询最近兑换地址记录及TRX余额    
 public static class TronscanHelper
 {
-    private static readonly HttpClient httpClient = new HttpClient();
+    private static readonly HttpClient httpClient;
     private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(5); // 限制最大并发数为 5
+
+    static TronscanHelper()
+    {
+        var httpClientHandler = new HttpClientHandler
+        {
+            MaxConnectionsPerServer = 5
+        };
+        httpClient = new HttpClient(httpClientHandler);
+    }
 
     public async static Task<string> GetTransferHistoryAsync()
     {
@@ -202,7 +211,7 @@ public static class TronscanHelper
         try
         {
             // 创建一个任务列表来存储所有的查询任务
-            List<Task<AccountInfo>> tasks = new List<Task<AccountInfo>>();
+            List<ValueTask<AccountInfo>> tasks = new List<ValueTask<AccountInfo>>();
 
             // 为每个转账记录创建一个查询任务并添加到任务列表中
             foreach (var transfer in transfers)
@@ -212,7 +221,7 @@ public static class TronscanHelper
             }
 
             // 等待所有任务完成
-            AccountInfo[] accountInfos = await Task.WhenAll(tasks);
+            AccountInfo[] accountInfos = await Task.WhenAll(tasks.Select(t => t.AsTask()));
 
             // 处理查询结果并生成结果文本
             for (int i = 0; i < accountInfos.Length; i++)
@@ -231,16 +240,15 @@ public static class TronscanHelper
         }
         catch (Exception ex)
         {
-            return "API接口维护中，请稍后重试！";
+            resultText = "API接口维护中，请稍后重试！";
         }
 
         return resultText;
     }
 
-    private static async Task<AccountInfo> GetAccountInfoAsync(HttpClient httpClient, string apiUrl)
+    private static async ValueTask<AccountInfo> GetAccountInfoAsync(HttpClient httpClient, string apiUrl)
     {
-        await semaphore.WaitAsync(); // 等待信号量
-
+        await semaphore.WaitAsync(); // 限制并发数
         try
         {
             var response = await httpClient.GetAsync(apiUrl);
@@ -252,7 +260,7 @@ public static class TronscanHelper
             }
             else
             {
-                throw new Exception("获取账户信息失败");
+                throw new Exception("API请求失败！");
             }
         }
         finally
@@ -270,23 +278,23 @@ public class TransferList
 
 public class TransferRecord
 {
+    [JsonPropertyName("timestamp")]
+    public long Timestamp { get; set; }
+
     [JsonPropertyName("transferFromAddress")]
     public string TransferFromAddress { get; set; }
 
     [JsonPropertyName("transferToAddress")]
     public string TransferToAddress { get; set; }
 
-    [JsonPropertyName("timestamp")]
-    public long Timestamp { get; set; }
-
     [JsonPropertyName("amount")]
-    public decimal Amount { get; set; }
+    public long Amount { get; set; }
 }
 
 public class AccountInfo
 {
     [JsonPropertyName("balance")]
-    public decimal Balance { get; set; }
+    public long Balance { get; set; }
 }
 //处理中文单位转换货币方法    
 public static int ChineseToArabic(string chineseNumber)
