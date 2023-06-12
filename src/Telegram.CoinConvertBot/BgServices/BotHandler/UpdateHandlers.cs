@@ -2218,7 +2218,7 @@ if (messageText.StartsWith("/zjdh"))
     );
 }  
 // 如果用户发送的文本包含"多签"两个字
-if (messageText.Contains("多签"))
+if (messageText.Contains("多签") || messageText.Contains("多重签名"))
 {
     // 向用户发送多签介绍
     string multisigText = @"什么是多签功能？
