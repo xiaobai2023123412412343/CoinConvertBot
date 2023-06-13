@@ -72,7 +72,7 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
     AddFollower(message);
 
     var sb = new StringBuilder();
-    sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>");
+    sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>\n");
     foreach (var follower in Followers)
     {
         sb.AppendLine($"<b>{follower.Name}</b>  用户名：@{follower.Username}   ID：<code>{follower.Id}</code>");
