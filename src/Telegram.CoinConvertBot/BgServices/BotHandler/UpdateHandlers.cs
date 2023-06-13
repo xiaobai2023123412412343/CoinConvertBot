@@ -58,7 +58,28 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-//获取关注列表    
+//获取关注列表   
+private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
+{
+    try
+    {
+        var transactionRecords = await GetTransactionRecordsAsync(botClient, callbackQuery.Message);
+        await botClient.EditMessageTextAsync(
+            chatId: callbackQuery.Message.Chat.Id,
+            messageId: callbackQuery.Message.MessageId,
+            text: transactionRecords,
+            replyMarkup: null
+        );
+        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 结束回调查询
+    }
+    catch (Exception ex)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: callbackQuery.Message.Chat.Id,
+            text: $"获取交易记录时发生错误：{ex.Message}"
+        );
+    }
+}    
 private static void AddFollower(Message message)
 {
     var user = Followers.FirstOrDefault(x => x.Id == message.From.Id);
@@ -78,11 +99,19 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
         sb.AppendLine($"<b>{follower.Name}</b>  用户名：@{follower.Username}   ID：<code>{follower.Id}</code>");
     }
 
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new []
+        {
+            InlineKeyboardButton.WithCallbackData("点击查看", "show_transaction_records")
+        }
+    });
+
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: sb.ToString(),
         parseMode: ParseMode.Html,
-        replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("点击查看", "https://t.me/your_bot_link"))
+        replyMarkup: inlineKeyboard
     );
 }  
 private static readonly List<User> Followers = new List<User>();
@@ -1962,6 +1991,20 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         // 在这里处理消息更新...
     }
+    // 添加以下代码来处理回调查询更新
+    if (update.Type == UpdateType.CallbackQuery)
+    {
+        var callbackQuery = update.CallbackQuery;
+        var callbackData = callbackQuery.Data;
+
+        switch (callbackData)
+        {
+            case "show_transaction_records":
+                await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
+                break;
+            // 其他回调处理...
+        }
+    }        
         if (update.Type == UpdateType.Message)
     {
 var message = update.Message;
