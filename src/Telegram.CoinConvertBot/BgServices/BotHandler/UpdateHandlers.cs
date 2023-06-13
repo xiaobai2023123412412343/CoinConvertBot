@@ -39,6 +39,13 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //yifanfubot或t.me/yifanfubot或@yifanfubot为机器人ID
 //TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC为监控的收款地址
 //TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv为监控的转账地址
+//const long TARGET_CHAT_ID = -917223865;//指定群聊转发用户对机器人发送的信息
+//    static GroupManager()  广告发到指定群聊
+//    {
+//        // 添加初始群组 ID
+//        groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
+//        //groupIds.Add(-994581226);  // 添加第二个初始群组 ID
+//    }
 
 public static class UpdateHandlers
 {
@@ -2243,6 +2250,25 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
         {
             Log.Logger.Error(e, "更新Telegram用户信息失败！");
         }
+// 将这个值替换为目标群组的ID
+const long TARGET_CHAT_ID = -917223865;//指定群聊转发用户对机器人发送的信息
+
+if (message.Type == MessageType.Text)
+{
+    var timestamp = message.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+    var userFullName = $"{message.From.FirstName} {message.From.LastName}".Trim();
+    var username = message.From.Username;
+    var userId = message.From.Id;
+    var text = message.Text;
+
+    string forwardedMessage = $"{timestamp}  {userFullName}  @{username} (ID:<code> {userId}</code>)\n\n发送文本：{text}";
+
+    await botClient.SendTextMessageAsync(
+        chatId: TARGET_CHAT_ID,
+        text: forwardedMessage,
+        parseMode: ParseMode.Html
+    );
+}     
 await SendHelpMessageAsync(botClient, message);        
 // 获取交易记录
 if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
