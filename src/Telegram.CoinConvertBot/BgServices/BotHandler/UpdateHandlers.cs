@@ -58,40 +58,40 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private static void AddFollower(Message message)
+//获取关注列表    
+private static void AddFollower(Message message)
+{
+    var user = Followers.FirstOrDefault(x => x.Id == message.From.Id);
+    if (user == null)
     {
-        var user = Followers.FirstOrDefault(x => x.Id == message.From.Id);
-        if (user == null)
-        {
-            Followers.Add(new User { Username = message.From.Username, Id = message.From.Id });
-        }
+        Followers.Add(new User { Name = message.From.FirstName, Username = message.From.Username, Id = message.From.Id });
     }
-
+}
 private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botClient, Message message)
 {
     AddFollower(message);
 
     var sb = new StringBuilder();
-    sb.AppendLine($"机器人目前在用人数：<code>{Followers.Count}</code>");
+    sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>");
     foreach (var follower in Followers)
     {
-        sb.AppendLine($"用户名：@{follower.Username}  ID：<code>{follower.Id}</code>");
+        sb.AppendLine($"<b>{follower.Name}</b>  用户名：@{follower.Username}   ID：<code>{follower.Id}</code>");
     }
 
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: sb.ToString(),
-        parseMode: ParseMode.Html, // 设置 ParseMode 为 Html
+        parseMode: ParseMode.Html,
         replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("点击查看", "https://t.me/your_bot_link"))
     );
-}   
-    private static readonly List<User> Followers = new List<User>();
-
-    public class User
-    {
-        public string Username { get; set; }
-        public long Id { get; set; }
-    }
+}  
+private static readonly List<User> Followers = new List<User>();
+public class User
+{
+    public string Name { get; set; }
+    public string Username { get; set; }
+    public long Id { get; set; }
+}
 // 创建一个静态函数，用于计算包含大数字的表达式
 static double EvaluateExpression(string expression)
 {
