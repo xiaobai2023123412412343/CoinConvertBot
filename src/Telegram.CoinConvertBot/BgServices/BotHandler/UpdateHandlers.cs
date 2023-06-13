@@ -65,6 +65,8 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 添加一个类级别的变量来跟踪广告是否正在运行
+private static bool isAdvertisementRunning = false;    
 //获取关注列表   
 private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
@@ -1750,7 +1752,7 @@ public static class GroupManager
     {
         // 添加初始群组 ID
         groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
-        //groupIds.Add(-994581226);  // 添加第二个初始群组 ID
+        //groupIds.Add(-917223865);  // 添加第二个初始群组 ID
     }
 
     public static IReadOnlyCollection<long> GroupIds => groupIds.ToList().AsReadOnly();
@@ -2251,7 +2253,7 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
             Log.Logger.Error(e, "更新Telegram用户信息失败！");
         }
 // 将这个值替换为目标群组的ID
-const long TARGET_CHAT_ID = -917223865;//指定群聊转发用户对机器人发送的信息
+const long TARGET_CHAT_ID = -894216057;//指定群聊转发用户对机器人发送的信息
 
 if (message.Type == MessageType.Text)
 {
@@ -2299,13 +2301,21 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         );
     }
 }      
-        // 检查是否接收到了 /gg 消息，收到就启动广告
-        if (messageText.StartsWith("/gg"))
-        {
-            var cancellationTokenSource = new CancellationTokenSource();
-            var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-            _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate);
-        }
+
+// 检查是否接收到了 /gg 消息，收到就启动广告
+if (messageText.StartsWith("/gg"))
+{
+    // 如果广告没有在运行，就启动广告
+    if (!isAdvertisementRunning)
+    {
+        isAdvertisementRunning = true; // 将变量设置为 true，表示广告正在运行
+
+        var cancellationTokenSource = new CancellationTokenSource();
+        var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+        _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate)
+            .ContinueWith(_ => isAdvertisementRunning = false); // 广告结束后将变量设置为 false
+    }
+}
 if (messageText.StartsWith("/zjdh"))
 {
     var transferHistoryText = await TronscanHelper.GetTransferHistoryAsync();
