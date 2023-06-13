@@ -103,7 +103,7 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
     {
         new []
         {
-            InlineKeyboardButton.WithCallbackData("点击查看", "show_transaction_records")
+            InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_records")
         }
     });
 
