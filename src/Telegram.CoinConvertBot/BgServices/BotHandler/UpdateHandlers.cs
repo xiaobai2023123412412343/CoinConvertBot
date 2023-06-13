@@ -58,6 +58,40 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+    private static void AddFollower(Message message)
+    {
+        var user = Followers.FirstOrDefault(x => x.Id == message.From.Id);
+        if (user == null)
+        {
+            Followers.Add(new User { Username = message.From.Username, Id = message.From.Id });
+        }
+    }
+
+private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botClient, Message message)
+{
+    AddFollower(message);
+
+    var sb = new StringBuilder();
+    sb.AppendLine($"机器人目前在用人数：<code>{Followers.Count}</code>");
+    foreach (var follower in Followers)
+    {
+        sb.AppendLine($"用户名：@{follower.Username}  ID：<code>{follower.Id}</code>");
+    }
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: sb.ToString(),
+        parseMode: ParseMode.Html, // 设置 ParseMode 为 Html
+        replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithUrl("点击查看", "https://t.me/your_bot_link"))
+    );
+}   
+    private static readonly List<User> Followers = new List<User>();
+
+    public class User
+    {
+        public string Username { get; set; }
+        public long Id { get; set; }
+    }
 // 创建一个静态函数，用于计算包含大数字的表达式
 static double EvaluateExpression(string expression)
 {
@@ -1933,6 +1967,11 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 var message = update.Message;
 if (message?.Text != null)
 {
+                if (message.Text.StartsWith("/gzz"))
+                {
+                    await HandleGetFollowersCommandAsync(botClient, message);
+                }    
+    
     // 检查输入文本是否为 Tron 地址
     var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
 
