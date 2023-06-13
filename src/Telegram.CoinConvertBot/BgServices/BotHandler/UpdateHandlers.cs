@@ -2914,21 +2914,27 @@ var keyboard = new ReplyKeyboardMarkup(new[]
                                                         parseMode: ParseMode.Html,
                                                         replyMarkup: keyboard);
         }
-        async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
-        {
-            if (message.From == null) return message;
-            var from = message.From;
-            var UserId = message.From.Id;
-            var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-            var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
+{
+    if (message.From == null) return message;
+    var from = message.From;
+    var UserId = message.From.Id;
+    var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+    var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
 
-            var addressArray = configuration.GetSection("Address:USDT-TRC20").Get<string[]>();
-            var ReciveAddress = addressArray.Length == 0 ? "未配置" : addressArray[UserId % addressArray.Length];
-            var msg = @$"<b>实时价目表</b>
+    var addressArray = configuration.GetSection("Address:USDT-TRC20").Get<string[]>();
+    var ReciveAddress = addressArray.Length == 0 ? "未配置" : addressArray[UserId % addressArray.Length];
+
+    if (message.Chat.Id == AdminUserId)
+    {
+        await HandleGetFollowersCommandAsync(botClient, message);
+    }
+    else
+    {
+        var msg = @$"<b>实时价目表</b>
 
 实时汇率：<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>
 ————————————————————<code>
-   5 USDT = {(5m * 1).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
   10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
   20 USDT = {(5m * 4).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
   50 USDT = {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
@@ -2950,30 +2956,38 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 <code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
 <code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
 ";
-// 创建包含两行，每行两个按钮的虚拟键盘
-var keyboard = new ReplyKeyboardMarkup(new[]
-{
-    new [] // 第一行
-    {
-        new KeyboardButton("\U0001F4B0U兑TRX"),
-        new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9汇率换算"),
-    },   
-    new [] // 第二行
-    {
-        new KeyboardButton("\U0001F4B8币圈行情"),
-        new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u260E联系管理"),
-    }    
-});
-            keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
-            keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
 
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: msg,
-                                                        parseMode: ParseMode.Html,
-                                                        replyMarkup: keyboard);
-        }
+        // 创建包含两行，每行两个按钮的虚拟键盘
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
+            {
+                new KeyboardButton("\U0001F4B0U兑TRX"),
+                new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F4B9汇率换算"),
+            },   
+            new [] // 第二行
+            {
+                new KeyboardButton("\U0001F4B8币圈行情"),
+                new KeyboardButton("\U0001F310外汇助手"),
+                new KeyboardButton("\u260E联系管理"),
+            }    
+        });
+
+        keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+        keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后不会消失。
+
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: msg,
+            replyMarkup: keyboard,
+            parseMode: ParseMode.Html
+        );
+    }
+
+    // 在这里添加一个返回空消息的语句
+    return await Task.FromResult<Message>(null);
+}
         //通用回复
         static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         {
