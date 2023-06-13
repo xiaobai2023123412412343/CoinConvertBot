@@ -1989,7 +1989,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         var message = update.Message;
 
-        // 在这里处理消息更新...
+        AddFollower(message);
     }
     // 添加以下代码来处理回调查询更新
     if (update.Type == UpdateType.CallbackQuery)
