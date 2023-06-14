@@ -457,7 +457,7 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
         string adminLink = "https://t.me/yifanfu";
         string adminLinkText = $"<a href=\"{adminLink}\">管理员！</a>";
 
-        string helpText = "更改电报语言：在机器人对话框直接发送：<code>中文</code> 自动返回包括原CZ_CN等众多简体中文语言包，点击任意链接即可更改界面语言！\n\n关于兑换：<code>点击U兑TRX，给收款地址转10u以上的任意金额，机器人自动返回TRX到原付款地址，过程全自动，无人工干预！(点击机器人任意菜单只要有反应即可正常兑换，无需联系管理二次确认)</code>\n\n实时汇率：<code>TRX能量跟包括比特币在内的所有数字货币一样，价格起起落落有涨有跌，受市场行情影响，机器人的兑换汇率自动跟随市场行情进行波动！</code>\n\n汇率计算：<code>发送数字+币种(货币代码也可)自动计算并返回对应的人民币价值，例如发送1000美元或1000usd 自动按实时汇率计算并返回1000美元 ≈ ****元人民币</code>\n\n查询地址：<code>发送任意TRC20波场地址自动查询地址详情并返回近期USDT交易记录！</code>\n\n关于翻译：<code>发送任意外文自动翻译成简体中文并返回(本功能调用谷歌翻译)</code>\n\n中文转外文：<code>发送例如：\"转英语 你好\" 自动将你好翻译成英语：hello</code>\n\n实时查看：<code>如果想实时自动获取TRX-比特币-美元-USDT等在内的所有汇率，把机器人拉到群里即可，机器人24小时自动推送！</code>\n\n群里使用：<code>所有功能都可在机器人私聊使用，如果在群里，需要设置机器人为管理或者@机器人才可使用！</code>\n\n机器人兑换过程公平公正公开，交易记录全开放，发送：<code>兑换记录</code> 自动返回近期USDT收入以及TRX转出记录，欢迎监督！\n\n\U0001F449        本机器人源码出售，如有需要可联系" + adminLinkText + "      \U0001F448";
+        string helpText = "更改电报语言：在机器人对话框直接发送：<code>中文</code> 自动返回包括原zh_cn等众多简体中文语言包，点击任意链接即可更改界面语言！\n\n关于兑换：<code>点击U兑TRX，给收款地址转10u以上的任意金额，机器人自动返回TRX到原付款地址，过程全自动，无人工干预！(点击机器人任意菜单只要有反应即可正常兑换，无需联系管理二次确认)</code>\n\n实时汇率：<code>TRX能量跟包括比特币在内的所有数字货币一样，价格起起落落有涨有跌，受市场行情影响，机器人的兑换汇率自动跟随市场行情进行波动！</code>\n\n汇率计算：<code>发送数字+币种(货币代码也可)自动计算并返回对应的人民币价值，例如发送1000美元或1000usd 自动按实时汇率计算并返回1000美元 ≈ ****元人民币</code>\n\n查询地址：<code>发送任意TRC20波场地址自动查询地址详情并返回近期USDT交易记录！</code>\n\n关于翻译：<code>发送任意外文自动翻译成简体中文并返回(本功能调用谷歌翻译)</code>\n\n中文转外文：<code>发送例如：\"转英语 你好\" 自动将你好翻译成英语：hello</code>\n\n实时查看：<code>如果想实时自动获取TRX-比特币-美元-USDT等在内的所有汇率，把机器人拉到群里即可，机器人24小时自动推送！</code>\n\n群里使用：<code>所有功能都可在机器人私聊使用，如果在群里，需要设置机器人为管理或者@机器人才可使用！</code>\n\n机器人兑换过程公平公正公开，交易记录全开放，发送：<code>兑换记录</code> 自动返回近期USDT收入以及TRX转出记录，欢迎监督！\n\n\U0001F449        本机器人源码出售，如有需要可联系" + adminLinkText + "      \U0001F448";
 
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
@@ -2279,7 +2279,7 @@ if (messageText.Contains("中文") || messageText.Contains("简体") || messageT
 {
     string languagePackMessage = @"Telegram 简体中文语言包
 
-管理员自用，原cz_cn简体中文包: https://t.me/setlanguage/classic-zh-cn
+管理员自用，原zh_cn简体中文包: https://t.me/setlanguage/classic-zh-cn
 
 支持 Telegram for iOS/Android/macOS/Desktop, Telegram X for iOS/Android 官方客户端
 支持 Nicegram/Plus Messager/Unigram 第三方客户端
