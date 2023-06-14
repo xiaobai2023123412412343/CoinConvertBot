@@ -2279,7 +2279,7 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
                 // 发送欢迎消息
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "群内使用机器人指令：请@我或者将我设置为管理员即可！"
+                    text: "无法访问本群消息，请将我设置为管理员方便使用机器人完整功能！"
                 );
                 return;
             }
