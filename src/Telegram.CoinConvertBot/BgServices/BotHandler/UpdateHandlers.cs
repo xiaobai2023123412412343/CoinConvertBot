@@ -2083,6 +2083,9 @@ else
     if (message != null && !string.IsNullOrWhiteSpace(message.Text))
     {
         var inputText = message.Text.Trim();
+        
+        // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
+        var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
 
         if (!string.IsNullOrWhiteSpace(inputText))
         {
@@ -2100,6 +2103,12 @@ else
 
             // 检查输入文本是否仅包含表情符号
             var isOnlyEmoji = EmojiHelper.IsOnlyEmoji(inputText);
+            
+            // 如果输入文本仅为 'id' 或 'ID'，则不执行翻译
+            if (isIdOrID)
+            {
+                return;
+            }
 
             if (!containsKeywordsOrCommandsOrNumbersOrAtSign && !isTronAddress && !isOnlyEmoji && !isNumberCurrency && !isChineseTextWithSpaces)
             {
