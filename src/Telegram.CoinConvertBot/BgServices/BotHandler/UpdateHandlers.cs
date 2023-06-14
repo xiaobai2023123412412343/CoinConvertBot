@@ -2260,6 +2260,11 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
         }
 // 将这个值替换为目标群组的ID
 const long TARGET_CHAT_ID = -894216057;//指定群聊转发用户对机器人发送的信息
+// 将这个值替换为你的机器人用户名
+const string BOT_USERNAME = "trxcoin_bot";
+
+// 存储机器人的所有命令
+string[] botCommands = { "/start", "/yi","/fan","/fu","/btc","/usd","/boss","中文","帮助","兑换记录","\U0001F4B0U兑TRX","\U0001F570实时汇率","\U0001F4B9汇率换算","\U0001F4B8币圈行情","\U0001F310外汇助手","\u260E联系管理", "/cny" };        
 
 if (message.Type == MessageType.Text)
 {
@@ -2322,14 +2327,21 @@ Telegram 官方只开放了语言包翻译接口, 官方没有提供中文语言
     var username = message.From.Username;
     var userId = message.From.Id;
     var text = message.Text;
+    var chatType = message.Chat.Type;
+    var isMentioned = message.Entities?.Any(e => e.Type == MessageEntityType.Mention) ?? false;
+    var containsCommand = botCommands.Any(cmd => text.Contains($"{cmd}@{BOT_USERNAME}") || text.StartsWith(cmd));
 
-    string forwardedMessage = $"{timestamp}  {userFullName}  @{username} (ID:<code> {userId}</code>)\n\n发送文本：{text}";
+    if (chatType == ChatType.Private || (chatType == ChatType.Group && (isMentioned || containsCommand)))
+    {
+        string chatOrigin = chatType == ChatType.Private ? "来自私聊" : "来自群聊";
+        string forwardedMessage = $"{timestamp}  {userFullName}  @{username} (ID:<code> {userId}</code>)\n\n{chatOrigin}：{text}";
 
-    await botClient.SendTextMessageAsync(
-        chatId: TARGET_CHAT_ID,
-        text: forwardedMessage,
-        parseMode: ParseMode.Html
-    );
+        await botClient.SendTextMessageAsync(
+            chatId: TARGET_CHAT_ID,
+            text: forwardedMessage,
+            parseMode: ParseMode.Html
+        );
+    }
 }     
 await SendHelpMessageAsync(botClient, message);        
 // 获取交易记录
