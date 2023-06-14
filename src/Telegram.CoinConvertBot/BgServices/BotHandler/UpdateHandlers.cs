@@ -2257,6 +2257,60 @@ const long TARGET_CHAT_ID = -894216057;//指定群聊转发用户对机器人发
 
 if (message.Type == MessageType.Text)
 {
+if (messageText.Contains("中文") || messageText.Contains("简体") || messageText.Contains("语言") || messageText.Contains("language"))
+{
+    string languagePackMessage = @"Telegram 简体中文语言包
+
+管理员自用，原cz_cn简体中文包: https://t.me/setlanguage/classic-zh-cn
+
+支持 Telegram for iOS/Android/macOS/Desktop, Telegram X for iOS/Android 官方客户端
+支持 Nicegram/Plus Messager/Unigram 第三方客户端
+Telegram 官网网页版不能使用语言包.
+如果遇到不能更改语言包, 先把Telegram客户端升级新版
+各个语言包:
+
+中文(简体)-聪聪: https://t.me/setlanguage/zhcncc
+中文(简体)-@zh_CN: https://t.me/setlanguage/classic-zh-cn
+中文(简体)-简体: https://t.me/setlanguage/classic-zh
+中文(简体)-langCN: https://t.me/setlanguage/zhlangcn
+中文(简体)-zh-hans: https://t.me/setlanguage/zh-hans-beta
+中文(简体)-瓜体: https://t.me/setlanguage/duang-zh-cn
+中文(简体)-瓜皮中文: https://t.me/setlanguage/duangr-zhcn
+中文(简体)-小哇花里胡哨: https://t.me/setlanguage/qingwa
+中文(简体)-爱吃辣条的小学生: https://t.me/setlanguage/xiaowa
+中文(简体)-江湖中文版: https://t.me/setlanguage/jianghu
+中文(简体)-江湖侠客版: https://t.me/setlanguage/baoku
+中文(简体)-@cnmoe: https://t.me/setlanguage/moecn
+中文(简体)-@teslacn: https://t.me/setlanguage/vexzh
+中文(简体)-: https://t.me/setlanguage/cnsimplified
+中文(简体)-@MiaoCN: https://t.me/setlanguage/meowcn
+中文(简体)-@Fengzh: https://t.me/setlanguage/fengcs
+中文(简体)-简体字: https://t.me/setlanguage/jiantizi
+中文(香港)-简体中文: https://t.me/setlanguage/zh-hans-raw
+中文(香港)-繁体1: https://t.me/setlanguage/hongkong
+中文(香港)-繁体2: https://t.me/setlanguage/zhhant-hk
+中文(香港)-繁体3: https://t.me/setlanguage/zh-hant-raw
+中文(香港)-人口语: https://t.me/setlanguage/hongkonger
+中文(香港)-广东话1: https://t.me/setlanguage/zhhkpb1
+中文(香港)-广东话2: https://t.me/setlanguage/hkcantonese
+中文(香港)-廣東話: https://t.me/setlanguage/cantonese
+中文(香港)-郭桓桓: https://t.me/setlanguage/zhong-taiwan-traditional
+中文(台灣)-正体: https://t.me/setlanguage/taiwan
+中文(台灣)-繁体: https://t.me/setlanguage/zh-hant-beta
+中文(台灣)-文言: https://t.me/setlanguage/chinese-ancient
+中文(台灣)-文言: https://t.me/setlanguage/chinese-literary
+中文(台灣)-魔法師: https://t.me/setlanguage/encha
+日文: https://t.me/setlanguage/ja-beta
+说明:
+Telegram 官方只开放了语言包翻译接口, 官方没有提供中文语言包
+目前所有的中文语言包都是非官方人员翻译的, 都是用户翻译的
+觉得好用可以推荐朋友使用~~~";
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: languagePackMessage
+    );
+}    
     var timestamp = message.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
     var userFullName = $"{message.From.FirstName} {message.From.LastName}".Trim();
     var username = message.From.Username;
