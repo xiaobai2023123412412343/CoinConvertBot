@@ -94,15 +94,18 @@ private static void AddFollower(Message message)
     var user = Followers.FirstOrDefault(x => x.Id == message.From.Id);
     if (user == null)
     {
-        Followers.Add(new User { Name = message.From.FirstName, Username = message.From.Username, Id = message.From.Id });
+        Followers.Add(new User { Name = message.From.FirstName, Username = message.From.Username, Id = message.From.Id, FollowTime = DateTime.UtcNow.AddHours(8) });
     }
 }
+
 private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botClient, Message message)
 {
     AddFollower(message);
 
+    var todayFollowers = Followers.Count(f => f.FollowTime.Date == DateTime.UtcNow.AddHours(8).Date);
+
     var sb = new StringBuilder();
-    sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>\n");
+    sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>   今日新增关注：<b>{todayFollowers}</b>\n");
     foreach (var follower in Followers)
     {
         sb.AppendLine($"<b>{follower.Name}</b>  用户名：@{follower.Username}   ID：<code>{follower.Id}</code>");
@@ -122,13 +125,16 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
         parseMode: ParseMode.Html,
         replyMarkup: inlineKeyboard
     );
-}  
+}
+
 private static readonly List<User> Followers = new List<User>();
+
 public class User
 {
     public string Name { get; set; }
     public string Username { get; set; }
     public long Id { get; set; }
+    public DateTime FollowTime { get; set; }
 }
 // 创建一个静态函数，用于计算包含大数字的表达式
 static double EvaluateExpression(string expression)
