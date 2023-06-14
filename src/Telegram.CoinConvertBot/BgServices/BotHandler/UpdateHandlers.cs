@@ -39,7 +39,10 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //yifanfubot或t.me/yifanfubot或@yifanfubot为机器人ID
 //TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC为监控的收款地址
 //TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv为监控的转账地址
-//const long TARGET_CHAT_ID = -917223865;//指定群聊转发用户对机器人发送的信息
+// 将这个值替换为目标群组的ID
+//const long TARGET_CHAT_ID = -894216057;//指定群聊转发用户对机器人发送的信息
+// 将这个值替换为你的机器人用户名
+//const string BOT_USERNAME = "yifanfubot";//机器人用户名
 //    static GroupManager()  广告发到指定群聊
 //    {
 //        // 添加初始群组 ID
@@ -2261,7 +2264,7 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
 // 将这个值替换为目标群组的ID
 const long TARGET_CHAT_ID = -894216057;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
-const string BOT_USERNAME = "trxcoin_bot";
+const string BOT_USERNAME = "yifanfubot";//机器人用户名
 
 // 存储机器人的所有命令
 string[] botCommands = { "/start", "/yi","/fan","/fu","/btc","/usd","/boss","中文","帮助","兑换记录","\U0001F4B0U兑TRX","\U0001F570实时汇率","\U0001F4B9汇率换算","\U0001F4B8币圈行情","\U0001F310外汇助手","\u260E联系管理", "/cny" };        
