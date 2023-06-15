@@ -70,6 +70,55 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class GoogleSearchHelper
+{
+    private static readonly HttpClient HttpClient = new HttpClient(new HttpClientHandler
+    {
+        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+    });
+
+    public static async Task<string> SearchAndFormatResultsAsync(string query, int maxResults = 7)
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync($"https://www.google.com/search?q={Uri.EscapeDataString(query)}&num={maxResults}");
+            var htmlContent = await response.Content.ReadAsStringAsync();
+
+            var resultPattern = @"<a href=""/url\?q=(?<url>.*?)&amp;sa=.*?"".*?><h3.*?>(?<title>.*?)</h3>";
+            var matches = Regex.Matches(htmlContent, resultPattern, RegexOptions.Singleline);
+
+            // 使用 UTF-8 编码的放大镜字符
+            var magnifyingGlass = "&#128269;";
+
+            var formattedResults = new StringBuilder($"Google |<code>{query}</code>  | {magnifyingGlass}\n\n");
+
+            for (int i = 0; i < Math.Min(matches.Count, maxResults); i++)
+            {
+                var match = matches[i];
+                var url = match.Groups["url"].Value;
+                var title = Regex.Replace(match.Groups["title"].Value, "<.*?>", string.Empty);
+
+                // 使用 HtmlDecode 方法对 HTML 实体进行解码
+                title = WebUtility.HtmlDecode(title);
+                url = WebUtility.HtmlDecode(url);
+
+                // 对消息中的特殊字符进行转义
+                title = title.Replace("_", "\\_").Replace("*", "\\*").Replace("[", "\\[").Replace("]", "\\]").Replace("`", "\\`");
+                url = url.Replace("_", "\\_").Replace("*", "\\*").Replace("[", "\\[").Replace("]", "\\]").Replace("`", "\\`");
+
+                // 加粗标题
+                formattedResults.AppendLine($"<code>{title}</code>\n{url}\n");
+            }
+
+            return formattedResults.ToString();
+        }
+        catch (Exception)
+        {
+            // API 异常处理
+            return "API异常，请访问 www.google.com 搜索";
+        }
+    }
+}
 //查询用户或群组ID    
 private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Message message)
 {
@@ -2420,7 +2469,37 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         );
     }
 }      
+if (messageText.StartsWith("谷歌 "))
+{
+    var query = messageText.Substring(2); // 去掉 "谷歌 " 前缀
 
+    // 发送提示消息
+    var infoMessage = await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "正在搜索，请稍后..."
+    );
+
+    var searchResults = await GoogleSearchHelper.SearchAndFormatResultsAsync(query);
+
+    // 创建内联键盘按钮
+    var openGoogleSearchButton = InlineKeyboardButton.WithUrl(
+        text: "在 Google 中搜索",
+        url: $"https://www.google.com/search?q={Uri.EscapeDataString(query)}"
+    );
+
+    // 创建内联键盘
+    var inlineKeyboard = new InlineKeyboardMarkup(openGoogleSearchButton);
+
+    // 编辑提示消息，附加搜索结果和内联键盘
+    await botClient.EditMessageTextAsync(
+        chatId: message.Chat.Id,
+        messageId: infoMessage.MessageId,
+        text: searchResults,
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        disableWebPagePreview: true, // 禁用链接预览
+        replyMarkup: inlineKeyboard // 添加内联键盘
+    );
+}
 // 检查是否接收到了 /gg 消息，收到就启动广告
 if (messageText.StartsWith("/gg"))
 {
