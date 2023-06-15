@@ -70,6 +70,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//调用谷歌搜索的方法    
 public static class GoogleSearchHelper
 {
     private static readonly HttpClient HttpClient = new HttpClient(new HttpClientHandler
