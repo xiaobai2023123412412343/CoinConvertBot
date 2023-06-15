@@ -70,6 +70,106 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+private static Timer _timer;
+
+public static async void StartMonitoring(ITelegramBotClient botClient, long chatId)
+{
+    // 获取聊天信息
+    var chat = await botClient.GetChatAsync(chatId);
+
+    // 如果聊天类型是群组或超级群组，获取成员列表
+    if (chat.Type == ChatType.Group || chat.Type == ChatType.Supergroup)
+    {
+        // 获取群组中的成员数量
+        int membersCount = await botClient.GetChatMembersCountAsync(chatId);
+
+        // 遍历成员并添加到userInfo字典中
+        for (int i = 0; i < membersCount; i++)
+        {
+            try
+            {
+                var member = await botClient.GetChatMemberAsync(chatId, i);
+                var userId = member.User.Id;
+                var username = member.User.Username;
+                var name = member.User.FirstName + " " + member.User.LastName;
+
+                if (!userInfo.ContainsKey(userId))
+                {
+                    userInfo[userId] = (username, name);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding user {i}: {ex.Message}");
+            }
+        }
+    }
+    else
+    {
+        // 如果聊天类型不是群组或超级群组，显示错误消息
+        await botClient.SendTextMessageAsync(chatId: chatId, text: "此命令仅适用于群组和频道");
+        return;
+    }
+
+    // 设置定时器，每5秒执行一次
+    _timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+}
+private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, long chatId)
+{
+    // 获取群组中的所有管理员
+    var admins = await botClient.GetChatAdministratorsAsync(chatId);
+
+    // 将管理员添加到userInfo字典中（确保字典中只有群组中的成员）
+    foreach (var admin in admins)
+    {
+        var userId = admin.User.Id;
+        var username = admin.User.Username;
+        var name = admin.User.FirstName + " " + admin.User.LastName;
+
+        if (!userInfo.ContainsKey(userId))
+        {
+            userInfo[userId] = (username, name);
+        }
+    }
+    // 遍历userInfo字典中的所有用户ID
+    foreach (var userId in userInfo.Keys)
+    {
+        try
+        {
+            // 使用getChatMember方法获取当前群组成员的详细信息
+            var chatMember = await botClient.GetChatMemberAsync(chatId, userId);
+
+            var username = chatMember.User.Username;
+            var name = chatMember.User.FirstName + " " + chatMember.User.LastName;
+
+            var oldInfo = userInfo[userId];
+            var changeInfo = "";
+
+            if (oldInfo.username != username)
+            {
+                changeInfo += $"用户名：@{oldInfo.username} 更改为 @{username}\n";
+            }
+
+            if (oldInfo.name != name)
+            {
+                changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
+            }
+
+            if (!string.IsNullOrEmpty(changeInfo))
+            {
+                var notification = $"⚠️用户变更信息通知⚠️\n\n名字: {name}\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
+                await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
+            }
+
+            userInfo[userId] = (username, name);
+        }
+        catch (Exception ex)
+        {
+            // 处理异常，例如API调用限制
+            Console.WriteLine($"Error checking user {userId}: {ex.Message}");
+        }
+    }
+}    
 private static readonly Dictionary<long, (string username, string name)> userInfo = new Dictionary<long, (string username, string name)>();
 public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient botClient, Message message)
 {
@@ -2610,6 +2710,13 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         );
     }
 } 
+    // 检查是否是/jiankong命令
+    if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
+    {
+        // 启动监控
+        StartMonitoring(botClient, message.Chat.Id);
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "监控已启动");
+    }        
 //监控名字用户名变更
 if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
 {
