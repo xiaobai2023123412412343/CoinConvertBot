@@ -1594,7 +1594,7 @@ static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
 }
 public static async Task<(int Today, int Yesterday, double Weekly, double Monthly)> GetFearAndGreedIndexAsync()
 {
-    var apiUrl = "https://api.alternative.me/fng/?limit=32&format=csv&date_format=cn";
+    var apiUrl = "https://api.alternative.me/fng/?limit=62&format=csv&date_format=cn";
 
     using (var httpClient = new HttpClient())
     {
@@ -1604,11 +1604,11 @@ public static async Task<(int Today, int Yesterday, double Weekly, double Monthl
             response.EnsureSuccessStatusCode();
 
             var rawData = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Raw Data: {rawData}"); // 添加调试信息
+            //Console.WriteLine($"Raw Data: {rawData}");//打印api
 
             var csvDataStartIndex = rawData.IndexOf("fng_value");
             var csvData = rawData.Substring(csvDataStartIndex);
-            Console.WriteLine($"CSV Data: {csvData}"); // 添加调试信息
+            //Console.WriteLine($"CSV Data: {csvData}");//打印api
 
             var rows = csvData.Split('\n');
             var dataList = new List<FngData>();
@@ -1621,45 +1621,30 @@ public static async Task<(int Today, int Yesterday, double Weekly, double Monthl
                 {
                     dataList.Add(new FngData
                     {
-                        Date = columns[0],
-                        FngValue = columns[1],
+                        Date = DateTime.Parse(columns[0]),
+                        FngValue = int.Parse(columns[1]),
                         FngClassification = columns[2]
                     });
                 }
             }
 
-            var today = int.Parse(dataList[0].FngValue);
-            var yesterday = int.Parse(dataList[1].FngValue);
+            var today = dataList[0].FngValue;
+            var yesterday = dataList[1].FngValue;
 
-            var weeklySum = 0;
-            var monthlySum = 0;
+            // 计算上周和上月的日期范围
+            var endOfWeek = dataList[0].Date.AddDays(-((int)dataList[0].Date.DayOfWeek + 6) % 7);
+            var startOfWeek = endOfWeek.AddDays(-6);
+            var startOfMonth = new DateTime(dataList[0].Date.Year, dataList[0].Date.Month - 1, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
-            for (int i = 0; i < dataList.Count; i++)
-            {
-                try
-                {
-                    var value = int.Parse(dataList[i].FngValue);
-                    if (i < 7)
-                    {
-                        weeklySum += value;
-                    }
-                    monthlySum += value;
-                }
-                catch (FormatException ex)
-                {
-                    Console.WriteLine($"Error parsing value at index {i}: {ex.Message}");
-                    throw;
-                }
-            }
-
-            var weeklyAverage = weeklySum / 7.0;
-            var monthlyAverage = monthlySum / 31.0;
+            // 使用LINQ筛选满足日期范围的数据，并计算平均值
+            var weeklyAverage = dataList.Where(d => d.Date >= startOfWeek && d.Date <= endOfWeek).Average(d => d.FngValue);
+            var monthlyAverage = dataList.Where(d => d.Date >= startOfMonth && d.Date <= endOfMonth).Average(d => d.FngValue);
 
             return (today, yesterday, weeklyAverage, monthlyAverage);
         }
         catch (Exception ex)
         {
-            // 处理异常，如网络错误或解析错误
             Console.WriteLine($"Error in GetFearAndGreedIndexAsync: {ex.Message}");
             return (0, 0, 0, 0); // 返回默认值
         }
@@ -1668,8 +1653,8 @@ public static async Task<(int Today, int Yesterday, double Weekly, double Monthl
 
 public class FngData
 {
-    public string Date { get; set; }
-    public string FngValue { get; set; }
+    public DateTime Date { get; set; }
+    public int FngValue { get; set; }
     public string FngClassification { get; set; }
 }
 static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, Message message)
@@ -1711,8 +1696,8 @@ Func<int, string> GetClassification = value =>
     return "极度贪婪";
 };
 
-text += $"今日：{today} {GetClassification(today)}   昨日：{yesterday} {GetClassification(yesterday)}\n";
-text += $"上周：{weekly:0} {GetClassification((int)weekly)}   上月：{monthly:0} {GetClassification((int)monthly)}\n\n";
+text += $"今日：{today} {GetClassification(today)}     昨日：{yesterday} {GetClassification(yesterday)}\n";
+text += $"上周：{weekly:0} {GetClassification((int)weekly)}     上月：{monthly:0} {GetClassification((int)monthly)}\n\n";
 
         for (int i = 0; i < cryptoSymbols.Length; i++)
         {
