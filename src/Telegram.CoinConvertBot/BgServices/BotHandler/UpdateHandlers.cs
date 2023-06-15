@@ -1592,6 +1592,86 @@ static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
 
     return rates;
 }
+public static async Task<(int Today, int Yesterday, double Weekly, double Monthly)> GetFearAndGreedIndexAsync()
+{
+    var apiUrl = "https://api.alternative.me/fng/?limit=32&format=csv&date_format=cn";
+
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            var response = await httpClient.GetAsync(apiUrl);
+            response.EnsureSuccessStatusCode();
+
+            var rawData = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Raw Data: {rawData}"); // 添加调试信息
+
+            var csvDataStartIndex = rawData.IndexOf("fng_value");
+            var csvData = rawData.Substring(csvDataStartIndex);
+            Console.WriteLine($"CSV Data: {csvData}"); // 添加调试信息
+
+            var rows = csvData.Split('\n');
+            var dataList = new List<FngData>();
+
+            for (int i = 1; i < rows.Length; i++)
+            {
+                var columns = rows[i].Split(',');
+
+                if (columns.Length >= 3)
+                {
+                    dataList.Add(new FngData
+                    {
+                        Date = columns[0],
+                        FngValue = columns[1],
+                        FngClassification = columns[2]
+                    });
+                }
+            }
+
+            var today = int.Parse(dataList[0].FngValue);
+            var yesterday = int.Parse(dataList[1].FngValue);
+
+            var weeklySum = 0;
+            var monthlySum = 0;
+
+            for (int i = 0; i < dataList.Count; i++)
+            {
+                try
+                {
+                    var value = int.Parse(dataList[i].FngValue);
+                    if (i < 7)
+                    {
+                        weeklySum += value;
+                    }
+                    monthlySum += value;
+                }
+                catch (FormatException ex)
+                {
+                    Console.WriteLine($"Error parsing value at index {i}: {ex.Message}");
+                    throw;
+                }
+            }
+
+            var weeklyAverage = weeklySum / 7.0;
+            var monthlyAverage = monthlySum / 31.0;
+
+            return (today, yesterday, weeklyAverage, monthlyAverage);
+        }
+        catch (Exception ex)
+        {
+            // 处理异常，如网络错误或解析错误
+            Console.WriteLine($"Error in GetFearAndGreedIndexAsync: {ex.Message}");
+            return (0, 0, 0, 0); // 返回默认值
+        }
+    }
+}
+
+public class FngData
+{
+    public string Date { get; set; }
+    public string FngValue { get; set; }
+    public string FngClassification { get; set; }
+}
 static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, Message message)
 {
     try
@@ -1616,7 +1696,23 @@ static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, M
             { "the-open-network", "电报币" }
         };
 
-        var text = "<b>币圈热门币种实时价格及涨跌幅:</b>\n\n";
+var text = "<b>币圈热门币种实时价格及恐惧与贪婪指数:</b>\n\n";
+
+var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
+
+Func<int, string> GetClassification = value =>
+{
+    if (value >= 0 && value <= 24)
+        return "极度恐惧";
+    if (value >= 25 && value <= 49)
+        return "恐惧";
+    if (value >= 50 && value <= 74)
+        return "贪婪";
+    return "极度贪婪";
+};
+
+text += $"今日：{today} {GetClassification(today)}   昨日：{yesterday} {GetClassification(yesterday)}\n";
+text += $"上周：{weekly:0} {GetClassification((int)weekly)}   上月：{monthly:0} {GetClassification((int)monthly)}\n\n";
 
         for (int i = 0; i < cryptoSymbols.Length; i++)
         {
