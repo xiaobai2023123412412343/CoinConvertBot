@@ -1832,6 +1832,19 @@ public static async Task<decimal> GetOkxPriceAsync(string baseCurrency, string q
 static async Task SendAdvertisementOnce(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate, long chatId)
 {    
         var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+        var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
+string GetFearGreedDescription(int value)
+{
+    if (value >= 0 && value <= 24)
+        return "极度恐惧";
+    if (value >= 25 && value <= 49)
+        return "恐惧";
+    if (value >= 50 && value <= 74)
+        return "贪婪";
+    return "极度贪婪";
+}
+
+string fearGreedDescription = GetFearGreedDescription(today);        
         decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
         // 获取比特币以太坊价格和涨跌幅
         var cryptoSymbols = new[] { "bitcoin", "ethereum" };
@@ -1869,6 +1882,7 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
              $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####}</b>\n" +
              $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n\n" +
              $"<code>\U0001F4B8 全网24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</code>\n" + // 添加新的一行
+             $"<code>\U0001F4B8 币圈今日恐惧与贪婪指数：{today} {fearGreedDescription}</code>\n" +             
              $"<code>\U0001F4B8 比特币价格 ≈ {bitcoinPrice} USDT    {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </code>\n" +
              $"<code>\U0001F4B8 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </code>\n" +
              $"<code>\U0001F4B8 比特币24小时合约：{btcLongRate:#.##}% 做多  {btcShortRate:#.##}% 做空</code>\n" + // 添加新的一行
@@ -2029,6 +2043,19 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
     {
         var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
         decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
+        var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
+string GetFearGreedDescription(int value)
+{
+    if (value >= 0 && value <= 24)
+        return "极度恐惧";
+    if (value >= 25 && value <= 49)
+        return "恐惧";
+    if (value >= 50 && value <= 74)
+        return "贪婪";
+    return "极度贪婪";
+}
+
+string fearGreedDescription = GetFearGreedDescription(today);        
         // 获取比特币以太坊价格和涨跌幅
         var cryptoSymbols = new[] { "bitcoin", "ethereum" };
         var (prices, changes) = await GetCryptoPricesAsync(cryptoSymbols);
@@ -2059,9 +2086,10 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)\n" +  
             $"————————<b>其它汇率</b>————————\n" +
             $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} </b>\n" +
-            $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +
+            $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +            
             $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT     {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </b>\n" +
-            $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" ;
+            $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" +
+            $"<b>\U0001F4B0 币圈今日恐惧与贪婪指数：{today}  {fearGreedDescription}</b>\n" ;
             
             
 string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
