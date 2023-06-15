@@ -70,6 +70,37 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+private static readonly Dictionary<long, (string username, string name)> userInfo = new Dictionary<long, (string username, string name)>();
+public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient botClient, Message message)
+{
+    var userId = message.From.Id;
+    var username = message.From.Username;
+    var name = message.From.FirstName + " " + message.From.LastName;
+
+    if (userInfo.ContainsKey(userId))
+    {
+        var oldInfo = userInfo[userId];
+        var changeInfo = "";
+
+        if (oldInfo.username != username)
+        {
+            changeInfo += $"用户名：@{oldInfo.username} 更改为 @{username}\n";
+        }
+
+        if (oldInfo.name != name)
+        {
+            changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
+        }
+
+        if (!string.IsNullOrEmpty(changeInfo))
+        {
+            var notification = $"⚠️变更信息通知⚠️\n名字: {name}\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}用户ID:<code> {userId}</code>";
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: notification, parseMode: ParseMode.Html);
+        }
+    }
+
+    userInfo[userId] = (username, name);
+}    
 //调用谷歌搜索的方法    
 public static class GoogleSearchHelper
 {
@@ -2578,7 +2609,12 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
             text: $"获取交易记录时发生错误：{ex.Message}"
         );
     }
-}      
+} 
+//监控名字用户名变更
+if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
+{
+    await UpdateHandlers.MonitorUsernameAndNameChangesAsync(botClient, message);
+}        
 if (messageText.StartsWith("谷歌 "))
 {
     var query = messageText.Substring(2); // 去掉 "谷歌 " 前缀
