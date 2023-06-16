@@ -205,9 +205,16 @@ private static readonly Dictionary<long, Dictionary<long, (string username, stri
 public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient botClient, Message message)
 {
     var chatId = message.Chat.Id;
-    var userId = message.From.Id;
-    var username = message.From.Username;
-    var name = message.From.FirstName + " " + message.From.LastName;
+    var user = message.From!;
+    var userId = user.Id;
+    var username = user.Username;
+    var name = user.FirstName + " " + user.LastName;
+
+    // 避免在私聊中触发提醒
+    if (message.Chat.Type == ChatType.Private)
+    {
+        return;
+    }
 
     if (groupUserInfo.ContainsKey(chatId) && groupUserInfo[chatId].ContainsKey(userId))
     {
@@ -2366,7 +2373,11 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         // 当有新成员加入时
         if (message.NewChatMembers != null && message.NewChatMembers.Any())
         {
-            await MonitorUsernameAndNameChangesAsync(botClient, message); // 直接调用 MonitorUsernameAndNameChangesAsync，将新成员资料存储起来
+            foreach (var newMember in message.NewChatMembers)
+            {
+                // 直接调用 MonitorUsernameAndNameChangesAsync，将新成员资料存储起来
+                await MonitorUsernameAndNameChangesAsync(botClient, message);
+            }
         }
         else
         {
@@ -2765,7 +2776,7 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         StartMonitoring(botClient, message.Chat.Id);
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "监控已启动");
     }
-    
+
     // 监控名字和用户名变更
     if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
     {
