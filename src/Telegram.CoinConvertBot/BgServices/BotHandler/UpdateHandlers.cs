@@ -2363,7 +2363,8 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         var message = update.Message;
 
-        if (message.NewChatMembers != null && message.NewChatMembers.Any()) // 当有新成员加入时
+        // 当有新成员加入时
+        if (message.NewChatMembers != null && message.NewChatMembers.Any())
         {
             await MonitorUsernameAndNameChangesAsync(botClient, message); // 直接调用 MonitorUsernameAndNameChangesAsync，将新成员资料存储起来
         }
@@ -2763,13 +2764,13 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         // 启动监控
         StartMonitoring(botClient, message.Chat.Id);
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "监控已启动");
-    } 
-        
-//监控名字用户名变更
-if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
-{
-    await UpdateHandlers.MonitorUsernameAndNameChangesAsync(botClient, message);
-}        
+    }
+    
+    // 监控名字和用户名变更
+    if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
+    {
+        await MonitorUsernameAndNameChangesAsync(botClient, message);
+    }    
 if (messageText.StartsWith("谷歌 "))
 {
     var query = messageText.Substring(2); // 去掉 "谷歌 " 前缀
