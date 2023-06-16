@@ -2376,7 +2376,11 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
             foreach (var newMember in message.NewChatMembers)
             {
                 // 直接调用 MonitorUsernameAndNameChangesAsync，将新成员资料存储起来
-                await MonitorUsernameAndNameChangesAsync(botClient, message);
+                await MonitorUsernameAndNameChangesAsync(botClient, new Message
+                {
+                    Chat = message.Chat,
+                    From = newMember
+                });
             }
         }
         else
