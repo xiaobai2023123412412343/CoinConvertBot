@@ -70,8 +70,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-private static Timer _timer;
-
+private static Dictionary<long, Timer> _timers = new Dictionary<long, Timer>();
 public static async void StartMonitoring(ITelegramBotClient botClient, long chatId)
 {
     // 获取聊天信息
@@ -83,7 +82,12 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
         // 获取群组中的成员数量
         int membersCount = await botClient.GetChatMembersCountAsync(chatId);
 
-        // 遍历成员并添加到userInfo字典中
+        if (!groupUserInfo.ContainsKey(chatId))
+        {
+            groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
+        }
+
+        // 遍历成员并添加到groupUserInfo字典中
         for (int i = 0; i < membersCount; i++)
         {
             try
@@ -93,9 +97,9 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
                 var username = member.User.Username;
                 var name = member.User.FirstName + " " + member.User.LastName;
 
-                if (!userInfo.ContainsKey(userId))
+                if (!groupUserInfo[chatId].ContainsKey(userId))
                 {
-                    userInfo[userId] = (username, name);
+                    groupUserInfo[chatId][userId] = (username, name);
                 }
             }
             catch (Exception ex)
@@ -110,12 +114,26 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
         await botClient.SendTextMessageAsync(chatId: chatId, text: "此命令仅适用于群组和频道");
         return;
     }
+    // 检查是否已有定时器
+    if (_timers.ContainsKey(chatId))
+    {
+        _timers[chatId].Dispose(); // 停止现有的定时器
+        _timers.Remove(chatId); // 从字典中移除
+    }
 
-    // 设置定时器，每5秒执行一次
-    _timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+    // 为这个群组创建一个新的定时器
+    var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+    _timers[chatId] = timer;
 }
+
 private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, long chatId)
 {
+    if (!groupUserInfo.ContainsKey(chatId))
+    {
+        groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
+    }
+    var userInfo = groupUserInfo[chatId];
+
     // 获取群组中的所有管理员
     var admins = await botClient.GetChatAdministratorsAsync(chatId);
 
@@ -166,20 +184,21 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
         catch (Exception ex)
         {
             // 处理异常，例如API调用限制
-            Console.WriteLine($"Error checking user {userId}: {ex.Message}");
+            Console.WriteLine($"Error checkinguser {userId}: {ex.Message}");
         }
     }
-}    
-private static readonly Dictionary<long, (string username, string name)> userInfo = new Dictionary<long, (string username, string name)>();
+}
+private static readonly Dictionary<long, Dictionary<long, (string username, string name)>> groupUserInfo = new Dictionary<long, Dictionary<long, (string username, string name)>>();
 public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient botClient, Message message)
 {
+    var chatId = message.Chat.Id;
     var userId = message.From.Id;
     var username = message.From.Username;
     var name = message.From.FirstName + " " + message.From.LastName;
 
-    if (userInfo.ContainsKey(userId))
+    if (groupUserInfo.ContainsKey(chatId) && groupUserInfo[chatId].ContainsKey(userId))
     {
-        var oldInfo = userInfo[userId];
+        var oldInfo = groupUserInfo[chatId][userId];
         var changeInfo = "";
 
         if (oldInfo.username != username)
@@ -195,12 +214,18 @@ public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient b
         if (!string.IsNullOrEmpty(changeInfo))
         {
             var notification = $"⚠️用户变更信息通知⚠️\n\n名字: {name}\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
-            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: notification, parseMode: ParseMode.Html);
+            await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
         }
     }
 
-    userInfo[userId] = (username, name);
-}    
+    // 确保群组的用户信息字典已初始化
+    if (!groupUserInfo.ContainsKey(chatId))
+    {
+        groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
+    }
+
+    groupUserInfo[chatId][userId] = (username, name);
+}
 //调用谷歌搜索的方法    
 public static class GoogleSearchHelper
 {
@@ -2716,7 +2741,8 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         // 启动监控
         StartMonitoring(botClient, message.Chat.Id);
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "监控已启动");
-    }        
+    } 
+        
 //监控名字用户名变更
 if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
 {
