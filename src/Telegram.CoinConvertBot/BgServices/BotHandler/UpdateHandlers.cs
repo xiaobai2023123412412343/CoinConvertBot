@@ -149,8 +149,11 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
             userInfo[userId] = (username, name);
         }
     }
+
+    List<long> usersToRemove = new List<long>();
+
     // 遍历userInfo字典中的所有用户ID
-    foreach (var userId in userInfo.Keys)
+    foreach (var userId in userInfo.Keys.ToList())
     {
         try
         {
@@ -184,8 +187,18 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
         catch (Exception ex)
         {
             // 处理异常，例如API调用限制
-            Console.WriteLine($"Error checkinguser {userId}: {ex.Message}");
+            Console.WriteLine($"Error checking user {userId}: {ex.Message}");
+
+            if (ex.Message.Contains("user not found"))
+            {
+                usersToRemove.Add(userId);
+            }
         }
+    }
+
+    foreach (var userId in usersToRemove)
+    {
+        userInfo.Remove(userId);
     }
 }
 private static readonly Dictionary<long, Dictionary<long, (string username, string name)>> groupUserInfo = new Dictionary<long, Dictionary<long, (string username, string name)>>();
@@ -2350,7 +2363,16 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         var message = update.Message;
 
-        AddFollower(message);
+        if (message.NewChatMembers != null && message.NewChatMembers.Any()) // 当有新成员加入时
+        {
+            await MonitorUsernameAndNameChangesAsync(botClient, message); // 直接调用 MonitorUsernameAndNameChangesAsync，将新成员资料存储起来
+        }
+        else
+        {
+            AddFollower(message);
+        }
+
+        // ... 其他现有代码 ...
     }
     // 添加以下代码来处理回调查询更新
     if (update.Type == UpdateType.CallbackQuery)
