@@ -2140,6 +2140,18 @@ public static class GroupManager
     {
         groupIds.Remove(id);
     }
+public static void ToggleAdvertisement(long groupId, bool enable)
+{
+    if (enable)
+    {
+        AddGroupId(groupId);
+    }
+    else
+    {
+        RemoveGroupId(groupId);
+    }
+}
+    
 }
 //获取24小时全网合约爆仓
 private static async Task<decimal> GetH24TotalVolUsdAsync(string apiUrl, string apiKey)
@@ -2333,7 +2345,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
             }
 
             // 等待10分钟
-            await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
 
             // 遍历已发送的消息并撤回
             foreach (var sentMessage in sentMessages)
@@ -2841,20 +2853,38 @@ if (messageText.StartsWith("谷歌 "))
         replyMarkup: inlineKeyboard // 添加内联键盘
     );
 }
-// 检查是否接收到了 /gg 消息，收到就启动广告
-if (messageText.StartsWith("/gg"))
-{
-    // 如果广告没有在运行，就启动广告
-    if (!isAdvertisementRunning)
+    // 检查是否接收到了 /gg 消息，收到就启动广告
+    if (messageText.StartsWith("/gg"))
     {
-        isAdvertisementRunning = true; // 将变量设置为 true，表示广告正在运行
+        // 如果广告没有在运行，就启动广告
+        if (!isAdvertisementRunning)
+        {
+            isAdvertisementRunning = true; // 将变量设置为 true，表示广告正在运行
 
-        var cancellationTokenSource = new CancellationTokenSource();
-        var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-        _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate)
-            .ContinueWith(_ => isAdvertisementRunning = false); // 广告结束后将变量设置为 false
+            var cancellationTokenSource = new CancellationTokenSource();
+            var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+            _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate)
+                .ContinueWith(_ => isAdvertisementRunning = false); // 广告结束后将变量设置为 false
+        }
     }
-}
+
+    // 检查是否为指定用户并执行相应的操作
+    if (message.From.Id == 1427768220 && message.Chat.Type == ChatType.Group)
+    {
+        var groupId = message.Chat.Id;
+        var command = messageText.ToLower();
+
+        if (command == "关闭广告")
+        {
+            GroupManager.ToggleAdvertisement(groupId, false);
+            await botClient.SendTextMessageAsync(groupId, "已关闭广告功能。");
+        }
+        else if (command == "开启广告")
+        {
+            GroupManager.ToggleAdvertisement(groupId, true);
+            await botClient.SendTextMessageAsync(groupId, "已开启广告功能。");
+        }
+    }
 if (messageText.StartsWith("/zjdh"))
 {
     var transferHistoryText = await TronscanHelper.GetTransferHistoryAsync();
