@@ -2656,7 +2656,7 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
                 // 发送欢迎消息
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "进群成功！请给予管理员权限以便群内使用机器人指令！"
+                    text: "进群成功！请给予管理员权限以体验机器人完整功能！"
                 );
                 return;
             }
