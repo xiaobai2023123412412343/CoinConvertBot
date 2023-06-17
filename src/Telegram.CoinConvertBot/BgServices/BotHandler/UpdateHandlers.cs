@@ -52,6 +52,8 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //        //groupIds.Add(-994581226);  // 添加第二个初始群组 ID
 //    }
 //    if (message.From.Id == 1427768220 && message.Chat.Type == ChatType.Group)  指定管理员可以发送：开启广告 关闭广告
+//拉黑+id  拉白+id
+
 
 public static class UpdateHandlers
 {
@@ -77,7 +79,7 @@ private static HashSet<long> blacklistedUserIds = new HashSet<long>();
 private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient botClient, Message message)
 {
     // 检查消息是否来自指定的管理员
-    if (message.From.Id != 1427768220)
+    if (message.From.Id != 1427768220)//管理员
     {
         return;
     }
