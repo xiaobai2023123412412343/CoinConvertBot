@@ -2507,6 +2507,11 @@ if (message?.Text != null)
         }          
 else
 {
+// 检查用户是否在黑名单中
+if (blacklistedUserIds.Contains(message.From.Id))
+{
+    return;
+}    
     if (message != null && !string.IsNullOrWhiteSpace(message.Text))
     {
         var inputText = message.Text.Trim();
