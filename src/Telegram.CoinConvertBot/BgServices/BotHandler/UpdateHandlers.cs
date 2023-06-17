@@ -88,7 +88,7 @@ private static async Task BotOnMyChatMemberChanged(ITelegramBotClient botClient,
     {
         await botClient.SendTextMessageAsync(
             chatId: chatMemberUpdated.Chat.Id,
-            text: "已升级为管理员，群员资料修改监控中..."
+            text: "已升级为管理员。"
         );
     }
 }    
