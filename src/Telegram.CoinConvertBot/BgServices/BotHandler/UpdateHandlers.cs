@@ -2467,6 +2467,14 @@ else
             {
                 // 检查输入文本是否包含任何非中文字符
                 var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
+                // 添加新的正则表达式以检查输入文本是否只包含符号
+                var isOnlySymbols = Regex.IsMatch(inputText, @"^[^\w\s]+$");
+
+                 // 如果输入文本仅包含符号，则不执行翻译
+                if (isOnlySymbols)
+                {
+                   return;
+                }
 
                 if (containsNonChinese)
                 {
