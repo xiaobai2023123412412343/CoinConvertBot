@@ -71,6 +71,48 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 存储被拉黑的用户 ID
+private static HashSet<long> blacklistedUserIds = new HashSet<long>();
+
+private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient botClient, Message message)
+{
+    // 检查消息是否来自指定的管理员
+    if (message.From.Id != 1427768220)
+    {
+        return;
+    }
+
+    // 检查消息是否包含拉黑或拉白命令
+    var commandParts = message.Text.Split(' ');
+    if (commandParts.Length != 2)
+    {
+        return;
+    }
+
+    var command = commandParts[0];
+    if (!long.TryParse(commandParts[1], out long userId))
+    {
+        return;
+    }
+
+    switch (command)
+    {
+        case "拉黑":
+            blacklistedUserIds.Add(userId);
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"用户 {userId} 已被拉黑。"
+            );
+            break;
+        case "拉白":
+            blacklistedUserIds.Remove(userId);
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"用户 {userId} 已被拉白。"
+            );
+            break;
+    }
+}    
 //监控信息变更提醒    
 private static Dictionary<long, Timer> _timers = new Dictionary<long, Timer>();
 public static async void StartMonitoring(ITelegramBotClient botClient, long chatId)
@@ -2658,6 +2700,7 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
     /// <returns></returns>
     private static async Task BotOnMessageReceived(ITelegramBotClient botClient, Message message)
     {
+        await HandleBlacklistAndWhitelistCommands(botClient, message);
         Log.Information($"Receive message type: {message.Type}");
      // 检查机器人是否被添加到新的群组
     if (message.Type == MessageType.ChatMembersAdded)
@@ -2689,6 +2732,15 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
         {
             Log.Logger.Error(e, "更新Telegram用户信息失败！");
         }
+// 检查用户是否在黑名单中
+if (blacklistedUserIds.Contains(message.From.Id))
+{
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "受限用户！"
+    );
+    return;
+}        
 // 将这个值替换为目标群组的ID
 const long TARGET_CHAT_ID = -894216057;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
@@ -2894,6 +2946,7 @@ if (messageText.StartsWith("谷歌 "))
             await botClient.SendTextMessageAsync(groupId, "已开启广告功能。");
         }
     }
+       
 if (messageText.StartsWith("/zjdh"))
 {
     var transferHistoryText = await TronscanHelper.GetTransferHistoryAsync();
