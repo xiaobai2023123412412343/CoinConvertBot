@@ -547,13 +547,13 @@ static double EvaluateExpression(string expression)
 public static class TronscanHelper
 {
     private static readonly HttpClient httpClient;
-    private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(5); // 限制最大并发数为 5
+    private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(10); // 限制最大并发数为 10
 
     static TronscanHelper()
     {
         var httpClientHandler = new HttpClientHandler
         {
-            MaxConnectionsPerServer = 5
+            MaxConnectionsPerServer = 10
         };
         httpClient = new HttpClient(httpClientHandler);
     }
@@ -609,49 +609,74 @@ public static class TronscanHelper
         }
     }
 
-    public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
+public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
+{
+    string apiUrlTemplate = "https://apilist.tronscan.org/api/account?address={0}";
+    string resultText = $"<b> 承兑地址：</b><code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n";
+
+    try
     {
-        string apiUrlTemplate = "https://apilist.tronscan.org/api/account?address={0}";
-        string resultText = $"<b> 承兑地址：</b><code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n";
+        // 创建一个任务列表来存储所有的查询任务
+        List<Task<(int index, AccountInfo accountInfo)>> tasks = new List<Task<(int index, AccountInfo accountInfo)>>();
 
-        try
+        // 为每个转账记录创建一个查询任务并添加到任务列表中
+        for (int i = 0; i < transfers.Count; i++)
         {
-            // 创建一个任务列表来存储所有的查询任务
-            List<ValueTask<AccountInfo>> tasks = new List<ValueTask<AccountInfo>>();
-
-            // 为每个转账记录创建一个查询任务并添加到任务列表中
-            foreach (var transfer in transfers)
-            {
-                string apiUrl = string.Format(apiUrlTemplate, transfer.TransferToAddress);
-                tasks.Add(GetAccountInfoAsync(httpClient, apiUrl));
-            }
-
-            // 等待所有任务完成
-            AccountInfo[] accountInfos = await Task.WhenAll(tasks.Select(t => t.AsTask()));
-
-            // 处理查询结果并生成结果文本
-            for (int i = 0; i < accountInfos.Length; i++)
-            {
-                decimal balanceInTrx = Math.Round(accountInfos[i].Balance / 1_000_000m, 2);
-                DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfers[i].Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
-                decimal amountInTrx = transfers[i].Amount / 1_000_000m;
-                resultText += $"兑换地址：<code>{transfers[i].TransferToAddress}</code>\n";
-                resultText += $"兑换时间：{transferTime:yyyy-MM-dd HH:mm:ss}\n";
-                resultText += $"兑换金额：{amountInTrx} trx   <b> 余额：{balanceInTrx} TRX</b>\n";
-                if (i < transfers.Count - 1)
-                {
-                    resultText += "————————————————\n";
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            resultText = "API接口维护中，请稍后重试！";
+            string apiUrl = string.Format(apiUrlTemplate, transfers[i].TransferToAddress);
+            tasks.Add(GetAccountInfoAsync(httpClient, apiUrl, i));
         }
 
-        return resultText;
+        // 等待所有任务完成
+        var results = await Task.WhenAll(tasks);
+
+        // 将查询结果按索引排序
+        var accountInfos = results.OrderBy(r => r.index).Select(r => r.accountInfo).ToList();
+
+        // 处理查询结果并生成结果文本
+        for (int i = 0; i < transfers.Count; i++)
+        {
+            decimal balanceInTrx = Math.Round(accountInfos[i].Balance / 1_000_000m, 2);
+            DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfers[i].Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
+            decimal amountInTrx = transfers[i].Amount / 1_000_000m;
+            resultText += $"兑换地址：<code>{transfers[i].TransferToAddress}</code>\n";
+            resultText += $"兑换时间：{transferTime:yyyy-MM-dd HH:mm:ss}\n";
+            resultText += $"兑换金额：{amountInTrx} trx   <b> 余额：{balanceInTrx} TRX</b>\n";
+            if (i < transfers.Count - 1)
+            {
+                resultText += "————————————————\n";
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        resultText = "API接口维护中，请稍后重试！";
     }
 
+    return resultText;
+}
+
+private static async Task<(int index, AccountInfo accountInfo)> GetAccountInfoAsync(HttpClient httpClient, string apiUrl, int index)
+{
+    await semaphore.WaitAsync(); // 限制并发数
+    try
+    {
+        var response = await httpClient.GetAsync(apiUrl);
+        if (response.IsSuccessStatusCode)
+        {
+            string jsonResult = await response.Content.ReadAsStringAsync();
+            var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
+            return (index, accountInfo);
+        }
+        else
+        {
+            throw new Exception("API请求失败！");
+        }
+    }
+    finally
+    {
+        semaphore.Release(); // 释放信号量
+    }
+}
     private static async ValueTask<AccountInfo> GetAccountInfoAsync(HttpClient httpClient, string apiUrl)
     {
         await semaphore.WaitAsync(); // 限制并发数
