@@ -3614,7 +3614,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
             string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
             string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
             string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
-            string groupFunctionText = $"<a href=\"{shareLink}\">防骗助手：点击拉我进群，群成员资料变更会发送提醒哦！</a>";
+            string groupFunctionText = $"<a href=\"{shareLink}\">防骗助手：点击拉我进群，群成员修改资料会发送提醒哦！</a>";
             
             //1带ID  2不带
             //string usage = @$"<b>{username}</b> (ID:<code>{userId}</code>) 你好，欢迎使用TRX自助兑换机器人！
