@@ -1509,17 +1509,33 @@ if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransac
     //await botClient.SendTextMessageAsync(message.Chat.Id, warningText);
     //return;
 //}
-// 计算地址末尾连续相同字符的数量（忽略大小写）
-int consecutiveIdenticalCharsCount = CountConsecutiveIdenticalChars(tronAddress);
+// 计算地址中连续相同字符的数量（忽略大小写）
+int maxConsecutiveIdenticalCharsCount = 0;
+int currentConsecutiveIdenticalCharsCount = 0;
+char previousChar = '\0';
 
-// 当连续相同字符数量大于等于4且小于等于地址长度时，添加“靓号”信息
+foreach (char c in tronAddress)
+{
+    if (char.ToUpperInvariant(c) == char.ToUpperInvariant(previousChar))
+    {
+        currentConsecutiveIdenticalCharsCount++;
+        maxConsecutiveIdenticalCharsCount = Math.Max(maxConsecutiveIdenticalCharsCount, currentConsecutiveIdenticalCharsCount);
+    }
+    else
+    {
+        currentConsecutiveIdenticalCharsCount = 1;
+        previousChar = c;
+    }
+}
+
+// 当连续相同字符数量大于等于4时，添加“靓号”信息
 string fireEmoji = "\uD83D\uDD25";
 string buyLink = "https://t.me/lianghaonet";
 string userLabelSuffix = $" <a href=\"{buyLink}\">购买靓号</a>";
 
-if (consecutiveIdenticalCharsCount >= 4 && consecutiveIdenticalCharsCount <= tronAddress.Length)
+if (maxConsecutiveIdenticalCharsCount >= 4)
 {
-    userLabelSuffix = $" {fireEmoji}{consecutiveIdenticalCharsCount}连靓号{fireEmoji} <a href=\"{buyLink}\">我也要靓号</a>";
+    userLabelSuffix = $" {fireEmoji}{maxConsecutiveIdenticalCharsCount}连靓号{fireEmoji} <a href=\"{buyLink}\">我也要靓号</a>";
 }
     
 // 添加地址权限的信息
