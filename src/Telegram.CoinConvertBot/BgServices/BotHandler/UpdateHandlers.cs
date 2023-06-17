@@ -547,13 +547,13 @@ static double EvaluateExpression(string expression)
 public static class TronscanHelper
 {
     private static readonly HttpClient httpClient;
-    private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(10); // 限制最大并发数为 10
+    private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(20); // 限制最大并发数为 20
 
     static TronscanHelper()
     {
         var httpClientHandler = new HttpClientHandler
         {
-            MaxConnectionsPerServer = 10
+            MaxConnectionsPerServer = 20
         };
         httpClient = new HttpClient(httpClientHandler);
     }
