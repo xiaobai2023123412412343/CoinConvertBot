@@ -51,6 +51,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //        groupIds.Add(-1001862069013);  // 用你的初始群组 ID 替换 
 //        //groupIds.Add(-994581226);  // 添加第二个初始群组 ID
 //    }
+//    if (message.From.Id == 1427768220 && message.Chat.Type == ChatType.Group)  指定管理员可以发送：开启广告 关闭广告
 
 public static class UpdateHandlers
 {
