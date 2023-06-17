@@ -73,6 +73,25 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+private static async Task BotOnMyChatMemberChanged(ITelegramBotClient botClient, ChatMemberUpdated chatMemberUpdated)
+{
+    var me = await botClient.GetMeAsync();
+    if (chatMemberUpdated.NewChatMember.User.Id != me.Id)
+    {
+        return;
+    }
+
+    var oldStatus = chatMemberUpdated.OldChatMember.Status;
+    var newStatus = chatMemberUpdated.NewChatMember.Status;
+
+    if (oldStatus != ChatMemberStatus.Administrator && newStatus == ChatMemberStatus.Administrator)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: chatMemberUpdated.Chat.Id,
+            text: "已升级为管理员，群员资料修改监控中..."
+        );
+    }
+}    
 // 存储被拉黑的用户 ID
 private static HashSet<long> blacklistedUserIds = new HashSet<long>();
 
@@ -2444,6 +2463,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
             UpdateType.Message => BotOnMessageReceived(botClient, update.Message!),
             UpdateType.CallbackQuery => BotOnCallbackQueryReceived(botClient, update.CallbackQuery!),    
+            UpdateType.MyChatMember => BotOnMyChatMemberChanged(botClient, update.MyChatMember!),    
             _ => UnknownUpdateHandlerAsync(botClient, update)
         };
     if (update.Type == UpdateType.Message)
