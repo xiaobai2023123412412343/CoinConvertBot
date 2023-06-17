@@ -3028,9 +3028,11 @@ if (messageText.StartsWith("谷歌 "))
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
 if (messageText.StartsWith("预支"))
 {
-    string responseText = "请发送需要预支TRX的钱包地址查询是否满足要求：\n同时满足2点即可预支：\n⚠️仅限累计兑换 50 USDT 以上地址，\n⚠️地址余额大于50 USDT且TRX余额低于10，\n⚠️预支的TRX能量仅够您向本机器人转账一次。";
-    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: responseText);
-}       
+    string adminUsername = "yifanfu";
+    string adminLink = $"https://t.me/{adminUsername}";
+    string responseText = "请发送需要预支TRX的钱包地址查询是否满足要求：\n同时满足2点即可预支：\n⚠️仅限累计兑换 50 USDT 以上地址，\n⚠️地址余额大于50 USDT且TRX余额低于13，\n⚠️预支的TRX能量仅够您向本机器人转账一次。\n\n如果查询满足条件，可<a href=\"" + adminLink + "\">联系管理员</a>直接预支TRX能量！";
+    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: responseText, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, disableWebPagePreview: true);
+}  
 if (messageText.StartsWith("/zjdh"))
 {
     var transferHistoryText = await TronscanHelper.GetTransferHistoryAsync();
