@@ -2548,6 +2548,14 @@ if (blacklistedUserIds.Contains(message.From.Id))
                 var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
                 // 添加新的正则表达式以检查输入文本是否只包含符号
                 var isOnlySymbols = Regex.IsMatch(inputText, @"^[^\w\s]+$");
+// 检查输入文本是否为 "拉黑 用户ID" 类型的文本
+var isBlacklistCommand = Regex.IsMatch(inputText, @"^拉黑|拉白\s+\d+$");
+
+// 如果输入文本为 "拉黑 用户ID" 类型的文本，则不执行翻译
+if (isBlacklistCommand)
+{
+    return;
+}                
 
                  // 如果输入文本仅包含符号，则不执行翻译
                 if (isOnlySymbols)
