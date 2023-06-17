@@ -2345,7 +2345,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
             }
 
             // 等待10分钟
-            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
 
             // 遍历已发送的消息并撤回
             foreach (var sentMessage in sentMessages)
