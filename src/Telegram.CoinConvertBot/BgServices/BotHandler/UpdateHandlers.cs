@@ -3699,8 +3699,10 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 
 机器人收款地址:(<b>↓点击自动复制↓</b>):<code>{ReciveAddress}</code>
 
-注意：<b>暂时只支持{MinUSDT} USDT以上(不含{MinUSDT} USDT)的金额兑换，若转入{MinUSDT} USDT及以下金额，将无法退还！！！</b>
-
+注意：<b>只支持{MinUSDT} USDT以上的金额兑换！！！</b>
+<b>如果TRX余额不足可发送<code> 预支 </code>领取一次转账能量！</b>    
+<b>只限钱包转账，自动原地址返TRX，如需兑换到其它地址请联系管理！</b>
+    
 转帐前，推荐您使用以下命令来接收入账通知
 <code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
 
