@@ -78,6 +78,12 @@ private static HashSet<long> blacklistedUserIds = new HashSet<long>();
 
 private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient botClient, Message message)
 {
+    // 检查 message 和 message.Text 是否为 null
+    if (message == null || message.Text == null)
+    {
+        return;
+    }
+
     // 检查消息是否来自指定的管理员
     if (message.From.Id != 1427768220)//管理员
     {
@@ -114,7 +120,7 @@ private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient
             );
             break;
     }
-}    
+}
 //监控信息变更提醒    
 private static Dictionary<long, Timer> _timers = new Dictionary<long, Timer>();
 public static async void StartMonitoring(ITelegramBotClient botClient, long chatId)
