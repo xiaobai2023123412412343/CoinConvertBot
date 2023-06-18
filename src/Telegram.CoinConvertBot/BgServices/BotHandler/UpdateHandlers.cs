@@ -2910,7 +2910,7 @@ Telegram 官方只开放了语言包翻译接口, 官方没有提供中文语言
     if (userId != ADMIN_ID && (chatType == ChatType.Private || (chatType == ChatType.Group && (isMentioned || containsCommand))))
     {
         string chatOrigin = chatType == ChatType.Private ? "来自私聊" : "来自群聊";
-        string forwardedMessage = $"{timestamp}  {userFullName}  @{username} (ID:<code> {userId}</code>)\n\n{chatOrigin}：{text}";
+        string forwardedMessage = $"{timestamp}  {userFullName}  @{username} (ID:<code> {userId}</code>)\n\n{chatOrigin}：<code>{text}</code>";
 
         await botClient.SendTextMessageAsync(
             chatId: TARGET_CHAT_ID,
