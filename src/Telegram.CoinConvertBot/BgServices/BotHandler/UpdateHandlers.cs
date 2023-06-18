@@ -197,6 +197,7 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
         await botClient.SendTextMessageAsync(chatId: chatId, text: "此命令仅适用于群组和频道");
         return;
     }
+
     // 检查是否已有定时器
     if (_timers.ContainsKey(chatId))
     {
@@ -2525,13 +2526,14 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     /// <returns></returns>
     public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-        var handler = update.Type switch
-        {
-            UpdateType.Message => BotOnMessageReceived(botClient, update.Message!),
-            UpdateType.CallbackQuery => BotOnCallbackQueryReceived(botClient, update.CallbackQuery!),    
-            UpdateType.MyChatMember => BotOnMyChatMemberChanged(botClient, update.MyChatMember!),    
-            _ => UnknownUpdateHandlerAsync(botClient, update)
-        };
+    var handler = update.Type switch
+    {
+        UpdateType.Message => BotOnMessageReceived(botClient, update.Message!),
+        UpdateType.CallbackQuery => BotOnCallbackQueryReceived(botClient, update.CallbackQuery!),    
+        UpdateType.MyChatMember => BotOnMyChatMemberChanged(botClient, update.MyChatMember!),    
+        _ => UnknownUpdateHandlerAsync(botClient, update)
+    };
+
     if (update.Type == UpdateType.Message)
     {
         var message = update.Message;
