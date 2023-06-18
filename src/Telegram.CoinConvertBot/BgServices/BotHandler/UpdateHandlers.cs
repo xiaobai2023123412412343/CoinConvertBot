@@ -100,7 +100,7 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
         {
             await botClient.SendTextMessageAsync(
                 chatId: userId,
-                text: $"⚠️您的地址：<code>{tronAddress}</code>\n⚠️余额已不足100TRX，为不影响转账请及时兑换TRX！",
+                text: $"⚠️您的地址：<code>{tronAddress}</code>\n⚠️余额已不足100TRX，为不影响转账请立即兑换TRX！",
                 parseMode: ParseMode.Html
             );
             // 余额不足，停止1分钟
@@ -144,9 +144,18 @@ private static async Task<bool> IsValidTronAddress(string tronAddress)
 {
     using (var httpClient = new HttpClient())
     {
-        var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
-        var content = await response.Content.ReadAsStringAsync();
-        return content.Contains("\"success\":true");
+        try
+        {
+            var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
+            var content = await response.Content.ReadAsStringAsync();
+            return content.Contains("\"success\":true");
+        }
+        catch (Exception ex)
+        {
+            // 记录异常信息，但不中断程序运行
+            Console.WriteLine($"Error checking Tron address: {ex.Message}");
+            return false;
+        }
     }
 }
 
@@ -155,21 +164,30 @@ private static async Task<decimal> GetTronBalanceAsync(string tronAddress)
 {
     using (var httpClient = new HttpClient())
     {
-        var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
-        var content = await response.Content.ReadAsStringAsync();
-        var match = Regex.Match(content, "\"balance\":(\\d+)");
-        if (match.Success)
+        try
         {
-            var balanceInSun = long.Parse(match.Groups[1].Value);
-            var balanceInTrx = balanceInSun / 1_000_000.0m;
-            return balanceInTrx;
+            var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
+            var content = await response.Content.ReadAsStringAsync();
+            var match = Regex.Match(content, "\"balance\":(\\d+)");
+            if (match.Success)
+            {
+                var balanceInSun = long.Parse(match.Groups[1].Value);
+                var balanceInTrx = balanceInSun / 1_000_000.0m;
+                return balanceInTrx;
+            }
+            else
+            {
+                throw new Exception("无法获取波场地址的TRX余额。");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            throw new Exception("无法获取波场地址的TRX余额。");
+            // 记录异常信息，但不中断程序运行
+            Console.WriteLine($"Error getting Tron balance: {ex.Message}");
+            return 0;
         }
     }
-}       
+}        
 //升级管理员提醒    
 private static async Task BotOnMyChatMemberChanged(ITelegramBotClient botClient, ChatMemberUpdated chatMemberUpdated)
 {
