@@ -350,7 +350,7 @@ public static class GoogleSearchHelper
             // 使用 UTF-8 编码的放大镜字符
             var magnifyingGlass = "&#128269;";
 
-            var formattedResults = new StringBuilder($"Google |<code>{query}</code>  | {magnifyingGlass}\n\n");
+            var formattedResults = new StringBuilder($"<b>Google</b> |<code>{query}</code>  | {magnifyingGlass}\n\n");
 
             for (int i = 0; i < Math.Min(matches.Count, maxResults); i++)
             {
