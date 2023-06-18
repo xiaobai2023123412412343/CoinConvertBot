@@ -1576,7 +1576,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     // 如果查询的地址是TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv，直接返回错误信息
     if (tronAddress == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
     {
-        await botClient.SendTextMessageAsync(message.Chat.Id, "受限地址，请更换其它地址查询！");
+        await botClient.SendTextMessageAsync(message.Chat.Id, "此为机器人收款地址，转账USDT自动返回TRX！");
         return;
     }
     // 在此处添加获取USDT OTC价格的代码
@@ -1631,11 +1631,11 @@ var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResu
 int availableTransferCount = (int)(trxBalance / 13.3959m);    
     
 // 检查是否发生了请求错误 欧意otc价格未加入，异常会导致返回的价格为0 全部关闭  所有的接口都处理了异常了
-if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetTotalIncome || isErrorGetOwnerPermission)
-{
-    await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址有误或接口维护中，请稍后重试！");
-    return;
-}
+//if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetTotalIncome || isErrorGetOwnerPermission)
+//{
+//    await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址有误或接口维护中，请稍后重试！");
+//    return;
+//}
     
     // 判断是否所有返回的数据都是0
 //if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
