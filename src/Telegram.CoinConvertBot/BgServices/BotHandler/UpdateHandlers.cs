@@ -1241,6 +1241,7 @@ public static async Task<(decimal TotalIncome, decimal MonthlyIncome, decimal Da
     catch (Exception ex)
     {
         // 发生错误时，返回默认值和IsError=true
+        Console.WriteLine($"Error in method {nameof(GetTotalIncomeAsync)}: {ex.Message}");
         return (0m, 0m, 0m, true);
     }
 }
@@ -1278,6 +1279,7 @@ public static async Task<(DateTime LastTransactionTime, bool IsError)> GetLastTr
     catch (Exception ex)
     {
         // 发生错误时，返回默认值和IsError=true
+        Console.WriteLine($"Error in method {nameof(GetLastTransactionTimeAsync)}: {ex.Message}");
         return (DateTime.MinValue, true);
     }
 }
@@ -1309,6 +1311,7 @@ public static async Task<(DateTime CreationTime, bool IsError)> GetAccountCreati
     catch (Exception ex)
     {
         // 发生错误时，返回默认值和IsError=true
+        Console.WriteLine($"Error in method {nameof(GetAccountCreationTimeAsync)}: {ex.Message}");
         return (DateTime.MinValue, true);
     }
 } 
@@ -1356,6 +1359,7 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
     catch (Exception ex)
     {
         // 发生错误时，返回零余额和IsError=true
+        Console.WriteLine($"Error in method {nameof(GetBalancesAsync)}: {ex.Message}");
         return (0m, 0m, true);
     }
 }
@@ -1391,9 +1395,10 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, doub
 
         return (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, false);
     }
-    catch
+    catch (Exception ex)
     {
         // 如果发生异常，返回一个特殊的元组值
+        Console.WriteLine($"Error in method {nameof(GetBandwidthAsync)}: {ex.Message}");
         return (0, 0, 0, 0, 0, 0, 0, 0, 0, true);
     }
 }
@@ -1470,6 +1475,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
         catch (Exception ex)
         {
             // 发生错误时，返回空字符串和IsError=true
+            Console.WriteLine($"Error in method {nameof(GetLastFiveTransactionsAsync)}: {ex.Message}");
             return (string.Empty, true);
         }
     }
@@ -1511,19 +1517,22 @@ public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddr
             return (string.Empty, true);
         }
     }
-    catch (HttpRequestException)
+    catch (HttpRequestException ex)
     {
         // 当发生 HttpRequestException 时，返回一个指示错误的元组值
+        Console.WriteLine($"Error in method {nameof(GetOwnerPermissionAsync)}: {ex.Message}");
         return (string.Empty, true);
     }
-    catch (JsonException)
+    catch (JsonException ex)
     {
         // 当发生 JsonException 时，返回一个指示错误的元组值
+        Console.WriteLine($"Error in method {nameof(GetOwnerPermissionAsync)}: {ex.Message}");
         return (string.Empty, true);
     }
-    catch (Exception)
+    catch (Exception ex)
     {
         // 当发生其他异常时，返回一个指示错误的元组值
+        Console.WriteLine($"Error in method {nameof(GetOwnerPermissionAsync)}: {ex.Message}");
         return (string.Empty, true);
     }
 }
@@ -1614,11 +1623,11 @@ var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResu
 int availableTransferCount = (int)(trxBalance / 13.3959m);    
     
 // 检查是否发生了请求错误 欧意otc价格未加入，异常会导致返回的价格为0 全部关闭  所有的接口都处理了异常了
-//if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetTotalIncome || isErrorGetOwnerPermission)
-//{
-//    await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址有误或接口维护中，请稍后重试！");
-//    return;
-//}
+if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetTotalIncome || isErrorGetOwnerPermission)
+{
+    await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址有误或接口维护中，请稍后重试！");
+    return;
+}
     
     // 判断是否所有返回的数据都是0
 //if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
@@ -1805,9 +1814,10 @@ public static async Task<(decimal UsdtTotal, int TransferCount, bool IsError)> G
 
         return (usdtTotal, transferCount, false);
     }
-    catch (Exception)
+    catch (Exception ex)
     {
         // 当发生异常时，返回一个特殊的结果，表示发生了错误
+        Console.WriteLine($"Error in method {nameof(GetUsdtTransferTotalAsync)}: {ex.Message}");
         return (0, 0, true);
     }
 }
