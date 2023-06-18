@@ -57,8 +57,10 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //decimal todayIncome = Math.Round(todayIncomeTask.Result, 2);
 //decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
 //decimal totalIncome = Math.Round(totalIncomeTask.Result - 21639, 2); 累计承兑-21639USDT  如果是新号可以不用减
-
-
+// 先发送GIF
+// string gifUrl = "https://i.postimg.cc/0QKYJ0Cb/333.gif"; // 替换为您的GIF URL  网站自己上传
+// 发送GIF和带按钮的文本
+// string gifUrl = "https://i.postimg.cc/Jzrm1m9c/277574078-352558983556639-7702866525169266409-n.png"; 自己注册
 
 public static class UpdateHandlers
 {
