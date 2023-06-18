@@ -85,6 +85,91 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 存储用户ID和波场地址的字典
+private static Dictionary<long, string> userTronAddresses = new Dictionary<long, string>();
+// 存储用户ID和定时器的字典
+private static Dictionary<long, Timer> userTimers = new Dictionary<long, Timer>();    
+private static void StartMonitoring(ITelegramBotClient botClient, long userId, string tronAddress)
+{
+    // 创建一个定时器来定期检查地址的TRX余额
+    Timer timer = null;
+    timer = new Timer(async _ =>
+    {
+        var balance = await GetTronBalanceAsync(tronAddress);
+        if (balance < 100)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: userId,
+                text: $"⚠️您的地址：<code>{tronAddress}</code>\n⚠️余额已不足100TRX，为不影响转账请及时兑换TRX！",
+                parseMode: ParseMode.Html
+            );
+            // 余额不足，停止1分钟
+            timer.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+        }
+        else
+        {
+            // 余额充足，每分钟检查一次
+            timer.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+        }
+    }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+
+    // 将定时器和用户ID存储起来
+    userTimers[userId] = timer;
+}
+
+// 处理绑定波场地址的命令
+private static async Task HandleBindTronAddressCommand(ITelegramBotClient botClient, Message message)
+{
+    var messageText = message.Text;
+    if (messageText.StartsWith("绑定波场地址 "))
+    {
+        var tronAddress = messageText.Substring(7); // 去掉 "绑定波场地址 " 前缀
+
+        // 检查地址是否有效
+        if (await IsValidTronAddress(tronAddress))
+        {
+            var userId = message.From.Id;
+
+            // 将地址和用户ID存储起来
+            userTronAddresses[userId] = tronAddress;
+
+            // 创建一个定时器来定期检查地址的TRX余额
+            StartMonitoring(botClient, userId, tronAddress);
+        }
+    }
+}
+
+// 检查波场地址是否有效
+private static async Task<bool> IsValidTronAddress(string tronAddress)
+{
+    using (var httpClient = new HttpClient())
+    {
+        var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
+        var content = await response.Content.ReadAsStringAsync();
+        return content.Contains("\"success\":true");
+    }
+}
+
+// 获取波场地址的TRX余额
+private static async Task<decimal> GetTronBalanceAsync(string tronAddress)
+{
+    using (var httpClient = new HttpClient())
+    {
+        var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
+        var content = await response.Content.ReadAsStringAsync();
+        var match = Regex.Match(content, "\"balance\":(\\d+)");
+        if (match.Success)
+        {
+            var balanceInSun = long.Parse(match.Groups[1].Value);
+            var balanceInTrx = balanceInSun / 1_000_000.0m;
+            return balanceInTrx;
+        }
+        else
+        {
+            throw new Exception("无法获取波场地址的TRX余额。");
+        }
+    }
+}       
 //升级管理员提醒    
 private static async Task BotOnMyChatMemberChanged(ITelegramBotClient botClient, ChatMemberUpdated chatMemberUpdated)
 {
@@ -3524,6 +3609,8 @@ USDT余额： <b>{USDT}</b>
                     bind.UserName = $"@{from.Username}";
                     bind.FullName = $"{from.FirstName} {from.LastName}";
                     await _bindRepository.InsertAsync(bind);
+                    // 启动定时器来监控这个地址的TRX余额
+                    StartMonitoring(botClient, UserId, address);
                 }
                 else
                 {
@@ -3533,6 +3620,8 @@ USDT余额： <b>{USDT}</b>
                     bind.UserName = $"@{from.Username}";
                     bind.FullName = $"{from.FirstName} {from.LastName}";
                     await _bindRepository.UpdateAsync(bind);
+                    // 启动定时器来监控这个地址的TRX余额
+                    StartMonitoring(botClient, UserId, address);
                 }
 // 创建包含两行，每行两个按钮的虚拟键盘
 var keyboard = new ReplyKeyboardMarkup(new[]
@@ -3595,6 +3684,12 @@ var keyboard = new ReplyKeyboardMarkup(new[]
             {
                 await _bindRepository.DeleteAsync(bind);
             }
+     // 停止向用户发送 TRX 余额不足的提醒
+    if (userTimers.TryGetValue(UserId, out var timer))
+    {
+        timer.Dispose();
+        userTimers.Remove(UserId);
+    }            
 // 创建包含两行，每行两个按钮的虚拟键盘
 var keyboard = new ReplyKeyboardMarkup(new[]
 {
