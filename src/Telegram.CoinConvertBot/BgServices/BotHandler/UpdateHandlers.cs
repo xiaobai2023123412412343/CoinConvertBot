@@ -96,11 +96,12 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
     timer = new Timer(async _ =>
     {
         var balance = await GetTronBalanceAsync(tronAddress);
+        var roundedBalance = Math.Round(balance, 2); // 四舍五入到小数点后两位
         if (balance < 100)
         {
             await botClient.SendTextMessageAsync(
                 chatId: userId,
-                text: $"⚠️您的地址：<code>{tronAddress}</code>\n⚠️余额已不足100TRX，为不影响转账请立即兑换TRX！",
+                text: $"⚠️您的地址：<code>{tronAddress}</code>\n⚠️余额剩{roundedBalance}TRX，为不影响转账请及时兑换TRX！",
                 parseMode: ParseMode.Html
             );
             // 余额不足，停止1分钟
