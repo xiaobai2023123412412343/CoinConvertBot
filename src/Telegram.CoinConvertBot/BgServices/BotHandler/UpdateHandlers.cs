@@ -793,7 +793,7 @@ private static async Task BotOnCallbackQueryReceived(ITelegramBotClient botClien
 
         await botClient.SendTextMessageAsync(
             chatId: callbackQuery.Message.Chat.Id,
-            text: "<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>",
+            text: "<code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>",
             parseMode: ParseMode.Html
         );
     }
@@ -838,7 +838,7 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
         string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
         string outcomeUrl = $"https://apilist.tronscan.org/api/transaction?address={outcomeAddress}&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=50&page=1";
 
-        string usdtUrl = $"https://api.trongrid.io/v1/accounts/TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC/transactions/trc20?only_confirmed=true&limit=20&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&min_timestamp=0&max_timestamp={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+        string usdtUrl = $"https://api.trongrid.io/v1/accounts/TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv/transactions/trc20?only_confirmed=true&limit=20&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&min_timestamp=0&max_timestamp={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
 
         using (var httpClient = new HttpClient())
         {
@@ -904,7 +904,7 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
                     continue;
                 }
 
-                if (data["to"] != null && data["to"].ToString() == "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC" &&
+                if (data["to"] != null && data["to"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
                     data["block_timestamp"] != null && data["value"] != null)
                 {
                     var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["block_timestamp"]).LocalDateTime;
@@ -1559,7 +1559,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     await botClient.SendTextMessageAsync(message.Chat.Id, "正在查询，请稍后...");
 
 // 同时启动所有任务
-var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC");
+var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv");
 var getBalancesTask = GetBalancesAsync(tronAddress);
 var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
 var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
@@ -2171,7 +2171,7 @@ string fearGreedDescription = GetFearGreedDescription(today);
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
         string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
-            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n" + //手动输入地址
+            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n" + //手动输入地址
             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
             $"\U0000267B有任何问题,请私聊联系 <a href=\"{channelLink}\">机器人管理员</a>\n\n" +
@@ -2389,7 +2389,7 @@ string fearGreedDescription = GetFearGreedDescription(today);
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
         string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
-            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC</code>\n\n\n" + //手动输入地址
+            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n\n" + //手动输入地址
             "\U0000267B进U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
             $"\U0000267B有任何问题,请私聊联系<a href=\"{channelLink}\">机器人管理员</a>\n\n" +
@@ -3419,7 +3419,7 @@ if (UserId != AdminUserId)
             
              // 调用新方法获取今日收入
             //Log.Information("查询今日收入...");
-            string targetReciveAddress = "TGUJoKVqzT7igyuwPfzyQPtcMFHu76QyaC";//填写你想要监控收入的地址
+            string targetReciveAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";//填写你想要监控收入的地址
             // 同时运行三个任务（今日收入，本月收入，总收入）
             Task<decimal> todayIncomeTask = GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
             Task<decimal> monthlyIncomeTask = GetMonthlyUSDTIncomeAsync(targetReciveAddress, contractAddress);
