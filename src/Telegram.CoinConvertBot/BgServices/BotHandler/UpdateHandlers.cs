@@ -1569,13 +1569,19 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
         await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址错误，请重新输入");
         return;
     }
+    var tronAddress = match.Groups[1].Value;
+
+    // 如果查询的地址是TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv，直接返回错误信息
+    if (tronAddress == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
+    {
+        await botClient.SendTextMessageAsync(message.Chat.Id, "受限地址，请更换其它地址查询！");
+        return;
+    }
     // 在此处添加获取USDT OTC价格的代码
     var getOkxPriceTask = GetOkxPriceAsync("usdt", "cny", "alipay");
     await getOkxPriceTask;
     decimal okxPrice = getOkxPriceTask.Result;
     
-    var tronAddress = match.Groups[1].Value;
-
     // 回复用户正在查询
     await botClient.SendTextMessageAsync(message.Chat.Id, "正在查询，请稍后...");
 
