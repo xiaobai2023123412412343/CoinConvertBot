@@ -1613,12 +1613,12 @@ var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResu
 // 计算可供转账的次数
 int availableTransferCount = (int)(trxBalance / 13.3959m);    
     
-// 检查是否发生了请求错误 欧意otc价格未加入，异常会导致返回的价格为0
-if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetTotalIncome || isErrorGetOwnerPermission)
-{
-    await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址有误或接口维护中，请稍后重试！");
-    return;
-}
+// 检查是否发生了请求错误 欧意otc价格未加入，异常会导致返回的价格为0 全部关闭  所有的接口都处理了异常了
+//if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetTotalIncome || isErrorGetOwnerPermission)
+//{
+//    await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址有误或接口维护中，请稍后重试！");
+//    return;
+//}
     
     // 判断是否所有返回的数据都是0
 //if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
