@@ -53,6 +53,11 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //    }
 //    if (message.From.Id == 1427768220 && message.Chat.Type == ChatType.Group)  指定管理员可以发送：开启广告 关闭广告
 //拉黑+id  拉白+id
+// 获取任务的结果
+//decimal todayIncome = Math.Round(todayIncomeTask.Result, 2);
+//decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
+//decimal totalIncome = Math.Round(totalIncomeTask.Result - 21639, 2); 累计承兑-21639USDT  如果是新号可以不用减
+
 
 
 public static class UpdateHandlers
