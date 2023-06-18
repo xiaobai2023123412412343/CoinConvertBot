@@ -3428,12 +3428,12 @@ if (UserId != AdminUserId)
             // 等待所有任务完成
             await Task.WhenAll(todayIncomeTask, monthlyIncomeTask, totalIncomeTask);
 
-            // 获取任务的结果
-            decimal todayIncome = todayIncomeTask.Result;
-            decimal monthlyIncome = monthlyIncomeTask.Result;
-            decimal totalIncome = totalIncomeTask.Result;
+// 获取任务的结果
+decimal todayIncome = Math.Round(todayIncomeTask.Result, 2);
+decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
+decimal totalIncome = Math.Round(totalIncomeTask.Result - 21639, 2);
 
-            var msg = @$"当前账户资源如下：
+var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
 TRX余额： <b>{TRX}</b>
 USDT余额： <b>{USDT}</b>
