@@ -123,8 +123,8 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
                     throw;
                 }
             }
-            // 余额不足，停止1分钟
-            timer.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+            // 余额不足，停止480分钟 8小时
+            timer.Change(TimeSpan.FromMinutes(480), TimeSpan.FromMinutes(480));
         }
         else
         {
