@@ -2298,7 +2298,17 @@ static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, M
     try
     {
         var cryptoSymbols = new[] { "bitcoin", "ethereum", "binancecoin","bitget-token", "tether","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };
-        var (prices, changes) = await GetCryptoPricesAsync(cryptoSymbols);
+
+        // 同时开始两个任务
+        var fearAndGreedIndexTask = GetFearAndGreedIndexAsync();
+        var cryptoPricesTask = GetCryptoPricesAsync(cryptoSymbols);
+
+        // 等待所有任务完成
+        await Task.WhenAll(fearAndGreedIndexTask, cryptoPricesTask);
+
+        // 获取任务的结果
+        var (today, yesterday, weekly, monthly) = fearAndGreedIndexTask.Result;
+        var (prices, changes) = cryptoPricesTask.Result;
 
         var cryptoNames = new Dictionary<string, string>
         {
@@ -2319,7 +2329,7 @@ static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, M
 
 var text = "<b>币圈热门币种实时价格及恐惧与贪婪指数:</b>\n\n";
 
-var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
+//var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
 
 Func<int, string> GetClassification = value =>
 {
