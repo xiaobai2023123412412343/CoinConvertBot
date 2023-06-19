@@ -85,6 +85,72 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public class UserInfo
+{
+    public long id { get; set; } // 或者使用 int，取决于 id 的实际值的范围
+    public string first_name { get; set; }
+    public string username { get; set; }
+    public string phone { get; set; }
+    public string about { get; set; }
+}
+
+public class ApiResponse
+{
+    public UserInfo response { get; set; }
+}
+public static async Task HandleUsernameOrUrlMessageAsync(ITelegramBotClient botClient, Message message)
+{
+    // 提取用户名或URL
+    var match = Regex.Match(message.Text, @"(?:https://t\.me/|http://t\.me/|t\.me/|@|\+)?(\w+)");
+    var usernameOrUrl = match.Groups[1].Value;
+
+    try
+    {
+        // 调用API
+        var client = new HttpClient();
+        var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"https://api.telegbot.org/api/users/test001/getPwrChat/?id={usernameOrUrl}"));
+
+        // 检查是否成功
+        if (!response.IsSuccessStatusCode)
+        {
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "获取用户信息失败");
+            return;
+        }
+
+        // 解析返回的JSON
+        var data = JsonSerializer.Deserialize<ApiResponse>(await response.Content.ReadAsStringAsync());
+
+        // 提取用户信息
+        var userInfo = data.response;
+        var id = userInfo.id.ToString(); // 将 id 转换为字符串
+        var firstName = userInfo.first_name;
+        var username = "@" + usernameOrUrl; // 使用提供的用户名
+        var phone = userInfo.phone ?? "未公开";
+        var about = userInfo.about ?? "未提供";
+
+        // 构建返回的消息
+        var reply = $"名字：<a href='tg://user?id={id}'>{firstName}</a>\n" + 
+                    $"用户名：{username}\n" +
+                    $"用户ID：<code>{id}</code>\n" +
+                    $"电话号码：{phone}\n" +
+                    $"个性签名：{about}";
+
+        // 创建内联按钮
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] { InlineKeyboardButton.WithUrl("\U0001F4AC   say:hi   \U0001F4AC", $"https://t.me/{usernameOrUrl}") },
+        });
+
+        // 发送消息
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: reply, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
+    }
+    catch (Exception ex)
+    {
+        // 在这里处理异常，例如记录错误日志或发送错误消息
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "处理请求时发生错误：" + ex.Message);
+    }
+}
+
 // 存储用户ID和波场地址的字典
 private static Dictionary<long, string> userTronAddresses = new Dictionary<long, string>();
 // 存储用户ID和定时器的字典
@@ -3207,6 +3273,10 @@ if (messageText.StartsWith("谷歌 "))
             await botClient.SendTextMessageAsync(groupId, "已开启广告功能。");
         }
     }
+if (message.Text.StartsWith("@") || message.Text.StartsWith("https://t.me/") || message.Text.StartsWith("http://t.me/") || message.Text.StartsWith("t.me/"))
+{
+    await HandleUsernameOrUrlMessageAsync(botClient, message);
+}
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
 if (messageText.StartsWith("预支"))
 {
