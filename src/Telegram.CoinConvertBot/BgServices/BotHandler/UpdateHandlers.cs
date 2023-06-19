@@ -100,9 +100,38 @@ public class ApiResponse
 }
 public static async Task HandleUsernameOrUrlMessageAsync(ITelegramBotClient botClient, Message message)
 {
-    // 提取用户名或URL
-    var match = Regex.Match(message.Text, @"(?:https://t\.me/|http://t\.me/|t\.me/|@|\+)?(\w+)");
-    var usernameOrUrl = match.Groups[1].Value;
+    string usernameOrUrl;
+
+    // 检查消息是在私聊中发送的还是在群聊中发送的
+    if (message.Chat.Type == ChatType.Private)
+    {
+        // 在私聊中，我们处理所有的消息
+        var match = Regex.Match(message.Text, @"(?:https://t\.me/|http://t\.me/|t\.me/|@|\+)?(\w+)");
+        if (!match.Success)
+        {
+            // 如果没有匹配到 URL 或用户名，直接返回
+            return;
+        }
+
+        usernameOrUrl = match.Groups[1].Value;
+    }
+    else if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
+    {
+        // 在群聊中，我们只处理以 "t.me/" 或 "http://t.me/" 开头的 URL
+        var match = Regex.Match(message.Text, @"(?:https://t\.me/|http://t\.me/|t\.me/)(\w+)");
+        if (!match.Success)
+        {
+            // 如果没有匹配到 URL，直接返回
+            return;
+        }
+
+        usernameOrUrl = match.Groups[1].Value;
+    }
+    else
+    {
+        // 如果消息不是在私聊或群聊中发送的，直接返回
+        return;
+    }
 
     try
     {
