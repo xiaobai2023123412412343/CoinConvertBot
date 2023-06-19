@@ -141,9 +141,9 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
 private static async Task HandleBindTronAddressCommand(ITelegramBotClient botClient, Message message)
 {
     var messageText = message.Text;
-    if (messageText.StartsWith("绑定波场地址 "))
+    if (messageText.StartsWith("绑定 "))
     {
-        var tronAddress = messageText.Substring(7); // 去掉 "绑定波场地址 " 前缀
+        var tronAddress = messageText.Substring(3); // 去掉 "绑定波场地址 " 前缀
 
         // 检查地址是否有效
         if (await IsValidTronAddress(tronAddress))
@@ -3388,8 +3388,8 @@ else
             "\U0001F4B9汇率换算" => Valuation(botClient, message), // 添加这一行
             "/yi" => ConvertCoinTRX(botClient, message),
             "/fan" => PriceTRX(botClient, message),
-            "绑定波场地址" => BindAddress(botClient, message),
-            "解绑波场地址" => UnBindAddress(botClient, message),
+            "绑定" => BindAddress(botClient, message),
+            "解绑" => UnBindAddress(botClient, message),
             "\u260E联系管理" => QueryAccount(botClient, message),
             "/boss" => QueryAccount(botClient, message), // 添加这一行
             "关闭键盘" => guanbi(botClient, message),
@@ -3700,9 +3700,8 @@ var keyboard = new ReplyKeyboardMarkup(new[]
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
                 keyboard.OneTimeKeyboard = false;
                 return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: @$"您已成功绑定<b>{address}</b>！
-当我们向您的钱包转账时，您将收到通知！
-如需解绑，请发送
-<code>解绑波场地址 Txxxxxxx</code>(您的钱包地址)", parseMode: ParseMode.Html, replyMarkup: keyboard);
+当我们向您的钱包转账或您的地址TRX余额不足时，您将收到通知！
+", parseMode: ParseMode.Html, replyMarkup: keyboard);
             }
             else
             {
@@ -3803,7 +3802,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 注意：<b>只支持{MinUSDT} USDT以上的金额兑换。</b>
 
 转帐前，推荐您使用以下命令来接收入账通知
-<code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
+<code>绑定 Txxxxxxx</code>(您的钱包地址)
 ";
             if (USDTFeeRate == 0)
             {
@@ -3820,7 +3819,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 <b>只限钱包转账，自动原地址返TRX，如需兑换到其它地址请联系管理！</b>
 
 转帐前，推荐您使用以下命令来接收入账通知
-<code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
+<code>绑定 Txxxxxxx</code>(您的钱包地址)
 
 
 <b>限时福利：</b>
@@ -3888,7 +3887,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 <b>只限钱包转账，自动原地址返TRX，如需兑换到其它地址请联系管理！</b>
     
 转帐前，推荐您使用以下命令来接收入账通知
-<code>绑定波场地址 Txxxxxxx</code>(您的钱包地址)
+<code>绑定 Txxxxxxx</code>(您的钱包地址)
 
 
 <b>限时福利：</b>
