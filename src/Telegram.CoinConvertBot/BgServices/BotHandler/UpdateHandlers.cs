@@ -2390,10 +2390,22 @@ for (int i = 0; i < cryptoSymbols.Length; i++)
         keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
         keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
 
-        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                    text: text, // 你可以将 'text' 替换为需要发送的文本
-                                                    parseMode: ParseMode.Html,
-                                                    replyMarkup: keyboard);
+        // 创建内联按钮
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // 第一行按钮
+            {
+                InlineKeyboardButton.WithUrl("\U0001F4B9 一起穿越币圈牛熊 \U0001F4B9", "https://t.me/+b4NunT6Vwf0wZWI1"),
+            },
+        });
+
+        // 发送带有内联按钮的消息
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: text, // 你可以将 'text' 替换为需要发送的文本
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
     }
     catch (Exception ex)
     {
