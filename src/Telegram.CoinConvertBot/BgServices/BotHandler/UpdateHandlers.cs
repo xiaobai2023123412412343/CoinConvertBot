@@ -97,11 +97,13 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
     {
         var balance = await GetTronBalanceAsync(tronAddress);
         var roundedBalance = Math.Round(balance, 2); // 四舍五入到小数点后两位
+        // 计算可供转账次数，这是新添加的代码
+        var transferTimes = Math.Floor(balance / (decimal)13.3959);  // 计算转账次数为用户余额除以13.3959 
         if (balance < 100)
         {
             await botClient.SendTextMessageAsync(
                 chatId: userId,
-                text: $"⚠️您的地址：<code>{tronAddress}</code>\n⚠️余额剩{roundedBalance}TRX，为不影响转账请及时兑换TRX！",
+                text: $"<b>温馨提示</b>\n\n您绑定的地址：<code>{tronAddress}</code>\nTRX余额只剩：{roundedBalance}，可供转账：{transferTimes}次\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
                 parseMode: ParseMode.Html
             );
             // 余额不足，停止1分钟
