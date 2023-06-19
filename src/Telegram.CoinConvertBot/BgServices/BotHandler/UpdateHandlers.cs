@@ -3699,8 +3699,8 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
                 keyboard.OneTimeKeyboard = false;
-                return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: @$"您已成功绑定<b>{address}</b>！
-当我们向您的钱包转账或您的地址TRX余额不足时，您将收到通知！
+                return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: @$"您已成功绑定：<code>{address}</code>
+当我们向您的钱包转账或钱包TRX余额不足时，您将收到通知！
 ", parseMode: ParseMode.Html, replyMarkup: keyboard);
             }
             else
@@ -3765,7 +3765,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
                 keyboard.OneTimeKeyboard = false;
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您已成功解绑<b>{address}</b>！", parseMode: ParseMode.Html, replyMarkup: keyboard);
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您已成功解绑：<b>{address}</b> ", parseMode: ParseMode.Html, replyMarkup: keyboard);
 
         }
         async Task<Message> ConvertCoinTRX(ITelegramBotClient botClient, Message message)
