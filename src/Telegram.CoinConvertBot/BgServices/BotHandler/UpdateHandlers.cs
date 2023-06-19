@@ -2923,7 +2923,15 @@ if (blacklistedUserIds.Contains(message.From.Id))
         
         // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
         var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
+        // 添加新正则表达式以检查输入文本是否包含 "查id"、"查ID" 或 "t.me/"
+        var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|t\.me/", RegexOptions.IgnoreCase);
 
+        // 如果输入文本包含 "查id"、"查ID" 或 "t.me/"，则不执行翻译
+        if (containsIdOrTme)
+        {
+            return;
+        }
+        
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
