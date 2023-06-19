@@ -4301,6 +4301,11 @@ static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, 
         static async Task<Message> Usage(ITelegramBotClient botClient, Message message)
         {
             var text = (message.Text ?? "").ToUpper().Trim();
+            // 如果输入以 "U" 结尾，将 "U" 替换为 "USDT"
+            if (text.EndsWith("U"))
+            {
+                  text = text.Replace("U", "USDT");
+            }            
             if (text.EndsWith("USDT") && decimal.TryParse(text.Replace("USDT", ""), out var usdtPrice))
             {
                 return await ValuationAction(botClient, message, usdtPrice, Currency.USDT, Currency.TRX);
