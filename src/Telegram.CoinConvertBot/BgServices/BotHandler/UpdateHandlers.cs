@@ -98,9 +98,73 @@ public class ApiResponse
 {
     public UserInfo response { get; set; }
 }
+private static async Task QueryAndSendUserInfo(ITelegramBotClient botClient, Message message, string usernameOrUrl)
+{
+    try
+    {
+        // 调用API
+        var client = new HttpClient();
+        var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"https://api.telegbot.org/api/users/test001/getPwrChat/?id={usernameOrUrl}"));
+
+        // 检查是否成功
+        if (!response.IsSuccessStatusCode)
+        {
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "获取用户信息失败", replyToMessageId: message.MessageId);
+            return;
+        }
+
+        // 解析返回的JSON
+        var data = JsonSerializer.Deserialize<ApiResponse>(await response.Content.ReadAsStringAsync());
+
+        // 提取用户信息
+        var userInfo = data.response;
+        var id = userInfo.id.ToString(); // 将 id 转换为字符串
+        var firstName = userInfo.first_name;
+        var username = "@" + usernameOrUrl; // 使用提供的用户名
+        var phone = userInfo.phone ?? "未公开";
+        var about = userInfo.about ?? "未提供";
+
+        // 构建返回的消息
+        var reply = $"名字：<a href='tg://user?id={id}'>{firstName}</a>\n" + 
+                    $"用户名：{username}\n" +
+                    $"用户ID：<code>{id}</code>\n" +
+                    $"电话号码：{phone}\n" +
+                    $"个性签名：{about}";
+
+        // 创建内联按钮
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] { InlineKeyboardButton.WithUrl("\U0001F4AC   say:hi   \U0001F4AC", $"https://t.me/{usernameOrUrl}") },
+        });
+
+        // 发送消息
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: reply, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true, replyToMessageId: message.MessageId);
+    }
+    catch (Exception ex)
+    {
+        // 在这里处理异常，例如记录错误日志或发送错误消息
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "处理请求时发生错误：" + ex.Message, replyToMessageId: message.MessageId);
+    }
+} 
 public static async Task HandleUsernameOrUrlMessageAsync(ITelegramBotClient botClient, Message message)
 {
-    string usernameOrUrl;
+    string usernameOrUrl = null;
+
+    // 检查消息是否是一个回复
+    if (message.ReplyToMessage != null)
+    {
+        // 检查用户发送的消息的文本是否是 "查id" 或 "查ID"
+        if (message.Text.Trim().ToLower() == "查id" || message.Text.Trim().ToLower() == "查id")
+        {
+            // 获取被回复的用户的用户名
+            usernameOrUrl = message.ReplyToMessage.From.Username;
+
+            // 查询用户信息并返回
+            await QueryAndSendUserInfo(botClient, message, usernameOrUrl);
+            return;
+        }
+    }
+
 
     // 检查消息是在私聊中发送的还是在群聊中发送的
     if (message.Chat.Type == ChatType.Private)
@@ -3302,7 +3366,12 @@ if (messageText.StartsWith("谷歌 "))
             await botClient.SendTextMessageAsync(groupId, "已开启广告功能。");
         }
     }
-if (message.Text.StartsWith("@") || message.Text.StartsWith("https://t.me/") || message.Text.StartsWith("http://t.me/") || message.Text.StartsWith("t.me/"))
+if (message.Text.StartsWith("@") || 
+    message.Text.StartsWith("https://t.me/") || 
+    message.Text.StartsWith("http://t.me/") || 
+    message.Text.StartsWith("t.me/") ||
+    message.Text.Trim().ToLower() == "查id" || 
+    message.Text.Trim().ToLower() == "查id")
 {
     await HandleUsernameOrUrlMessageAsync(botClient, message);
 }
