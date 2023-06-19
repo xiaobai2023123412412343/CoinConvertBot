@@ -101,11 +101,28 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
         var transferTimes = Math.Floor(balance / (decimal)13.3959);  // 计算转账次数为用户余额除以13.3959 
         if (balance < 100)
         {
-            await botClient.SendTextMessageAsync(
-                chatId: userId,
-                text: $"<b>温馨提示</b>\n\n您绑定的地址：<code>{tronAddress}</code>\nTRX余额只剩：{roundedBalance}，可供转账：{transferTimes}次\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
-                parseMode: ParseMode.Html
-            );
+            try
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: userId,
+                    text: $"<b>温馨提示</b>\n\n您绑定的地址：<code>{tronAddress}</code>\nTRX余额只剩：{roundedBalance}，可供转账：{transferTimes}次\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
+                    parseMode: ParseMode.Html
+                );
+            }
+            catch (ApiRequestException ex)
+            {
+                if (ex.Message == "Forbidden: bot was blocked by the user")
+                {
+                    // 用户阻止了机器人，取消定时器任务
+                    timer.Dispose();
+                    return;
+                }
+                else
+                {
+                    // 其他类型的异常，你可以在这里处理
+                    throw;
+                }
+            }
             // 余额不足，停止1分钟
             timer.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
         }
