@@ -85,6 +85,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//查询用户电报资料    
 public class UserInfo
 {
     public long id { get; set; } // 或者使用 int，取决于 id 的实际值的范围
