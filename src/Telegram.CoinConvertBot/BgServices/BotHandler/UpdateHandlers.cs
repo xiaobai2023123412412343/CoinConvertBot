@@ -2297,26 +2297,28 @@ static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, M
 {
     try
     {
-        var cryptoSymbols = new[] { "bitcoin", "ethereum", "binancecoin","bitget-token", "tether","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };
+        var cryptoSymbols = new[] { "tether","bitcoin", "ethereum", "binancecoin","bitget-token", "tether","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };
 
-        // 同时开始两个任务
+        // 同时开始三个任务
         var fearAndGreedIndexTask = GetFearAndGreedIndexAsync();
         var cryptoPricesTask = GetCryptoPricesAsync(cryptoSymbols);
+        var usdtOtcPriceTask = GetOkxPriceAsync("usdt", "cny", "bank"); // 添加了这一行
 
         // 等待所有任务完成
-        await Task.WhenAll(fearAndGreedIndexTask, cryptoPricesTask);
+        await Task.WhenAll(fearAndGreedIndexTask, cryptoPricesTask, usdtOtcPriceTask); // 修改了这一行
 
         // 获取任务的结果
         var (today, yesterday, weekly, monthly) = fearAndGreedIndexTask.Result;
         var (prices, changes) = cryptoPricesTask.Result;
+        var usdtOtcPrice = usdtOtcPriceTask.Result; // 添加了这一行
 
         var cryptoNames = new Dictionary<string, string>
         {
+            { "tether", "USDT" },
             { "bitcoin", "比特币" },
             { "ethereum", "以太坊" },
             { "binancecoin", "币安币" },
-            { "bitget-token", "BGB" },
-            { "tether", "USDT泰达币" },
+            { "bitget-token", "BGB" },           
             { "ripple", "瑞波币" },
             { "cardano", "艾达币" },
             { "dogecoin", "狗狗币" },
@@ -2345,17 +2347,28 @@ Func<int, string> GetClassification = value =>
 text += $"今日：{today} {GetClassification(today)}     昨日：{yesterday} {GetClassification(yesterday)}\n";
 text += $"上周：{weekly:0} {GetClassification((int)weekly)}     上月：{monthly:0} {GetClassification((int)monthly)}\n\n";
 
-        for (int i = 0; i < cryptoSymbols.Length; i++)
-        {
-            var cryptoName = cryptoNames[cryptoSymbols[i]];
-            var changeText = changes[i] < 0 ? $"<b>-</b>{Math.Abs(changes[i]):0.##}%" : $"<b>+</b>{changes[i]:0.##}%";
-            text += $"<code>{cryptoName}: ${prices[i]:0.######}  {changeText}</code>\n";
-            // 添加分隔符
-            if (i < cryptoSymbols.Length - 1) // 防止在最后一行也添加分隔符
-            {
-                text += "———————————————\n";
-            }
-        }
+for (int i = 0; i < cryptoSymbols.Length; i++)
+{
+    var cryptoName = cryptoNames[cryptoSymbols[i]];
+    var changeText = changes[i] < 0 ? $"<b>-</b>{Math.Abs(changes[i]):0.##}%" : $"<b>+</b>{changes[i]:0.##}%";
+    var priceText = $"{prices[i]:0.######}"; // 定义 priceText 变量
+    if (cryptoSymbols[i] == "tether") // 如果是 USDT
+    {
+        var usdtPrice = Math.Round(prices[i], 2); // 将价格四舍五入到两位小数
+        priceText = $"{usdtPrice}≈{usdtOtcPrice} CNY"; // 更新 priceText 变量
+    }
+    else if (cryptoSymbols[i] == "shiba-inu") // 如果是 SHIB
+    {
+        var shibPrice = Math.Round(prices[i], 9); // 将价格四舍五入到九位小数
+        priceText = $"{shibPrice}"; // 更新 priceText 变量
+    }
+    text += $"<code>{cryptoName}: ${priceText}  {changeText}</code>\n"; // 将 priceText 添加到消息文本中
+    // 添加分隔符
+    if (i < cryptoSymbols.Length - 1) // 防止在最后一行也添加分隔符
+    {
+        text += "———————————————\n";
+    }
+}
 
         // 创建包含两行，每行两个按钮的虚拟键盘
         var keyboard = new ReplyKeyboardMarkup(new[]
