@@ -134,7 +134,7 @@ private static async Task QueryAndSendUserInfo(ITelegramBotClient botClient, Mes
         // 创建内联按钮
         var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-            new [] { InlineKeyboardButton.WithUrl("\U0001F4AC   say:hi   \U0001F4AC", $"https://t.me/{usernameOrUrl}") },
+            new [] { InlineKeyboardButton.WithUrl("\U0001F4AC   say: hi~   \U0001F4AC", $"https://t.me/{usernameOrUrl}") },
         });
 
         // 发送消息
@@ -231,7 +231,7 @@ public static async Task HandleUsernameOrUrlMessageAsync(ITelegramBotClient botC
         // 创建内联按钮
         var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-            new [] { InlineKeyboardButton.WithUrl("\U0001F4AC   say:hi   \U0001F4AC", $"https://t.me/{usernameOrUrl}") },
+            new [] { InlineKeyboardButton.WithUrl("\U0001F4AC   say: hi~   \U0001F4AC", $"https://t.me/{usernameOrUrl}") },
         });
 
         // 发送消息
