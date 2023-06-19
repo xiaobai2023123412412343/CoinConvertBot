@@ -66,6 +66,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //(decimal btcLongRate, decimal btcShortRate) = await GetH24LongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h24&symbol=BTC", "9e8ff0ca25f14355a015972f21f162de");
 //(decimal ethLongRate, decimal ethShortRate) = await GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
 //谷歌 关键词 搜索注释掉了 
+//if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))  指定用户可以群发
 
 public static class UpdateHandlers
 {
@@ -3384,6 +3385,17 @@ if (message.Text.StartsWith("@") ||
 {
     await HandleUsernameOrUrlMessageAsync(botClient, message);
 }
+// 检查是否是管理员发送的 "群发" 消息
+if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
+{
+    var messageToSend = message.Text.Substring(3); // 去掉 "群发 " 前缀
+
+    // 向所有关注者发送消息
+    foreach (var follower in Followers)
+    {
+        await botClient.SendTextMessageAsync(chatId: follower.Id, text: messageToSend);
+    }
+}        
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
 if (messageText.StartsWith("预支"))
 {
