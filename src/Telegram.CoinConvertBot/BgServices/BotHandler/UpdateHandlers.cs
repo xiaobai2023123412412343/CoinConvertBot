@@ -372,7 +372,7 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
 
                 if (!string.IsNullOrEmpty(changeInfo))
                 {
-                    var notification = $"⚠️用户资料变更通知⚠️\n\n名字: {name}\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
+                    var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
                     await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
                 }
 
@@ -442,7 +442,7 @@ public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient b
 
         if (!string.IsNullOrEmpty(changeInfo))
         {
-            var notification = $"⚠️用户资料变更通知⚠️\n\n名字: {name}\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
+            var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
             await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
         }
     }
