@@ -2753,6 +2753,14 @@ if (blacklistedUserIds.Contains(message.From.Id))
     if (message != null && !string.IsNullOrWhiteSpace(message.Text))
     {
         var inputText = message.Text.Trim();
+        // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
+        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑)");
+
+        // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
+        if (isBindOrUnbindCommand)
+        {
+            return;
+        }        
         
         // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
         var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
