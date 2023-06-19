@@ -1610,12 +1610,12 @@ public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddr
                 }
                 else
                 {
-                    return ("当前地址未激活！", false);
+                    return ("当前地址未激活", false);
                 }
             }
             else
             {
-                return ("当前地址未激活！", false);
+                return ("当前地址未激活", false);
             }
         }
         else
@@ -1784,7 +1784,7 @@ if (maxConsecutiveIdenticalCharsCount >= 4)
 string addressPermissionText;
 if (string.IsNullOrEmpty(ownerPermissionAddress))
 {
-    addressPermissionText = $"<b>当前地址未激活！</b>";
+    addressPermissionText = $"<b>当前地址未激活</b>";
 }
 else if (ownerPermissionAddress.Equals(tronAddress, StringComparison.OrdinalIgnoreCase))
 {
