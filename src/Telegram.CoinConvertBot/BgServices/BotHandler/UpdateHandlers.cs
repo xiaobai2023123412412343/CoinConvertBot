@@ -105,7 +105,7 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
             {
                 await botClient.SendTextMessageAsync(
                     chatId: userId,
-                    text: $"<b>温馨提示</b>\n\n您绑定的地址：<code>{tronAddress}</code>\nTRX余额只剩：{roundedBalance}，可供转账：{transferTimes}次\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
+                    text: $"<b>温馨提示：</b>\n您绑定的地址：<code>{tronAddress}</code>\n\n⚠️ TRX余额只剩：{roundedBalance}，剩余可供转账：{transferTimes}次 ⚠️\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
                     parseMode: ParseMode.Html
                 );
             }
