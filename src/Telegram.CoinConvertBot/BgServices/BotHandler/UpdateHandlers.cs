@@ -3577,10 +3577,10 @@ if (message.Text.StartsWith("@") ||
 {
     await HandleUsernameOrUrlMessageAsync(botClient, message);
 }
-if (message.Text.StartsWith("存 "))
+if (Regex.IsMatch(message.Text, @"用户名：|ID："))
 {
     await HandleStoreCommandAsync(botClient, message);
-}        
+}       
 if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase))
 {
     await HandleCryptoCurrencyMessageAsync(botClient, message);
