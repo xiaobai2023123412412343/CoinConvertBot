@@ -3801,52 +3801,58 @@ if (UserId != AdminUserId)
 
     return message;
 }
-            var _myTronConfig = provider.GetRequiredService<IOptionsSnapshot<MyTronConfig>>();
-            var _wallet = provider.GetRequiredService<IWalletClient>();
-            var _transactionClient = provider.GetRequiredService<ITransactionClient>();
-            var _contractClientFactory = provider.GetRequiredService<IContractClientFactory>();
-            var protocol = _wallet.GetProtocol();
-            var Address = _myTronConfig.Value.Address;
-            var addr = _wallet.ParseAddress(Address);
+var _myTronConfig = provider.GetRequiredService<IOptionsSnapshot<MyTronConfig>>();
+var _wallet = provider.GetRequiredService<IWalletClient>();
+var _transactionClient = provider.GetRequiredService<ITransactionClient>();
+var _contractClientFactory = provider.GetRequiredService<IContractClientFactory>();
+var protocol = _wallet.GetProtocol();
+var Address = _myTronConfig.Value.Address;
+var addr = _wallet.ParseAddress(Address);
 
-            var resource = await protocol.GetAccountResourceAsync(new TronNet.Protocol.Account
-            {
-                Address = addr
-            });
-            var account = await protocol.GetAccountAsync(new TronNet.Protocol.Account
-            {
-                Address = addr
-            });
-            var TRX = Convert.ToDecimal(account.Balance) / 1_000_000L;
-            var contractAddress = _myTronConfig.Value.USDTContractAddress;
-            var contractClient = _contractClientFactory.CreateClient(ContractProtocol.TRC20);
-            //Log.Information("查询 USDT 余额...");
-            var USDT = await contractClient.BalanceOfAsync(contractAddress, _wallet.GetAccount(_myTronConfig.Value.PrivateKey));
-            //Log.Information($"查询 USDT 余额: 合约地址: {contractAddress}, 查询地址: {_wallet.GetAccount(_myTronConfig.Value.PrivateKey).Address}, 余额: {USDT}");
-            
-             // 调用新方法获取今日收入
-            //Log.Information("查询今日收入...");
-            string targetReciveAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";//填写你想要监控收入的地址
-            // 同时运行三个任务（今日收入，本月收入，总收入）
-            Task<decimal> todayIncomeTask = GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
-            Task<decimal> monthlyIncomeTask = GetMonthlyUSDTIncomeAsync(targetReciveAddress, contractAddress);
-            Task<decimal> totalIncomeTask = GetTotalUSDTIncomeAsync(targetReciveAddress, contractAddress);
+// 同时运行获取账户资源和账户信息的任务
+Task<TronNet.Protocol.AccountResourceMessage> resourceTask = protocol.GetAccountResourceAsync(new TronNet.Protocol.Account
+{
+    Address = addr
+}).ResponseAsync;
+Task<TronNet.Protocol.Account> accountTask = protocol.GetAccountAsync(new TronNet.Protocol.Account
+{
+    Address = addr
+}).ResponseAsync;
 
-            // 等待所有任务完成
-            await Task.WhenAll(todayIncomeTask, monthlyIncomeTask, totalIncomeTask);
+// 同时运行获取剩余的质押能量的任务
+var bandwidthTask = GetBandwidthAsync(Address);
+
+// 同时运行获取账户余额的任务
+var contractAddress = _myTronConfig.Value.USDTContractAddress;
+var contractClient = _contractClientFactory.CreateClient(ContractProtocol.TRC20);
+Task<decimal> USDTTask = contractClient.BalanceOfAsync(contractAddress, _wallet.GetAccount(_myTronConfig.Value.PrivateKey));
+
+// 同时运行获取今日、本月和总收入的任务
+string targetReciveAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
+Task<decimal> todayIncomeTask = GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
+Task<decimal> monthlyIncomeTask = GetMonthlyUSDTIncomeAsync(targetReciveAddress, contractAddress);
+Task<decimal> totalIncomeTask = GetTotalUSDTIncomeAsync(targetReciveAddress, contractAddress);
+
+// 等待所有任务完成
+await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, todayIncomeTask, monthlyIncomeTask, totalIncomeTask);
 
 // 获取任务的结果
+var resource = resourceTask.Result;
+var account = accountTask.Result;
+var (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, isError) = bandwidthTask.Result;
+var TRX = Convert.ToDecimal(account.Balance) / 1_000_000L;
+var USDT = USDTTask.Result;
 decimal todayIncome = Math.Round(todayIncomeTask.Result, 2);
 decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
-decimal totalIncome = Math.Round(totalIncomeTask.Result - 18157, 2);
-
+decimal totalIncome = Math.Round(totalIncomeTask.Result - 17957, 2);
+            
 var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
 TRX余额： <b>{TRX}</b>
 USDT余额： <b>{USDT}</b>
 免费带宽： <b>{resource.FreeNetLimit - resource.FreeNetUsed}/{resource.FreeNetLimit}</b>
 质押带宽： <b>{resource.NetLimit - resource.NetUsed}/{resource.NetLimit}</b>
-质押能量： <b>{resource.EnergyUsed}/{resource.EnergyLimit}</b>
+质押能量： <b>{energyRemaining}/{resource.EnergyLimit}</b>
 ————————————————————
 带宽质押比：<b>100 TRX = {resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100:0.000} 带宽</b>
 能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>
