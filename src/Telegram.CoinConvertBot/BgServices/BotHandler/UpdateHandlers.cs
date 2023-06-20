@@ -86,6 +86,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//计算数字+数字货币的各地货币价值    
 private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient botClient, Message message)
 {
     var cryptoNames = new List<(string, string, string)>
