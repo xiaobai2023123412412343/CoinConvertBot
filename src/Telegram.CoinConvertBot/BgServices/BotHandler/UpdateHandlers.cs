@@ -3139,7 +3139,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|fu|btc|usd|boss|cny|jiankong)|会员代开|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|fu|btc|usd|vip|cny|jiankong)|会员代开|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"^\d+\s*[A-Za-z\u4e00-\u9fa5]+$");
@@ -3807,7 +3807,7 @@ else
             "绑定" => BindAddress(botClient, message),
             "解绑" => UnBindAddress(botClient, message),
             "\u2B50会员代开" => QueryAccount(botClient, message),
-            "/boss" => QueryAccount(botClient, message), // 添加这一行
+            "/vip" => QueryAccount(botClient, message), // 添加这一行
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
         };
