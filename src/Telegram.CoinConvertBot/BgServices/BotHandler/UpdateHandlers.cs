@@ -105,26 +105,20 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
         ("the-open-network", "电报币", "ton")
     };
 
-    // 修改正则表达式，使其可以匹配所有货币的形式
     var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase);
     
-    // 检查匹配是否成功
     if (!match.Success)
     {
-        // 如果匹配失败，直接返回
         return;
     }
 
     var amount = decimal.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
     var currencyName = match.Groups[3].Value.ToLower();
 
-    // 修改货币识别逻辑，使其可以根据匹配到的货币名称来确定货币类型
     var currencyTuple = cryptoNames.FirstOrDefault(x => x.Item2.ToLower() == currencyName.ToLower() || x.Item3.ToLower() == currencyName.ToLower());
     var currency = currencyTuple.Item1;
-    // 检查 currency 是否为 null
     if (currency == null)
     {
-        // 如果 currency 为 null，直接返回
         return;
     }
 
@@ -154,7 +148,25 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
         }
     }
 
-    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: responseText, parseMode: ParseMode.Html);
+    var inlineKeyboardButton = new InlineKeyboardButton("穿越牛熊，慢，就是快！")
+    {
+        Url = "https://t.me/+b4NunT6Vwf0wZWI1"
+    };
+
+    var inlineKeyboard = new InlineKeyboardMarkup(inlineKeyboardButton);
+
+    try
+    {
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                             text: responseText,
+                                             parseMode: ParseMode.Html,
+                                             replyMarkup: inlineKeyboard);
+    }
+    catch (Exception ex)
+    {
+        Log.Error($"发送消息失败: {ex.Message}");
+        return;
+    }
 }
 //查询用户电报资料    
 public class UserInfo
