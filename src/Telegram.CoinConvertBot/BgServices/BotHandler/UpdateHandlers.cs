@@ -86,6 +86,78 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, Message message)
+{
+    // 检查消息是否来自指定的用户 ID
+    if (message.From.Id != 1427768220)
+    {
+        // 如果不是管理员，直接返回，不做任何处理
+        return;
+    }
+
+    // 将消息文本转换为小写
+    var lowerCaseMessage = message.Text.ToLower();
+
+    // 使用正则表达式匹配用户信息
+    var regex = new Regex(@"(.*?)用户名：@(.*?)\s+id：(\d+)", RegexOptions.IgnoreCase);
+    var matches = regex.Matches(lowerCaseMessage);
+
+    foreach (Match match in matches)
+    {
+        try
+        {
+            string name = match.Groups[1].Value.Trim();
+            string username = match.Groups[2].Value.Trim();
+            long id = long.Parse(match.Groups[3].Value.Trim());
+
+            // 检查是否已经存在相同ID的用户
+            var existingUser = Followers.FirstOrDefault(u => u.Id == id);
+            if (existingUser != null)
+            {
+                // 如果存在，更新用户名和名字
+                existingUser.Username = username;
+                existingUser.Name = name;
+            }
+            else
+            {
+                // 如果不存在，创建新的用户对象并添加到列表中
+                var user = new User { Name = name, Username = username, Id = id, FollowTime = DateTime.UtcNow.AddHours(8) };
+                Followers.Add(user);
+            }
+
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"用户 {name} (@{username}, ID: {id}) 已经被添加到关注者列表中。");
+        }
+        catch (Exception ex)
+        {
+            // 在这里处理异常，例如记录日志
+            // Log.Error(ex, "处理用户信息时出错");
+            continue; // 跳过当前用户，继续处理下一个用户
+        }
+    }
+
+    // 单独存储用户名或ID
+    if (message.Text.StartsWith("存 用户名："))
+    {
+        string username = message.Text.Substring("存 用户名：".Length).Trim();
+        var user = new User { Username = username, FollowTime = DateTime.UtcNow.AddHours(8) };
+        Followers.Add(user);
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"用户 @{username} 已经被添加到关注者列表中。");
+    }
+    else if (message.Text.StartsWith("存 ID："))
+    {
+        string idText = message.Text.Substring("存 ID：".Length).Trim();
+        if (long.TryParse(idText, out long id))
+        {
+            var user = new User { Id = id, FollowTime = DateTime.UtcNow.AddHours(8) };
+            Followers.Add(user);
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"用户 ID: {id} 已经被添加到关注者列表中。");
+        }
+        else
+        {
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"无法解析ID: {idText}。请确保你输入的是一个有效的数字。");
+        }
+    }
+}
 //计算数字+数字货币的各地货币价值    
 private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient botClient, Message message)
 {
@@ -3504,6 +3576,10 @@ if (message.Text.StartsWith("@") ||
 {
     await HandleUsernameOrUrlMessageAsync(botClient, message);
 }
+if (message.Text.StartsWith("存 "))
+{
+    await HandleStoreCommandAsync(botClient, message);
+}        
 if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase))
 {
     await HandleCryptoCurrencyMessageAsync(botClient, message);
