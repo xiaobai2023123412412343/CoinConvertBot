@@ -2542,7 +2542,7 @@ for (int i = 0; i < cryptoSymbols.Length; i++)
             {
                 new KeyboardButton("\U0001F4B8币圈行情"),
                 new KeyboardButton("\U0001F310外汇助手"),
-                new KeyboardButton("\u260E联系管理"),
+                new KeyboardButton("\u2B50会员代开"),
             }    
         });
 
@@ -3131,7 +3131,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|fu|btc|usd|boss|cny|jiankong)|联系管理|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|fu|btc|usd|boss|cny|jiankong)|会员代开|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"^\d+\s*[A-Za-z\u4e00-\u9fa5]+$");
@@ -3278,8 +3278,8 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
         new [] // 第一行按钮
         {
             //InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
-            InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1"),
-            InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions")
+            InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions"),
+            InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1")
         }
     });
 
@@ -3373,7 +3373,7 @@ const string BOT_USERNAME = "yifanfubot";//机器人用户名
 const int ADMIN_ID = 1427768220;//指定管理员ID不转发
 
 // 存储机器人的所有命令
-string[] botCommands = { "/start", "/yi","/fan","/fu","/btc","/usd","/boss","中文","帮助","兑换记录","\U0001F4B0U兑TRX","\U0001F570实时汇率","\U0001F4B9汇率换算","\U0001F4B8币圈行情","\U0001F310外汇助手","\u260E联系管理", "/cny" };       
+string[] botCommands = { "/start", "/yi","/fan","/fu","/btc","/usd","/boss","中文","帮助","兑换记录","\U0001F4B0U兑TRX","\U0001F570实时汇率","\U0001F4B9汇率换算","\U0001F4B8币圈行情","\U0001F310外汇助手","\u2B50会员代开", "/cny" };       
 
 if (message.Type == MessageType.Text)
 {
@@ -3798,7 +3798,7 @@ else
             "/fan" => PriceTRX(botClient, message),
             "绑定" => BindAddress(botClient, message),
             "解绑" => UnBindAddress(botClient, message),
-            "\u260E联系管理" => QueryAccount(botClient, message),
+            "\u2B50会员代开" => QueryAccount(botClient, message),
             "/boss" => QueryAccount(botClient, message), // 添加这一行
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
@@ -3963,8 +3963,8 @@ if (UserId != AdminUserId)
         new [] // 第一行按钮
         {
             //InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
-            InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1"),
-            InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions") // 新增按钮
+            InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions"),
+            InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1")
         }
     });
 
@@ -4049,7 +4049,7 @@ USDT余额： <b>{USDT}</b>
                 {
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u260E联系管理"),
+                    new KeyboardButton("\u2B50会员代开"),
                 }    
             });
             keyboard.ResizeKeyboard = true;           
@@ -4108,7 +4108,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B8币圈行情"),
         new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u260E联系管理"),
+        new KeyboardButton("\u2B50会员代开"),
     }    
 });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
@@ -4132,7 +4132,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B8币圈行情"),
         new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u260E联系管理"),
+        new KeyboardButton("\u2B50会员代开"),
     }    
 });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
@@ -4174,7 +4174,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B8币圈行情"),
         new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u260E联系管理"),
+        new KeyboardButton("\u2B50会员代开"),
     }    
 });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
@@ -4255,7 +4255,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B8币圈行情"),
         new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u260E联系管理"),
+        new KeyboardButton("\u2B50会员代开"),
     }    
 });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
@@ -4323,7 +4323,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
             {
                 new KeyboardButton("\U0001F4B8币圈行情"),
                 new KeyboardButton("\U0001F310外汇助手"),
-                new KeyboardButton("\u260E联系管理"),
+                new KeyboardButton("\u2B50会员代开"),
             }    
         });
 
@@ -4382,7 +4382,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B8币圈行情"),
         new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u260E联系管理"),
+        new KeyboardButton("\u2B50会员代开"),
     }    
 });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
@@ -4433,7 +4433,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
             {
                 new KeyboardButton("\U0001F4B8币圈行情"),
                 new KeyboardButton("\U0001F310外汇助手"),
-                new KeyboardButton("\u260E联系管理"),
+                new KeyboardButton("\u2B50会员代开"),
             }    
         });
 
@@ -4542,7 +4542,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new KeyboardButton("\U0001F4B8币圈行情"),
         new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u260E联系管理"),
+        new KeyboardButton("\u2B50会员代开"),
     }    
 });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
