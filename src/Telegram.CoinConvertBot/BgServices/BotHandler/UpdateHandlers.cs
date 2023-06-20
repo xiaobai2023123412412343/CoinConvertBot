@@ -86,6 +86,57 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient botClient, Message message)
+{
+    var cryptoNames = new Dictionary<string, string>
+    {
+        { "tether", "USDT" },
+        { "bitcoin", "比特币" },
+        { "ethereum", "以太坊" },
+        { "binancecoin", "币安币" },
+        { "bitget-token", "BGB" },           
+        { "ripple", "瑞波币" },
+        { "cardano", "艾达币" },
+        { "dogecoin", "狗狗币" },
+        { "shiba-inu", "shib" },
+        { "solana", "Sol" },
+        { "litecoin", "莱特币" },
+        { "chainlink", "link" },
+        { "the-open-network", "电报币" }
+    };
+
+    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)(btc|比特币|eth|以太坊)$", RegexOptions.IgnoreCase);
+    var amount = decimal.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+    var currency = match.Groups[3].Value.ToLower() == "btc" || match.Groups[3].Value == "比特币" ? "bitcoin" : "ethereum";
+
+    var (prices, changes) = await GetCryptoPricesAsync(new[] { currency });
+    var cryptoPriceInUsdt = prices[0] * amount;
+
+    var cnyPerUsdt = await GetOkxPriceAsync("usdt", "cny", "all");
+    var cryptoPriceInCny = cryptoPriceInUsdt * cnyPerUsdt;
+    var cryptoToCnyRate = cryptoPriceInUsdt * cnyPerUsdt;
+
+    var rates = await GetCurrencyRatesAsync();
+    var responseText = $"<b>{amount} 枚 {cryptoNames[currency]}</b> 的价值是： {cryptoToCnyRate:N2} 人民币 (CNY)\n\n";
+    var rateList = rates.ToList();
+    for (int i = 0; i < rateList.Count; i++)
+    {
+        var rate = rateList[i];
+        var cryptoPriceInCurrency = cryptoPriceInCny * rate.Value.Item1;
+        var currencyFullName = CurrencyFullNames.ContainsKey(rate.Key) ? CurrencyFullNames[rate.Key] : rate.Key;
+        responseText += $"{cryptoPriceInCurrency:N2} {currencyFullName}";
+        if (i % 2 == 0)
+        {
+            responseText += " | ";
+        }
+        else if (i != rateList.Count - 1)
+        {
+            responseText += "\n————————————————————————————\n";
+        }
+    }
+
+    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: responseText, parseMode: ParseMode.Html);
+}
 //查询用户电报资料    
 public class UserInfo
 {
@@ -3421,6 +3472,10 @@ if (message.Text.StartsWith("@") ||
 {
     await HandleUsernameOrUrlMessageAsync(botClient, message);
 }
+if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊)$", RegexOptions.IgnoreCase))
+{
+    await HandleCryptoCurrencyMessageAsync(botClient, message);
+}       
 // 检查是否是管理员发送的 "群发" 消息
 if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
 {
