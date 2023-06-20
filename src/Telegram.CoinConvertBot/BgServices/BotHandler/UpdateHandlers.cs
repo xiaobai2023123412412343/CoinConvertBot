@@ -3115,7 +3115,15 @@ if (blacklistedUserIds.Contains(message.From.Id))
         if (isBindOrUnbindCommand)
         {
             return;
-        }        
+        }  
+// 添加新的正则表达式以检查输入文本是否包含 "用户名："
+var containsUsername = Regex.IsMatch(inputText, @"用户名：");
+
+// 如果输入文本包含 "用户名："，则不执行翻译
+if (containsUsername)
+{
+    return;
+}        
         
         // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
         var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
