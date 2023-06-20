@@ -88,26 +88,45 @@ public static class UpdateHandlers
     /// <returns></returns>
 private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient botClient, Message message)
 {
-    var cryptoNames = new Dictionary<string, string>
+    var cryptoNames = new List<(string, string, string)>
     {
-        { "tether", "USDT" },
-        { "bitcoin", "比特币" },
-        { "ethereum", "以太坊" },
-        { "binancecoin", "币安币" },
-        { "bitget-token", "BGB" },           
-        { "ripple", "瑞波币" },
-        { "cardano", "艾达币" },
-        { "dogecoin", "狗狗币" },
-        { "shiba-inu", "shib" },
-        { "solana", "Sol" },
-        { "litecoin", "莱特币" },
-        { "chainlink", "link" },
-        { "the-open-network", "电报币" }
+        ("tether", "USDT", "泰达币"),
+        ("bitcoin", "比特币", "btc"),
+        ("ethereum", "以太坊", "eth"),
+        ("binancecoin", "币安币", "bnb"),
+        ("bitget-token", "BGB", "BGB"),
+        ("ripple", "瑞波币", "xrp"),
+        ("cardano", "艾达币", "ada"),
+        ("dogecoin", "狗狗币", "doge"),
+        ("shiba-inu", "shib", "shib"),
+        ("solana", "Sol", "sol"),
+        ("litecoin", "莱特币", "ltc"),
+        ("chainlink", "link", "link"),
+        ("the-open-network", "电报币", "ton")
     };
 
-    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)(btc|比特币|eth|以太坊)$", RegexOptions.IgnoreCase);
+    // 修改正则表达式，使其可以匹配所有货币的形式
+    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase);
+    
+    // 检查匹配是否成功
+    if (!match.Success)
+    {
+        // 如果匹配失败，直接返回
+        return;
+    }
+
     var amount = decimal.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
-    var currency = match.Groups[3].Value.ToLower() == "btc" || match.Groups[3].Value == "比特币" ? "bitcoin" : "ethereum";
+    var currencyName = match.Groups[3].Value.ToLower();
+
+    // 修改货币识别逻辑，使其可以根据匹配到的货币名称来确定货币类型
+    var currencyTuple = cryptoNames.FirstOrDefault(x => x.Item2.ToLower() == currencyName.ToLower() || x.Item3.ToLower() == currencyName.ToLower());
+    var currency = currencyTuple.Item1;
+    // 检查 currency 是否为 null
+    if (currency == null)
+    {
+        // 如果 currency 为 null，直接返回
+        return;
+    }
 
     var (prices, changes) = await GetCryptoPricesAsync(new[] { currency });
     var cryptoPriceInUsdt = prices[0] * amount;
@@ -117,7 +136,7 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
     var cryptoToCnyRate = cryptoPriceInUsdt * cnyPerUsdt;
 
     var rates = await GetCurrencyRatesAsync();
-    var responseText = $"<b>{amount} 枚 {cryptoNames[currency]}</b> 的价值是： {cryptoToCnyRate:N2} 人民币 (CNY)\n\n";
+    var responseText = $"<b>{amount} 枚 {currencyTuple.Item2}</b> 的价值是： {cryptoToCnyRate:N2} 人民币 (CNY)\n\n";
     var rateList = rates.ToList();
     for (int i = 0; i < rateList.Count; i++)
     {
@@ -3472,10 +3491,10 @@ if (message.Text.StartsWith("@") ||
 {
     await HandleUsernameOrUrlMessageAsync(botClient, message);
 }
-if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊)$", RegexOptions.IgnoreCase))
+if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase))
 {
     await HandleCryptoCurrencyMessageAsync(botClient, message);
-}       
+}  
 // 检查是否是管理员发送的 "群发" 消息
 if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
 {
