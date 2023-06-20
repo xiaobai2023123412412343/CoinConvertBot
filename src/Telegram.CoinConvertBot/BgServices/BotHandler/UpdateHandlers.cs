@@ -67,6 +67,8 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //(decimal ethLongRate, decimal ethShortRate) = await GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
 //谷歌 关键词 搜索注释掉了 
 //if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))  指定用户可以群发
+//发送用户名：**或ID：**  会触发储存资料
+
 
 public static class UpdateHandlers
 {
