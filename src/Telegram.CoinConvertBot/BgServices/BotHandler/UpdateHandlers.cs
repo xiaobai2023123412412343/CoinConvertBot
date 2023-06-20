@@ -4418,7 +4418,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 数字计算<b>直接对话框发送</b>
 如发送：1+1
 回复： <code>1+1=2</code>
-注：<b>群内计算需要@机器人或设置机器人为管理</b>
+注：<b>群内计算需要回复机器人或设置机器人为管理</b>
 
 ";
 
