@@ -86,6 +86,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//存储用户资料    
 private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, Message message)
 {
     // 检查消息是否来自指定的用户 ID
