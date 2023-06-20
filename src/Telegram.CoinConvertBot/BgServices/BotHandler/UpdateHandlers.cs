@@ -3516,9 +3516,18 @@ if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
     // 向所有关注者发送消息
     foreach (var follower in Followers)
     {
-        await botClient.SendTextMessageAsync(chatId: follower.Id, text: messageToSend);
+        try
+        {
+            await botClient.SendTextMessageAsync(chatId: follower.Id, text: messageToSend);
+        }
+        catch (ApiRequestException e)
+        {
+            // 用户不存在或已经屏蔽了机器人
+            // 在这里记录异常，然后继续向下一个用户发送消息
+            Log.Error($"Failed to send message to {follower.Id}: {e.Message}");
+        }
     }
-}        
+}      
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
 if (messageText.StartsWith("预支"))
 {
