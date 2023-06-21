@@ -758,6 +758,11 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
             // 机器人被踢出群组，跳过
             return;
         }
+        else if (ex.Message == "Forbidden: the group chat was deleted")
+        {
+            // 群组已被删除，跳过
+            return;
+        }        
         throw;  // 其他错误，继续抛出
     }
 }
