@@ -68,7 +68,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //谷歌 关键词 搜索注释掉了 
 //if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))  指定用户可以群发
 //发送用户名：**或ID：**  会触发储存资料
-//运行机器人发送 /yc   启动全局异常处理
+//运行机器人发送 /yccl   启动全局异常处理    /qdgg  启动广告
 
 
 public static class UpdateHandlers
