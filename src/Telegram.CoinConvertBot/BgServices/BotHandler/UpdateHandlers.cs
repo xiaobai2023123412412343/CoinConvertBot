@@ -88,6 +88,18 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+private static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
+{
+    Exception ex = (Exception)e.ExceptionObject;
+
+    // 在这里处理异常，例如记录错误信息
+    Console.WriteLine("Unhandled exception: " + ex.Message);
+
+    // 如果您希望程序在发生未处理的异常时继续运行，可以在这里重新启动它
+    // 注意：这可能会导致程序的状态不一致，因此请谨慎使用
+    System.Diagnostics.Process.Start(System.Reflection.Assembly.GetExecutingAssembly().Location);
+    Environment.Exit(1);
+}  
 //存储用户资料    
 private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, Message message)
 {
@@ -3587,6 +3599,11 @@ if (message.Text.StartsWith("@") ||
 {
     await HandleUsernameOrUrlMessageAsync(botClient, message);
 }
+if (messageText.StartsWith("/yc"))
+{
+    // 添加全局异常处理器
+    AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
+}        
 if (Regex.IsMatch(message.Text, @"用户名：|ID："))
 {
     await HandleStoreCommandAsync(botClient, message);
