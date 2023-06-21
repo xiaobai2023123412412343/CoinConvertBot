@@ -3157,7 +3157,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|fu|btc|usd|vip|cny|jiankong)|会员代开|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|cny|jiankong)|会员代开|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"^\d+\s*[A-Za-z\u4e00-\u9fa5]+$");
@@ -3564,8 +3564,8 @@ if (messageText.StartsWith("谷歌 "))
         replyMarkup: inlineKeyboard // 添加内联键盘
     );
 }
-    // 检查是否接收到了 /gg 消息，收到就启动广告
-    if (messageText.StartsWith("/gg"))
+    // 检查是否接收到了 /qdgg 消息，收到就启动广告
+    if (messageText.StartsWith("/qdgg"))
     {
         // 如果广告没有在运行，就启动广告
         if (!isAdvertisementRunning)
@@ -3605,10 +3605,16 @@ if (message.Text.StartsWith("@") ||
 {
     await HandleUsernameOrUrlMessageAsync(botClient, message);
 }
-if (messageText.StartsWith("/yc"))
+if (messageText.StartsWith("/yccl"))
 {
     // 添加全局异常处理器
     AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
+
+    // 使用 Telegram.Bot 的方法来发送消息
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "全局异常处理已启动！"
+    );
 }        
 if (Regex.IsMatch(message.Text, @"用户名：|ID："))
 {
