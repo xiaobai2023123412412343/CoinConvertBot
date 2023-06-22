@@ -828,56 +828,60 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
 private static readonly Dictionary<long, Dictionary<long, (string username, string name)>> groupUserInfo = new Dictionary<long, Dictionary<long, (string username, string name)>>();
 public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient botClient, Message message)
 {
-    try
+    while (true)
     {
-        var chatId = message.Chat.Id;
-        var user = message.From!;
-        var userId = user.Id;
-        var username = user.Username;
-        var name = user.FirstName + " " + user.LastName;
-
-        // 避免在私聊中触发提醒
-        if (message.Chat.Type == ChatType.Private)
+        try
         {
-            return;
-        }
+            var chatId = message.Chat.Id;
+            var user = message.From!;
+            var userId = user.Id;
+            var username = user.Username;
+            var name = user.FirstName + " " + user.LastName;
 
-        if (groupUserInfo.ContainsKey(chatId) && groupUserInfo[chatId].ContainsKey(userId))
-        {
-            var oldInfo = groupUserInfo[chatId][userId];
-            var changeInfo = "";
-
-            if (oldInfo.username != username)
+            // 避免在私聊中触发提醒
+            if (message.Chat.Type == ChatType.Private)
             {
-                changeInfo += $"用户名：@{oldInfo.username} 更改为 @{username}\n";
+                return;
             }
 
-            if (oldInfo.name != name)
+            if (groupUserInfo.ContainsKey(chatId) && groupUserInfo[chatId].ContainsKey(userId))
             {
-                changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
+                var oldInfo = groupUserInfo[chatId][userId];
+                var changeInfo = "";
+
+                if (oldInfo.username != username)
+                {
+                    changeInfo += $"用户名：@{oldInfo.username} 更改为 @{username}\n";
+                }
+
+                if (oldInfo.name != name)
+                {
+                    changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
+                }
+
+                if (!string.IsNullOrEmpty(changeInfo))
+                {
+                    var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
+                    await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
+                }
             }
 
-            if (!string.IsNullOrEmpty(changeInfo))
+            // 确保群组的用户信息字典已初始化
+            if (!groupUserInfo.ContainsKey(chatId))
             {
-                var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
-                await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
+                groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
             }
+
+            groupUserInfo[chatId][userId] = (username, name);
         }
-
-        // 确保群组的用户信息字典已初始化
-        if (!groupUserInfo.ContainsKey(chatId))
+        catch (Exception ex)
         {
-            groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
-        }
+            // 打印错误信息
+            Console.WriteLine($"Unexpected error: {ex.Message}");
 
-        groupUserInfo[chatId][userId] = (username, name);
-    }
-    catch (Exception ex)
-    {
-        // 打印错误信息
-        Console.WriteLine($"Unexpected error: {ex.Message}");
-        // 可以选择重新抛出异常，或者只是记录错误信息并让机器人继续运行
-        throw;
+            // 等待10秒后再次开始循环
+            await Task.Delay(TimeSpan.FromSeconds(10));
+        }
     }
 }
 //调用谷歌搜索的方法    
