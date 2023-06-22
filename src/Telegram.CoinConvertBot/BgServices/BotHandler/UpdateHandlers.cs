@@ -3674,7 +3674,7 @@ if (messageText.StartsWith("谷歌 "))
     }
 
     // 检查是否为指定用户并执行相应的操作
-    if (message.From.Id == 1427768220 && message.Chat.Type == ChatType.Group)
+    if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup))
     {
         var groupId = message.Chat.Id;
         var command = messageText.ToLower();
