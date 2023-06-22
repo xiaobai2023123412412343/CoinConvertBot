@@ -4330,7 +4330,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     {
         var msg = @$"<b>实时汇率表：</b>
 
-<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX  ≈ {100m * usdtPrice} CNY</b>
+<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX   ≈ {100m * usdtPrice} CNY</b>
 ————————————————————<code>
   10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 2) * usdtPrice} CNY
   20 USDT = {(5m * 4).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 4) * usdtPrice} CNY
