@@ -92,16 +92,24 @@ public static class UpdateHandlers
 //全局异常处理    
 private static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
 {
-    Exception ex = (Exception)e.ExceptionObject;
-
-    // 在这里处理异常，例如记录错误信息
-    Console.WriteLine("Unhandled exception: " + ex.Message);
-
-    // 如果您希望程序在发生未处理的异常时继续运行，可以在这里重新启动它
-    // 注意：这可能会导致程序的状态不一致，因此请谨慎使用
-    System.Diagnostics.Process.Start(System.Reflection.Assembly.GetExecutingAssembly().Location);
-    Environment.Exit(1);
-}  
+    try
+    {
+        // 在这里处理异常，例如记录错误信息
+        Console.WriteLine("Unhandled exception: " + ((Exception)e.ExceptionObject).Message);
+    }
+    catch (Exception ex)
+    {
+        // 在这里处理所有的异常，例如记录错误信息
+        Console.WriteLine("Error in UnhandledExceptionHandler: " + ex.Message);
+    }
+    finally
+    {
+        // 如果您希望程序在发生未处理的异常时继续运行，可以在这里重新启动它
+        // 注意：这可能会导致程序的状态不一致，因此请谨慎使用
+        System.Diagnostics.Process.Start(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        Environment.Exit(1);
+    }
+}
 //存储用户资料    
 private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, Message message)
 {
