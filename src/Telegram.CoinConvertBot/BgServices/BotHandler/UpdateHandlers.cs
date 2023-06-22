@@ -1508,7 +1508,7 @@ private static string FormatTransactionRecords(List<(DateTime timestamp, string 
 
         if (numOfIncomeRecords < incomeTransactions.Count || numOfOutcomeRecords < outcomeTransactions.Count)
         {
-            sb.AppendLine("————————————————");
+            sb.AppendLine("—————————————————————");
             totalPairs++;
         }
     }
