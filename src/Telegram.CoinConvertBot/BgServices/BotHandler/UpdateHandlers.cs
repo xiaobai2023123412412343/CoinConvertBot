@@ -90,12 +90,23 @@ public static class UpdateHandlers
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
 //全局异常处理    
+// 添加一个TelegramBotClient类型的botClient变量
+public static TelegramBotClient botClient = null!;    
 private static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
 {
     try
     {
+        // 获取引起错误的异常对象
+        var exception = (Exception)e.ExceptionObject;
+
         // 在这里处理异常，例如记录错误信息
-        Console.WriteLine("Unhandled exception: " + ((Exception)e.ExceptionObject).Message);
+        Console.WriteLine("Unhandled exception: " + exception.Message);
+
+        // 获取引起错误的方法的信息
+        var errorMethod = exception.StackTrace;
+
+        // 发送消息到指定的id，包含引起错误的方法的信息
+        botClient.SendTextMessageAsync(1427768220, $"任务失败了，请检查！错误方法：{errorMethod}");
     }
     catch (Exception ex)
     {
