@@ -4226,6 +4226,10 @@ var keyboard = new ReplyKeyboardMarkup(new[]
             var UserId = message.From.Id;
             var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
             var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+            string adminLink = "t.me/yifanfu"; // 替换为你的管理员的Telegram链接
+            string adminText = $"<a href=\"http://{adminLink}\">联系管理</a>";
+            string leftPointingIndex = char.ConvertFromUtf32(0x1F448);
+            
 
             var addressArray = configuration.GetSection("Address:USDT-TRC20").Get<string[]>();
             if (addressArray.Length == 0)
@@ -4257,26 +4261,24 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 ";
             if (USDTFeeRate == 0)
             {
-                msg = @$"<b>请向此地址转入任意金额，机器人自动回款TRX</b>
-机器人收款地址:(<b>↓点击自动复制↓</b>):<code>{ReciveAddress}</code>
+                msg = @$"
+<b>机器人收款地址:(↓点击自动复制↓</b>):
+                
+<code>{ReciveAddress}</code>    
 
-示例：
+操作示例：
 <code>转入金额：<b>100 USDT</b>
-实时汇率：<b>1 USDT = {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>
+实时汇率：<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>
 获得TRX：<b>100 * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {100m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
+    
+注意：<b>只支持{MinUSDT} USDT以上的金额兑换！</b>    
+如果TRX余额不足可发送 预支 领取一次转账能量！
+只限钱包转账，自动原地址返TRX，如需兑换到其它地址请{adminText}！
 
-注意：<b>只支持{MinUSDT} USDT以上的金额兑换！！！</b>
-<b>如果TRX余额不足可发送<code> 预支 </code>领取一次转账能量！</b>    
-<b>只限钱包转账，自动原地址返TRX，如需兑换到其它地址请联系管理！</b>
-
-转帐前，推荐您使用以下命令来接收入账通知
-<code>绑定 Txxxxxxx</code>(您的钱包地址)
+转帐前，推荐您绑定钱包地址来接收入账通知及TRX余额不足提醒： 
+发送：<code>绑定 Txxxxxxx</code>(您的钱包地址)         {leftPointingIndex} <b>推荐使用！！！</b> 
 
 
-<b>限时福利：</b>
-<code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
-<code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
-<code>单笔兑换：<b>666 USDT或以上金额,电报会员免费送!!!</b></code>
 ";
             }
 // 创建包含两行，每行两个按钮的虚拟键盘
@@ -4300,6 +4302,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: msg,
                                                         parseMode: ParseMode.Html,
+                                                        disableWebPagePreview: true, // 添加这一行来禁用链接预览
                                                         replyMarkup: keyboard);
         }
 async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
