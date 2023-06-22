@@ -4316,6 +4316,9 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     string adminText = $"<a href=\"http://{adminLink}\">联系管理</a>";
     string leftPointingIndex = char.ConvertFromUtf32(0x1F448);
 
+     // 获取 USDT 的 OTC 价格
+    var usdtPrice = await GetOkxPriceAsync("usdt", "cny", "otc");
+
     var addressArray = configuration.GetSection("Address:USDT-TRC20").Get<string[]>();
     var ReciveAddress = addressArray.Length == 0 ? "未配置" : addressArray[UserId % addressArray.Length];
 
@@ -4325,16 +4328,16 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     }
     else
     {
-        var msg = @$"<b>实时价目表</b>
+        var msg = @$"<b>实时汇率表：</b>
 
-实时汇率：<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>
+<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX  ≈ {100m * usdtPrice} CNY</b>
 ————————————————————<code>
-  10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
-  20 USDT = {(5m * 4).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
-  50 USDT = {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
- 100 USDT = {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
- 500 USDT = {(5m * 100).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
-1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
+  10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 2) * usdtPrice} CNY
+  20 USDT = {(5m * 4).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 4) * usdtPrice} CNY
+  50 USDT = {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 10) * usdtPrice} CNY
+ 100 USDT = {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 20) * usdtPrice} CNY
+ 500 USDT = {(5m * 100).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 100) * usdtPrice} CNY
+1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 200) * usdtPrice} CNY
 </code>
 <b>机器人收款地址:(↓点击自动复制↓</b>):
         
