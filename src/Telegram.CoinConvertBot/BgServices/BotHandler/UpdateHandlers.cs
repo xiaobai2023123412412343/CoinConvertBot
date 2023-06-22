@@ -621,70 +621,79 @@ private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient
 private static Dictionary<long, Timer> _timers = new Dictionary<long, Timer>();
 public static async void StartMonitoring(ITelegramBotClient botClient, long chatId)
 {
-    // 获取聊天信息
-    var chat = await botClient.GetChatAsync(chatId);
-
-    // 如果聊天类型是群组或超级群组，获取成员列表
-    if (chat.Type == ChatType.Group || chat.Type == ChatType.Supergroup)
+    try
     {
-        // 获取群组中的成员数量
-        int membersCount = await botClient.GetChatMembersCountAsync(chatId);
+        // 获取聊天信息
+        var chat = await botClient.GetChatAsync(chatId);
 
+        // 如果聊天类型是群组或超级群组，获取成员列表
+        if (chat.Type == ChatType.Group || chat.Type == ChatType.Supergroup)
+        {
+            // 获取群组中的成员数量
+            int membersCount = await botClient.GetChatMembersCountAsync(chatId);
+
+            if (!groupUserInfo.ContainsKey(chatId))
+            {
+                groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
+            }
+
+            // 遍历成员并添加到groupUserInfo字典中
+            for (int i = 0; i < membersCount; i++)
+            {
+                try
+                {
+                    var member = await botClient.GetChatMemberAsync(chatId, i);
+                    var userId = member.User.Id;
+                    var username = member.User.Username;
+                    var name = member.User.FirstName + " " + member.User.LastName;
+
+                    if (!groupUserInfo[chatId].ContainsKey(userId))
+                    {
+                        groupUserInfo[chatId][userId] = (username, name);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error adding user {i}: {ex.Message}");
+                }
+            }
+        }
+        else
+        {
+            // 如果聊天类型不是群组或超级群组，显示错误消息
+            await botClient.SendTextMessageAsync(chatId: chatId, text: "此命令仅适用于群组和频道");
+            return;
+        }
+
+        // 检查是否已有定时器
+        if (_timers.ContainsKey(chatId))
+        {
+            _timers[chatId].Dispose(); // 停止现有的定时器
+            _timers.Remove(chatId); // 从字典中移除
+        }
+
+        // 为这个群组创建一个新的定时器
+        var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+        _timers[chatId] = timer;
+    }
+    catch (Exception ex)
+    {
+        // 打印错误信息
+        Console.WriteLine($"Unexpected error: {ex.Message}");
+        // 可以选择重新抛出异常，或者只是记录错误信息并让机器人继续运行
+        throw;
+    }
+}
+private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, long chatId)
+{
+    try
+    {
         if (!groupUserInfo.ContainsKey(chatId))
         {
             groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
         }
+        var userInfo = groupUserInfo[chatId];
 
-        // 遍历成员并添加到groupUserInfo字典中
-        for (int i = 0; i < membersCount; i++)
-        {
-            try
-            {
-                var member = await botClient.GetChatMemberAsync(chatId, i);
-                var userId = member.User.Id;
-                var username = member.User.Username;
-                var name = member.User.FirstName + " " + member.User.LastName;
-
-                if (!groupUserInfo[chatId].ContainsKey(userId))
-                {
-                    groupUserInfo[chatId][userId] = (username, name);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error adding user {i}: {ex.Message}");
-            }
-        }
-    }
-    else
-    {
-        // 如果聊天类型不是群组或超级群组，显示错误消息
-        await botClient.SendTextMessageAsync(chatId: chatId, text: "此命令仅适用于群组和频道");
-        return;
-    }
-
-    // 检查是否已有定时器
-    if (_timers.ContainsKey(chatId))
-    {
-        _timers[chatId].Dispose(); // 停止现有的定时器
-        _timers.Remove(chatId); // 从字典中移除
-    }
-
-    // 为这个群组创建一个新的定时器
-    var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
-    _timers[chatId] = timer;
-}
-
-private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, long chatId)
-{
-    if (!groupUserInfo.ContainsKey(chatId))
-    {
-        groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
-    }
-    var userInfo = groupUserInfo[chatId];
-
-    try
-    {
         // 尝试获取群组信息
         var chat = await botClient.GetChatAsync(chatId);
 
@@ -755,92 +764,109 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
             userInfo.Remove(userId);
         }
     }
-catch (ApiRequestException ex)
-{
-    if (ex.ErrorCode == 400 && ex.Message == "Bad Request: group chat was upgraded to a supergroup chat")
+    catch (ApiRequestException ex)
     {
-        // 群组升级为超级群组，更新群组id
-        var chat = await botClient.GetChatAsync(chatId);
-        var newChatId = chat.Id;
-        if (_timers.ContainsKey(chatId))
+        if (ex.ErrorCode == 400 && ex.Message == "Bad Request: group chat was upgraded to a supergroup chat")
         {
-            _timers[newChatId] = _timers[chatId];
-            _timers.Remove(chatId);
-        }
-        if (groupUserInfo.ContainsKey(chatId))
+            // 群组升级为超级群组，更新群组id
+            var chat = await botClient.GetChatAsync(chatId);
+            var newChatId = chat.Id;
+            if (_timers.ContainsKey(chatId))
+            {
+                _timers[newChatId] = _timers[chatId];
+                _timers.Remove(chatId);
+            }
+            if (groupUserInfo.ContainsKey(chatId))
+            {
+                groupUserInfo[newChatId] = groupUserInfo[chatId];
+                groupUserInfo.Remove(chatId);
+            }
+            return;
+        }    
+        if (ex.ErrorCode == 400 && ex.Message == "Bad Request: chat not found")
         {
-            groupUserInfo[newChatId] = groupUserInfo[chatId];
-            groupUserInfo.Remove(chatId);
+            // 群组不存在，跳过
+            return;
         }
-        return;
-    }    
-    if (ex.ErrorCode == 400 && ex.Message == "Bad Request: chat not found")
-    {
-        // 群组不存在，跳过
-        return;
+        else if (ex.Message == "Forbidden: bot was kicked from the group chat")
+        {
+            // 机器人被踢出群组，跳过
+            return;
+        }
+        else if (ex.Message == "Forbidden: bot was kicked from the supergroup chat")
+        {
+            // 机器人被踢出超级群组，跳过
+            return;
+        }
+        else if (ex.Message == "Forbidden: the group chat was deleted")
+        {
+            // 群组已被删除，跳过
+            return;
+        }        
+        throw;  // 其他错误，继续抛出
     }
-    else if (ex.Message == "Forbidden: bot was kicked from the group chat")
+    catch (Exception ex)
     {
-        // 机器人被踢出群组，跳过
-        return;
+        // 打印错误信息
+        Console.WriteLine($"Unexpected error: {ex.Message}");
+        // 可以选择重新抛出异常，或者只是记录错误信息并让机器人继续运行
+        throw;
     }
-    else if (ex.Message == "Forbidden: bot was kicked from the supergroup chat")
-    {
-        // 机器人被踢出超级群组，跳过
-        return;
-    }
-    else if (ex.Message == "Forbidden: the group chat was deleted")
-    {
-        // 群组已被删除，跳过
-        return;
-    }        
-    throw;  // 其他错误，继续抛出
-}
 }
 private static readonly Dictionary<long, Dictionary<long, (string username, string name)>> groupUserInfo = new Dictionary<long, Dictionary<long, (string username, string name)>>();
 public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient botClient, Message message)
 {
-    var chatId = message.Chat.Id;
-    var user = message.From!;
-    var userId = user.Id;
-    var username = user.Username;
-    var name = user.FirstName + " " + user.LastName;
-
-    // 避免在私聊中触发提醒
-    if (message.Chat.Type == ChatType.Private)
+    try
     {
-        return;
-    }
+        var chatId = message.Chat.Id;
+        var user = message.From!;
+        var userId = user.Id;
+        var username = user.Username;
+        var name = user.FirstName + " " + user.LastName;
 
-    if (groupUserInfo.ContainsKey(chatId) && groupUserInfo[chatId].ContainsKey(userId))
-    {
-        var oldInfo = groupUserInfo[chatId][userId];
-        var changeInfo = "";
-
-        if (oldInfo.username != username)
+        // 避免在私聊中触发提醒
+        if (message.Chat.Type == ChatType.Private)
         {
-            changeInfo += $"用户名：@{oldInfo.username} 更改为 @{username}\n";
+            return;
         }
 
-        if (oldInfo.name != name)
+        if (groupUserInfo.ContainsKey(chatId) && groupUserInfo[chatId].ContainsKey(userId))
         {
-            changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
+            var oldInfo = groupUserInfo[chatId][userId];
+            var changeInfo = "";
+
+            if (oldInfo.username != username)
+            {
+                changeInfo += $"用户名：@{oldInfo.username} 更改为 @{username}\n";
+            }
+
+            if (oldInfo.name != name)
+            {
+                changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
+            }
+
+            if (!string.IsNullOrEmpty(changeInfo))
+            {
+                var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
+                await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
+            }
         }
 
-        if (!string.IsNullOrEmpty(changeInfo))
+        // 确保群组的用户信息字典已初始化
+        if (!groupUserInfo.ContainsKey(chatId))
         {
-            var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
-            await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
+            groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
         }
+
+        groupUserInfo[chatId][userId] = (username, name);
     }
-
-    // 确保群组的用户信息字典已初始化
-    if (!groupUserInfo.ContainsKey(chatId))
+    catch (Exception ex)
     {
-        groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
+        // 打印错误信息
+        Console.WriteLine($"Unexpected error: {ex.Message}");
+        // 可以选择重新抛出异常，或者只是记录错误信息并让机器人继续运行
+        throw;
     }
-
-    groupUserInfo[chatId][userId] = (username, name);
 }
 //调用谷歌搜索的方法    
 public static class GoogleSearchHelper
