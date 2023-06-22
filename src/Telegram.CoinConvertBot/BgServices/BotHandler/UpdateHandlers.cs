@@ -3534,26 +3534,40 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         );
     }
 } 
-    // 检查是否是/jiankong命令
-    if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
+// 检查是否是/jiankong命令
+if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
+{
+    // 如果消息来源于私聊
+    if (message.Chat.Type == ChatType.Private)
     {
-        // 如果消息来源于私聊
-        if (message.Chat.Type == ChatType.Private)
-        {
-            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "此命令仅适用于群组和频道");
-            return;
-        }
-        
-        // 启动监控
-        StartMonitoring(botClient, message.Chat.Id);
-        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "监控已启动");
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "此命令仅适用于群组和频道");
+        return;
     }
+    
+    // 启动监控
+    StartMonitoring(botClient, message.Chat.Id);
 
-    // 监控名字和用户名变更
-    if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
-    {
-        await MonitorUsernameAndNameChangesAsync(botClient, message);
-    } 
+    // 发送 "监控已启动" 消息
+    var sentMessageForMonitoring = await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "监控已启动"
+    );
+
+    // 等待1秒
+    await Task.Delay(500);
+
+    // 删除消息
+    await botClient.DeleteMessageAsync(
+        chatId: message.Chat.Id,
+        messageId: sentMessageForMonitoring.MessageId
+    );
+}
+
+// 监控名字和用户名变更
+if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
+{
+    await MonitorUsernameAndNameChangesAsync(botClient, message);
+} 
 if (messageText.StartsWith("谷歌 "))
 {
     var query = messageText.Substring(2); // 去掉 "谷歌 " 前缀
