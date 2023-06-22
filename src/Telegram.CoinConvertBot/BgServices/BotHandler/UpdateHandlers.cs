@@ -747,25 +747,30 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
             userInfo.Remove(userId);
         }
     }
-    catch (ApiRequestException ex)
+catch (ApiRequestException ex)
+{
+    if (ex.ErrorCode == 400 && ex.Message == "Bad Request: chat not found")
     {
-        if (ex.ErrorCode == 400 && ex.Message == "Bad Request: chat not found")
-        {
-            // 群组不存在，跳过
-            return;
-        }
-        else if (ex.Message == "Forbidden: bot was kicked from the group chat")
-        {
-            // 机器人被踢出群组，跳过
-            return;
-        }
-        else if (ex.Message == "Forbidden: the group chat was deleted")
-        {
-            // 群组已被删除，跳过
-            return;
-        }        
-        throw;  // 其他错误，继续抛出
+        // 群组不存在，跳过
+        return;
     }
+    else if (ex.Message == "Forbidden: bot was kicked from the group chat")
+    {
+        // 机器人被踢出群组，跳过
+        return;
+    }
+    else if (ex.Message == "Forbidden: bot was kicked from the supergroup chat")
+    {
+        // 机器人被踢出超级群组，跳过
+        return;
+    }
+    else if (ex.Message == "Forbidden: the group chat was deleted")
+    {
+        // 群组已被删除，跳过
+        return;
+    }        
+    throw;  // 其他错误，继续抛出
+}
 }
 private static readonly Dictionary<long, Dictionary<long, (string username, string name)>> groupUserInfo = new Dictionary<long, Dictionary<long, (string username, string name)>>();
 public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient botClient, Message message)
