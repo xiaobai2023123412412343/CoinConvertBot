@@ -1448,7 +1448,9 @@ private static string FormatTransactionRecords(List<(DateTime timestamp, string 
 
     return sb.ToString();
 }
-//以上3个方法是监控收款地址以及出款地址的交易记录并返回！    
+//以上3个方法是监控收款地址以及出款地址的交易记录并返回！   
+//谷歌翻译
+static Dictionary<long, bool> groupTranslationSettings = new Dictionary<long, bool>();    
 public class GoogleTranslateFree
 {
     private const string GoogleTranslateUrl = "https://translate.google.com/translate_a/single?client=gtx&sl=auto&tl={0}&dt=t&q={1}";
@@ -3126,6 +3128,11 @@ if (blacklistedUserIds.Contains(message.From.Id))
 }    
     if (message != null && !string.IsNullOrWhiteSpace(message.Text))
     {
+    // 检查群聊的翻译设置
+    if (message.Chat.Type == ChatType.Group && groupTranslationSettings.TryGetValue(message.Chat.Id, out var isTranslationEnabled) && !isTranslationEnabled)
+    {
+        return;
+    }        
         var inputText = message.Text.Trim();
         // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
         var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑)");
@@ -3644,7 +3651,23 @@ if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
             Log.Error($"Failed to send message to {follower.Id}: {e.Message}");
         }
     }
-}      
+}  
+if (message.Chat.Type == ChatType.Group)
+{
+    var groupId = message.Chat.Id;
+    var command = messageText.ToLower();
+
+    if (command == "关闭翻译")
+    {
+        groupTranslationSettings[groupId] = false;
+        await botClient.SendTextMessageAsync(groupId, "已关闭翻译功能。");
+    }
+    else if (command == "开启翻译")
+    {
+        groupTranslationSettings[groupId] = true;
+        await botClient.SendTextMessageAsync(groupId, "已开启翻译功能。");
+    }
+}        
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
 if (messageText.StartsWith("预支"))
 {
