@@ -757,6 +757,23 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
     }
 catch (ApiRequestException ex)
 {
+    if (ex.ErrorCode == 400 && ex.Message == "Bad Request: group chat was upgraded to a supergroup chat")
+    {
+        // 群组升级为超级群组，更新群组id
+        var chat = await botClient.GetChatAsync(chatId);
+        var newChatId = chat.Id;
+        if (_timers.ContainsKey(chatId))
+        {
+            _timers[newChatId] = _timers[chatId];
+            _timers.Remove(chatId);
+        }
+        if (groupUserInfo.ContainsKey(chatId))
+        {
+            groupUserInfo[newChatId] = groupUserInfo[chatId];
+            groupUserInfo.Remove(chatId);
+        }
+        return;
+    }    
     if (ex.ErrorCode == 400 && ex.Message == "Bad Request: chat not found")
     {
         // 群组不存在，跳过
