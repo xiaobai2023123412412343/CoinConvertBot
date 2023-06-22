@@ -3196,7 +3196,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
     if (message != null && !string.IsNullOrWhiteSpace(message.Text))
     {
     // 检查群聊的翻译设置
-    if (message.Chat.Type == ChatType.Group && groupTranslationSettings.TryGetValue(message.Chat.Id, out var isTranslationEnabled) && !isTranslationEnabled)
+    if ((message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup) && groupTranslationSettings.TryGetValue(message.Chat.Id, out var isTranslationEnabled) && !isTranslationEnabled)
     {
         return;
     }        
@@ -3738,7 +3738,7 @@ if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
         }
     }
 }  
-if (message.Chat.Type == ChatType.Group)
+if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
 {
     var groupId = message.Chat.Id;
     var command = messageText.ToLower();
@@ -3753,7 +3753,7 @@ if (message.Chat.Type == ChatType.Group)
         groupTranslationSettings[groupId] = true;
         await botClient.SendTextMessageAsync(groupId, "已开启翻译功能。");
     }
-}        
+}      
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
 if (messageText.StartsWith("预支"))
 {
