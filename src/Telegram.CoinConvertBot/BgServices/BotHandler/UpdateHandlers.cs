@@ -1492,7 +1492,7 @@ private static string FormatTransactionRecords(List<(DateTime timestamp, string 
     int numOfOutcomeRecords = 0;
     int totalPairs = 0;
 
-    while ((numOfIncomeRecords < incomeTransactions.Count || numOfOutcomeRecords < outcomeTransactions.Count) && totalPairs < 8)
+    while (numOfIncomeRecords < incomeTransactions.Count || numOfOutcomeRecords < outcomeTransactions.Count)
     {
         if (numOfIncomeRecords < incomeTransactions.Count)
         {
@@ -1506,7 +1506,7 @@ private static string FormatTransactionRecords(List<(DateTime timestamp, string 
             numOfOutcomeRecords++;
         }
 
-        if (numOfIncomeRecords > 0 && numOfOutcomeRecords > 0)
+        if (numOfIncomeRecords < incomeTransactions.Count || numOfOutcomeRecords < outcomeTransactions.Count)
         {
             sb.AppendLine("————————————————");
             totalPairs++;
