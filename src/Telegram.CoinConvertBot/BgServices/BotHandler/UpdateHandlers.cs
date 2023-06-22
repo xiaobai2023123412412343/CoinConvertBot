@@ -694,131 +694,135 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
 }
 private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, long chatId)
 {
-    try
+    while (true)
     {
-        if (!groupUserInfo.ContainsKey(chatId))
+        try
         {
-            groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
-        }
-        var userInfo = groupUserInfo[chatId];
-
-        // 尝试获取群组信息
-        var chat = await botClient.GetChatAsync(chatId);
-
-        // 获取群组中的所有管理员
-        var admins = await botClient.GetChatAdministratorsAsync(chatId);
-
-        // 将管理员添加到userInfo字典中（确保字典中只有群组中的成员）
-        foreach (var admin in admins)
-        {
-            var userId = admin.User.Id;
-            var username = admin.User.Username;
-            var name = admin.User.FirstName + " " + admin.User.LastName;
-
-            if (!userInfo.ContainsKey(userId))
+            if (!groupUserInfo.ContainsKey(chatId))
             {
-                userInfo[userId] = (username, name);
+                groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
             }
-        }
+            var userInfo = groupUserInfo[chatId];
 
-        List<long> usersToRemove = new List<long>();
-
-        // 遍历userInfo字典中的所有用户ID
-        foreach (var userId in userInfo.Keys.ToList())
-        {
-            try
-            {
-                // 使用getChatMember方法获取当前群组成员的详细信息
-                var chatMember = await botClient.GetChatMemberAsync(chatId, userId);
-
-                var username = chatMember.User.Username;
-                var name = chatMember.User.FirstName + " " + chatMember.User.LastName;
-
-                var oldInfo = userInfo[userId];
-                var changeInfo = "";
-
-                if (oldInfo.username != username)
-                {
-                    changeInfo += $"用户名：@{oldInfo.username} 更改为 @{username}\n";
-                }
-
-                if (oldInfo.name != name)
-                {
-                    changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
-                }
-
-                if (!string.IsNullOrEmpty(changeInfo))
-                {
-                    var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
-                    await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
-                }
-
-                userInfo[userId] = (username, name);
-            }
-            catch (Exception ex)
-            {
-                // 处理异常，例如API调用限制
-                Console.WriteLine($"Error checking user {userId}: {ex.Message}");
-
-                if (ex.Message.Contains("user not found"))
-                {
-                    usersToRemove.Add(userId);
-                }
-            }
-        }
-
-        foreach (var userId in usersToRemove)
-        {
-            userInfo.Remove(userId);
-        }
-    }
-    catch (ApiRequestException ex)
-    {
-        if (ex.ErrorCode == 400 && ex.Message == "Bad Request: group chat was upgraded to a supergroup chat")
-        {
-            // 群组升级为超级群组，更新群组id
+            // 尝试获取群组信息
             var chat = await botClient.GetChatAsync(chatId);
-            var newChatId = chat.Id;
-            if (_timers.ContainsKey(chatId))
+
+            // 获取群组中的所有管理员
+            var admins = await botClient.GetChatAdministratorsAsync(chatId);
+
+            // 将管理员添加到userInfo字典中（确保字典中只有群组中的成员）
+            foreach (var admin in admins)
             {
-                _timers[newChatId] = _timers[chatId];
-                _timers.Remove(chatId);
+                var userId = admin.User.Id;
+                var username = admin.User.Username;
+                var name = admin.User.FirstName + " " + admin.User.LastName;
+
+                if (!userInfo.ContainsKey(userId))
+                {
+                    userInfo[userId] = (username, name);
+                }
             }
-            if (groupUserInfo.ContainsKey(chatId))
+
+            List<long> usersToRemove = new List<long>();
+
+            // 遍历userInfo字典中的所有用户ID
+            foreach (var userId in userInfo.Keys.ToList())
             {
-                groupUserInfo[newChatId] = groupUserInfo[chatId];
-                groupUserInfo.Remove(chatId);
+                try
+                {
+                    // 使用getChatMember方法获取当前群组成员的详细信息
+                    var chatMember = await botClient.GetChatMemberAsync(chatId, userId);
+
+                    var username = chatMember.User.Username;
+                    var name = chatMember.User.FirstName + " " + chatMember.User.LastName;
+
+                    var oldInfo = userInfo[userId];
+                    var changeInfo = "";
+
+                    if (oldInfo.username != username)
+                    {
+                        changeInfo += $"用户名：@{oldInfo.username} 更改为 @{username}\n";
+                    }
+
+                    if (oldInfo.name != name)
+                    {
+                        changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
+                    }
+
+                    if (!string.IsNullOrEmpty(changeInfo))
+                    {
+                        var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
+                        await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
+                    }
+
+                    userInfo[userId] = (username, name);
+                }
+                catch (Exception ex)
+                {
+                    // 处理异常，例如API调用限制
+                    Console.WriteLine($"Error checking user {userId}: {ex.Message}");
+
+                    if (ex.Message.Contains("user not found"))
+                    {
+                        usersToRemove.Add(userId);
+                    }
+                }
             }
-            return;
-        }    
-        if (ex.ErrorCode == 400 && ex.Message == "Bad Request: chat not found")
-        {
-            // 群组不存在，跳过
-            return;
+
+            foreach (var userId in usersToRemove)
+            {
+                userInfo.Remove(userId);
+            }
         }
-        else if (ex.Message == "Forbidden: bot was kicked from the group chat")
+        catch (ApiRequestException ex)
         {
-            // 机器人被踢出群组，跳过
-            return;
+            if (ex.ErrorCode == 400 && ex.Message == "Bad Request: group chat was upgraded to a supergroup chat")
+            {
+                // 群组升级为超级群组，更新群组id
+                var chat = await botClient.GetChatAsync(chatId);
+                var newChatId = chat.Id;
+                if (_timers.ContainsKey(chatId))
+                {
+                    _timers[newChatId] = _timers[chatId];
+                    _timers.Remove(chatId);
+                }
+                if (groupUserInfo.ContainsKey(chatId))
+                {
+                    groupUserInfo[newChatId] = groupUserInfo[chatId];
+                    groupUserInfo.Remove(chatId);
+                }
+                return;
+            }    
+            if (ex.ErrorCode == 400 && ex.Message == "Bad Request: chat not found")
+            {
+                // 群组不存在，跳过
+                return;
+            }
+            else if (ex.Message == "Forbidden: bot was kicked from the group chat")
+            {
+                // 机器人被踢出群组，跳过
+                return;
+            }
+            else if (ex.Message == "Forbidden: bot was kicked from the supergroup chat")
+            {
+                // 机器人被踢出超级群组，跳过
+                return;
+            }
+            else if (ex.Message == "Forbidden: the group chat was deleted")
+            {
+                // 群组已被删除，跳过
+                return;
+            }        
+            throw;  // 其他错误，继续抛出
         }
-        else if (ex.Message == "Forbidden: bot was kicked from the supergroup chat")
+        catch (Exception ex)
         {
-            // 机器人被踢出超级群组，跳过
-            return;
+            // 打印错误信息
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+
+            // 等待10秒后再次开始循环
+            await Task.Delay(TimeSpan.FromSeconds(10));
         }
-        else if (ex.Message == "Forbidden: the group chat was deleted")
-        {
-            // 群组已被删除，跳过
-            return;
-        }        
-        throw;  // 其他错误，继续抛出
-    }
-    catch (Exception ex)
-    {
-        // 打印错误信息
-        Console.WriteLine($"Unexpected error: {ex.Message}");
-        // 可以选择重新抛出异常，或者只是记录错误信息并让机器人继续运行
-        throw;
     }
 }
 private static readonly Dictionary<long, Dictionary<long, (string username, string name)>> groupUserInfo = new Dictionary<long, Dictionary<long, (string username, string name)>>();
