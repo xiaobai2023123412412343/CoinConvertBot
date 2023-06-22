@@ -89,6 +89,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//全局异常处理    
 private static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
 {
     Exception ex = (Exception)e.ExceptionObject;
