@@ -632,26 +632,26 @@ private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient
 private static Dictionary<long, Timer> _timers = new Dictionary<long, Timer>();
 public static async void StartMonitoring(ITelegramBotClient botClient, long chatId)
 {
-    try
+    while (true)
     {
-        // 获取聊天信息
-        var chat = await botClient.GetChatAsync(chatId);
-
-        // 如果聊天类型是群组或超级群组，获取成员列表
-        if (chat.Type == ChatType.Group || chat.Type == ChatType.Supergroup)
+        try
         {
-            // 获取群组中的成员数量
-            int membersCount = await botClient.GetChatMembersCountAsync(chatId);
+            // 获取聊天信息
+            var chat = await botClient.GetChatAsync(chatId);
 
-            if (!groupUserInfo.ContainsKey(chatId))
+            // 如果聊天类型是群组或超级群组，获取成员列表
+            if (chat.Type == ChatType.Group || chat.Type == ChatType.Supergroup)
             {
-                groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
-            }
+                // 获取群组中的成员数量
+                int membersCount = await botClient.GetChatMembersCountAsync(chatId);
 
-            // 遍历成员并添加到groupUserInfo字典中
-            for (int i = 0; i < membersCount; i++)
-            {
-                try
+                if (!groupUserInfo.ContainsKey(chatId))
+                {
+                    groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
+                }
+
+                // 遍历成员并添加到groupUserInfo字典中
+                for (int i = 0; i < membersCount; i++)
                 {
                     var member = await botClient.GetChatMemberAsync(chatId, i);
                     var userId = member.User.Id;
@@ -663,36 +663,33 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
                         groupUserInfo[chatId][userId] = (username, name);
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error adding user {i}: {ex.Message}");
-                }
             }
-        }
-        else
-        {
-            // 如果聊天类型不是群组或超级群组，显示错误消息
-            await botClient.SendTextMessageAsync(chatId: chatId, text: "此命令仅适用于群组和频道");
-            return;
-        }
+            else
+            {
+                // 如果聊天类型不是群组或超级群组，显示错误消息
+                await botClient.SendTextMessageAsync(chatId: chatId, text: "此命令仅适用于群组和频道");
+                return;
+            }
 
-        // 检查是否已有定时器
-        if (_timers.ContainsKey(chatId))
-        {
-            _timers[chatId].Dispose(); // 停止现有的定时器
-            _timers.Remove(chatId); // 从字典中移除
-        }
+            // 检查是否已有定时器
+            if (_timers.ContainsKey(chatId))
+            {
+                _timers[chatId].Dispose(); // 停止现有的定时器
+                _timers.Remove(chatId); // 从字典中移除
+            }
 
-        // 为这个群组创建一个新的定时器
-        var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
-        _timers[chatId] = timer;
-    }
-    catch (Exception ex)
-    {
-        // 打印错误信息
-        Console.WriteLine($"Unexpected error: {ex.Message}");
-        // 可以选择重新抛出异常，或者只是记录错误信息并让机器人继续运行
-        throw;
+            // 为这个群组创建一个新的定时器
+            var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+            _timers[chatId] = timer;
+        }
+        catch (Exception ex)
+        {
+            // 打印错误信息
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+
+            // 等待10秒后再次开始循环
+            await Task.Delay(TimeSpan.FromSeconds(10));
+        }
     }
 }
 private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, long chatId)
