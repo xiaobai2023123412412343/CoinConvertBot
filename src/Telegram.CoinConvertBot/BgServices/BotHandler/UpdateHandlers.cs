@@ -3597,6 +3597,11 @@ if (messageText.StartsWith("谷歌 "))
             var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
             _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate)
                 .ContinueWith(_ => isAdvertisementRunning = false); // 广告结束后将变量设置为 false
+        // 向用户发送一条消息，告知他们广告已经启动
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "群广告已启动！"
+        );     
         }
     }
 
