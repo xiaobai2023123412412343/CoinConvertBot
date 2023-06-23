@@ -478,6 +478,15 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
                     throw;
                 }
             }
+            catch (Exception ex) // 捕获所有异常
+            {
+                // 取消定时器任务
+                timer.Dispose();
+                // 从字典中移除该用户的定时器和地址
+                userTimers.Remove(userId);
+                userTronAddresses.Remove(userId);
+                return;
+            }
             finally
             {
                 // 如果下发提醒失败或查询失败，过10秒重新启动
