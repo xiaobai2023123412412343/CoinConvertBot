@@ -539,22 +539,30 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
 // 处理绑定波场地址的命令
 private static async Task HandleBindTronAddressCommand(ITelegramBotClient botClient, Message message)
 {
-    var messageText = message.Text;
-    if (messageText.StartsWith("绑定 "))
+    try
     {
-        var tronAddress = messageText.Substring(3); // 去掉 "绑定波场地址 " 前缀
-
-        // 检查地址是否有效
-        if (await IsValidTronAddress(tronAddress))
+        var messageText = message.Text;
+        if (messageText.StartsWith("绑定 "))
         {
-            var userId = message.From.Id;
+            var tronAddress = messageText.Substring(3); // 去掉 "绑定波场地址 " 前缀
 
-            // 将地址和用户ID存储起来
-            userTronAddresses[userId] = tronAddress;
+            // 检查地址是否有效
+            if (await IsValidTronAddress(tronAddress))
+            {
+                var userId = message.From.Id;
 
-            // 创建一个定时器来定期检查地址的TRX余额
-            StartMonitoring(botClient, userId, tronAddress);
+                // 将地址和用户ID存储起来
+                userTronAddresses[userId] = tronAddress;
+
+                // 创建一个定时器来定期检查地址的TRX余额
+                StartMonitoring(botClient, userId, tronAddress);
+            }
         }
+    }
+    catch (Exception ex)
+    {
+        // 在这里处理异常，例如记录错误日志或发送错误消息
+        Log.Error($"处理绑定波场地址命令时发生错误: {ex.Message}");
     }
 }
 
