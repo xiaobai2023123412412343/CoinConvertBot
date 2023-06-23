@@ -1211,7 +1211,6 @@ static double EvaluateExpression(string expression)
             case '-':
                 return 1;
             case '*':
-                return 2;
             case '/':
                 return 2;
             default:
@@ -1255,7 +1254,18 @@ static double EvaluateExpression(string expression)
             {
                 i++;
             }
-            values.Push(double.Parse(expression.Substring(start, i - start)));
+            try
+            {
+                values.Push(double.Parse(expression.Substring(start, i - start)));
+            }
+            catch (FormatException)
+            {
+                throw new ArgumentException($"Invalid number in expression: {expression.Substring(start, i - start)}");
+            }
+            catch (OverflowException)
+            {
+                throw new ArgumentException($"Number in expression is too large: {expression.Substring(start, i - start)}");
+            }
         }
         else
         {
