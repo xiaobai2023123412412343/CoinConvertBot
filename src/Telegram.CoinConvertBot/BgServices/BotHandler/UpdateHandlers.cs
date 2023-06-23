@@ -648,47 +648,55 @@ private static HashSet<long> blacklistedUserIds = new HashSet<long>();
 
 private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient botClient, Message message)
 {
-    // 检查 message 和 message.Text 是否为 null
-    if (message == null || message.Text == null)
+    try
     {
-        return;
-    }
+        // 检查 message 和 message.Text 是否为 null
+        if (message == null || message.Text == null)
+        {
+            return;
+        }
 
-    // 检查消息是否来自指定的管理员
-    if (message.From.Id != 1427768220)//管理员
-    {
-        return;
-    }
+        // 检查消息是否来自指定的管理员
+        if (message.From.Id != 1427768220)//管理员
+        {
+            return;
+        }
 
-    // 检查消息是否包含拉黑或拉白命令
-    var commandParts = message.Text.Split(' ');
-    if (commandParts.Length != 2)
-    {
-        return;
-    }
+        // 检查消息是否包含拉黑或拉白命令
+        var commandParts = message.Text.Split(' ');
+        if (commandParts.Length != 2)
+        {
+            return;
+        }
 
-    var command = commandParts[0];
-    if (!long.TryParse(commandParts[1], out long userId))
-    {
-        return;
-    }
+        var command = commandParts[0];
+        if (!long.TryParse(commandParts[1], out long userId))
+        {
+            return;
+        }
 
-    switch (command)
+        switch (command)
+        {
+            case "拉黑":
+                blacklistedUserIds.Add(userId);
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: $"用户 {userId} 已被拉黑。"
+                );
+                break;
+            case "拉白":
+                blacklistedUserIds.Remove(userId);
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: $"用户 {userId} 已被拉白。"
+                );
+                break;
+        }
+    }
+    catch (Exception ex)
     {
-        case "拉黑":
-            blacklistedUserIds.Add(userId);
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: $"用户 {userId} 已被拉黑。"
-            );
-            break;
-        case "拉白":
-            blacklistedUserIds.Remove(userId);
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: $"用户 {userId} 已被拉白。"
-            );
-            break;
+        // 在这里处理异常，例如记录错误日志或发送错误消息
+        Console.WriteLine($"处理拉黑和拉白命令时发生错误: {ex.Message}");
     }
 }
 //监控信息变更提醒    
