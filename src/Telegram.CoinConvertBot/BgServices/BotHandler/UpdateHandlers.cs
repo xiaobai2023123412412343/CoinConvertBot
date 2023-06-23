@@ -767,11 +767,32 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
                     changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
                 }
 
-                if (!string.IsNullOrEmpty(changeInfo))
+        if (!string.IsNullOrEmpty(changeInfo))
+        {
+            var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
+            try
+            {
+                await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
+            }
+            catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+            {
+                // 如果机器人没有发言权限
+                if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
                 {
-                    var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
-                    await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
+                    // 取消当前群聊的监控任务
+                    if (_timers.ContainsKey(chatId))
+                    {
+                        _timers[chatId].Dispose(); // 停止现有的定时器
+                        _timers.Remove(chatId); // 从字典中移除
+                    }
+
+                    // 记录这些信息在服务器上
+                    Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+                    return;
                 }
+                throw;
+            }
+        }
 
                 userInfo[userId] = (username, name);
             }
@@ -895,11 +916,32 @@ public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient b
                 changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
             }
 
-            if (!string.IsNullOrEmpty(changeInfo))
+        if (!string.IsNullOrEmpty(changeInfo))
+        {
+            var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
+            try
             {
-                var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
                 await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
             }
+            catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+            {
+                // 如果机器人没有发言权限
+                if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+                {
+                    // 取消当前群聊的监控任务
+                    if (_timers.ContainsKey(chatId))
+                    {
+                        _timers[chatId].Dispose(); // 停止现有的定时器
+                        _timers.Remove(chatId); // 从字典中移除
+                    }
+
+                    // 记录这些信息在服务器上
+                    Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+                    return;
+                }
+                throw;
+            }
+        }
         }
 
         // 确保群组的用户信息字典已初始化
