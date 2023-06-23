@@ -347,11 +347,19 @@ private static async Task QueryAndSendUserInfo(ITelegramBotClient botClient, Mes
         // 发送消息
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: reply, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true, replyToMessageId: message.MessageId);
     }
-    catch (Exception ex)
+catch (Exception ex)
+{
+    try
     {
         // 在这里处理异常，例如记录错误日志或发送错误消息
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "处理请求时发生错误：" + ex.Message, replyToMessageId: message.MessageId);
     }
+    catch (Exception sendEx)
+    {
+        // 如果向用户发送消息也失败，那么记录这个异常，但不再尝试发送消息
+        Log.Error($"向用户发送失败消息也失败了: {sendEx.Message}");
+    }
+}
 } 
 public static async Task HandleUsernameOrUrlMessageAsync(ITelegramBotClient botClient, Message message)
 {
@@ -444,11 +452,19 @@ public static async Task HandleUsernameOrUrlMessageAsync(ITelegramBotClient botC
         // 发送消息
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: reply, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
     }
-    catch (Exception ex)
+catch (Exception ex)
+{
+    try
     {
         // 在这里处理异常，例如记录错误日志或发送错误消息
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "处理请求时发生错误：" + ex.Message);
     }
+    catch (Exception sendEx)
+    {
+        // 如果向用户发送消息也失败，那么记录这个异常，但不再尝试发送消息
+        Log.Error($"向用户发送失败消息也失败了: {sendEx.Message}");
+    }
+}
 }
 
 // 存储用户ID和波场地址的字典
