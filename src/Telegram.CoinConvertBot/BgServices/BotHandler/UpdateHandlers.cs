@@ -833,13 +833,35 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
         }        
         throw;  // 其他错误，继续抛出
     }
-    catch (Exception ex)
+catch (Exception ex) // 捕获所有异常
+{
+    // 打印错误信息
+    Console.WriteLine($"Unexpected error: {ex.Message}");
+
+    // 取消当前群聊的监控任务
+    if (_timers.ContainsKey(chatId))
     {
-        // 打印错误信息
-        Console.WriteLine($"Unexpected error: {ex.Message}");
-        // 可以选择重新抛出异常，或者只是记录错误信息并让机器人继续运行
-        throw;
+        _timers[chatId].Dispose(); // 停止现有的定时器
+        _timers.Remove(chatId); // 从字典中移除
     }
+
+    try
+    {
+        // 在本群下发通知：监控任务异常，请重启！
+        await botClient.SendTextMessageAsync(chatId: chatId, text: "监控任务异常，请重启！");
+    }
+    catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+    {
+        // 如果机器人没有发言权限
+        if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+        {
+            // 记录这些信息在服务器上
+            Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+        }
+    }
+
+    return;
+}
 }
 private static readonly Dictionary<long, Dictionary<long, (string username, string name)>> groupUserInfo = new Dictionary<long, Dictionary<long, (string username, string name)>>();
 public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient botClient, Message message)
