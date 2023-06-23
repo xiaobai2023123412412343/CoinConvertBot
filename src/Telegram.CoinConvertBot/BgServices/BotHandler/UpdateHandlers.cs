@@ -887,9 +887,10 @@ catch (Exception ex) // 捕获所有异常
 private static readonly Dictionary<long, Dictionary<long, (string username, string name)>> groupUserInfo = new Dictionary<long, Dictionary<long, (string username, string name)>>();
 public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient botClient, Message message)
 {
+    long chatId = 0; // 在 try-catch 块之前定义 chatId 变量
     try
     {
-        var chatId = message.Chat.Id;
+        chatId = message.Chat.Id; // 在这里赋值，不需要再次声明
         var user = message.From!;
         var userId = user.Id;
         var username = user.Username;
@@ -916,32 +917,32 @@ public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient b
                 changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
             }
 
-        if (!string.IsNullOrEmpty(changeInfo))
-        {
-            var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
-            try
+            if (!string.IsNullOrEmpty(changeInfo))
             {
-                await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
-            }
-            catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
-            {
-                // 如果机器人没有发言权限
-                if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+                var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
+                try
                 {
-                    // 取消当前群聊的监控任务
-                    if (_timers.ContainsKey(chatId))
-                    {
-                        _timers[chatId].Dispose(); // 停止现有的定时器
-                        _timers.Remove(chatId); // 从字典中移除
-                    }
-
-                    // 记录这些信息在服务器上
-                    Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
-                    return;
+                    await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
                 }
-                throw;
+                catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+                {
+                    // 如果机器人没有发言权限
+                    if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+                    {
+                        // 取消当前群聊的监控任务
+                        if (_timers.ContainsKey(chatId))
+                        {
+                            _timers[chatId].Dispose(); // 停止现有的定时器
+                            _timers.Remove(chatId); // 从字典中移除
+                        }
+
+                        // 记录这些信息在服务器上
+                        Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+                        return;
+                    }
+                    throw;
+                }
             }
-        }
         }
 
         // 确保群组的用户信息字典已初始化
@@ -956,8 +957,30 @@ public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient b
     {
         // 打印错误信息
         Console.WriteLine($"Unexpected error: {ex.Message}");
-        // 可以选择重新抛出异常，或者只是记录错误信息并让机器人继续运行
-        throw;
+
+        // 取消当前群聊的监控任务
+        if (_timers.ContainsKey(chatId))
+        {
+            _timers[chatId].Dispose(); // 停止现有的定时器
+            _timers.Remove(chatId); // 从字典中移除
+        }
+
+        try
+        {
+            // 在本群下发通知：监控任务异常，请重启！
+            await botClient.SendTextMessageAsync(chatId: chatId, text: "监控任务异常，请重启！");
+        }
+        catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+        {
+            // 如果机器人没有发言权限
+            if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+            {
+                // 记录这些信息在服务器上
+                Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+            }
+        }
+
+        return;
     }
 }
 //调用谷歌搜索的方法    
