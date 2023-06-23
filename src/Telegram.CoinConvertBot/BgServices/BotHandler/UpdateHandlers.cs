@@ -618,23 +618,31 @@ private static async Task<decimal> GetTronBalanceAsync(string tronAddress)
 //升级管理员提醒    
 private static async Task BotOnMyChatMemberChanged(ITelegramBotClient botClient, ChatMemberUpdated chatMemberUpdated)
 {
-    var me = await botClient.GetMeAsync();
-    if (chatMemberUpdated.NewChatMember.User.Id != me.Id)
+    try
     {
-        return;
+        var me = await botClient.GetMeAsync();
+        if (chatMemberUpdated.NewChatMember.User.Id != me.Id)
+        {
+            return;
+        }
+
+        var oldStatus = chatMemberUpdated.OldChatMember.Status;
+        var newStatus = chatMemberUpdated.NewChatMember.Status;
+
+        if (oldStatus != ChatMemberStatus.Administrator && newStatus == ChatMemberStatus.Administrator)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: chatMemberUpdated.Chat.Id,
+                text: "已升级为管理员。"
+            );
+        }
     }
-
-    var oldStatus = chatMemberUpdated.OldChatMember.Status;
-    var newStatus = chatMemberUpdated.NewChatMember.Status;
-
-    if (oldStatus != ChatMemberStatus.Administrator && newStatus == ChatMemberStatus.Administrator)
+    catch (Exception ex)
     {
-        await botClient.SendTextMessageAsync(
-            chatId: chatMemberUpdated.Chat.Id,
-            text: "已升级为管理员。"
-        );
+        // 在这里处理异常，例如记录错误日志或发送错误消息
+        Console.WriteLine($"处理聊天成员变更时发生错误: {ex.Message}");
     }
-}    
+}
 // 存储被拉黑的用户 ID
 private static HashSet<long> blacklistedUserIds = new HashSet<long>();
 
