@@ -461,20 +461,23 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
                     parseMode: ParseMode.Html
                 );
             }
-            catch (ApiRequestException ex)
-            {
-                if (ex.Message == "Forbidden: bot was blocked by the user")
-                {
-                    // 用户阻止了机器人，取消定时器任务
-                    timer.Dispose();
-                    return;
-                }
-                else
-                {
-                    // 其他类型的异常，你可以在这里处理
-                    throw;
-                }
-            }
+catch (ApiRequestException ex)
+{
+    if (ex.Message == "Forbidden: bot was blocked by the user" || ex.Message.Contains("user is deactivated"))
+    {
+        // 用户阻止了机器人，或者用户注销了机器人，取消定时器任务
+        timer.Dispose();
+        // 从字典中移除该用户的定时器和地址
+        userTimers.Remove(userId);
+        userTronAddresses.Remove(userId);
+        return;
+    }
+    else
+    {
+        // 其他类型的异常，你可以在这里处理
+        throw;
+    }
+}
             // 余额不足，停止480分钟 8小时
             timer.Change(TimeSpan.FromMinutes(480), TimeSpan.FromMinutes(480));
         }
