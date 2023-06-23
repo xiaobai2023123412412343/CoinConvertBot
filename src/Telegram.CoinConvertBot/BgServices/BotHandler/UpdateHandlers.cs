@@ -708,8 +708,13 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
     {
         // 打印错误信息
         Console.WriteLine($"Unexpected error: {ex.Message}");
-        // 可以选择重新抛出异常，或者只是记录错误信息并让机器人继续运行
-        throw;
+
+        // 如果存在定时器，停止并移除
+        if (_timers.ContainsKey(chatId))
+        {
+            _timers[chatId].Dispose(); // 停止现有的定时器
+            _timers.Remove(chatId); // 从字典中移除
+        }
     }
 }
 private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, long chatId)
