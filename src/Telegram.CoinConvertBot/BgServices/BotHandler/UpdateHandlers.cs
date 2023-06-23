@@ -1095,29 +1095,40 @@ public static class GoogleSearchHelper
 //查询用户或群组ID    
 private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Message message)
 {
-    var userId = message.From.Id;
-    var chatId = message.Chat.Id;
-
-    if (message.Chat.Type == ChatType.Private)
+    try
     {
-        await botClient.SendTextMessageAsync(
-            chatId: chatId,
-            text: $"您的用户ID是：<code>{userId}</code>",
-            parseMode: ParseMode.Html
-        );
-    }
-    else if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
-    {
-        var replyToMessageId = message.MessageId;
+        var userId = message.From.Id;
+        var chatId = message.Chat.Id;
 
-        await botClient.SendTextMessageAsync(
-            chatId: chatId,
-            text: $"您的用户ID是：<code>{userId}</code>\n当前群聊ID是：<code>{chatId}</code>",
-            parseMode: ParseMode.Html,
-            replyToMessageId: replyToMessageId
-        );
+        if (message.Chat.Type == ChatType.Private)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: $"您的用户ID是：<code>{userId}</code>",
+                parseMode: ParseMode.Html
+            );
+        }
+        else if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
+        {
+            var replyToMessageId = message.MessageId;
+
+            await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: $"您的用户ID是：<code>{userId}</code>\n当前群聊ID是：<code>{chatId}</code>",
+                parseMode: ParseMode.Html,
+                replyToMessageId: replyToMessageId
+            );
+        }
     }
-}   
+    catch (ApiRequestException ex)
+    {
+        Console.WriteLine($"发送消息时发生错误: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"发生意外错误: {ex.Message}");
+    }
+}
 // 添加一个类级别的变量来跟踪广告是否正在运行
 private static bool isAdvertisementRunning = false;    
 //获取关注列表   
