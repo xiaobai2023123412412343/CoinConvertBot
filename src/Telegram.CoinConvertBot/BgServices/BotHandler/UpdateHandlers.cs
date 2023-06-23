@@ -264,18 +264,32 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
 
     var inlineKeyboard = new InlineKeyboardMarkup(inlineKeyboardButton);
 
+try
+{
+    await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                         text: responseText,
+                                         parseMode: ParseMode.Html,
+                                         replyMarkup: inlineKeyboard);
+}
+catch (Exception ex)
+{
+    Log.Error($"发送消息失败: {ex.Message}");
+
+    // 尝试向用户发送一条消息，告知他们查询失败
     try
     {
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                             text: responseText,
-                                             parseMode: ParseMode.Html,
-                                             replyMarkup: inlineKeyboard);
+                                             text: "查询失败，请稍后再试！",
+                                             parseMode: ParseMode.Html);
     }
-    catch (Exception ex)
+    catch (Exception sendEx)
     {
-        Log.Error($"发送消息失败: {ex.Message}");
-        return;
+        // 如果向用户发送消息也失败，那么记录这个异常，但不再尝试发送消息
+        Log.Error($"向用户发送失败消息也失败了: {sendEx.Message}");
     }
+
+    return;
+}
 }
 //查询用户电报资料    
 public class UserInfo
