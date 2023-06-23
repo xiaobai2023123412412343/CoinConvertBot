@@ -3515,6 +3515,15 @@ if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
         {
             await handler;
         }
+catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+{
+    // 如果机器人没有发言权限
+    if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+    {
+        // 记录这些信息在服务器上
+        Console.WriteLine($"在群里被禁言拉，指令不作处理！！！");
+    }
+}        
         catch (Exception exception)
         {
             Log.Error(exception, "呜呜呜，机器人输错啦~");
