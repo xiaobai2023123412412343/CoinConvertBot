@@ -204,6 +204,8 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
         ("ethereum", "以太坊", "eth"),
         ("binancecoin", "币安币", "bnb"),
         ("bitget-token", "币记-BGB", "BGB"),
+        ("okb", "欧易-okb", "okb"),
+        ("huobi-token", "火币积分-HT", "ht"),
         ("ripple", "瑞波币", "xrp"),
         ("cardano", "艾达币", "ada"),
         ("dogecoin", "狗狗币", "doge"),
@@ -214,7 +216,7 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
         ("the-open-network", "电报币", "ton")
     };
 
-    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase);
+    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase);
     
     if (!match.Success)
     {
@@ -3909,7 +3911,7 @@ if (Regex.IsMatch(message.Text, @"用户名：|ID："))
 {
     await HandleStoreCommandAsync(botClient, message);
 }       
-if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase))
+if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase))
 {
     await HandleCryptoCurrencyMessageAsync(botClient, message);
 }  
