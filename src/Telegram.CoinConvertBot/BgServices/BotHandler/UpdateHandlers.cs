@@ -203,7 +203,7 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
         ("bitcoin", "比特币", "btc"),
         ("ethereum", "以太坊", "eth"),
         ("binancecoin", "币安币", "bnb"),
-        ("bitget-token", "BGB", "BGB"),
+        ("bitget-token", "币记-BGB", "BGB"),
         ("ripple", "瑞波币", "xrp"),
         ("cardano", "艾达币", "ada"),
         ("dogecoin", "狗狗币", "doge"),
