@@ -2588,6 +2588,12 @@ private static readonly Dictionary<string, string> CurrencyFullNames = new Dicti
     { "LAK", "老挝币" },
     { "MMK", "缅甸币" },
     { "MYR", "马来西亚币" },
+    { "KWD", "科威特第纳尔" },
+    { "RUB", "俄罗斯卢布" },
+    { "CHF", "瑞士法郎" },
+    { "CAD", "加拿大加元" },
+    { "MXN", "墨西哥比索" },
+    { "NZD", "新西兰元" },
 };
 static bool TryGetRateByCurrencyCode(Dictionary<string, (decimal, string)> rates, string currencyCode, out KeyValuePair<string, (decimal, string)> rate)
 {
@@ -2643,14 +2649,20 @@ static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
             { "韩元 (KRW)", (ratesElement.GetProperty("KRW").GetDecimal(), "₩") },
             { "泰铢 (THB)", (ratesElement.GetProperty("THB").GetDecimal(), "฿") },
             { "越南盾 (VND)", (ratesElement.GetProperty("VND").GetDecimal(), "₫") },
+            { "老挝币 (LAK)", (ratesElement.GetProperty("LAK").GetDecimal(), "₭") },
+            { "缅甸币 (MMK)", (ratesElement.GetProperty("MMK").GetDecimal(), "K") },       
             { "印度卢比 (INR)", (ratesElement.GetProperty("INR").GetDecimal(), "₹") },
+            { "瑞士法郎 (CHF)", (ratesElement.GetProperty("CHF").GetDecimal(), "Fr") },   
+            { "新西兰元 (NZD)", (ratesElement.GetProperty("NZD").GetDecimal(), "NZ$") },            
             { "新加坡新元 (SGD)", (ratesElement.GetProperty("SGD").GetDecimal(), "S$") },
             { "柬埔寨瑞尔 (KHR)", (ratesElement.GetProperty("KHR").GetDecimal(), "៛") },
             { "菲律宾披索 (PHP)", (ratesElement.GetProperty("PHP").GetDecimal(), "₱") },
-            { "迪拜迪拉姆 (AED)", (ratesElement.GetProperty("AED").GetDecimal(), "د.إ") },
-            { "老挝币 (LAK)", (ratesElement.GetProperty("LAK").GetDecimal(), "₭") },
-            { "缅甸币 (MMK)", (ratesElement.GetProperty("MMK").GetDecimal(), "K") },
-            { "马来西亚币 (MYR)", (ratesElement.GetProperty("MYR").GetDecimal(), "RM") }
+            { "墨西哥比索 (MXN)", (ratesElement.GetProperty("MXN").GetDecimal(), "$") },            
+            { "迪拜迪拉姆 (AED)", (ratesElement.GetProperty("AED").GetDecimal(), "د.إ") },     
+            { "俄罗斯卢布 (RUB)", (ratesElement.GetProperty("RUB").GetDecimal(), "₽") },
+            { "加拿大加元 (CAD)", (ratesElement.GetProperty("CAD").GetDecimal(), "C$") },
+            { "马来西亚币 (MYR)", (ratesElement.GetProperty("MYR").GetDecimal(), "RM") },
+            { "科威特第纳尔 (KWD)", (ratesElement.GetProperty("KWD").GetDecimal(), "KD") }
         };
     }
     catch (Exception)
