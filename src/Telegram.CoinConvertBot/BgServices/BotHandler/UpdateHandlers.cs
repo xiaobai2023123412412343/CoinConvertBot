@@ -2642,7 +2642,7 @@ static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
             { "泰铢 (THB)", (ratesElement.GetProperty("THB").GetDecimal(), "฿") },
             { "越南盾 (VND)", (ratesElement.GetProperty("VND").GetDecimal(), "₫") },
             { "印度卢比 (INR)", (ratesElement.GetProperty("INR").GetDecimal(), "₹") },
-            { "新加坡新币 (SGD)", (ratesElement.GetProperty("SGD").GetDecimal(), "S$") },
+            { "新加坡新元 (SGD)", (ratesElement.GetProperty("SGD").GetDecimal(), "S$") },
             { "柬埔寨瑞尔 (KHR)", (ratesElement.GetProperty("KHR").GetDecimal(), "៛") },
             { "菲律宾披索 (PHP)", (ratesElement.GetProperty("PHP").GetDecimal(), "₱") },
             { "迪拜迪拉姆 (AED)", (ratesElement.GetProperty("AED").GetDecimal(), "د.إ") },
