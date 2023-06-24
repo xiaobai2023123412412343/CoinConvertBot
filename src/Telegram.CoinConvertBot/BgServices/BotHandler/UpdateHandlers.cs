@@ -2728,7 +2728,7 @@ static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, M
 {
     try
     {
-        var cryptoSymbols = new[] { "tether","bitcoin", "ethereum", "binancecoin","bitget-token", "tether","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };
+        var cryptoSymbols = new[] { "tether","bitcoin", "ethereum", "binancecoin","bitget-token", "okb","huobi-token","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };
 
         // 同时开始三个任务
         var fearAndGreedIndexTask = GetFearAndGreedIndexAsync();
@@ -2749,7 +2749,9 @@ static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, M
             { "bitcoin", "比特币" },
             { "ethereum", "以太坊" },
             { "binancecoin", "币安币" },
-            { "bitget-token", "BGB" },           
+            { "bitget-token", "币记-BGB" },  
+            { "okb", "欧易-okb" }, 
+            { "huobi-token", "火币积分-HT" }, 
             { "ripple", "瑞波币" },
             { "cardano", "艾达币" },
             { "dogecoin", "狗狗币" },
