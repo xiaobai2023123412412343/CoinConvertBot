@@ -248,7 +248,7 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
         var rate = rateList[i];
         var cryptoPriceInCurrency = cryptoPriceInCny * rate.Value.Item1;
         var currencyFullName = CurrencyFullNames.ContainsKey(rate.Key) ? CurrencyFullNames[rate.Key] : rate.Key;
-        responseText += $"{cryptoPriceInCurrency:N2} {currencyFullName}";
+        responseText += $"<code>{cryptoPriceInCurrency:N2} {currencyFullName}</code>";
         if (i % 2 == 0)
         {
             responseText += " | ";
