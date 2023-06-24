@@ -1164,7 +1164,7 @@ private static void AddFollower(Message message)
     }
 }
 
-private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botClient, Message message)
+private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botClient, Message message, int page = 0)
 {
     AddFollower(message);
 
@@ -1172,14 +1172,22 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
 
     var sb = new StringBuilder();
     sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>   今日新增关注：<b>{todayFollowers}</b>\n");
-    foreach (var follower in Followers)
+
+    // 每页显示10条数据
+    var followersPerPage = Followers.Skip(page * 15).Take(15);
+    foreach (var follower in followersPerPage)
     {
         sb.AppendLine($"<b>{follower.Name}</b>  用户名：@{follower.Username}   ID：<code>{follower.Id}</code>");
     }
 
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        new []
+        new [] // 第一行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("上一页", $"prev_page_{page}"),
+            InlineKeyboardButton.WithCallbackData("下一页", $"next_page_{page}")
+        },
+        new [] // 第二行按钮
         {
             InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_records")
         }
@@ -3345,12 +3353,48 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         // ... 其他现有代码 ...
     }
-    // 添加以下代码来处理回调查询更新
-    if (update.Type == UpdateType.CallbackQuery)
-    {
-        var callbackQuery = update.CallbackQuery;
-        var callbackData = callbackQuery.Data;
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data;
 
+    if (callbackData.StartsWith("prev_page_") || callbackData.StartsWith("next_page_"))
+    {
+        var page = int.Parse(callbackData.Split('_')[2]);
+        if (callbackData.StartsWith("prev_page_"))
+        {
+            if (page > 0)
+            {
+                page--;
+            }
+            else
+            {
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是第一页啦！");
+                return;
+            }
+        }
+        else // next_page
+        {
+            if (page < Followers.Count / 15) // 假设 Followers 是你的数据源
+            {
+                page++;
+            }
+            else
+            {
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是最后一页啦！");
+                return;
+            }
+        }
+
+        // 先撤回当前的消息
+        await botClient.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
+
+        // 然后发送新的一页数据
+        await HandleGetFollowersCommandAsync(botClient, callbackQuery.Message, page);
+        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 关闭加载提示
+    }
+    else
+    {
         switch (callbackData)
         {
             case "show_transaction_records":
@@ -3358,7 +3402,8 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 break;
             // 其他回调处理...
         }
-    }        
+    }
+}       
         if (update.Type == UpdateType.Message)
     {
 var message = update.Message;
