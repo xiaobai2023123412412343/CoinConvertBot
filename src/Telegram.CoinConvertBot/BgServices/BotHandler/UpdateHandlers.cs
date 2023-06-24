@@ -1164,7 +1164,7 @@ private static void AddFollower(Message message)
     }
 }
 
-private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botClient, Message message, int page = 0)
+private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botClient, Message message, int page = 0, bool edit = false)
 {
     AddFollower(message);
 
@@ -1193,12 +1193,25 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
         }
     });
 
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: sb.ToString(),
-        parseMode: ParseMode.Html,
-        replyMarkup: inlineKeyboard
-    );
+    if (edit)
+    {
+        await botClient.EditMessageTextAsync(
+            chatId: message.Chat.Id,
+            messageId: message.MessageId,
+            text: sb.ToString(),
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
+    }
+    else
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: sb.ToString(),
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
+    }
 }
 
 private static readonly List<User> Followers = new List<User>();
@@ -3386,11 +3399,8 @@ if (update.Type == UpdateType.CallbackQuery)
             }
         }
 
-        // 先撤回当前的消息
-        await botClient.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
-
-        // 然后发送新的一页数据
-        await HandleGetFollowersCommandAsync(botClient, callbackQuery.Message, page);
+        // 更新消息内容而不是发送新的消息
+        await HandleGetFollowersCommandAsync(botClient, callbackQuery.Message, page, true);
         await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 关闭加载提示
     }
     else
@@ -3403,7 +3413,7 @@ if (update.Type == UpdateType.CallbackQuery)
             // 其他回调处理...
         }
     }
-}       
+}
         if (update.Type == UpdateType.Message)
     {
 var message = update.Message;
