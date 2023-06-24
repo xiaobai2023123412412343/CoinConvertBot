@@ -3423,7 +3423,7 @@ if (containsUsername)
             var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|cny|jiankong)|会员代开|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
-            var isNumberCurrency = Regex.IsMatch(inputText, @"^\d+\s*[A-Za-z\u4e00-\u9fa5]+$");
+            var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$)", RegexOptions.IgnoreCase);
 
             // 检查输入文本是否为纯中文文本带空格
             var isChineseTextWithSpaces = Regex.IsMatch(inputText, @"^[\u4e00-\u9fa5\s]+$");
