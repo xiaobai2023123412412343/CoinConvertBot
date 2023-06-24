@@ -4755,6 +4755,10 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 如发送： <code>100美元</code>或<code>100usd</code>
 回复：<b>100美元 ≈  xxx 元人民币</b>
 
+查数字货币价值直接发送<b>金额+代码</b>
+如发送： <code>1btc</code>或<code>1比特币</code>
+回复：<b>1枚比特币的价值是：****</b>        
+
 数字计算<b>直接对话框发送</b>
 如发送：1+1
 回复： <code>1+1=2</code>
