@@ -2694,6 +2694,75 @@ static bool TryGetRateByCurrencyCode(Dictionary<string, (decimal, string)> rates
     rate = default;
     return false;
 }
+// 将 maxPage 提升为类的成员变量
+private static int CalculateMaxPage(Dictionary<string, (decimal, string)> rates, int itemsPerPage)
+{
+    return (int)Math.Ceiling((double)rates.Count / itemsPerPage);
+}
+public static async Task HandleCurrencyRatesCommandAsync(ITelegramBotClient botClient, Message message, int page, bool updateMessage = false)
+{
+    var rates = await GetCurrencyRatesAsync();
+    int itemsPerPage = 10; // 设置每页显示的条目数为10
+    int maxPage = CalculateMaxPage(rates, itemsPerPage); // 计算最大页数
+    var text = "<b>100元人民币兑换其他国家货币</b>:\n\n";
+
+    int count = 0;
+
+    foreach (var rate in rates.Skip((page - 1) * itemsPerPage).Take(itemsPerPage)) // 修改循环以只显示当前页的条目
+    {
+        decimal convertedAmount = rate.Value.Item1 * 100;
+        decimal exchangeRate = 1 / rate.Value.Item1;
+        text += $"<code>{rate.Key}: {convertedAmount:0.#####} {rate.Value.Item2}  汇率≈{exchangeRate:0.######}</code>\n";
+
+        // 如果还有更多的汇率条目，添加分隔符
+        if (count < itemsPerPage - 1)
+        {
+            text += "——————————————————————\n";
+        }
+
+        count++;
+    }
+
+    string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+    string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+    string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
+
+    // 创建一个虚拟键盘
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("上一页", $"shangye_rate_{page}"),
+            InlineKeyboardButton.WithCallbackData("下一页", $"xiaye_rate_{page}")
+        },
+        new [] // 第二行按钮
+        {
+            InlineKeyboardButton.WithUrl("分享到群组", shareLink)
+        }
+    });
+
+    if (updateMessage)
+    {
+        await botClient.EditMessageTextAsync(
+            chatId: message.Chat.Id,
+            messageId: message.MessageId,
+            text: text,
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true,
+            replyMarkup: inlineKeyboard
+        );
+    }
+    else
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: text,
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true,
+            replyMarkup: inlineKeyboard
+        );
+    }
+}     
 static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
 {
     var apiUrl = "https://api.exchangerate-api.com/v4/latest/CNY"; // CNY为人民币代号
@@ -3465,6 +3534,51 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         // ... 其他现有代码 ...
     }
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data;
+
+    if (callbackData.StartsWith("xiaye_rate_") || callbackData.StartsWith("shangye_rate_"))
+    {
+        var page = int.Parse(callbackData.Split('_')[2]);
+        var rates = await GetCurrencyRatesAsync();
+        int itemsPerPage = 10; // 设置每页显示的条目数为10
+        int maxPage = CalculateMaxPage(rates, itemsPerPage); // 计算最大页数
+        if (callbackData.StartsWith("xiaye_rate_"))
+        {
+            page++;
+            if (page > maxPage) // 如果已经是最后一页
+            {
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是最后一页啦！");
+                return;
+            }
+        }
+        else // 如果是 "shangye_rate_"
+        {
+            page--;
+            if (page < 1) // 如果已经是第一页
+            {
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是第一页啦！");
+                return;
+            }
+        }
+
+        // 更新消息内容而不是发送新的消息
+        await HandleCurrencyRatesCommandAsync(botClient, callbackQuery.Message, page, true);
+        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 关闭加载提示
+    }
+    else
+    {
+        switch (callbackData)
+        {
+            case "show_transaction_records":
+                await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
+                break;
+            // 其他回调处理...
+        }
+    }
+}        
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
@@ -4326,45 +4440,7 @@ else
 }
 if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添加 /usd 条件
 {
-    var rates = await GetCurrencyRatesAsync();
-    var text = "<b>100元人民币兑换其他国家货币</b>:\n\n";
-
-    int count = 0;
-    foreach (var rate in rates)
-    {
-        decimal convertedAmount = rate.Value.Item1 * 100;
-        decimal exchangeRate = 1 / rate.Value.Item1;
-        text += $"<code>{rate.Key}: {convertedAmount:0.#####} {rate.Value.Item2}  汇率≈{exchangeRate:0.######}</code>\n";
-
-        // 如果还有更多的汇率条目，添加分隔符
-        if (count < rates.Count - 1)
-        {
-            text += "——————————————————————\n";
-        }
-
-        count++;
-    }
-
-    string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
-    string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
-    string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
-
-    // 创建一个虚拟键盘
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
-    {
-        new [] // 第一行按钮
-        {
-            InlineKeyboardButton.WithUrl("分享到群组", shareLink)
-        }
-    });
-
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: text,
-        parseMode: ParseMode.Html,
-        disableWebPagePreview: true,
-        replyMarkup: inlineKeyboard
-    );
+    await HandleCurrencyRatesCommandAsync(botClient, message, 1);
 }
 
 else
