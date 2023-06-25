@@ -241,23 +241,19 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
     var cryptoToCnyRate = cryptoPriceInUsdt * cnyPerUsdt;
 
     var rates = await GetCurrencyRatesAsync();
-    var responseText = $"<b>{amount} 枚 {currencyTuple.Item2}</b> 的价值是： {cryptoToCnyRate:N2} 人民币 (CNY)\n\n";
+    var responseText = $"<b>{amount} 枚 {currencyTuple.Item2}</b> 的价值是：\n\n<code>{cryptoToCnyRate:N2} 人民币 (CNY)</code>\n—————————————————\n";
     var rateList = rates.ToList();
-    for (int i = 0; i < rateList.Count; i++)
+for (int i = 0; i < rateList.Count; i++)
+{
+    var rate = rateList[i];
+    var cryptoPriceInCurrency = cryptoPriceInCny * rate.Value.Item1;
+    var currencyFullName = CurrencyFullNames.ContainsKey(rate.Key) ? CurrencyFullNames[rate.Key] : rate.Key;
+    responseText += $"<code>{cryptoPriceInCurrency:N2} {currencyFullName}</code>";
+    if (i != rateList.Count - 1)
     {
-        var rate = rateList[i];
-        var cryptoPriceInCurrency = cryptoPriceInCny * rate.Value.Item1;
-        var currencyFullName = CurrencyFullNames.ContainsKey(rate.Key) ? CurrencyFullNames[rate.Key] : rate.Key;
-        responseText += $"<code>{cryptoPriceInCurrency:N2} {currencyFullName}</code>";
-        if (i % 2 == 0)
-        {
-            responseText += " | ";
-        }
-        else if (i != rateList.Count - 1)
-        {
-            responseText += "\n————————————————————————————\n";
-        }
+        responseText += "\n—————————————————\n";
     }
+}
 
     var inlineKeyboardButton = new InlineKeyboardButton("穿越牛熊，慢，就是快！")
     {
