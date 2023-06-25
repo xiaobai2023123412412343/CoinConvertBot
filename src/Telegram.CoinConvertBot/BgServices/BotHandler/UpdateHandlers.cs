@@ -703,73 +703,93 @@ private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient
 }
 //监控信息变更提醒    
 private static Dictionary<long, Timer> _timers = new Dictionary<long, Timer>();
+private static Dictionary<long, int> _errorCounts = new Dictionary<long, int>();    
 public static async void StartMonitoring(ITelegramBotClient botClient, long chatId)
 {
-    try
+    int retryCount = 0; // 添加一个重试计数器
+
+    while (retryCount < 3) // 如果重试次数小于3次，继续尝试
     {
-        // 获取聊天信息
-        var chat = await botClient.GetChatAsync(chatId);
-
-        // 如果聊天类型是群组或超级群组，获取成员列表
-        if (chat.Type == ChatType.Group || chat.Type == ChatType.Supergroup)
+        try
         {
-            // 获取群组中的成员数量
-            int membersCount = await botClient.GetChatMembersCountAsync(chatId);
+            // 获取聊天信息
+            var chat = await botClient.GetChatAsync(chatId);
 
-            if (!groupUserInfo.ContainsKey(chatId))
+            // 如果聊天类型是群组或超级群组，获取成员列表
+            if (chat.Type == ChatType.Group || chat.Type == ChatType.Supergroup)
             {
-                groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
-            }
+                // 获取群组中的成员数量
+                int membersCount = await botClient.GetChatMembersCountAsync(chatId);
 
-            // 遍历成员并添加到groupUserInfo字典中
-            for (int i = 0; i < membersCount; i++)
-            {
-                try
+                if (!groupUserInfo.ContainsKey(chatId))
                 {
-                    var member = await botClient.GetChatMemberAsync(chatId, i);
-                    var userId = member.User.Id;
-                    var username = member.User.Username;
-                    var name = member.User.FirstName + " " + member.User.LastName;
+                    groupUserInfo[chatId] = new Dictionary<long, (string username, string name)>();
+                }
 
-                    if (!groupUserInfo[chatId].ContainsKey(userId))
+                // 遍历成员并添加到groupUserInfo字典中
+                for (int i = 0; i < membersCount; i++)
+                {
+                    try
                     {
-                        groupUserInfo[chatId][userId] = (username, name);
+                        var member = await botClient.GetChatMemberAsync(chatId, i);
+                        var userId = member.User.Id;
+                        var username = member.User.Username;
+                        var name = member.User.FirstName + " " + member.User.LastName;
+
+                        if (!groupUserInfo[chatId].ContainsKey(userId))
+                        {
+                            groupUserInfo[chatId][userId] = (username, name);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error adding user {i}: {ex.Message}");
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error adding user {i}: {ex.Message}");
-                }
             }
-        }
-        else
-        {
-            // 如果聊天类型不是群组或超级群组，显示错误消息
-            await botClient.SendTextMessageAsync(chatId: chatId, text: "此命令仅适用于群组和频道");
-            return;
-        }
+            else
+            {
+                // 如果聊天类型不是群组或超级群组，显示错误消息
+                await botClient.SendTextMessageAsync(chatId: chatId, text: "此命令仅适用于群组和频道");
+                return;
+            }
 
-        // 检查是否已有定时器
-        if (_timers.ContainsKey(chatId))
-        {
-            _timers[chatId].Dispose(); // 停止现有的定时器
-            _timers.Remove(chatId); // 从字典中移除
+            // 检查是否已有定时器
+            if (_timers.ContainsKey(chatId))
+            {
+                _timers[chatId].Dispose(); // 停止现有的定时器
+                _timers.Remove(chatId); // 从字典中移除
+            }
+
+            // 为这个群组创建一个新的定时器
+            var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+            _timers[chatId] = timer;
+
+            break; // 如果成功启动监控任务，跳出循环
         }
-
-        // 为这个群组创建一个新的定时器
-        var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
-        _timers[chatId] = timer;
-    }
-    catch (Exception ex)
-    {
-        // 打印错误信息
-        Console.WriteLine($"Unexpected error: {ex.Message}");
-
-        // 如果存在定时器，停止并移除
-        if (_timers.ContainsKey(chatId))
+        catch (Exception ex)
         {
-            _timers[chatId].Dispose(); // 停止现有的定时器
-            _timers.Remove(chatId); // 从字典中移除
+            // 打印错误信息
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+
+            // 如果存在定时器，停止并移除
+            if (_timers.ContainsKey(chatId))
+            {
+                _timers[chatId].Dispose(); // 停止现有的定时器
+                _timers.Remove(chatId); // 从字典中移除
+            }
+
+            retryCount++; // 增加重试计数器
+
+            if (retryCount < 3) // 如果重试次数小于3次，等待5秒后再次尝试
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
+            else // 如果重试次数达到3次，打印错误信息并跳出循环
+            {
+                Console.WriteLine("Failed to start monitoring task after 3 attempts. Cancelling task.");
+                break;
+            }
         }
     }
 }
@@ -920,25 +940,47 @@ catch (Exception ex) // 捕获所有异常
     // 打印错误信息
     Console.WriteLine($"Unexpected error: {ex.Message}");
 
-    // 取消当前群聊的监控任务
-    if (_timers.ContainsKey(chatId))
+    // 增加错误计数
+    if (_errorCounts.ContainsKey(chatId))
     {
-        _timers[chatId].Dispose(); // 停止现有的定时器
-        _timers.Remove(chatId); // 从字典中移除
+        _errorCounts[chatId]++;
+    }
+    else
+    {
+        _errorCounts[chatId] = 1;
     }
 
-    try
+    // 如果错误次数达到3次，取消任务并发送通知
+    if (_errorCounts[chatId] >= 3)
     {
+        // 取消当前群聊的监控任务
+        if (_timers.ContainsKey(chatId))
+        {
+            _timers[chatId].Dispose(); // 停止现有的定时器
+            _timers.Remove(chatId); // 从字典中移除
+        }
+
         // 在本群下发通知：监控任务异常，请重启！
         await botClient.SendTextMessageAsync(chatId: chatId, text: "监控任务异常，请重启！");
+
+        // 重置错误计数器
+        _errorCounts[chatId] = 0;
     }
-    catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+    else
     {
-        // 如果机器人没有发言权限
-        if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+        // 如果错误次数未达到3次，尝试重新启动监控任务
+        try
         {
-            // 记录这些信息在服务器上
-            Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+            StartMonitoring(botClient, chatId);
+        }
+        catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+        {
+            // 如果机器人没有发言权限
+            if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+            {
+                // 记录这些信息在服务器上
+                Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+            }
         }
     }
 
@@ -1019,25 +1061,47 @@ public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient b
         // 打印错误信息
         Console.WriteLine($"Unexpected error: {ex.Message}");
 
-        // 取消当前群聊的监控任务
-        if (_timers.ContainsKey(chatId))
+        // 增加错误计数
+        if (_errorCounts.ContainsKey(chatId))
         {
-            _timers[chatId].Dispose(); // 停止现有的定时器
-            _timers.Remove(chatId); // 从字典中移除
+            _errorCounts[chatId]++;
+        }
+        else
+        {
+            _errorCounts[chatId] = 1;
         }
 
-        try
+        // 如果错误次数达到3次，取消任务并发送通知
+        if (_errorCounts[chatId] >= 3)
         {
+            // 取消当前群聊的监控任务
+            if (_timers.ContainsKey(chatId))
+            {
+                _timers[chatId].Dispose(); // 停止现有的定时器
+                _timers.Remove(chatId); // 从字典中移除
+            }
+
             // 在本群下发通知：监控任务异常，请重启！
             await botClient.SendTextMessageAsync(chatId: chatId, text: "监控任务异常，请重启！");
+
+            // 重置错误计数器
+            _errorCounts[chatId] = 0;
         }
-        catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+        else
         {
-            // 如果机器人没有发言权限
-            if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+            // 如果错误次数未达到3次，尝试重新启动监控任务
+            try
             {
-                // 记录这些信息在服务器上
-                Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+                StartMonitoring(botClient, chatId);
+            }
+            catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+            {
+                // 如果机器人没有发言权限
+                if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+                {
+                    // 记录这些信息在服务器上
+                    Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+                }
             }
         }
 
