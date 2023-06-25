@@ -3654,7 +3654,7 @@ if (update.Type == UpdateType.CallbackQuery)
         {
             await botClient.SendTextMessageAsync(
                 chatId: callbackQuery.Message.Chat.Id,
-                text: "数据超时，请重新获取！"
+                text: "操作超时，请重新获取！"
             );
         }
         else
@@ -3719,7 +3719,7 @@ if (update.Type == UpdateType.CallbackQuery)
         {
             await botClient.SendTextMessageAsync(
                 chatId: callbackQuery.Message.Chat.Id,
-                text: "数据超时，请重新获取！"
+                text: "操作超时，请重新获取！"
             );
         }
         else
@@ -3968,7 +3968,7 @@ if(update.CallbackQuery != null)
         {
             await botClient.SendTextMessageAsync(
                 chatId: update.CallbackQuery.Message.Chat.Id,
-                text: "操作超时！请重新操作！"
+                text: "操作超时！请重新获取！"
             );
         }
         else
