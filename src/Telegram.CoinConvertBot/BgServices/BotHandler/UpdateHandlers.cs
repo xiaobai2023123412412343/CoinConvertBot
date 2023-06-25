@@ -3539,46 +3539,63 @@ if (update.Type == UpdateType.CallbackQuery)
     var callbackQuery = update.CallbackQuery;
     var callbackData = callbackQuery.Data;
 
-    if (callbackData.StartsWith("xiaye_rate_") || callbackData.StartsWith("shangye_rate_"))
+    try
     {
-        var page = int.Parse(callbackData.Split('_')[2]);
-        var rates = await GetCurrencyRatesAsync();
-        int itemsPerPage = 10; // 设置每页显示的条目数为10
-        int maxPage = CalculateMaxPage(rates, itemsPerPage); // 计算最大页数
-        if (callbackData.StartsWith("xiaye_rate_"))
+        if (callbackData.StartsWith("xiaye_rate_") || callbackData.StartsWith("shangye_rate_"))
         {
-            page++;
-            if (page > maxPage) // 如果已经是最后一页
+            var page = int.Parse(callbackData.Split('_')[2]);
+            var rates = await GetCurrencyRatesAsync();
+            int itemsPerPage = 10; // 设置每页显示的条目数为10
+            int maxPage = CalculateMaxPage(rates, itemsPerPage); // 计算最大页数
+            if (callbackData.StartsWith("xiaye_rate_"))
             {
-                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是最后一页啦！");
-                return;
+                page++;
+                if (page > maxPage) // 如果已经是最后一页
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是最后一页啦！");
+                    return;
+                }
             }
-        }
-        else // 如果是 "shangye_rate_"
-        {
-            page--;
-            if (page < 1) // 如果已经是第一页
+            else // 如果是 "shangye_rate_"
             {
-                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是第一页啦！");
-                return;
+                page--;
+                if (page < 1) // 如果已经是第一页
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是第一页啦！");
+                    return;
+                }
             }
-        }
 
-        // 更新消息内容而不是发送新的消息
-        await HandleCurrencyRatesCommandAsync(botClient, callbackQuery.Message, page, true);
-        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 关闭加载提示
-    }
-    else
-    {
-        switch (callbackData)
+            // 更新消息内容而不是发送新的消息
+            await HandleCurrencyRatesCommandAsync(botClient, callbackQuery.Message, page, true);
+            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 关闭加载提示
+        }
+        else
         {
-            case "show_transaction_records":
-                await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
-                break;
-            // 其他回调处理...
+            switch (callbackData)
+            {
+                case "show_transaction_records":
+                    await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
+                    break;
+                // 其他回调处理...
+            }
         }
     }
-}        
+    catch (Exception ex)
+    {
+        if (ex.Message.Contains("message can't be edited"))
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: callbackQuery.Message.Chat.Id,
+                text: "操作超时，请重新获取！"
+            );
+        }
+        else
+        {
+            // 处理其他类型的异常
+        }
+    }
+}     
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
