@@ -3657,106 +3657,123 @@ if (isBlacklistCommand)
     }
 }
     }
-if(update.CallbackQuery != null && update.CallbackQuery.Data == "membershipOptions")
+if(update.CallbackQuery != null)
 {
-    var membershipKeyboard = new InlineKeyboardMarkup(new[]
+    try
     {
-        new [] // 第一行按钮
+        if(update.CallbackQuery.Data == "membershipOptions")
         {
-            InlineKeyboardButton.WithCallbackData("3个月会员    24.99 u", "3months"),
-        },
-        new [] // 第二行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("6个月会员    39.99 u", "6months"),
-        },
-        new [] // 第三行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("一年会员    70.99 u", "1year"),
-        },
-        new [] // 第四行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("返回", "back"),
-        }
-    });
+            var membershipKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new [] // 第一行按钮
+                {
+                    InlineKeyboardButton.WithCallbackData("3个月会员    24.99 u", "3months"),
+                },
+                new [] // 第二行按钮
+                {
+                    InlineKeyboardButton.WithCallbackData("6个月会员    39.99 u", "6months"),
+                },
+                new [] // 第三行按钮
+                {
+                    InlineKeyboardButton.WithCallbackData("一年会员    70.99 u", "1year"),
+                },
+                new [] // 第四行按钮
+                {
+                    InlineKeyboardButton.WithCallbackData("返回", "back"),
+                }
+            });
 
-    await botClient.EditMessageTextAsync(
-        chatId: update.CallbackQuery.Message.Chat.Id,
-        messageId: update.CallbackQuery.Message.MessageId,
-        text: "请选择会员期限：",
-        replyMarkup: membershipKeyboard
-    );
-}
-if (update.CallbackQuery != null &&
-    (update.CallbackQuery.Data == "3months" || update.CallbackQuery.Data == "6months" || update.CallbackQuery.Data == "1year"))
-{
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            await botClient.EditMessageTextAsync(
+                chatId: update.CallbackQuery.Message.Chat.Id,
+                messageId: update.CallbackQuery.Message.MessageId,
+                text: "请选择会员期限：",
+                replyMarkup: membershipKeyboard
+            );
+        }
+        else if (update.CallbackQuery.Data == "3months" || update.CallbackQuery.Data == "6months" || update.CallbackQuery.Data == "1year")
+        {
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new [] // 第一行按钮
+                {
+                    InlineKeyboardButton.WithUrl("支付成功", "https://t.me/yifanfu"),
+                    InlineKeyboardButton.WithCallbackData("重新选择", "cancelPayment"),
+                }
+            });
+
+            await botClient.EditMessageTextAsync(
+                chatId: update.CallbackQuery.Message.Chat.Id,
+                messageId: update.CallbackQuery.Message.MessageId,
+                text: "<b>收款地址</b>：<code>TJ4c6esQYEM7jn5s8DD5zk2DBYJTLHnFR3</code>",
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard
+            );
+        }
+        else if (update.CallbackQuery.Data == "cancelPayment")
+        {
+            var membershipKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new [] // 第一行按钮
+                {
+                    InlineKeyboardButton.WithCallbackData("3个月会员    24.99 u", "3months"),
+                },
+                new [] // 第二行按钮
+                {
+                    InlineKeyboardButton.WithCallbackData("6个月会员    39.99 u", "6months"),
+                },
+                new [] // 第三行按钮
+                {
+                    InlineKeyboardButton.WithCallbackData("一年会员    70.99 u", "1year"),
+                },
+                new [] // 第四行按钮
+                {
+                    InlineKeyboardButton.WithCallbackData("返回", "back"),
+                }
+            });
+
+            await botClient.EditMessageTextAsync(
+                chatId: update.CallbackQuery.Message.Chat.Id,
+                messageId: update.CallbackQuery.Message.MessageId,
+                text: "请选择会员期限：",
+                replyMarkup: membershipKeyboard
+            );
+        }
+        else if(update.CallbackQuery.Data == "back")
+        {
+            // 返回上一级菜单
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new [] // 第一行按钮
+                {
+                    //InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
+                    InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions"),
+                    InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1")
+                }
+            });
+
+            await botClient.EditMessageTextAsync(
+                chatId: update.CallbackQuery.Message.Chat.Id,
+                messageId: update.CallbackQuery.Message.MessageId,
+                text: "欢迎使用本机器人,请选择下方按钮操作：",
+                replyMarkup: inlineKeyboard
+            );
+        }
+    }
+    catch (Exception ex)
     {
-        new [] // 第一行按钮
+        if (ex.Message.Contains("message can't be edited"))
         {
-            InlineKeyboardButton.WithUrl("支付成功", "https://t.me/yifanfu"),
-            InlineKeyboardButton.WithCallbackData("重新选择", "cancelPayment"),
+            await botClient.SendTextMessageAsync(
+                chatId: update.CallbackQuery.Message.Chat.Id,
+                text: "操作超时！请重新操作！"
+            );
         }
-    });
-
-    await botClient.EditMessageTextAsync(
-        chatId: update.CallbackQuery.Message.Chat.Id,
-        messageId: update.CallbackQuery.Message.MessageId,
-        text: "<b>收款地址</b>：<code>TJ4c6esQYEM7jn5s8DD5zk2DBYJTLHnFR3</code>",
-        parseMode: ParseMode.Html,
-        replyMarkup: inlineKeyboard
-    );
-}
-
-if (update.CallbackQuery != null && update.CallbackQuery.Data == "cancelPayment")
-{
-    var membershipKeyboard = new InlineKeyboardMarkup(new[]
-    {
-        new [] // 第一行按钮
+        else
         {
-            InlineKeyboardButton.WithCallbackData("3个月会员    24.99 u", "3months"),
-        },
-        new [] // 第二行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("6个月会员    39.99 u", "6months"),
-        },
-        new [] // 第三行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("一年会员    70.99 u", "1year"),
-        },
-        new [] // 第四行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("返回", "back"),
+            // 处理其他类型的异常
         }
-    });
-
-    await botClient.EditMessageTextAsync(
-        chatId: update.CallbackQuery.Message.Chat.Id,
-        messageId: update.CallbackQuery.Message.MessageId,
-        text: "请选择会员期限：",
-        replyMarkup: membershipKeyboard
-    );
-}
-
-if(update.CallbackQuery != null && update.CallbackQuery.Data == "back")
-{
-    // 返回上一级菜单
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
-    {
-        new [] // 第一行按钮
-        {
-            //InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
-            InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions"),
-            InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1")
-        }
-    });
-
-    await botClient.EditMessageTextAsync(
-        chatId: update.CallbackQuery.Message.Chat.Id,
-        messageId: update.CallbackQuery.Message.MessageId,
-        text: "欢迎使用本机器人,请选择下方按钮操作：",
-        replyMarkup: inlineKeyboard
-    );
-}        
+    }
+}       
     else if (update.Type == UpdateType.MyChatMember)
     {
         var chatMemberUpdated = update.MyChatMember;
