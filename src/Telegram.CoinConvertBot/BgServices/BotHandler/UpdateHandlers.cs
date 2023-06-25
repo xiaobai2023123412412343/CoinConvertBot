@@ -2909,7 +2909,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     }
 }
 
-static async Task<(decimal[], decimal[])> GetCryptoPricesAsync(string[] symbols)
+static async Task<(decimal[], decimal[])> GetCryptoPricesAsync(string[] symbols, int retryCount = 0)
 {
     try
     {
@@ -2942,6 +2942,14 @@ static async Task<(decimal[], decimal[])> GetCryptoPricesAsync(string[] symbols)
     catch (Exception ex)
     {
         Log.Logger.Error($"Error in GetCryptoPricesAsync: {ex.Message}");
+
+        // 如果重试次数小于3，再次调用此方法
+        if (retryCount < 3)
+        {
+            Log.Logger.Information("Retrying GetCryptoPricesAsync...");
+            return await GetCryptoPricesAsync(symbols, retryCount + 1);
+        }
+
         return (new decimal[0], new decimal[0]); // 当发生异常时，返回空数组
     }
 }
