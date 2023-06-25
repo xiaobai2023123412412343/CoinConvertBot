@@ -3465,49 +3465,66 @@ if (update.Type == UpdateType.CallbackQuery)
     var callbackQuery = update.CallbackQuery;
     var callbackData = callbackQuery.Data;
 
-    if (callbackData.StartsWith("prev_page_") || callbackData.StartsWith("next_page_"))
+    try
     {
-        var page = int.Parse(callbackData.Split('_')[2]);
-        if (callbackData.StartsWith("prev_page_"))
+        if (callbackData.StartsWith("prev_page_") || callbackData.StartsWith("next_page_"))
         {
-            if (page > 0)
+            var page = int.Parse(callbackData.Split('_')[2]);
+            if (callbackData.StartsWith("prev_page_"))
             {
-                page--;
+                if (page > 0)
+                {
+                    page--;
+                }
+                else
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是第一页啦！");
+                    return;
+                }
             }
-            else
+            else // next_page
             {
-                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是第一页啦！");
-                return;
+                if (page < Followers.Count / 15) // 假设 Followers 是你的数据源
+                {
+                    page++;
+                }
+                else
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是最后一页啦！");
+                    return;
+                }
             }
-        }
-        else // next_page
-        {
-            if (page < Followers.Count / 15) // 假设 Followers 是你的数据源
-            {
-                page++;
-            }
-            else
-            {
-                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是最后一页啦！");
-                return;
-            }
-        }
 
-        // 更新消息内容而不是发送新的消息
-        await HandleGetFollowersCommandAsync(botClient, callbackQuery.Message, page, true);
-        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 关闭加载提示
-    }
-    else
-    {
-        switch (callbackData)
+            // 更新消息内容而不是发送新的消息
+            await HandleGetFollowersCommandAsync(botClient, callbackQuery.Message, page, true);
+            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 关闭加载提示
+        }
+        else
         {
-            case "show_transaction_records":
-                await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
-                break;
-            // 其他回调处理...
+            switch (callbackData)
+            {
+                case "show_transaction_records":
+                    await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
+                    break;
+                // 其他回调处理...
+            }
         }
     }
-}
+    catch (Exception ex)
+    {
+        if (ex.Message.Contains("message can't be edited"))
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: callbackQuery.Message.Chat.Id,
+                text: "数据超时，请重新获取！"
+            );
+        }
+        else
+        {
+            // 处理其他类型的异常
+        }
+    }
+} 
         if (update.Type == UpdateType.Message)
     {
 var message = update.Message;
