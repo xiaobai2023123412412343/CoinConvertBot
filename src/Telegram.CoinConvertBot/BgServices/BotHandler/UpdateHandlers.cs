@@ -4079,6 +4079,19 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         chatId: message.Chat.Id,
         messageId: sentMessageForMonitoring.MessageId
     );
+
+    // 尝试撤回 /jiankong 指令
+    try
+    {
+        await botClient.DeleteMessageAsync(
+            chatId: message.Chat.Id,
+            messageId: message.MessageId
+        );
+    }
+    catch (Telegram.Bot.Exceptions.ApiRequestException)
+    {
+        // 如果机器人没有权限，忽略异常
+    }
 }
 
 // 监控名字和用户名变更
