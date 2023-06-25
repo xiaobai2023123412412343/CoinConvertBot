@@ -2759,11 +2759,17 @@ public class FngData
     public int FngValue { get; set; }
     public string FngClassification { get; set; }
 }
-static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, Message message)
+// 将 cryptoSymbols 提升为类的成员变量
+private static string[] cryptoSymbols = new[] { "tether","bitcoin", "ethereum", "binancecoin","bitget-token", "okb","huobi-token","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };  
+static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, Message message, int page = 1, bool editMessage = false)
 {
     try
     {
-        var cryptoSymbols = new[] { "tether","bitcoin", "ethereum", "binancecoin","bitget-token", "okb","huobi-token","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };
+        //var cryptoSymbols = new[] { "tether","bitcoin", "ethereum", "binancecoin","bitget-token", "okb","huobi-token","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };
+
+        var pageSize = 8; // 每页显示的数量
+        var totalPages = (int)Math.Ceiling((double)cryptoSymbols.Length / pageSize); // 总页数
+        page = Math.Max(1, Math.Min(page, totalPages)); // 确保页数在有效范围内
 
         // 同时开始三个任务
         var fearAndGreedIndexTask = GetFearAndGreedIndexAsync();
@@ -2815,7 +2821,9 @@ Func<int, string> GetClassification = value =>
 text += $"今日：{today} {GetClassification(today)}     昨日：{yesterday} {GetClassification(yesterday)}\n";
 text += $"上周：{weekly:0} {GetClassification((int)weekly)}     上月：{monthly:0} {GetClassification((int)monthly)}\n\n";
 
-for (int i = 0; i < cryptoSymbols.Length; i++)
+var startIndex = (page - 1) * pageSize;
+var endIndex = Math.Min(startIndex + pageSize, cryptoSymbols.Length);        
+for (int i = startIndex; i < endIndex; i++)
 {
     var cryptoName = cryptoNames[cryptoSymbols[i]];
     var changeText = changes[i] < 0 ? $"<b>-</b>{Math.Abs(changes[i]):0.##}%" : $"<b>+</b>{changes[i]:0.##}%";
@@ -2858,22 +2866,41 @@ for (int i = 0; i < cryptoSymbols.Length; i++)
         keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
         keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
 
-        // 创建内联按钮
-        var inlineKeyboard = new InlineKeyboardMarkup(new[]
-        {
-            new [] // 第一行按钮
-            {
-                InlineKeyboardButton.WithUrl("\U0001F4B9 一起穿越币圈牛熊 \U0001F4B9", "https://t.me/+b4NunT6Vwf0wZWI1"),
-            },
-        });
+// 创建内联按钮
+var inlineKeyboard = new InlineKeyboardMarkup(new[]
+{
+    new [] // 第一行按钮
+    {
+        InlineKeyboardButton.WithCallbackData("上一页", $"shangyiye_{page - 1}"),
+        InlineKeyboardButton.WithCallbackData("下一页", $"xiayiye_{page + 1}"),
+    },
+    new [] // 第二行按钮
+    {
+        InlineKeyboardButton.WithUrl("\U0001F4B9 一起穿越币圈牛熊 \U0001F4B9", "https://t.me/+b4NunT6Vwf0wZWI1"),
+    },
+});
 
-        // 发送带有内联按钮的消息
+    if (editMessage)
+    {
+        // 使用 EditMessageTextAsync 方法编辑现有的消息
+        return await botClient.EditMessageTextAsync(
+            chatId: message.Chat.Id,
+            messageId: message.MessageId,
+            text: text, // 你可以将 'text' 替换为需要发送的文本
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
+    }
+    else
+    {
+        // 使用 SendTextMessageAsync 方法发送新的消息
         return await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: text, // 你可以将 'text' 替换为需要发送的文本
             parseMode: ParseMode.Html,
             replyMarkup: inlineKeyboard
         );
+    }
     }
     catch (Exception ex)
     {
@@ -3366,6 +3393,56 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         // ... 其他现有代码 ...
     }
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data;
+
+    if (callbackData.StartsWith("shangyiye_") || callbackData.StartsWith("xiayiye_"))
+    {
+        var page = int.Parse(callbackData.Split('_')[1]);
+        var totalPages = (int)Math.Ceiling((double)cryptoSymbols.Length / 8); // 总页数
+
+        if (callbackData.StartsWith("shangyiye_"))
+        {
+            if (page > 0) // 修改了这里，确保页数大于0才能减少
+            {
+                page--;
+            }
+            else
+            {
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是第一页啦！");
+                return;
+            }
+        }
+        else // xiayiye
+        {
+            if (page <= totalPages) // 确保页数小于或等于总页数才能增加
+            {
+                page++;
+            }
+            else
+            {
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是最后一页啦！");
+                return;
+            }
+        }
+
+        // 更新消息内容而不是发送新的消息
+        await SendCryptoPricesAsync(botClient, callbackQuery.Message, page, true);
+        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 关闭加载提示
+    }
+    else
+    {
+        switch (callbackData)
+        {
+            case "show_transaction_records":
+                await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
+                break;
+            // 其他回调处理...
+        }
+    }
+} 
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
@@ -4071,11 +4148,11 @@ TRX（波场币）多重签名（Multisig）是一种安全机制，允许多个
         var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
         _ = SendAdvertisementOnce(botClient, cancellationTokenSource.Token, rateRepository, FeeRate, message.Chat.Id);
     }        
-        // 添加这部分代码以处理 /crypto 和 /btc 指令
-        if (messageText.StartsWith("\U0001F4B8币圈行情", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
-        {
-            await SendCryptoPricesAsync(botClient, message);
-        }
+// 添加这部分代码以处理 /crypto 和 /btc 指令
+if (messageText.StartsWith("\U0001F4B8币圈行情", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
+{
+    await SendCryptoPricesAsync(botClient, message, 1, false);
+}
 else
 {
     // 修改正则表达式以检测至少一个运算符
