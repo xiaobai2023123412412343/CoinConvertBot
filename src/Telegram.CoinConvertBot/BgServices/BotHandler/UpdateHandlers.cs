@@ -3398,48 +3398,65 @@ if (update.Type == UpdateType.CallbackQuery)
     var callbackQuery = update.CallbackQuery;
     var callbackData = callbackQuery.Data;
 
-    if (callbackData.StartsWith("shangyiye_") || callbackData.StartsWith("xiayiye_"))
+    try
     {
-        var page = int.Parse(callbackData.Split('_')[1]);
-        var totalPages = (int)Math.Ceiling((double)cryptoSymbols.Length / 8); // 总页数
-
-        if (callbackData.StartsWith("shangyiye_"))
+        if (callbackData.StartsWith("shangyiye_") || callbackData.StartsWith("xiayiye_"))
         {
-            if (page > 0) // 修改了这里，确保页数大于0才能减少
+            var page = int.Parse(callbackData.Split('_')[1]);
+            var totalPages = (int)Math.Ceiling((double)cryptoSymbols.Length / 8); // 总页数
+
+            if (callbackData.StartsWith("shangyiye_"))
             {
-                page--;
+                if (page > 0) // 修改了这里，确保页数大于0才能减少
+                {
+                    page--;
+                }
+                else
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是第一页啦！");
+                    return;
+                }
             }
-            else
+            else // xiayiye
             {
-                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是第一页啦！");
-                return;
+                if (page <= totalPages) // 确保页数小于或等于总页数才能增加
+                {
+                    page++;
+                }
+                else
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是最后一页啦！");
+                    return;
+                }
+            }
+
+            // 更新消息内容而不是发送新的消息
+            await SendCryptoPricesAsync(botClient, callbackQuery.Message, page, true);
+            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 关闭加载提示
+        }
+        else
+        {
+            switch (callbackData)
+            {
+                case "show_transaction_records":
+                    await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
+                    break;
+                // 其他回调处理...
             }
         }
-        else // xiayiye
-        {
-            if (page <= totalPages) // 确保页数小于或等于总页数才能增加
-            {
-                page++;
-            }
-            else
-            {
-                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, "已经是最后一页啦！");
-                return;
-            }
-        }
-
-        // 更新消息内容而不是发送新的消息
-        await SendCryptoPricesAsync(botClient, callbackQuery.Message, page, true);
-        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 关闭加载提示
     }
-    else
+    catch (Exception ex)
     {
-        switch (callbackData)
+        if (ex.Message.Contains("message can't be edited"))
         {
-            case "show_transaction_records":
-                await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
-                break;
-            // 其他回调处理...
+            await botClient.SendTextMessageAsync(
+                chatId: callbackQuery.Message.Chat.Id,
+                text: "数据超时，请重新获取！"
+            );
+        }
+        else
+        {
+            // 处理其他类型的异常
         }
     }
 } 
