@@ -201,22 +201,28 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
     {
         ("tether", "USDT", "泰达币"),
         ("bitcoin", "比特币", "btc"),
+        ("bitcoin-cash", "比特现金", "bch"),
         ("ethereum", "以太坊", "eth"),
+        ("ethereum-classic", "以太经典", "etc"),
         ("binancecoin", "币安币", "bnb"),
-        ("bitget-token", "币记-BGB", "BGB"),
+        ("bitget-token", "币记-BGB", "bgb"),
         ("okb", "欧易-okb", "okb"),
         ("huobi-token", "火币积分-HT", "ht"),
+        ("the-open-network", "电报币", "ton"),
         ("ripple", "瑞波币", "xrp"),
         ("cardano", "艾达币", "ada"),
+        ("uniswap", "uni", "uni"),
         ("dogecoin", "狗狗币", "doge"),
         ("shiba-inu", "shib", "shib"),
         ("solana", "Sol", "sol"),
+        ("avalanche-2", "AVAX", "avax"),
         ("litecoin", "莱特币", "ltc"),
-        ("chainlink", "link", "link"),
-        ("the-open-network", "电报币", "ton")
+        ("monero", "门罗币", "xmr"),
+        ("chainlink", "link", "link")
     };
 
-    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase);
+    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$", RegexOptions.IgnoreCase);
+
     
     if (!match.Success)
     {
@@ -3826,7 +3832,7 @@ if (containsUsername)
             var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|cny|jiankong)|会员代开|汇率换算|实时汇率|U兑TRX|币圈行情|外汇助手|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
-            var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$)", RegexOptions.IgnoreCase);
+            var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
 
             // 检查输入文本是否为纯中文文本带空格
             var isChineseTextWithSpaces = Regex.IsMatch(inputText, @"^[\u4e00-\u9fa5\s]+$");
@@ -4344,7 +4350,7 @@ if (Regex.IsMatch(message.Text, @"用户名：|ID："))
 {
     await HandleStoreCommandAsync(botClient, message);
 }       
-if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton)$", RegexOptions.IgnoreCase))
+if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$", RegexOptions.IgnoreCase))
 {
     await HandleCryptoCurrencyMessageAsync(botClient, message);
 }  
