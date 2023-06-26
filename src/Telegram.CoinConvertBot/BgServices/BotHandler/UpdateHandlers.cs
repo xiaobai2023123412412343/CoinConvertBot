@@ -2889,14 +2889,35 @@ public class FngData
     public string FngClassification { get; set; }
 }
 // 将 cryptoSymbols 提升为类的成员变量
-private static string[] cryptoSymbols = new[] { "tether","bitcoin", "ethereum", "binancecoin","bitget-token", "okb","huobi-token","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };  
+private static string[] cryptoSymbols = new[] { 
+    "tether", 
+    "bitcoin", 
+    "bitcoin-cash", 
+    "ethereum", 
+    "ethereum-classic", 
+    "binancecoin", 
+    "bitget-token", 
+    "okb", 
+    "huobi-token", 
+    "the-open-network",    
+    "ripple", 
+    "cardano", 
+    "uniswap", 
+    "dogecoin", 
+    "shiba-inu", 
+    "solana", 
+    "avalanche-2", 
+    "litecoin", 
+    "monero", 
+    "chainlink"
+};
 static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, Message message, int page = 1, bool editMessage = false)
 {
     try
     {
         //var cryptoSymbols = new[] { "tether","bitcoin", "ethereum", "binancecoin","bitget-token", "okb","huobi-token","ripple", "cardano", "dogecoin","shiba-inu", "solana", "litecoin", "chainlink", "the-open-network" };
 
-        var pageSize = 8; // 每页显示的数量
+        var pageSize = 10; // 每页显示的数量
         var totalPages = (int)Math.Ceiling((double)cryptoSymbols.Length / pageSize); // 总页数
         page = Math.Max(1, Math.Min(page, totalPages)); // 确保页数在有效范围内
 
@@ -2917,19 +2938,24 @@ static async Task<Message> SendCryptoPricesAsync(ITelegramBotClient botClient, M
         {
             { "tether", "USDT" },
             { "bitcoin", "比特币" },
+            { "bitcoin-cash", "比特现金" }, 
             { "ethereum", "以太坊" },
+            { "ethereum-classic", "以太经典" },
             { "binancecoin", "币安币" },
             { "bitget-token", "币记-BGB" },  
             { "okb", "欧易-okb" }, 
             { "huobi-token", "火币积分-HT" }, 
+            { "the-open-network", "电报币" },          
             { "ripple", "瑞波币" },
             { "cardano", "艾达币" },
+            { "uniswap", "uni" },
             { "dogecoin", "狗狗币" },
             { "shiba-inu", "shib" },
             { "solana", "Sol" },
+            { "avalanche-2", "AVAX" },
             { "litecoin", "莱特币" },
-            { "chainlink", "link" },
-            { "the-open-network", "电报币" }
+            { "monero", "门罗币" },
+            { "chainlink", "link" }
         };
 
 var text = "<b>币圈热门币种实时价格及恐惧与贪婪指数:</b>\n\n";
@@ -2969,7 +2995,7 @@ for (int i = startIndex; i < endIndex; i++)
     }
     text += $"<code>{cryptoName}: ${priceText}  {changeText}</code>\n"; // 将 priceText 添加到消息文本中
     // 添加分隔符
-    if (i < cryptoSymbols.Length - 1) // 防止在最后一行也添加分隔符
+    if (i < endIndex - 1) // 只在当前页的非最后一行添加分隔符
     {
         text += "———————————————\n";
     }
@@ -3602,7 +3628,7 @@ if (update.Type == UpdateType.CallbackQuery)
         if (callbackData.StartsWith("shangyiye_") || callbackData.StartsWith("xiayiye_"))
         {
             var page = int.Parse(callbackData.Split('_')[1]);
-            var totalPages = (int)Math.Ceiling((double)cryptoSymbols.Length / 8); // 总页数
+            var totalPages = (int)Math.Ceiling((double)cryptoSymbols.Length / 10); // 总页数
 
             if (callbackData.StartsWith("shangyiye_"))
             {
