@@ -45,6 +45,8 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //const string BOT_USERNAME = "yifanfubot";//机器人用户名
 // 指定管理员ID
 //const int ADMIN_ID = 1427768220;//指定管理员ID不转发
+// 将这个值替换为目标群组的ID
+//const long TARGET_CHAT_ID = -894216057;//指定群聊转发用户对机器人发送的信息
 //    static GroupManager()  广告发到指定群聊
 //    {
 //        // 添加初始群组 ID
