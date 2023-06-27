@@ -4215,20 +4215,70 @@ Telegram 官方只开放了语言包翻译接口, 官方没有提供中文语言
     var text = message.Text;
     var chatType = message.Chat.Type;
     var isMentioned = message.Entities?.Any(e => e.Type == MessageEntityType.Mention) ?? false;
-    var containsCommand = botCommands.Any(cmd => text.Contains($"{cmd}@{BOT_USERNAME}") || text.StartsWith(cmd));
+    var containsCommand = botCommands.Any(cmd => text.StartsWith($"{cmd}@{BOT_USERNAME}") || text.StartsWith(cmd));
 
-    if (userId != ADMIN_ID && (chatType == ChatType.Private || (chatType == ChatType.Group && (isMentioned || containsCommand))))
+    string chatOrigin;
+    if (chatType == ChatType.Private)
     {
-        string chatOrigin = chatType == ChatType.Private ? "来自私聊" : "来自群聊";
-        string forwardedMessage = $"{timestamp}  {userFullName}  @{username} (ID:<code> {userId}</code>)\n\n{chatOrigin}：<code>{text}</code>";
+        chatOrigin = "来自私聊";
+    }
+    else if (chatType == ChatType.Group || chatType == ChatType.Supergroup)
+    {
+        chatOrigin = "来自群聊";
+    }
+    else if (chatType == ChatType.Channel)
+    {
+        chatOrigin = "来自频道";
+    }
+    else
+    {
+        chatOrigin = "未知来源";
+    }
 
-        await botClient.SendTextMessageAsync(
-            chatId: TARGET_CHAT_ID,
-            text: forwardedMessage,
-            parseMode: ParseMode.Html
-        );
+    string forwardedMessage = $"{timestamp}  {userFullName}  @{username} (ID:<code> {userId}</code>)\n\n{chatOrigin}：<code>{text}</code>";
+
+    if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCommand))
+    {
+        if (userId != ADMIN_ID)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: TARGET_CHAT_ID,
+                text: forwardedMessage,
+                parseMode: ParseMode.Html
+            );
+        }
     }
 }  
+if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClient.BotId)
+{
+    // 解析出被回复消息中的用户ID
+    var match = Regex.Match(message.ReplyToMessage.Text, @"ID: (\d+)");
+    if (match.Success)
+    {
+        var userId = long.Parse(match.Groups[1].Value);
+
+        try
+        {
+            // 尝试向该用户发送新的消息
+            await botClient.SendTextMessageAsync(
+                chatId: userId,
+                text: message.Text
+            );
+        }
+        catch (Exception ex)
+        {
+            // 如果发送消息失败，捕获异常并在当前位置发送错误消息
+            var errorMsg = ex.Message.Contains("Forbidden: bot was blocked by the user") 
+                ? "信息发送失败：机器人被用户阻止" 
+                : $"信息发送失败：<code>{ex.Message}</code>";
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: errorMsg,
+                parseMode: ParseMode.Html
+            );
+        }
+    }
+}
 if (messageText.Equals("ID", StringComparison.OrdinalIgnoreCase) || messageText.Equals("id", StringComparison.OrdinalIgnoreCase))
 {
     await HandleIdCommandAsync(botClient, message);
