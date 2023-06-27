@@ -247,26 +247,32 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
     var cryptoToCnyRate = cryptoPriceInUsdt * cnyPerUsdt;
 
     var rates = await GetCurrencyRatesAsync();
-    var responseText = $"<b>{amount} 枚 {currencyTuple.Item2}</b> 的价值是：\n\n<code>{cryptoToCnyRate:N2} 人民币 (CNY)</code>\n—————————————————\n";
-    var rateList = rates.ToList();
-for (int i = 0; i < rateList.Count; i++)
+var responseText = $"<b>{amount} 枚 {currencyTuple.Item2}</b> 的价值是：\n\n<code>{cryptoToCnyRate:N2} 人民币 (CNY)</code>\n—————————————————\n";
+var rateList = rates.ToList();
+for (int i = 0; i < Math.Min(9, rateList.Count); i++)
 {
     var rate = rateList[i];
     var cryptoPriceInCurrency = cryptoPriceInCny * rate.Value.Item1;
     var currencyFullName = CurrencyFullNames.ContainsKey(rate.Key) ? CurrencyFullNames[rate.Key] : rate.Key;
     responseText += $"<code>{cryptoPriceInCurrency:N2} {currencyFullName}</code>";
-    if (i != rateList.Count - 1)
+    if (i != Math.Min(9, rateList.Count) - 1)
     {
         responseText += "\n—————————————————\n";
     }
 }
 
-    var inlineKeyboardButton = new InlineKeyboardButton("穿越牛熊，慢，就是快！")
-    {
-        Url = "https://t.me/+b4NunT6Vwf0wZWI1"
-    };
+var inlineKeyboardButton1 = new InlineKeyboardButton($"完整的 {currencyTuple.Item2} 价值表")
+{
+    CallbackData = $"full_rates,{cryptoPriceInCny},{amount},{currencyTuple.Item2},{cryptoPriceInCny}"
+};
 
-    var inlineKeyboard = new InlineKeyboardMarkup(inlineKeyboardButton);
+var inlineKeyboardButton2 = InlineKeyboardButton.WithUrl("穿越牛熊，慢，就是快！", "https://t.me/+b4NunT6Vwf0wZWI1");
+
+var inlineKeyboard = new InlineKeyboardMarkup(new[]
+{
+    new [] { inlineKeyboardButton1 },
+    new [] { inlineKeyboardButton2 }
+});
 
 try
 {
@@ -3562,6 +3568,51 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         // ... 其他现有代码 ...
     }
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data.Split(',');
+    if (callbackData[0] == "full_rates")
+    {
+        // 从 CallbackData 中获取信息
+        var cryptoPriceInCny = decimal.Parse(callbackData[1]);
+        var amount = decimal.Parse(callbackData[2]);
+        var currencyName = callbackData[3];
+        var cryptoPriceInCnyOriginal = decimal.Parse(callbackData[4]);
+
+        // 获取所有汇率
+        var rates = await GetCurrencyRatesAsync();
+        // 使用 amount 变量来动态生成消息
+        var responseText = $"<b>{amount} 枚 {currencyName}</b> 的价值是：\n\n<code>{cryptoPriceInCnyOriginal:N2} 人民币 (CNY)</code>\n—————————————————\n";
+        var rateList = rates.ToList();
+        for (int i = 0; i < rateList.Count; i++)
+        {
+            var rate = rateList[i];
+            var cryptoPriceInCurrency = cryptoPriceInCny * rate.Value.Item1;
+            var currencyFullName = CurrencyFullNames.ContainsKey(rate.Key) ? CurrencyFullNames[rate.Key] : rate.Key;
+            responseText += $"<code>{cryptoPriceInCurrency:N2} {currencyFullName}</code>";
+            if (i != rateList.Count - 1)
+            {
+                responseText += "\n—————————————————\n";
+            }
+        }
+
+        // 创建一个新的内联按钮
+        var inlineKeyboardButton = InlineKeyboardButton.WithUrl("穿越牛熊，慢，就是快！", "https://t.me/+b4NunT6Vwf0wZWI1");
+        var inlineKeyboard = new InlineKeyboardMarkup(new[] { inlineKeyboardButton });
+
+        // 替换旧的消息，并添加新的内联按钮
+        await botClient.EditMessageTextAsync(chatId: callbackQuery.Message.Chat.Id,
+                                             messageId: callbackQuery.Message.MessageId,
+                                             text: responseText,
+                                             parseMode: ParseMode.Html,
+                                             replyMarkup: inlineKeyboard);
+    }
+    else
+    {
+        await BotOnCallbackQueryReceived(botClient, callbackQuery);
+    }
+}
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
