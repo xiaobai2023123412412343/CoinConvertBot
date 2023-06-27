@@ -1622,9 +1622,22 @@ public static int ChineseToArabic(string chineseNumber)
     return number;
 }
     
+private static readonly Dictionary<string, bool> handledCallbackQueries = new Dictionary<string, bool>();
+
 private static async Task BotOnCallbackQueryReceived(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
     var callbackData = callbackQuery.Data;
+    var callbackQueryId = callbackQuery.Id;
+
+    // 检查这个回调查询是否已经被处理过
+    if (handledCallbackQueries.ContainsKey(callbackQueryId))
+    {
+        // 如果已经被处理过，那么就直接返回，不再处理这个回调查询
+        return;
+    }
+
+    // 将这个回调查询的 ID 添加到字典中，表示已经处理过
+    handledCallbackQueries[callbackQueryId] = true;
 
     if (callbackData == "show_address")
     {
@@ -1640,7 +1653,7 @@ private static async Task BotOnCallbackQueryReceived(ITelegramBotClient botClien
             parseMode: ParseMode.Html
         );
     }
-}  
+} 
 private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Message message)
 {
     if (message.Text.Contains("帮助"))
