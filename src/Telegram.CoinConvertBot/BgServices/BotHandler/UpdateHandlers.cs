@@ -1205,8 +1205,7 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
         Console.WriteLine($"发生意外错误: {ex.Message}");
     }
 }
-// 添加一个类级别的变量来跟踪广告是否正在运行
-private static bool isAdvertisementRunning = false;    
+
 //获取关注列表   
 private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
@@ -3403,6 +3402,8 @@ private static async Task<(decimal longRate, decimal shortRate)> GetH1EthLongSho
         return (0, 0);
     }
 }
+// 添加一个类级别的变量来跟踪广告是否正在运行
+private static bool isAdvertisementRunning = false;        
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
   
