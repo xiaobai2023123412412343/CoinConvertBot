@@ -3280,41 +3280,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
             }),
         cancellationToken: cancellationToken);
 }
-public static class GroupManager
-{
-    private static HashSet<long> groupIds = new HashSet<long>();
 
-    static GroupManager()
-    {
-        // 添加初始群组 ID
-        groupIds.Add(-1001862069013);  // 大号群ID
-        //groupIds.Add(-917223865);  // 添加第二个初始群组 ID
-    }
-
-    public static IReadOnlyCollection<long> GroupIds => groupIds.ToList().AsReadOnly();
-
-    public static void AddGroupId(long id)
-    {
-        groupIds.Add(id);
-    }
-
-    public static void RemoveGroupId(long id)  // 这是新添加的方法
-    {
-        groupIds.Remove(id);
-    }
-public static void ToggleAdvertisement(long groupId, bool enable)
-{
-    if (enable)
-    {
-        AddGroupId(groupId);
-    }
-    else
-    {
-        RemoveGroupId(groupId);
-    }
-}
-    
-}
 //获取24小时全网合约爆仓
 private static async Task<decimal> GetH24TotalVolUsdAsync(string apiUrl, string apiKey)
 {
@@ -3400,6 +3366,45 @@ private static async Task<(decimal longRate, decimal shortRate)> GetH1EthLongSho
     {
         Console.WriteLine($"获取以太坊1小时长短期利率时发生异常：{ex.Message}");
         return (0, 0);
+    }
+}
+public static class GroupManager
+{
+    private static HashSet<long> groupIds = new HashSet<long>();
+
+    static GroupManager()
+    {
+        // 添加初始群组 ID
+        groupIds.Add(-1001862069013);  // 大号群ID
+        //groupIds.Add(-917223865);  // 添加第二个初始群组 ID
+    }
+
+    public static IReadOnlyCollection<long> GroupIds => groupIds.ToList().AsReadOnly();
+
+    public static void AddGroupId(long id)
+    {
+        // 只有当 ID 是负数时才将其添加到 groupIds 集合中
+        if (id < 0)
+        {
+            groupIds.Add(id);
+        }
+    }
+
+    public static void RemoveGroupId(long id)  // 这是新添加的方法
+    {
+        groupIds.Remove(id);
+    }
+
+    public static void ToggleAdvertisement(long groupId, bool enable)
+    {
+        if (enable)
+        {
+            AddGroupId(groupId);
+        }
+        else
+        {
+            RemoveGroupId(groupId);
+        }
     }
 }
 // 添加一个类级别的变量来跟踪广告是否正在运行
