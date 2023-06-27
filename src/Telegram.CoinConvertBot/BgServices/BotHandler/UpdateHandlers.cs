@@ -4236,8 +4236,11 @@ Telegram 官方只开放了语言包翻译接口, 官方没有提供中文语言
     }
 
     string forwardedMessage = $"{timestamp}  {userFullName}  @{username} (ID:<code> {userId}</code>)\n\n{chatOrigin}：<code>{text}</code>";
+    var isTronAddress = Regex.IsMatch(text, @"^(T[A-Za-z0-9]{33})$");// 新增：检查消息是否是波场地址  新增：检查消息是否是数字+货币的组合
+    var isNumberCurrency = Regex.IsMatch(text, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
 
-    if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCommand))
+
+    if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCommand) || isTronAddress || isNumberCurrency)
     {
         if (userId != ADMIN_ID)
         {
