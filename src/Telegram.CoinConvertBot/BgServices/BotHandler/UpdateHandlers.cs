@@ -780,6 +780,18 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
 
             break; // 如果成功启动监控任务，跳出循环
         }
+        catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+        {
+            // 如果机器人请求次数过多
+            if (apiEx.Message.Contains("Too Many Requests"))
+            {
+                // 暂停10分钟
+                await Task.Delay(TimeSpan.FromMinutes(10));
+
+                // 重新启动监控任务
+                StartMonitoring(botClient, chatId);
+            }
+        }        
         catch (Exception ex)
         {
             // 打印错误信息
@@ -885,6 +897,15 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
                     Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
                     return;
                 }
+        // 如果机器人请求次数过多
+        if (apiEx.Message.Contains("Too Many Requests"))
+        {
+            // 暂停10分钟
+            await Task.Delay(TimeSpan.FromMinutes(10));
+
+            // 重新启动监控任务
+            StartMonitoring(botClient, chatId);
+        }                
                 throw;
             }
         }
@@ -949,6 +970,7 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
         }        
         throw;  // 其他错误，继续抛出
     }
+
 catch (Exception ex) // 捕获所有异常
 {
     // 打印错误信息
@@ -1072,6 +1094,18 @@ public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient b
 
         groupUserInfo[chatId][userId] = (username, name);
     }
+    catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+    {
+        // 如果机器人请求次数过多
+        if (apiEx.Message.Contains("Too Many Requests"))
+        {
+            // 暂停10分钟
+            await Task.Delay(TimeSpan.FromMinutes(10));
+
+            // 重新启动监控任务
+            StartMonitoring(botClient, chatId);
+        }
+    }    
     catch (Exception ex)
     {
         // 打印错误信息
