@@ -1268,12 +1268,13 @@ private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClie
     try
     {
         var transactionRecords = await GetTransactionRecordsAsync(botClient, callbackQuery.Message);
-        await botClient.EditMessageTextAsync(
-            chatId: callbackQuery.Message.Chat.Id,
-            messageId: callbackQuery.Message.MessageId,
-            text: transactionRecords,
-            replyMarkup: null
-        );
+        // 不再发送消息
+        // await botClient.EditMessageTextAsync(
+        //     chatId: callbackQuery.Message.Chat.Id,
+        //     messageId: callbackQuery.Message.MessageId,
+        //     text: transactionRecords,
+        //     replyMarkup: null
+        // );
         await botClient.AnswerCallbackQueryAsync(callbackQuery.Id); // 结束回调查询
     }
     catch (Exception ex)
@@ -1283,7 +1284,7 @@ private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClie
             text: $"获取交易记录时发生错误：{ex.Message}"
         );
     }
-}    
+}   
 private static void AddFollower(Message message)
 {
     var user = Followers.FirstOrDefault(x => x.Id == message.From.Id);
