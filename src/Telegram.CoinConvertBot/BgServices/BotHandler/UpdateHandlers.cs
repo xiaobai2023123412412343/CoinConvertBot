@@ -1742,8 +1742,9 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
 }
 public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient botClient, Message message)
 {
-     // 回复用户正在统计
-    await botClient.SendTextMessageAsync(message.Chat.Id, "正在统计，请稍后...");
+    // 回复用户正在统计
+    var responseMessage = await botClient.SendTextMessageAsync(message.Chat.Id, "正在统计，请稍后...");
+    var responseMessageId = responseMessage.MessageId;
     
     try
     {
@@ -1762,7 +1763,20 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
             var outcomeTransactions = ParseTransactions(outcomeResponseTask.Result, "TRX");
             var usdtTransactions = ParseTransactions(usdtResponseTask.Result, "USDT");
 
-            return FormatTransactionRecords(outcomeTransactions.Concat(usdtTransactions).ToList());
+            var transactionRecords = FormatTransactionRecords(outcomeTransactions.Concat(usdtTransactions).ToList());
+
+            try
+            {
+                await botClient.DeleteMessageAsync(message.Chat.Id, responseMessageId);
+            }
+            catch (Exception ex)
+            {
+                // 如果撤回消息失败，这里可以处理这个异常
+                // 例如，你可以记录这个错误，或者忽略它
+                Console.WriteLine($"撤回消息失败：{ex.Message}");
+            }            
+
+            return transactionRecords;
         }
     }
     catch (Exception ex)
@@ -1770,7 +1784,6 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
         return $"获取交易记录时发生错误：{ex.Message}";
     }
 }
-
 private static List<(DateTime timestamp, string token, decimal amount)> ParseTransactions(string jsonResponse, string token)
 {
     var transactions = new List<(DateTime timestamp, string token, decimal amount)>();
