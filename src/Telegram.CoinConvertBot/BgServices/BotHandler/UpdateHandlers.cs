@@ -1765,15 +1765,23 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
 
             var transactionRecords = FormatTransactionRecords(outcomeTransactions.Concat(usdtTransactions).ToList());
 
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new []
+                {
+                    InlineKeyboardButton.WithCallbackData("\u2705 收入支出全公开，请放心兑换！\u2705", "show_address")
+                }
+            });
+
             try
             {
-                await botClient.DeleteMessageAsync(message.Chat.Id, responseMessageId);
+                await botClient.EditMessageTextAsync(message.Chat.Id, responseMessageId, transactionRecords, replyMarkup: inlineKeyboard);
             }
             catch (Exception ex)
             {
-                // 如果撤回消息失败，这里可以处理这个异常
+                // 如果替换消息失败，这里可以处理这个异常
                 // 例如，你可以记录这个错误，或者忽略它
-                Console.WriteLine($"撤回消息失败：{ex.Message}");
+                Console.WriteLine($"替换消息失败：{ex.Message}");
             }            
 
             return transactionRecords;
@@ -4383,19 +4391,6 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
     {
         // 调用GetTransactionRecordsAsync时传递botClient和message参数
         var transactionRecords = await UpdateHandlers.GetTransactionRecordsAsync(botClient, message);
-        var inlineKeyboard = new InlineKeyboardMarkup(new[]
-        {
-            new []
-            {
-                InlineKeyboardButton.WithCallbackData("\u2705 收入支出全公开，请放心兑换！\u2705", "show_address")
-            }
-        });
-
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: transactionRecords,
-            replyMarkup: inlineKeyboard
-        );
     }
     catch (Exception ex)
     {
@@ -4404,7 +4399,7 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
             text: $"获取交易记录时发生错误：{ex.Message}"
         );
     }
-} 
+}  
 // 检查是否是/jiankong命令
 if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
 {
