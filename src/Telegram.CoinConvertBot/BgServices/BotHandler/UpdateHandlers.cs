@@ -780,18 +780,23 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
 
             break; // 如果成功启动监控任务，跳出循环
         }
-        catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
-        {
-            // 如果机器人请求次数过多
-            if (apiEx.Message.Contains("Too Many Requests"))
-            {
-                // 暂停10分钟
-                await Task.Delay(TimeSpan.FromMinutes(10));
+catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+{
+    // 如果机器人请求次数过多
+    if (apiEx.Message.Contains("Too Many Requests"))
+    {
+        // 暂停10分钟
+        await Task.Delay(TimeSpan.FromMinutes(10));
+    }
+    else
+    {
+        // 对于其他 ApiRequestException 异常，也暂停10分钟
+        await Task.Delay(TimeSpan.FromMinutes(10));
+    }
 
-                // 重新启动监控任务
-                StartMonitoring(botClient, chatId);
-            }
-        }        
+    // 重新启动监控任务
+    StartMonitoring(botClient, chatId);
+}       
         catch (Exception ex)
         {
             // 打印错误信息
@@ -1094,18 +1099,23 @@ public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient b
 
         groupUserInfo[chatId][userId] = (username, name);
     }
-    catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+{
+    // 如果机器人请求次数过多
+    if (apiEx.Message.Contains("Too Many Requests"))
     {
-        // 如果机器人请求次数过多
-        if (apiEx.Message.Contains("Too Many Requests"))
-        {
-            // 暂停10分钟
-            await Task.Delay(TimeSpan.FromMinutes(10));
+        // 暂停10分钟
+        await Task.Delay(TimeSpan.FromMinutes(10));
+    }
+    else
+    {
+        // 对于其他 ApiRequestException 异常，也暂停10分钟
+        await Task.Delay(TimeSpan.FromMinutes(10));
+    }
 
-            // 重新启动监控任务
-            StartMonitoring(botClient, chatId);
-        }
-    }    
+    // 重新启动监控任务
+    StartMonitoring(botClient, chatId);
+}   
     catch (Exception ex)
     {
         // 打印错误信息
