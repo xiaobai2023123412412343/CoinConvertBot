@@ -879,43 +879,49 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
                 }
                 // 在每次请求之间添加延迟
                 await Task.Delay(TimeSpan.FromSeconds(1));
-        if (!string.IsNullOrEmpty(changeInfo))
-        {
-            var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
-            try
-            {
-                await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
-            }
-            catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
-            {
-                // 如果机器人没有发言权限
-                if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+                if (!string.IsNullOrEmpty(changeInfo))
                 {
-                    // 取消当前群聊的监控任务
-                    if (_timers.ContainsKey(chatId))
+                    var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
+                    try
                     {
-                        _timers[chatId].Dispose(); // 停止现有的定时器
-                        _timers.Remove(chatId); // 从字典中移除
+                        await botClient.SendTextMessageAsync(chatId: chatId, text: notification, parseMode: ParseMode.Html);
                     }
+                    catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+                    {
+                        // 如果机器人没有发言权限
+                        if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+                        {
+                            // 取消当前群聊的监控任务
+                            if (_timers.ContainsKey(chatId))
+                            {
+                                _timers[chatId].Dispose(); // 停止现有的定时器
+                                _timers.Remove(chatId); // 从字典中移除
+                            }
 
-                    // 记录这些信息在服务器上
-                    Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
-                    return;
+                            // 记录这些信息在服务器上
+                            Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+                        }
+                        // 如果机器人请求次数过多
+                        else if (apiEx.Message.Contains("Too Many Requests"))
+                        {
+                            // 暂停10分钟
+                            await Task.Delay(TimeSpan.FromMinutes(10));
+
+                            // 重新启动监控任务
+                            StartMonitoring(botClient, chatId);
+                        }                
+                        // 其他的 ApiRequestException 错误
+                        else
+                        {
+                            // 暂停10分钟
+                            await Task.Delay(TimeSpan.FromMinutes(10));
+
+                            // 重新启动监控任务
+                            StartMonitoring(botClient, chatId);
+                        }
+                    }
+                    userInfo[userId] = (username, name);
                 }
-        // 如果机器人请求次数过多
-        if (apiEx.Message.Contains("Too Many Requests"))
-        {
-            // 暂停10分钟
-            await Task.Delay(TimeSpan.FromMinutes(10));
-
-            // 重新启动监控任务
-            StartMonitoring(botClient, chatId);
-        }                
-                throw;
-            }
-        }
-
-                userInfo[userId] = (username, name);
             }
             catch (Exception ex)
             {
@@ -976,57 +982,57 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
         throw;  // 其他错误，继续抛出
     }
 
-catch (Exception ex) // 捕获所有异常
-{
-    // 打印错误信息
-    Console.WriteLine($"Unexpected error: {ex.Message}");
+    catch (Exception ex) // 捕获所有异常
+    {
+        // 打印错误信息
+        Console.WriteLine($"Unexpected error: {ex.Message}");
 
-    // 增加错误计数
-    if (_errorCounts.ContainsKey(chatId))
-    {
-        _errorCounts[chatId]++;
-    }
-    else
-    {
-        _errorCounts[chatId] = 1;
-    }
-
-    // 如果错误次数达到3次，取消任务并发送通知
-    if (_errorCounts[chatId] >= 3)
-    {
-        // 取消当前群聊的监控任务
-        if (_timers.ContainsKey(chatId))
+        // 增加错误计数
+        if (_errorCounts.ContainsKey(chatId))
         {
-            _timers[chatId].Dispose(); // 停止现有的定时器
-            _timers.Remove(chatId); // 从字典中移除
+            _errorCounts[chatId]++;
+        }
+        else
+        {
+            _errorCounts[chatId] = 1;
         }
 
-        // 在本群下发通知：监控任务异常，请重启！
-        await botClient.SendTextMessageAsync(chatId: chatId, text: "监控任务异常，请重启！");
-
-        // 重置错误计数器
-        _errorCounts[chatId] = 0;
-    }
-    else
-    {
-        // 如果错误次数未达到3次，尝试重新启动监控任务
-        try
+        // 如果错误次数达到3次，取消任务并发送通知
+        if (_errorCounts[chatId] >= 3)
         {
-            StartMonitoring(botClient, chatId);
-        }
-        catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
-        {
-            // 如果机器人没有发言权限
-            if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+            // 取消当前群聊的监控任务
+            if (_timers.ContainsKey(chatId))
             {
-                // 记录这些信息在服务器上
-                Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+                _timers[chatId].Dispose(); // 停止现有的定时器
+                _timers.Remove(chatId); // 从字典中移除
+            }
+
+            // 在本群下发通知：监控任务异常，请重启！
+            await botClient.SendTextMessageAsync(chatId: chatId, text: "监控任务异常，请重启！");
+
+            // 重置错误计数器
+            _errorCounts[chatId] = 0;
+        }
+        else
+        {
+            // 如果错误次数未达到3次，尝试重新启动监控任务
+            try
+            {
+                StartMonitoring(botClient, chatId);
+            }
+            catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
+            {
+                // 如果机器人没有发言权限
+                if (apiEx.Message.Contains("not enough rights to send text messages to the chat"))
+                {
+                    // 记录这些信息在服务器上
+                    Console.WriteLine($"Monitor task for chat {chatId} has been cancelled due to lack of message sending rights.");
+                }
             }
         }
-    }
 
-    return;
-}
+        return;
+    }
 }
 private static readonly Dictionary<long, Dictionary<long, (string username, string name)>> groupUserInfo = new Dictionary<long, Dictionary<long, (string username, string name)>>();
 public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient botClient, Message message)
