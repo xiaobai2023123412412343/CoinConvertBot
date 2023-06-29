@@ -1318,7 +1318,7 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
         },
         new [] // 第二行按钮
         {
-            InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_records")
+            InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_recordds")
         }
     });
 
@@ -3862,7 +3862,7 @@ if (update.Type == UpdateType.CallbackQuery)
         {
             switch (callbackData)
             {
-                case "show_transaction_records":
+                case "show_transaction_recordds":
                     await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
                     break;
                 // 其他回调处理...
