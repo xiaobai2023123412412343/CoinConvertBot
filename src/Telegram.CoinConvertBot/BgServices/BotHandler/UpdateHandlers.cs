@@ -3301,7 +3301,7 @@ string fearGreedDescription = GetFearGreedDescription(today);
         (decimal ethLongRate, decimal ethShortRate) = await GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
-string advertisementText = $"————————<b>合约大数据</b>————————\n" +
+string advertisementText = $"—————————<b>合约大数据</b>—————————\n" +
     $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####}</b>\n" +
     $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +
     $"<b>\U0001F4B0实时汇率：100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
@@ -3317,15 +3317,13 @@ string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
+// 你想要发送的照片的URL或file_id
+//string photoUrl = "https://i.postimg.cc/jjK3vbsS/What-is-Bitcoin-Cash.jpg"; // 替换为你的图片URL或file_id
+
 // 创建 InlineKeyboardButton 并设置文本和回调数据
 var visitButton1 = new InlineKeyboardButton("\U0000267B 进交流群")
 {
     Url = "https://t.me/+b4NunT6Vwf0wZWI1" // 将此链接替换为你想要跳转的左侧链接
-};
-
-var visitButton2 = new InlineKeyboardButton("\u2B50 会员代开")
-{
-    Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的右侧链接
 };
 
 var shareToGroupButton = InlineKeyboardButton.WithUrl("\U0001F449 分享到群组 \U0001F448", shareLink);
@@ -3333,21 +3331,25 @@ var shareToGroupButton = InlineKeyboardButton.WithUrl("\U0001F449 分享到群�
 // 创建 InlineKeyboardMarkup 并添加按钮
 var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
-    new[] { visitButton1, visitButton2 }, // 第一行按钮
-    new[] { shareToGroupButton } // 第二行按钮
+    new[] { visitButton1, shareToGroupButton }, // 一行按钮
 });
+
+// 发送带有说明的照片到指定的聊天
+//await botClient.SendPhotoAsync(
+//    chatId: chatId,
+//    photo: photoUrl,
+//    caption: advertisementText,
+//    parseMode: ParseMode.Html,
+//    replyMarkup: inlineKeyboard, // 使用新的inlineKeyboard对象
+//    cancellationToken: cancellationToken);
+    
     // 发送广告到指定的聊天
     await botClient.SendTextMessageAsync(
         chatId: chatId,
         text: advertisementText,
         parseMode: ParseMode.Html,
-        replyMarkup: new InlineKeyboardMarkup(
-            new[]
-            {
-                new[] { visitButton1, visitButton2 },
-                new[] { shareToGroupButton }
-            }),
-        cancellationToken: cancellationToken);
+        replyMarkup: inlineKeyboard, // 使用新的inlineKeyboard对象
+        cancellationToken: cancellationToken);    
 }
 
 //获取24小时全网合约爆仓
