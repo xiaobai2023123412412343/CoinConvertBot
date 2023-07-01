@@ -3264,41 +3264,50 @@ public static async Task<decimal> GetOkxPriceAsync(string baseCurrency, string q
 
 static async Task SendAdvertisementOnce(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate, long chatId)
 {    
-        var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-        var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
-string GetFearGreedDescription(int value)
-{
-    if (value >= 0 && value <= 24)
-        return "极度恐惧";
-    if (value >= 25 && value <= 49)
-        return "恐惧";
-    if (value >= 50 && value <= 74)
-        return "贪婪";
-    return "极度贪婪";
-}
+    var rateTask = rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+    var fearAndGreedIndexTask = GetFearAndGreedIndexAsync();
+    var cryptoPricesTask = GetCryptoPricesAsync(new[] { "bitcoin", "ethereum" });
+    var currencyRatesTask = GetCurrencyRatesAsync();
+    var okxPriceTask = GetOkxPriceAsync("USDT", "CNY", "all");
+    var h24TotalVolUsdTask = GetH24TotalVolUsdAsync("https://open-api.coinglass.com/public/v2/liquidation_info?time_type=h24&symbol=all", "9e8ff0ca25f14355a015972f21f162de");
+    var btcLongShortTask = GetH24LongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h24&symbol=BTC", "9e8ff0ca25f14355a015972f21f162de");
+    var ethLongShortTask = GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
 
-string fearGreedDescription = GetFearGreedDescription(today);        
-        decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
-        // 获取比特币以太坊价格和涨跌幅
-        var cryptoSymbols = new[] { "bitcoin", "ethereum" };
-        var (prices, changes) = await GetCryptoPricesAsync(cryptoSymbols);
-        var bitcoinPrice = prices[0];
-        var ethereumPrice = prices[1];
-        var bitcoinChange = changes[0];
-        var ethereumChange = changes[1];
-        // 获取美元汇率
-        var currencyRates = await GetCurrencyRatesAsync();
-        if (!currencyRates.TryGetValue("美元 (USD)", out var usdRateTuple)) 
-        {
-            Console.WriteLine("Could not find USD rate in response.");
-            return; // 或者你可以选择继续，只是不显示美元汇率
-        }
-        var usdRate = 1 / usdRateTuple.Item1;
-        decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
-         // 获取24小时爆仓信息 后面为网站秘钥 coinglass注册免费获取
-        decimal h24TotalVolUsd = await GetH24TotalVolUsdAsync("https://open-api.coinglass.com/public/v2/liquidation_info?time_type=h24&symbol=all", "9e8ff0ca25f14355a015972f21f162de");
-        (decimal btcLongRate, decimal btcShortRate) = await GetH24LongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h24&symbol=BTC", "9e8ff0ca25f14355a015972f21f162de");
-        (decimal ethLongRate, decimal ethShortRate) = await GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
+    await Task.WhenAll(rateTask, fearAndGreedIndexTask, cryptoPricesTask, currencyRatesTask, okxPriceTask, h24TotalVolUsdTask, btcLongShortTask, ethLongShortTask);
+
+    var rate = await rateTask;
+    var (today, yesterday, weekly, monthly) = await fearAndGreedIndexTask;
+    var (prices, changes) = await cryptoPricesTask;
+    var currencyRates = await currencyRatesTask;
+    var okxPrice = await okxPriceTask;
+    var h24TotalVolUsd = await h24TotalVolUsdTask;
+    var (btcLongRate, btcShortRate) = await btcLongShortTask;
+    var (ethLongRate, ethShortRate) = await ethLongShortTask;
+
+    string GetFearGreedDescription(int value)
+    {
+        if (value >= 0 && value <= 24)
+            return "极度恐惧";
+        if (value >= 25 && value <= 49)
+            return "恐惧";
+        if (value >= 50 && value <= 74)
+            return "贪婪";
+        return "极度贪婪";
+    }
+
+    string fearGreedDescription = GetFearGreedDescription(today);        
+    decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
+    var bitcoinPrice = prices[0];
+    var ethereumPrice = prices[1];
+    var bitcoinChange = changes[0];
+    var ethereumChange = changes[1];
+
+    if (!currencyRates.TryGetValue("美元 (USD)", out var usdRateTuple)) 
+    {
+        Console.WriteLine("Could not find USD rate in response.");
+        return; // 或者你可以选择继续，只是不显示美元汇率
+    }
+    var usdRate = 1 / usdRateTuple.Item1;
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
 string advertisementText = $"—————————<b>合约大数据</b>—————————\n" +
