@@ -2106,16 +2106,19 @@ private static readonly Dictionary<string, string> LanguageCodes = new Dictionar
     { "斯瓦希里语", "sw" },
     { "印尼语", "id" }
 };
-public static async Task<(decimal TotalIncome, decimal MonthlyIncome, decimal DailyIncome, bool IsError)> GetTotalIncomeAsync(string address, bool isTrx)
+public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal MonthlyIncome, decimal MonthlyOutcome, decimal DailyIncome, decimal DailyOutcome, bool IsError)> GetTotalIncomeAsync(string address, bool isTrx)
 {
     try
     {
-        var apiUrl = $"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20?only_confirmed=true&only_to=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        var apiUrl = $"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20?only_confirmed=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
         using var httpClient = new HttpClient();
 
         decimal totalIncome = 0m;
+        decimal totalOutcome = 0m;
         decimal monthlyIncome = 0m;
+        decimal monthlyOutcome = 0m;
         decimal dailyIncome = 0m;
+        decimal dailyOutcome = 0m;
         string fingerprint = null;
 
         // 获取当月1号和今天的日期
@@ -2143,42 +2146,47 @@ public static async Task<(decimal TotalIncome, decimal MonthlyIncome, decimal Da
                     continue;
                 }
 
-                if (!transactionElement.TryGetProperty("to", out var toAddressElement))
-                {
-                    continue;
-                }
-                var toAddress = toAddressElement.GetString();
-
-                if (toAddress != address)
-                {
-                    continue;
-                }
-
                 if (!transactionElement.TryGetProperty("value", out var valueElement))
                 {
                     continue;
                 }
                 var value = valueElement.GetString();
 
-                decimal income = decimal.Parse(value) / 1_000_000; // 假设USDT有6位小数
-                totalIncome += income;
+                decimal amount = decimal.Parse(value) / 1_000_000; // 假设USDT有6位小数
 
                 // 获取交易时间
+                DateTime transactionTime = DateTime.MinValue;
                 if (transactionElement.TryGetProperty("block_timestamp", out var timestampElement))
                 {
                     var timestamp = timestampElement.GetInt64();
                     DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).UtcDateTime;
-                    DateTime transactionTimeInBeijing = transactionTimeUtc.AddHours(8);
+                    transactionTime = transactionTimeUtc.AddHours(8);
+                }
 
-                    // 判断是否属于当月和今天的收入
-                    if (transactionTimeInBeijing >= firstDayOfMonth)
+                // 判断是收入还是支出
+                bool isIncome = transactionElement.GetProperty("to").GetString() == address;
+                if (isIncome)
+                {
+                    totalIncome += amount;
+                    if (transactionTime >= firstDayOfMonth)
                     {
-                        monthlyIncome += income;
-
-                        if (transactionTimeInBeijing >= today)
-                        {
-                            dailyIncome += income;
-                        }
+                        monthlyIncome += amount;
+                    }
+                    if (transactionTime.Date == today)
+                    {
+                        dailyIncome += amount;
+                    }
+                }
+                else
+                {
+                    totalOutcome += amount;
+                    if (transactionTime >= firstDayOfMonth)
+                    {
+                        monthlyOutcome += amount;
+                    }
+                    if (transactionTime.Date == today)
+                    {
+                        dailyOutcome += amount;
                     }
                 }
 
@@ -2195,13 +2203,13 @@ public static async Task<(decimal TotalIncome, decimal MonthlyIncome, decimal Da
         }
 
         // 如果没有发生错误，返回结果和IsError=false
-        return (totalIncome, monthlyIncome, dailyIncome, false);
+        return (totalIncome, totalOutcome, monthlyIncome, monthlyOutcome, dailyIncome, dailyOutcome, false);
     }
     catch (Exception ex)
     {
         // 发生错误时，返回默认值和IsError=true
         Console.WriteLine($"Error in method {nameof(GetTotalIncomeAsync)}: {ex.Message}");
-        return (0m, 0m, 0m, true);
+        return (0m, 0m, 0m, 0m, 0m, 0m, true);
     }
 }
     
@@ -2577,7 +2585,7 @@ var getLastTransactionTimeResult = getLastTransactionTimeTask.Result;
 var (lastTransactionTime, isErrorGetLastTransactionTime) = getLastTransactionTimeResult;
 
 var getTotalIncomeResult = getTotalIncomeTask.Result;
-var (usdtTotalIncome, monthlyIncome, dailyIncome, isErrorGetTotalIncome) = getTotalIncomeResult;
+var (usdtTotalIncome, usdtTotalOutcome, monthlyIncome, monthlyOutcome, dailyIncome, dailyOutcome, isErrorGetTotalIncome) = getTotalIncomeResult;
 
 var getOwnerPermissionResult = getOwnerPermissionTask.Result;
 var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResult;
@@ -2685,7 +2693,8 @@ if (trxBalance < 100)
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
     $"———————<b>最近交易</b>———————\n" +
     $"{lastFiveTransactions}\n"+
-    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" ;
+    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
+    $"USDT总出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
 }
 else
@@ -2706,7 +2715,8 @@ else
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
     $"———————<b>最近交易</b>———————\n" +
     $"{lastFiveTransactions}\n"+
-    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" ;
+    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
+    $"USDT总出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
 }
 
