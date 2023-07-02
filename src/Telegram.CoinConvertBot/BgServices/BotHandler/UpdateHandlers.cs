@@ -4407,6 +4407,12 @@ if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClien
                 chatId: userId,
                 text: message.Text
             );
+
+            // 如果消息发送成功，向当前用户发送成功消息
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "发送成功！"
+            );
         }
         catch (Exception ex)
         {
