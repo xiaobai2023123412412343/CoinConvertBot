@@ -4438,7 +4438,7 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         );
     }
 }  
-if (messageText.Equals("个人中心", StringComparison.OrdinalIgnoreCase))
+if (messageText.Equals("个人中心", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
 {
     await HandlePersonalCenterCommandAsync(botClient, message, provider);
     return;
@@ -4484,8 +4484,8 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
-// 检查是否是"查询余额"命令
-if (message.Type == MessageType.Text && message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase))
+// 检查是否是"查询余额"命令或 "/trc"
+if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id, 
@@ -4676,13 +4676,13 @@ TRX（波场币）多重签名（Multisig）是一种安全机制，允许多个
 如果需要开通多签功能，可联系管理员协助开通！";
     await botClient.SendTextMessageAsync(message.Chat.Id, multisigText);
 }        
-    // 检查是否接收到了 /cny 消息，收到就在当前聊天中发送广告
-    else if (messageText.StartsWith("/cny"))
-    {
-        var cancellationTokenSource = new CancellationTokenSource();
-        var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-        _ = SendAdvertisementOnce(botClient, cancellationTokenSource.Token, rateRepository, FeeRate, message.Chat.Id);
-    }        
+// 检查是否接收到了 /cny 消息或 "合约助手"，收到就在当前聊天中发送广告
+else if (messageText.StartsWith("/cny") || messageText.StartsWith("合约助手"))
+{
+    var cancellationTokenSource = new CancellationTokenSource();
+    var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+    _ = SendAdvertisementOnce(botClient, cancellationTokenSource.Token, rateRepository, FeeRate, message.Chat.Id);
+}        
 // 添加这部分代码以处理 /crypto 和 /btc 指令
 if (messageText.StartsWith("\U0001F4B8币圈行情", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
 {
