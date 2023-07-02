@@ -5095,12 +5095,18 @@ var keyboard = new ReplyKeyboardMarkup(new[]
         new KeyboardButton("\U0001F570实时汇率"),
         new KeyboardButton("\U0001F4B9汇率换算"),
     },   
-    new [] // 第二行
-    {
-        new KeyboardButton("\U0001F4B8币圈行情"),
-        new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u2B50会员代开"),
-    }    
+                new [] // 第二行
+                {
+                    new KeyboardButton("\U0001F4B8币圈行情"),
+                    new KeyboardButton("\U0001F310外汇助手"),
+                    new KeyboardButton("\u2B50会员代开"),
+                },   
+                new [] // 第三行
+                {
+                    new KeyboardButton("\U0001F947合约助手"),
+                    new KeyboardButton("\U0001F50D查询余额"),
+                    new KeyboardButton("\U0001F464个人中心"),
+                }       
 });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
                 keyboard.OneTimeKeyboard = false;
@@ -5119,12 +5125,18 @@ var keyboard = new ReplyKeyboardMarkup(new[]
         new KeyboardButton("\U0001F570实时汇率"),
         new KeyboardButton("\U0001F4B9汇率换算"),
     },   
-    new [] // 第二行
-    {
-        new KeyboardButton("\U0001F4B8币圈行情"),
-        new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u2B50会员代开"),
-    }    
+                new [] // 第二行
+                {
+                    new KeyboardButton("\U0001F4B8币圈行情"),
+                    new KeyboardButton("\U0001F310外汇助手"),
+                    new KeyboardButton("\u2B50会员代开"),
+                },   
+                new [] // 第三行
+                {
+                    new KeyboardButton("\U0001F947合约助手"),
+                    new KeyboardButton("\U0001F50D查询余额"),
+                    new KeyboardButton("\U0001F464个人中心"),
+                }        
 });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
                 keyboard.OneTimeKeyboard = false;
@@ -5161,12 +5173,18 @@ var keyboard = new ReplyKeyboardMarkup(new[]
         new KeyboardButton("\U0001F570实时汇率"),
         new KeyboardButton("\U0001F4B9汇率换算"),
     },   
-    new [] // 第二行
-    {
-        new KeyboardButton("\U0001F4B8币圈行情"),
-        new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u2B50会员代开"),
-    }    
+                new [] // 第二行
+                {
+                    new KeyboardButton("\U0001F4B8币圈行情"),
+                    new KeyboardButton("\U0001F310外汇助手"),
+                    new KeyboardButton("\u2B50会员代开"),
+                },   
+                new [] // 第三行
+                {
+                    new KeyboardButton("\U0001F947合约助手"),
+                    new KeyboardButton("\U0001F50D查询余额"),
+                    new KeyboardButton("\U0001F464个人中心"),
+                }         
 });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
                 keyboard.OneTimeKeyboard = false;
@@ -5244,12 +5262,18 @@ var keyboard = new ReplyKeyboardMarkup(new[]
         new KeyboardButton("\U0001F570实时汇率"),
         new KeyboardButton("\U0001F4B9汇率换算"),
     },   
-    new [] // 第二行
-    {
-        new KeyboardButton("\U0001F4B8币圈行情"),
-        new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u2B50会员代开"),
-    }    
+                new [] // 第二行
+                {
+                    new KeyboardButton("\U0001F4B8币圈行情"),
+                    new KeyboardButton("\U0001F310外汇助手"),
+                    new KeyboardButton("\u2B50会员代开"),
+                },   
+                new [] // 第三行
+                {
+                    new KeyboardButton("\U0001F947合约助手"),
+                    new KeyboardButton("\U0001F50D查询余额"),
+                    new KeyboardButton("\U0001F464个人中心"),
+                }         
 });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
             keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见            
@@ -5317,12 +5341,18 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
                 new KeyboardButton("\U0001F570实时汇率"),
                 new KeyboardButton("\U0001F4B9汇率换算"),
             },   
-            new [] // 第二行
-            {
-                new KeyboardButton("\U0001F4B8币圈行情"),
-                new KeyboardButton("\U0001F310外汇助手"),
-                new KeyboardButton("\u2B50会员代开"),
-            }    
+                new [] // 第二行
+                {
+                    new KeyboardButton("\U0001F4B8币圈行情"),
+                    new KeyboardButton("\U0001F310外汇助手"),
+                    new KeyboardButton("\u2B50会员代开"),
+                },   
+                new [] // 第三行
+                {
+                    new KeyboardButton("\U0001F947合约助手"),
+                    new KeyboardButton("\U0001F50D查询余额"),
+                    new KeyboardButton("\U0001F464个人中心"),
+                }         
         });
 
         keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
@@ -5377,12 +5407,18 @@ var keyboard = new ReplyKeyboardMarkup(new[]
         new KeyboardButton("\U0001F570实时汇率"),
         new KeyboardButton("\U0001F4B9汇率换算"),
     },   
-    new [] // 第二行
-    {
-        new KeyboardButton("\U0001F4B8币圈行情"),
-        new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u2B50会员代开"),
-    }    
+                new [] // 第二行
+                {
+                    new KeyboardButton("\U0001F4B8币圈行情"),
+                    new KeyboardButton("\U0001F310外汇助手"),
+                    new KeyboardButton("\u2B50会员代开"),
+                },   
+                new [] // 第三行
+                {
+                    new KeyboardButton("\U0001F947合约助手"),
+                    new KeyboardButton("\U0001F50D查询余额"),
+                    new KeyboardButton("\U0001F464个人中心"),
+                }       
 });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
             keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
@@ -5432,12 +5468,18 @@ var keyboard = new ReplyKeyboardMarkup(new[]
                 new KeyboardButton("\U0001F570实时汇率"),
                 new KeyboardButton("\U0001F4B9汇率换算"),
             },   
-            new [] // 第二行
-            {
-                new KeyboardButton("\U0001F4B8币圈行情"),
-                new KeyboardButton("\U0001F310外汇助手"),
-                new KeyboardButton("\u2B50会员代开"),
-            }    
+                new [] // 第二行
+                {
+                    new KeyboardButton("\U0001F4B8币圈行情"),
+                    new KeyboardButton("\U0001F310外汇助手"),
+                    new KeyboardButton("\u2B50会员代开"),
+                },   
+                new [] // 第三行
+                {
+                    new KeyboardButton("\U0001F947合约助手"),
+                    new KeyboardButton("\U0001F50D查询余额"),
+                    new KeyboardButton("\U0001F464个人中心"),
+                }         
         });
 
         keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
@@ -5541,12 +5583,18 @@ var keyboard = new ReplyKeyboardMarkup(new[]
         new KeyboardButton("\U0001F570实时汇率"),
         new KeyboardButton("\U0001F4B9汇率换算"),
     },   
-    new [] // 第二行
-    {
-        new KeyboardButton("\U0001F4B8币圈行情"),
-        new KeyboardButton("\U0001F310外汇助手"),
-        new KeyboardButton("\u2B50会员代开"),
-    }    
+                new [] // 第二行
+                {
+                    new KeyboardButton("\U0001F4B8币圈行情"),
+                    new KeyboardButton("\U0001F310外汇助手"),
+                    new KeyboardButton("\u2B50会员代开"),
+                },   
+                new [] // 第三行
+                {
+                    new KeyboardButton("\U0001F947合约助手"),
+                    new KeyboardButton("\U0001F50D查询余额"),
+                    new KeyboardButton("\U0001F464个人中心"),
+                }       
 });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
             keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
