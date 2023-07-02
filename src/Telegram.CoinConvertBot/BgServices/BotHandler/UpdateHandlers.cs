@@ -2693,8 +2693,8 @@ if (trxBalance < 100)
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
     $"———————<b>最近交易</b>———————\n" +
     $"{lastFiveTransactions}\n"+
-    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
-    $"USDT总出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
+    $"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
+    $"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
 }
 else
@@ -2715,8 +2715,8 @@ else
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
     $"———————<b>最近交易</b>———————\n" +
     $"{lastFiveTransactions}\n"+
-    $"USDT总收：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
-    $"USDT总出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
+    $"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
+    $"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
 }
 
