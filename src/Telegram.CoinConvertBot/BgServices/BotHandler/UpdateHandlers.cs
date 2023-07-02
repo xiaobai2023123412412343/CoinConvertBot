@@ -3163,6 +3163,7 @@ for (int i = startIndex; i < endIndex; i++)
             {
                 new KeyboardButton("\U0001F4B0U兑TRX"),
                 new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F50D查询余额"),
                 new KeyboardButton("\U0001F4B9汇率换算"),
             },   
                 new [] // 第二行
@@ -3170,13 +3171,8 @@ for (int i = startIndex; i < endIndex; i++)
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
                     new KeyboardButton("\u2B50会员代开"),
-                },   
-                new [] // 第三行
-                {
-                    new KeyboardButton("\U0001F947合约助手"),
-                    new KeyboardButton("\U0001F50D查询余额"),
                     new KeyboardButton("\U0001F464个人中心"),
-                }   
+                }
         });
 
         keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
@@ -5066,27 +5062,23 @@ USDT余额： <b>{USDT}</b>
 累计承兑：<b>{totalIncome} USDT</b>                
 ";
             // 创建包含两行，每行两个按钮的虚拟键盘
-            var keyboard = new ReplyKeyboardMarkup(new[]
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
             {
-                new [] // 第一行
-                {
-                    new KeyboardButton("\U0001F4B0U兑TRX"),
-                    new KeyboardButton("\U0001F570实时汇率"),
-                    new KeyboardButton("\U0001F4B9汇率换算"),
-                },   
+                new KeyboardButton("\U0001F4B0U兑TRX"),
+                new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F50D查询余额"),
+                new KeyboardButton("\U0001F4B9汇率换算"),
+            },   
                 new [] // 第二行
                 {
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
                     new KeyboardButton("\u2B50会员代开"),
-                },   
-                new [] // 第三行
-                {
-                    new KeyboardButton("\U0001F947合约助手"),
-                    new KeyboardButton("\U0001F50D查询余额"),
                     new KeyboardButton("\U0001F464个人中心"),
-                }                
-            });
+                }
+        });
             keyboard.ResizeKeyboard = true;           
             keyboard.OneTimeKeyboard = false;
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
@@ -5131,27 +5123,23 @@ USDT余额： <b>{USDT}</b>
                     StartMonitoring(botClient, UserId, address);
                 }
 // 创建包含两行，每行两个按钮的虚拟键盘
-var keyboard = new ReplyKeyboardMarkup(new[]
-{
-    new [] // 第一行
-    {
-        new KeyboardButton("\U0001F4B0U兑TRX"),
-        new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9汇率换算"),
-    },   
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
+            {
+                new KeyboardButton("\U0001F4B0U兑TRX"),
+                new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F50D查询余额"),
+                new KeyboardButton("\U0001F4B9汇率换算"),
+            },   
                 new [] // 第二行
                 {
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
                     new KeyboardButton("\u2B50会员代开"),
-                },   
-                new [] // 第三行
-                {
-                    new KeyboardButton("\U0001F947合约助手"),
-                    new KeyboardButton("\U0001F50D查询余额"),
                     new KeyboardButton("\U0001F464个人中心"),
-                }       
-});
+                }
+        });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
                 keyboard.OneTimeKeyboard = false;
                 return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: @$"您已成功绑定：<code>{address}</code>
@@ -5161,27 +5149,23 @@ var keyboard = new ReplyKeyboardMarkup(new[]
             else
             {
 // 创建包含两行，每行两个按钮的虚拟键盘
-var keyboard = new ReplyKeyboardMarkup(new[]
-{
-    new [] // 第一行
-    {
-        new KeyboardButton("\U0001F4B0U兑TRX"),
-        new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9汇率换算"),
-    },   
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
+            {
+                new KeyboardButton("\U0001F4B0U兑TRX"),
+                new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F50D查询余额"),
+                new KeyboardButton("\U0001F4B9汇率换算"),
+            },   
                 new [] // 第二行
                 {
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
                     new KeyboardButton("\u2B50会员代开"),
-                },   
-                new [] // 第三行
-                {
-                    new KeyboardButton("\U0001F947合约助手"),
-                    new KeyboardButton("\U0001F50D查询余额"),
                     new KeyboardButton("\U0001F464个人中心"),
-                }        
-});
+                }
+        });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
                 keyboard.OneTimeKeyboard = false;
                 return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您输入的波场地址<b>{address}</b>有误！", parseMode: ParseMode.Html, replyMarkup: keyboard);
@@ -5209,27 +5193,23 @@ var keyboard = new ReplyKeyboardMarkup(new[]
         userTimers.Remove(UserId);
     }            
 // 创建包含两行，每行两个按钮的虚拟键盘
-var keyboard = new ReplyKeyboardMarkup(new[]
-{
-    new [] // 第一行
-    {
-        new KeyboardButton("\U0001F4B0U兑TRX"),
-        new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9汇率换算"),
-    },   
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
+            {
+                new KeyboardButton("\U0001F4B0U兑TRX"),
+                new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F50D查询余额"),
+                new KeyboardButton("\U0001F4B9汇率换算"),
+            },   
                 new [] // 第二行
                 {
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
                     new KeyboardButton("\u2B50会员代开"),
-                },   
-                new [] // 第三行
-                {
-                    new KeyboardButton("\U0001F947合约助手"),
-                    new KeyboardButton("\U0001F50D查询余额"),
                     new KeyboardButton("\U0001F464个人中心"),
-                }         
-});
+                }
+        });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
                 keyboard.OneTimeKeyboard = false;
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您已成功解绑：<b>{address}</b> ", parseMode: ParseMode.Html, replyMarkup: keyboard);
@@ -5298,27 +5278,23 @@ var keyboard = new ReplyKeyboardMarkup(new[]
 ";
             }
 // 创建包含两行，每行两个按钮的虚拟键盘
-var keyboard = new ReplyKeyboardMarkup(new[]
-{
-    new [] // 第一行
-    {
-        new KeyboardButton("\U0001F4B0U兑TRX"),
-        new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9汇率换算"),
-    },   
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
+            {
+                new KeyboardButton("\U0001F4B0U兑TRX"),
+                new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F50D查询余额"),
+                new KeyboardButton("\U0001F4B9汇率换算"),
+            },   
                 new [] // 第二行
                 {
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
                     new KeyboardButton("\u2B50会员代开"),
-                },   
-                new [] // 第三行
-                {
-                    new KeyboardButton("\U0001F947合约助手"),
-                    new KeyboardButton("\U0001F50D查询余额"),
                     new KeyboardButton("\U0001F464个人中心"),
-                }         
-});
+                }
+        });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
             keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见            
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
@@ -5383,6 +5359,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
             {
                 new KeyboardButton("\U0001F4B0U兑TRX"),
                 new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F50D查询余额"),
                 new KeyboardButton("\U0001F4B9汇率换算"),
             },   
                 new [] // 第二行
@@ -5390,13 +5367,8 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
                     new KeyboardButton("\u2B50会员代开"),
-                },   
-                new [] // 第三行
-                {
-                    new KeyboardButton("\U0001F947合约助手"),
-                    new KeyboardButton("\U0001F50D查询余额"),
                     new KeyboardButton("\U0001F464个人中心"),
-                }         
+                }
         });
 
         keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
@@ -5443,27 +5415,23 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
    
 ";
 // 创建包含两行，每行两个按钮的虚拟键盘
-var keyboard = new ReplyKeyboardMarkup(new[]
-{
-    new [] // 第一行
-    {
-        new KeyboardButton("\U0001F4B0U兑TRX"),
-        new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9汇率换算"),
-    },   
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
+            {
+                new KeyboardButton("\U0001F4B0U兑TRX"),
+                new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F50D查询余额"),
+                new KeyboardButton("\U0001F4B9汇率换算"),
+            },   
                 new [] // 第二行
                 {
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
                     new KeyboardButton("\u2B50会员代开"),
-                },   
-                new [] // 第三行
-                {
-                    new KeyboardButton("\U0001F947合约助手"),
-                    new KeyboardButton("\U0001F50D查询余额"),
                     new KeyboardButton("\U0001F464个人中心"),
-                }       
-});
+                }
+        });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
             keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
@@ -5510,6 +5478,7 @@ var keyboard = new ReplyKeyboardMarkup(new[]
             {
                 new KeyboardButton("\U0001F4B0U兑TRX"),
                 new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F50D查询余额"),
                 new KeyboardButton("\U0001F4B9汇率换算"),
             },   
                 new [] // 第二行
@@ -5517,13 +5486,8 @@ var keyboard = new ReplyKeyboardMarkup(new[]
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
                     new KeyboardButton("\u2B50会员代开"),
-                },   
-                new [] // 第三行
-                {
-                    new KeyboardButton("\U0001F947合约助手"),
-                    new KeyboardButton("\U0001F50D查询余额"),
                     new KeyboardButton("\U0001F464个人中心"),
-                }         
+                }
         });
 
         keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
@@ -5619,27 +5583,23 @@ static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, 
                 }
             }
 // 创建包含两行，每行两个按钮的虚拟键盘
-var keyboard = new ReplyKeyboardMarkup(new[]
-{
-    new [] // 第一行
-    {
-        new KeyboardButton("\U0001F4B0U兑TRX"),
-        new KeyboardButton("\U0001F570实时汇率"),
-        new KeyboardButton("\U0001F4B9汇率换算"),
-    },   
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
+            {
+                new KeyboardButton("\U0001F4B0U兑TRX"),
+                new KeyboardButton("\U0001F570实时汇率"),
+                new KeyboardButton("\U0001F50D查询余额"),
+                new KeyboardButton("\U0001F4B9汇率换算"),
+            },   
                 new [] // 第二行
                 {
                     new KeyboardButton("\U0001F4B8币圈行情"),
                     new KeyboardButton("\U0001F310外汇助手"),
                     new KeyboardButton("\u2B50会员代开"),
-                },   
-                new [] // 第三行
-                {
-                    new KeyboardButton("\U0001F947合约助手"),
-                    new KeyboardButton("\U0001F50D查询余额"),
                     new KeyboardButton("\U0001F464个人中心"),
-                }       
-});
+                }
+        });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
             keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
 
