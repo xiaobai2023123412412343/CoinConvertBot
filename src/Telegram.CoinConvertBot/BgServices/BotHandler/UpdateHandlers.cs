@@ -4438,7 +4438,7 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         );
     }
 }  
-if (messageText.Equals("个人中心", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
+if (messageText.Equals("\U0001F464个人中心", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
 {
     await HandlePersonalCenterCommandAsync(botClient, message, provider);
     return;
@@ -4485,7 +4485,7 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
     }
 }
 // 检查是否是"查询余额"命令或 "/trc"
-if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
+if (message.Type == MessageType.Text && (message.Text.Equals("\U0001F50D查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id, 
@@ -4677,7 +4677,7 @@ TRX（波场币）多重签名（Multisig）是一种安全机制，允许多个
     await botClient.SendTextMessageAsync(message.Chat.Id, multisigText);
 }        
 // 检查是否接收到了 /cny 消息或 "合约助手"，收到就在当前聊天中发送广告
-else if (messageText.StartsWith("/cny") || messageText.StartsWith("合约助手"))
+else if (messageText.StartsWith("/cny") || messageText.StartsWith("\U0001F947合约助手"))
 {
     var cancellationTokenSource = new CancellationTokenSource();
     var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
