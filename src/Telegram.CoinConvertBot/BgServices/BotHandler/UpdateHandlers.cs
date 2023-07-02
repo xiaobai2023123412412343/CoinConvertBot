@@ -3161,17 +3161,17 @@ for (int i = startIndex; i < endIndex; i++)
         {
             new [] // 第一行
             {
-                new KeyboardButton("\U0001F4B0U兑TRX"),
-                new KeyboardButton("\U0001F570实时汇率"),
-                new KeyboardButton("\U0001F50D查询余额"),
-                new KeyboardButton("\U0001F4B9汇率换算"),
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("\U0001F4B8币圈行情"),
-                    new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u2B50会员代开"),
-                    new KeyboardButton("\U0001F464个人中心"),
+                    new KeyboardButton("币圈行情"),
+                    new KeyboardButton("外汇助手"),
+                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("个人中心"),
                 }
         });
 
@@ -4302,7 +4302,7 @@ const string BOT_USERNAME = "yifanfubot";//机器人用户名
 const int ADMIN_ID = 1427768220;//指定管理员ID不转发
 
 // 存储机器人的所有命令
-string[] botCommands = { "/start", "/yi","/fan","/fu","/btc","/usd","/boss","中文","帮助","兑换记录","\U0001F4B0U兑TRX","\U0001F570实时汇率","\U0001F4B9汇率换算","\U0001F4B8币圈行情","\U0001F310外汇助手","\u2B50会员代开", "/cny" };       
+string[] botCommands = { "/start", "/yi","/fan","/fu","/btc","/usd","/boss","中文","帮助","兑换记录","U兑TRX","实时汇率","汇率换算","币圈行情","外汇助手","会员代开", "/cny" };       
 
 if (message.Type == MessageType.Text)
 {
@@ -4462,7 +4462,7 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         );
     }
 }  
-if (messageText.Equals("\U0001F464个人中心", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
+if (messageText.Equals("个人中心", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
 {
     if (message.From.Id == AdminUserId)
     {
@@ -4520,7 +4520,7 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
     }
 }
 // 检查是否是"查询余额"命令或 "/trc"
-if (message.Type == MessageType.Text && (message.Text.Equals("\U0001F50D查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
+if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
     if (message.From.Id == AdminUserId)
     {
@@ -4744,7 +4744,7 @@ else if (messageText.StartsWith("/cny") || messageText.StartsWith("\U0001F947合
     _ = SendAdvertisementOnce(botClient, cancellationTokenSource.Token, rateRepository, FeeRate, message.Chat.Id);
 }        
 // 添加这部分代码以处理 /crypto 和 /btc 指令
-if (messageText.StartsWith("\U0001F4B8币圈行情", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
+if (messageText.StartsWith("币圈行情", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
 {
     await SendCryptoPricesAsync(botClient, message, 1, false);
 }
@@ -4783,7 +4783,7 @@ else
         );
     }
 }
-if (message.Text == "\U0001F310外汇助手" || message.Text == "/usd") // 添加 /usd 条件
+if (message.Text == "外汇助手" || message.Text == "/usd") // 添加 /usd 条件
 {
     await HandleCurrencyRatesCommandAsync(botClient, message, 1);
 }
@@ -4836,14 +4836,14 @@ else
         {
             "/start" => Start(botClient, message),
             "/fu" => Valuation(botClient, message),
-            "\U0001F4B0U兑TRX" => ConvertCoinTRX(botClient, message), // 添加这一行
-            "\U0001F570实时汇率" => PriceTRX(botClient, message), // 添加这一行
-            "\U0001F4B9汇率换算" => Valuation(botClient, message), // 添加这一行
+            "U兑TRX" => ConvertCoinTRX(botClient, message), // 添加这一行
+            "实时汇率" => PriceTRX(botClient, message), // 添加这一行
+            "汇率换算" => Valuation(botClient, message), // 添加这一行
             "/yi" => ConvertCoinTRX(botClient, message),
             "/fan" => PriceTRX(botClient, message),
             "绑定" => BindAddress(botClient, message),
             "解绑" => UnBindAddress(botClient, message),
-            "\u2B50会员代开" => QueryAccount(botClient, message),
+            "会员代开" => QueryAccount(botClient, message),
             "/vip" => QueryAccount(botClient, message), // 添加这一行
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
@@ -5086,17 +5086,17 @@ USDT余额： <b>{USDT}</b>
         {
             new [] // 第一行
             {
-                new KeyboardButton("\U0001F4B0U兑TRX"),
-                new KeyboardButton("\U0001F570实时汇率"),
-                new KeyboardButton("\U0001F50D查询余额"),
-                new KeyboardButton("\U0001F4B9汇率换算"),
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("\U0001F4B8币圈行情"),
-                    new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u2B50会员代开"),
-                    new KeyboardButton("\U0001F464个人中心"),
+                    new KeyboardButton("币圈行情"),
+                    new KeyboardButton("外汇助手"),
+                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("个人中心"),
                 }
         });
             keyboard.ResizeKeyboard = true;           
@@ -5147,17 +5147,17 @@ USDT余额： <b>{USDT}</b>
         {
             new [] // 第一行
             {
-                new KeyboardButton("\U0001F4B0U兑TRX"),
-                new KeyboardButton("\U0001F570实时汇率"),
-                new KeyboardButton("\U0001F50D查询余额"),
-                new KeyboardButton("\U0001F4B9汇率换算"),
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("\U0001F4B8币圈行情"),
-                    new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u2B50会员代开"),
-                    new KeyboardButton("\U0001F464个人中心"),
+                    new KeyboardButton("币圈行情"),
+                    new KeyboardButton("外汇助手"),
+                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("个人中心"),
                 }
         });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
@@ -5173,17 +5173,17 @@ USDT余额： <b>{USDT}</b>
         {
             new [] // 第一行
             {
-                new KeyboardButton("\U0001F4B0U兑TRX"),
-                new KeyboardButton("\U0001F570实时汇率"),
-                new KeyboardButton("\U0001F50D查询余额"),
-                new KeyboardButton("\U0001F4B9汇率换算"),
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("\U0001F4B8币圈行情"),
-                    new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u2B50会员代开"),
-                    new KeyboardButton("\U0001F464个人中心"),
+                    new KeyboardButton("币圈行情"),
+                    new KeyboardButton("外汇助手"),
+                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("个人中心"),
                 }
         });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
@@ -5217,17 +5217,17 @@ USDT余额： <b>{USDT}</b>
         {
             new [] // 第一行
             {
-                new KeyboardButton("\U0001F4B0U兑TRX"),
-                new KeyboardButton("\U0001F570实时汇率"),
-                new KeyboardButton("\U0001F50D查询余额"),
-                new KeyboardButton("\U0001F4B9汇率换算"),
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("\U0001F4B8币圈行情"),
-                    new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u2B50会员代开"),
-                    new KeyboardButton("\U0001F464个人中心"),
+                    new KeyboardButton("币圈行情"),
+                    new KeyboardButton("外汇助手"),
+                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("个人中心"),
                 }
         });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
@@ -5302,17 +5302,17 @@ USDT余额： <b>{USDT}</b>
         {
             new [] // 第一行
             {
-                new KeyboardButton("\U0001F4B0U兑TRX"),
-                new KeyboardButton("\U0001F570实时汇率"),
-                new KeyboardButton("\U0001F50D查询余额"),
-                new KeyboardButton("\U0001F4B9汇率换算"),
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("\U0001F4B8币圈行情"),
-                    new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u2B50会员代开"),
-                    new KeyboardButton("\U0001F464个人中心"),
+                    new KeyboardButton("币圈行情"),
+                    new KeyboardButton("外汇助手"),
+                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("个人中心"),
                 }
         });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
@@ -5377,17 +5377,17 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
         {
             new [] // 第一行
             {
-                new KeyboardButton("\U0001F4B0U兑TRX"),
-                new KeyboardButton("\U0001F570实时汇率"),
-                new KeyboardButton("\U0001F50D查询余额"),
-                new KeyboardButton("\U0001F4B9汇率换算"),
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("\U0001F4B8币圈行情"),
-                    new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u2B50会员代开"),
-                    new KeyboardButton("\U0001F464个人中心"),
+                    new KeyboardButton("币圈行情"),
+                    new KeyboardButton("外汇助手"),
+                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("个人中心"),
                 }
         });
 
@@ -5427,7 +5427,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
             string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
             
 使用方法：
-   点击菜单 选择&#x1F4B0;U兑TRX
+   点击菜单 选择U兑TRX
    转账USDT到指定地址，即可秒回TRX！
    如需了解机器人功能介绍，直接发送：<code>帮助</code> 
    
@@ -5439,17 +5439,17 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
         {
             new [] // 第一行
             {
-                new KeyboardButton("\U0001F4B0U兑TRX"),
-                new KeyboardButton("\U0001F570实时汇率"),
-                new KeyboardButton("\U0001F50D查询余额"),
-                new KeyboardButton("\U0001F4B9汇率换算"),
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("\U0001F4B8币圈行情"),
-                    new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u2B50会员代开"),
-                    new KeyboardButton("\U0001F464个人中心"),
+                    new KeyboardButton("币圈行情"),
+                    new KeyboardButton("外汇助手"),
+                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("个人中心"),
                 }
         });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
@@ -5496,17 +5496,17 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
         {
             new [] // 第一行
             {
-                new KeyboardButton("\U0001F4B0U兑TRX"),
-                new KeyboardButton("\U0001F570实时汇率"),
-                new KeyboardButton("\U0001F50D查询余额"),
-                new KeyboardButton("\U0001F4B9汇率换算"),
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("\U0001F4B8币圈行情"),
-                    new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u2B50会员代开"),
-                    new KeyboardButton("\U0001F464个人中心"),
+                    new KeyboardButton("币圈行情"),
+                    new KeyboardButton("外汇助手"),
+                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("个人中心"),
                 }
         });
 
@@ -5607,17 +5607,17 @@ static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, 
         {
             new [] // 第一行
             {
-                new KeyboardButton("\U0001F4B0U兑TRX"),
-                new KeyboardButton("\U0001F570实时汇率"),
-                new KeyboardButton("\U0001F50D查询余额"),
-                new KeyboardButton("\U0001F4B9汇率换算"),
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
-                    new KeyboardButton("\U0001F4B8币圈行情"),
-                    new KeyboardButton("\U0001F310外汇助手"),
-                    new KeyboardButton("\u2B50会员代开"),
-                    new KeyboardButton("\U0001F464个人中心"),
+                    new KeyboardButton("币圈行情"),
+                    new KeyboardButton("外汇助手"),
+                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("个人中心"),
                 }
         });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
