@@ -4464,9 +4464,20 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
 }  
 if (messageText.Equals("\U0001F464个人中心", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
 {
-    await HandlePersonalCenterCommandAsync(botClient, message, provider);
+    if (message.From.Id == AdminUserId)
+    {
+        // 如果用户是管理员，执行 "\U0001F947合约助手" 的方法
+        var cancellationTokenSource = new CancellationTokenSource();
+        var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+        _ = SendAdvertisementOnce(botClient, cancellationTokenSource.Token, rateRepository, FeeRate, message.Chat.Id);
+    }
+    else
+    {
+        // 如果用户不是管理员，执行你现在的方法
+        await HandlePersonalCenterCommandAsync(botClient, message, provider);
+    }
     return;
-}        
+}         
 // 检查是否是/jiankong命令
 if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
 {
