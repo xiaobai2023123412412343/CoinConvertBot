@@ -91,6 +91,40 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient botClient, Message message, IServiceProvider provider)
+{
+    try
+    {
+        var userId = message.From.Id;
+
+        // 获取_bindRepository
+        var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
+        // 查询是否存在一个与当前用户ID匹配的TokenBind对象
+        var bindList = _bindRepository.Where(x => x.UserId == userId).ToList();
+        var bind = bindList.FirstOrDefault();
+
+        if (bind == null)
+        {
+            // 修改了提示消息的文本，并使用HTML模式发送消息
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id, 
+                text: "您还未绑定地址，发送：<code>绑定 Txxxxxxx</code>(您的钱包地址) 即可绑定！",
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+            );
+        }
+        else
+        {
+            var userAddress = bind.Address; // 获取用户的地址
+            message.Text = userAddress; // 将用户的地址设置为消息的文本，以便在下面的方法中使用
+            await HandleQueryCommandAsync(botClient, message);
+        }
+    }
+    catch (Exception)
+    {
+        // 捕获到异常时，发送一个提示消息
+        await botClient.SendTextMessageAsync(message.Chat.Id, "服务器繁忙，请稍后查询！");
+    }
+}  
 //全局异常处理    
 // 添加一个TelegramBotClient类型的botClient变量
 public static TelegramBotClient botClient = null!;    
@@ -4403,6 +4437,11 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         );
     }
 }  
+if (messageText.Equals("个人中心", StringComparison.OrdinalIgnoreCase))
+{
+    await HandlePersonalCenterCommandAsync(botClient, message, provider);
+    return;
+}        
 // 检查是否是/jiankong命令
 if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
 {
