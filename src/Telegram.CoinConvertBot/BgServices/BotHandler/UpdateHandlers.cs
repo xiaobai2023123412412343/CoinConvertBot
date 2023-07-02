@@ -4610,22 +4610,38 @@ if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|
 if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
 {
     var messageToSend = message.Text.Substring(3); // 去掉 "群发 " 前缀
+    int total = 0, success = 0, fail = 0;
 
     // 向所有关注者发送消息
-    foreach (var follower in Followers)
+    foreach (var follower in Followers.ToList()) // 使用 ToList() 创建一个副本，以便在遍历过程中修改集合
     {
+        total++;
         try
         {
             await botClient.SendTextMessageAsync(chatId: follower.Id, text: messageToSend);
+            success++;
         }
         catch (ApiRequestException e)
         {
             // 用户不存在或已经屏蔽了机器人
             // 在这里记录异常，然后继续向下一个用户发送消息
             Log.Error($"Failed to send message to {follower.Id}: {e.Message}");
+            fail++;
+
+            // 检查错误消息以确定是否应该删除用户
+            if (e.Message.Contains("bot can't send messages to bots") ||
+                e.Message.Contains("bot was blocked by the user") ||
+                e.Message.Contains("chat not found"))
+            {
+                // 从存储库中删除用户
+                Followers.Remove(follower);
+            }
         }
     }
-}  
+
+    // 发送统计信息
+    await botClient.SendTextMessageAsync(chatId: message.From.Id, text: $"群发总数：<b>{total}</b>   成功：<b>{success}</b>  失败：<b>{fail}</b>", parseMode: ParseMode.Html);
+} 
 if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
 {
     var groupId = message.Chat.Id;
