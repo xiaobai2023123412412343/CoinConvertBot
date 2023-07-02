@@ -4522,11 +4522,20 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
 // 检查是否是"查询余额"命令或 "/trc"
 if (message.Type == MessageType.Text && (message.Text.Equals("\U0001F50D查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id, 
-        text: "请发送您要查询的<b>TRC-20(波场)地址：</b> ", 
-        parseMode: ParseMode.Html
-    );
+    if (message.From.Id == AdminUserId)
+    {
+        // 如果用户是管理员，执行 HandleGetFollowersCommandAsync 方法
+        await HandleGetFollowersCommandAsync(botClient, message);
+    }
+    else
+    {
+        // 如果用户不是管理员，执行你现在的方法
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id, 
+            text: "请发送您要查询的<b>TRC-20(波场)地址：</b> ", 
+            parseMode: ParseMode.Html
+        );
+    }
 }
 // 监控名字和用户名变更
 if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
