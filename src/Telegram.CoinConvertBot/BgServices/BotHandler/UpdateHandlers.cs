@@ -5340,12 +5340,12 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     var addressArray = configuration.GetSection("Address:USDT-TRC20").Get<string[]>();
     var ReciveAddress = addressArray.Length == 0 ? "未配置" : addressArray[UserId % addressArray.Length];
 
-    if (message.Chat.Id == AdminUserId)
-    {
-        await HandleGetFollowersCommandAsync(botClient, message);
-    }
-    else
-    {
+  //  if (message.Chat.Id == AdminUserId)
+   // {
+   //     await HandleGetFollowersCommandAsync(botClient, message);
+   // }
+   // else
+   // {
         var msg = @$"<b>实时汇率表：</b>
 
 <b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX   ≈ {100m * usdtPrice} CNY</b>
@@ -5401,7 +5401,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
             parseMode: ParseMode.Html,
             disableWebPagePreview: true // 添加这一行来禁用链接预览
         );
-    }
+  //  }
 
     // 在这里添加一个返回空消息的语句
     return await Task.FromResult<Message>(null);
