@@ -4484,7 +4484,15 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
-
+// 检查是否是"查询余额"命令
+if (message.Type == MessageType.Text && message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase))
+{
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id, 
+        text: "请发送您要查询的<b>TRC-20(波场)地址：</b> ", 
+        parseMode: ParseMode.Html
+    );
+}
 // 监控名字和用户名变更
 if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
 {
