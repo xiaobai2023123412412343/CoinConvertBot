@@ -5114,6 +5114,11 @@ USDT余额： <b>{USDT}</b>
             var address = messageText.Split(' ').Last();
             if (address.StartsWith("T") && address.Length == 34)
             {
+        // 检查地址是否为"TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv"
+        if (address == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
+        {
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "此为机器人收款地址，绑定失败，请绑定您的钱包地址！");
+        }                
                 var from = message.From;
                 var UserId = message.Chat.Id;
 
