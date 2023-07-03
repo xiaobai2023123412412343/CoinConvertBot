@@ -102,7 +102,7 @@ public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient bot
         var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
         // 查询是否存在一个与当前用户ID匹配的TokenBind对象
         var bindList = _bindRepository.Where(x => x.UserId == userId).ToList();
-        var bind = bindList.FirstOrDefault();
+        var bind = bindList.LastOrDefault(); // 获取最新的地址
 
         if (bind == null)
         {
@@ -125,7 +125,7 @@ public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient bot
         // 捕获到异常时，发送一个提示消息
         await botClient.SendTextMessageAsync(message.Chat.Id, "服务器繁忙，请稍后查询！");
     }
-}  
+}   
 //全局异常处理    
 // 添加一个TelegramBotClient类型的botClient变量
 public static TelegramBotClient botClient = null!;    
