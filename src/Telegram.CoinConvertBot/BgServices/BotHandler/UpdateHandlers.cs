@@ -1351,7 +1351,7 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
     sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>   今日新增关注：<b>{todayFollowers}</b>\n");
 
     // 每页显示10条数据
-    var followersPerPage = Followers.Skip(page * 15).Take(15);
+    var followersPerPage = Followers.OrderByDescending(f => f.FollowTime).Skip(page * 15).Take(15);
     foreach (var follower in followersPerPage)
     {
         sb.AppendLine($"<b>{follower.Name}</b>  用户名：@{follower.Username}   ID：<code>{follower.Id}</code>");
