@@ -4549,6 +4549,51 @@ if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", Str
         );
     }
 }
+if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$") && !messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase)) // 检查消息是否只包含英文字母，并且不是"TRX"或"trx"
+{
+    var symbol = messageText.ToUpper(); // 将消息转换为大写
+    var url = $"https://api.bitget.com/api/spot/v1/market/ticker?symbol={symbol}USDT_SPBL"; // 构造API URL
+
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            var response = await httpClient.GetStringAsync(url); // 调用API
+            var json = JObject.Parse(response); // 解析API返回的JSON数据
+
+            if (json["data"] != null)
+            {
+                var data = json["data"];
+    if (data["ts"] != null && data["openUtc0"] != null && data["high24h"] != null && data["low24h"] != null && data["close"] != null && data["buyOne"] != null && data["sellOne"] != null && data["usdtVol"] != null && data["change"] != null)
+    {
+        // 格式化返回给用户的消息
+        var reply = $"<b> {symbol}/USDT 数据</b>\n\n" +
+                    $"<b>时间：</b><code>{new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((long)data["ts"]).ToLocalTime():yyyy-MM-dd HH:mm:ss}</code>\n" +
+                    $"<b>开盘价：</b><code>{data["openUtc0"]}</code>\n" +
+                    $"<b>24小时最高价：</b><code>{data["high24h"]}</code>\n" +
+                    $"<b>24小时最低价：</b><code>{data["low24h"]}</code>\n" +
+                    $"<b>最新成交价：</b><code>{data["close"]}</code>\n" +
+                    $"<b>买一价：</b><code>{data["buyOne"]}</code>\n" +
+                    $"<b>卖一价：</b><code>{data["sellOne"]}</code>\n" +
+                    $"<b>成交额：</b><code>{string.Format("{0:N2}", double.Parse((string)data["usdtVol"]))}</code>\n" +
+                    $"<b>24小时涨跌幅：</b><code>{Math.Round(double.Parse((string)data["change"]) * 100, 2)}%</code>";
+
+// 发送消息给用户
+await botClient.SendTextMessageAsync(
+    chatId: message.Chat.Id,
+    text: reply,
+    parseMode: ParseMode.Html
+);
+    }
+            }
+        }
+        catch (Exception ex)
+        {
+            // 记录错误信息
+            Console.WriteLine($"Error when calling API: {ex.Message}");
+        }
+    }
+}        
 // 监控名字和用户名变更
 if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
 {
