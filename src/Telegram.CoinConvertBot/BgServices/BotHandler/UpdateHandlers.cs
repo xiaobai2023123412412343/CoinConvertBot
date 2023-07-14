@@ -103,38 +103,29 @@ public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient bot
         // 查询是否存在一个与当前用户ID匹配的TokenBind对象
         var bindList = _bindRepository.Where(x => x.UserId == userId).ToList();
 
-        // 添加的代码
-        if (bindList.Any())
-        {
-            var addresses = string.Join("\n", bindList.Select(b => b.Address));
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id, 
-                text: $"您绑定了<b>{bindList.Count}</b>个地址：\n<code>{addresses}</code>",
-                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
-            );
-        }
+if (bindList.Any())
+{
+    var buttons = bindList.Select(b => new[] { InlineKeyboardButton.WithCallbackData(b.Address, $"query,{b.Address}") }).ToArray();
+    var inlineKeyboard = new InlineKeyboardMarkup(buttons);
 
-        var bind = bindList.LastOrDefault(); // 获取最新的地址
-
-        if (bind == null)
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id, 
+        text: $"您绑定了<b>{bindList.Count}</b>个地址，点击下方按钮查看详情：",
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}
+        else
         {
-            // 修改了提示消息的文本，并使用HTML模式发送消息
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id, 
                 text: "您还未绑定地址，发送：<code>绑定 Txxxxxxx</code>(您的钱包地址) 即可绑定！",
                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
             );
         }
-        else
-        {
-            var userAddress = bind.Address; // 获取用户的地址
-            message.Text = userAddress; // 将用户的地址设置为消息的文本，以便在下面的方法中使用
-            await HandleQueryCommandAsync(botClient, message);
-        }
     }
     catch (Exception)
     {
-        // 捕获到异常时，发送一个提示消息
         await botClient.SendTextMessageAsync(message.Chat.Id, "服务器繁忙，请稍后查询！");
     }
 }
@@ -3735,6 +3726,24 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         // ... 其他现有代码 ...
     }
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data.Split(',');
+    if (callbackData[0] == "query")
+    {
+        // 从 CallbackData 中获取Tron地址
+        var tronAddress = callbackData[1];
+
+        // 调用 HandleQueryCommandAsync 方法来查询并返回结果
+        await HandleQueryCommandAsync(botClient, new Message
+        {
+            Chat = callbackQuery.Message.Chat,
+            Text = tronAddress
+        });
+    }
+    // ... 其他现有代码 ...
+}        
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
