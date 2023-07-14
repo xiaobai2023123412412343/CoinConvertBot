@@ -4016,7 +4016,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
     }        
         var inputText = message.Text.Trim();
         // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
-        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑)");
+        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑)");
 
         // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
         if (isBindOrUnbindCommand)
