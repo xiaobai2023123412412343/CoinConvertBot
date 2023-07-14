@@ -2750,6 +2750,7 @@ else
         {
             InlineKeyboardButton.WithUrl("详细信息", $"https://tronscan.org/#/address/{tronAddress}"), // 链接到Tron地址的详细信息
             InlineKeyboardButton.WithUrl("链上天眼", $"https://www.oklink.com/cn/trx/address/{tronAddress}"), // 链接到欧意地址的详细信息
+            InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
             InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
         }
     });
@@ -3734,6 +3735,24 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         // ... 其他现有代码 ...
     }
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data.Split(',');
+    if (callbackData[0] == "query_again")
+    {
+        // 从 CallbackData 中获取Tron地址
+        var tronAddress = callbackData[1];
+
+        // 调用 HandleQueryCommandAsync 方法来查询并返回结果
+        await HandleQueryCommandAsync(botClient, new Message
+        {
+            Chat = callbackQuery.Message.Chat,
+            Text = tronAddress
+        });
+    }
+    // ... 其他现有代码 ...
+}        
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
