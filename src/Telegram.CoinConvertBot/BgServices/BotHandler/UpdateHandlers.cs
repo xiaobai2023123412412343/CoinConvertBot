@@ -1782,26 +1782,42 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
 }
 public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient botClient, Message message)
 {
-    // 回复用户正在统计
     var responseMessage = await botClient.SendTextMessageAsync(message.Chat.Id, "正在统计，请稍后...");
     var responseMessageId = responseMessage.MessageId;
     
     try
     {
         string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
-        string outcomeUrl = $"https://apilist.tronscan.org/api/transaction?address={outcomeAddress}&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=50&page=1";
-
-        string usdtUrl = $"https://api.trongrid.io/v1/accounts/TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv/transactions/trc20?only_confirmed=true&limit=20&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&min_timestamp=0&max_timestamp={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+        string outcomeUrl = $"https://apilist.tronscan.org/api/transaction?address={outcomeAddress}&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=50&page=";
+        string usdtUrl = $"https://api.trongrid.io/v1/accounts/TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv/transactions/trc20?only_confirmed=true&limit=50&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&min_timestamp=0&max_timestamp={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}&page=";
 
         using (var httpClient = new HttpClient())
         {
-            var outcomeResponseTask = httpClient.GetStringAsync(outcomeUrl);
-            var usdtResponseTask = httpClient.GetStringAsync(usdtUrl);
+            var outcomeTransactions = new List<(DateTime timestamp, string token, decimal amount)>();
+            var usdtTransactions = new List<(DateTime timestamp, string token, decimal amount)>();
 
-            await Task.WhenAll(outcomeResponseTask, usdtResponseTask);
+            int page = 1;
+            while (outcomeTransactions.Count < 8 || usdtTransactions.Count < 8)
+            {
+                var outcomeResponseTask = httpClient.GetStringAsync(outcomeUrl + page);
+                var usdtResponseTask = httpClient.GetStringAsync(usdtUrl + page);
 
-            var outcomeTransactions = ParseTransactions(outcomeResponseTask.Result, "TRX");
-            var usdtTransactions = ParseTransactions(usdtResponseTask.Result, "USDT");
+                await Task.WhenAll(outcomeResponseTask, usdtResponseTask);
+
+                outcomeTransactions = outcomeTransactions
+                    .Concat(ParseTransactions(outcomeResponseTask.Result, "TRX").Except(outcomeTransactions))
+                    .OrderByDescending(t => t.timestamp)
+                    .Take(8)
+                    .ToList();
+
+                usdtTransactions = usdtTransactions
+                    .Concat(ParseTransactions(usdtResponseTask.Result, "USDT").Except(usdtTransactions))
+                    .OrderByDescending(t => t.timestamp)
+                    .Take(8)
+                    .ToList();
+
+                page++;
+            }
 
             var transactionRecords = FormatTransactionRecords(outcomeTransactions.Concat(usdtTransactions).ToList());
 
@@ -1819,8 +1835,6 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
             }
             catch (Exception ex)
             {
-                // 如果替换消息失败，这里可以处理这个异常
-                // 例如，你可以记录这个错误，或者忽略它
                 Console.WriteLine($"替换消息失败：{ex.Message}");
             }            
 
@@ -1895,8 +1909,8 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
 private static string FormatTransactionRecords(List<(DateTime timestamp, string token, decimal amount)> transactions)
 {
     var sb = new StringBuilder();
-    var incomeTransactions = transactions.Where(t => t.token == "USDT").OrderByDescending(t => t.timestamp).Take(9).ToList(); // 只取前10笔收入记录
-    var outcomeTransactions = transactions.Where(t => t.token == "TRX").OrderByDescending(t => t.timestamp).Take(9).ToList(); // 只取前10笔支出记录
+    var incomeTransactions = transactions.Where(t => t.token == "USDT").OrderByDescending(t => t.timestamp).Take(8).ToList(); // 只取前8笔收入记录
+    var outcomeTransactions = transactions.Where(t => t.token == "TRX").OrderByDescending(t => t.timestamp).Take(8).ToList(); // 只取前8笔支出记录
 
     int numOfIncomeRecords = 0;
     int numOfOutcomeRecords = 0;
