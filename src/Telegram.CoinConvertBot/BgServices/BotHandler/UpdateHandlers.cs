@@ -4747,7 +4747,23 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
         groupTranslationSettings[groupId] = true;
         await botClient.SendTextMessageAsync(groupId, "已开启翻译功能。");
     }
-}      
+} 
+if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
+{
+    var parts = messageText.Split(' ');
+    if (parts.Length == 3)
+    {
+        var userId = long.Parse(parts[1]);
+        var address = parts[2];
+        var fakeMessage = new Message
+        {
+            Chat = new Chat { Id = userId },
+            From = new Telegram.Bot.Types.User { Id = userId },
+            Text = address
+        };
+        await BindAddress(botClient, fakeMessage);
+    }
+}
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
 if (messageText.StartsWith("预支"))
 {
