@@ -1903,8 +1903,8 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
 private static string FormatTransactionRecords(List<(DateTime timestamp, string token, decimal amount)> transactions)
 {
     var sb = new StringBuilder();
-    var incomeTransactions = transactions.Where(t => t.token == "USDT").OrderByDescending(t => t.timestamp).ToList();
-    var outcomeTransactions = transactions.Where(t => t.token == "TRX").OrderByDescending(t => t.timestamp).ToList();
+    var incomeTransactions = transactions.Where(t => t.token == "USDT").OrderByDescending(t => t.timestamp).Take(9).ToList(); // 只取前10笔收入记录
+    var outcomeTransactions = transactions.Where(t => t.token == "TRX").OrderByDescending(t => t.timestamp).Take(9).ToList(); // 只取前10笔支出记录
 
     int numOfIncomeRecords = 0;
     int numOfOutcomeRecords = 0;
