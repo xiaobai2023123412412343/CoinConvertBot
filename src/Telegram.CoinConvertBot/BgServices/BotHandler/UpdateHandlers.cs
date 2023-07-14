@@ -4549,6 +4549,7 @@ if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", Str
         );
     }
 }
+//查询所有币价        
 if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$") && !messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase)) // 检查消息是否只包含英文字母，并且不是"TRX"或"trx"
 {
     var symbol = messageText.ToUpper(); // 将消息转换为大写
