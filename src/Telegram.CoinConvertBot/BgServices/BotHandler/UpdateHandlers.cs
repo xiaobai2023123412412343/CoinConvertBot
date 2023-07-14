@@ -71,7 +71,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))  指定用户可以群发
 //发送用户名：**或ID：**  会触发储存资料
 //运行机器人发送 /yccl   启动全局异常处理    /qdgg  启动广告
-
+//代绑 id 地址  可以帮用户绑定地址
 
 public static class UpdateHandlers
 {
