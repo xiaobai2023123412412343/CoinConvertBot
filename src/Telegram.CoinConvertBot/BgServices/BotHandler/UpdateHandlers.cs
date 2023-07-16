@@ -4614,12 +4614,12 @@ if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$") && !messageText.Equals("TRX", Str
         var reply = $"<b> {symbol}/USDT 数据</b>\n\n" +
                     $"<b>时间：</b><code>{new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((long)data["ts"]).ToLocalTime():yyyy-MM-dd HH:mm:ss}</code>\n" +
                     $"<b>开盘价：</b><code>{data["openUtc0"]}</code>\n" +
+                    $"<b>买一价：</b><code>{data["buyOne"]}</code>\n" +
+                    $"<b>卖一价：</b><code>{data["sellOne"]}</code>\n" +   
+                    $"<b>最新成交价：</b><code>{data["close"]}</code>\n" +            
                     $"<b>24小时最高价：</b><code>{data["high24h"]}</code>\n" +
                     $"<b>24小时最低价：</b><code>{data["low24h"]}</code>\n" +
-                    $"<b>最新成交价：</b><code>{data["close"]}</code>\n" +
-                    $"<b>买一价：</b><code>{data["buyOne"]}</code>\n" +
-                    $"<b>卖一价：</b><code>{data["sellOne"]}</code>\n" +
-                    $"<b>成交额：</b><code>{string.Format("{0:N2}", double.Parse((string)data["usdtVol"]))}</code>\n" +
+                   // $"<b>成交额：</b><code>{string.Format("{0:N2}", double.Parse((string)data["usdtVol"]))}</code>\n" +
                     $"<b>24小时涨跌幅：</b><code>{Math.Round(double.Parse((string)data["change"]) * 100, 2)}%</code>";
 
 // 发送消息给用户
