@@ -813,7 +813,7 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
             }
 
             // 为这个群组创建一个新的定时器
-            var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+            var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
             _timers[chatId] = timer;
 
             break; // 如果成功启动监控任务，跳出循环
