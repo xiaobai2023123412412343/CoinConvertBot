@@ -795,7 +795,7 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
                     }
 
                     // 在每次请求之间添加延迟
-                    await Task.Delay(TimeSpan.FromSeconds(1));
+                    await Task.Delay(TimeSpan.FromSeconds(2));
                 }
             }
             else
@@ -916,7 +916,7 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
                     changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
                 }
                 // 在每次请求之间添加延迟
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                await Task.Delay(TimeSpan.FromSeconds(2));
                 if (!string.IsNullOrEmpty(changeInfo))
                 {
                     var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
@@ -1131,7 +1131,7 @@ public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient b
                     throw;
                 }
                 // 在每次请求之间添加延迟
-                await Task.Delay(TimeSpan.FromSeconds(1));                
+                await Task.Delay(TimeSpan.FromSeconds(2));                
             }
         }
 
