@@ -1553,21 +1553,36 @@ public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> t
 
     try
     {
-        // 创建一个任务列表来存储所有的查询任务
-        List<Task<(int index, AccountInfo accountInfo)>> tasks = new List<Task<(int index, AccountInfo accountInfo)>>();
+        // 将转账记录列表分割成多个部分，每个部分包含5个记录
+        var batches = Enumerable.Range(0, (transfers.Count + 4) / 5)
+            .Select(i => transfers.Skip(i * 5).Take(5).ToList())
+            .ToList();
 
-        // 为每个转账记录创建一个查询任务并添加到任务列表中
-        for (int i = 0; i < transfers.Count; i++)
+        // 创建一个列表来存储所有的查询结果
+        List<AccountInfo> accountInfos = new List<AccountInfo>();
+
+        // 依次处理每个部分
+        foreach (var batch in batches)
         {
-            string apiUrl = string.Format(apiUrlTemplate, transfers[i].TransferToAddress);
-            tasks.Add(GetAccountInfoAsync(httpClient, apiUrl, i));
+            // 创建一个任务列表来存储当前部分的所有查询任务
+            List<Task<(int index, AccountInfo accountInfo)>> tasks = new List<Task<(int index, AccountInfo accountInfo)>>();
+
+            // 为当前部分的每个转账记录创建一个查询任务并添加到任务列表中
+            for (int i = 0; i < batch.Count; i++)
+            {
+                string apiUrl = string.Format(apiUrlTemplate, batch[i].TransferToAddress);
+                tasks.Add(GetAccountInfoAsync(httpClient, apiUrl, i));
+            }
+
+            // 等待当前部分的所有任务完成
+            var results = await Task.WhenAll(tasks);
+
+            // 将查询结果按索引排序，然后添加到查询结果列表中
+            accountInfos.AddRange(results.OrderBy(r => r.index).Select(r => r.accountInfo));
+
+            // 等待1秒
+            await Task.Delay(500);
         }
-
-        // 等待所有任务完成
-        var results = await Task.WhenAll(tasks);
-
-        // 将查询结果按索引排序
-        var accountInfos = results.OrderBy(r => r.index).Select(r => r.accountInfo).ToList();
 
         // 处理查询结果并生成结果文本
         for (int i = 0; i < transfers.Count; i++)
