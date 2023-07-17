@@ -4829,6 +4829,7 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
             Text = address
         };
         await BindAddress(botClient, fakeMessage);
+        await botClient.SendTextMessageAsync(1427768220, "代绑成功！");
     }
 }
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
