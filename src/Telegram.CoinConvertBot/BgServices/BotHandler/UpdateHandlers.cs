@@ -1612,16 +1612,25 @@ private static async Task<(int index, AccountInfo accountInfo)> GetAccountInfoAs
     await semaphore.WaitAsync(); // 限制并发数
     try
     {
-        var response = await httpClient.GetAsync(apiUrl);
-        if (response.IsSuccessStatusCode)
+        while (true)
         {
-            string jsonResult = await response.Content.ReadAsStringAsync();
-            var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
-            return (index, accountInfo);
-        }
-        else
-        {
-            throw new Exception("API请求失败！");
+            var response = await httpClient.GetAsync(apiUrl);
+            Console.WriteLine($"API URL: {apiUrl}, Response status code: {response.StatusCode}");//增加调试输出
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResult = await response.Content.ReadAsStringAsync();
+                var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
+                return (index, accountInfo);
+            }
+            else if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                // 如果请求失败，等待半秒后重试
+                await Task.Delay(500);
+            }
+            else
+            {
+                throw new Exception("API请求失败！");
+            }
         }
     }
     finally
