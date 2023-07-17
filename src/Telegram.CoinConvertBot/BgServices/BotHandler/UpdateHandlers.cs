@@ -4735,15 +4735,15 @@ if (messageText.StartsWith("谷歌 "))
             await botClient.SendTextMessageAsync(groupId, "已开启广告功能。");
         }
     }
-if (message.Text.StartsWith("@") || 
-    message.Text.StartsWith("https://t.me/") || 
-    message.Text.StartsWith("http://t.me/") || 
-    message.Text.StartsWith("t.me/") ||
-    message.Text.Trim().ToLower() == "查id" || 
-    message.Text.Trim().ToLower() == "查id")
-{
-    await HandleUsernameOrUrlMessageAsync(botClient, message);
-}
+//if (message.Text.StartsWith("@") || 
+//    message.Text.StartsWith("https://t.me/") || 
+//    message.Text.StartsWith("http://t.me/") || 
+//    message.Text.StartsWith("t.me/") ||
+//    message.Text.Trim().ToLower() == "查id" || 
+//    message.Text.Trim().ToLower() == "查id")
+//{
+//    await HandleUsernameOrUrlMessageAsync(botClient, message);
+//}
 if (messageText.StartsWith("/yccl"))
 {
     // 添加全局异常处理器
