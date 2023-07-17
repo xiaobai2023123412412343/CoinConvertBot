@@ -1542,7 +1542,7 @@ public static class TronscanHelper
         }
         catch (Exception ex)
         {
-            return "API接口维护中，请稍后重试！";
+            return "查询转账记录API接口维护中，请稍后重试！";
         }
     }
 
@@ -1586,7 +1586,7 @@ public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> t
     }
     catch (Exception ex)
     {
-        resultText = "API接口维护中，请稍后重试！";
+        resultText = "查询余额API接口维护中，请稍后重试！";
     }
 
     return resultText;
