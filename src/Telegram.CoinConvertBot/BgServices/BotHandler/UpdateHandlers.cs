@@ -756,7 +756,7 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
 {
     int retryCount = 0; // 添加一个重试计数器
 
-    while (retryCount < 999) // 如果重试次数小于3次，继续尝试
+    while (retryCount < 999) // 如果重试次数小于999次，继续尝试
     {
         try
         {
@@ -839,6 +839,14 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         {
             // 打印错误信息
             Console.WriteLine($"Unexpected error: {ex.Message}");
+            
+          // 如果错误信息包含 "Exception during making request"，等待五分钟后重启任务
+          if (ex.Message.Contains("Exception during making request"))
+          {
+              await Task.Delay(TimeSpan.FromMinutes(5));
+              StartMonitoring(botClient, chatId);
+              return;
+          }            
 
             // 如果存在定时器，停止并移除
             if (_timers.ContainsKey(chatId))
@@ -1034,7 +1042,13 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
         {
             _errorCounts[chatId] = 1;
         }
-
+        // 如果错误信息包含 "Exception during making request"，等待五分钟后重启任务
+        if (ex.Message.Contains("Exception during making request"))
+        {
+            await Task.Delay(TimeSpan.FromMinutes(5));
+            StartMonitoring(botClient, chatId);
+            return;
+        }
         // 如果错误次数达到999次，取消任务并发送通知
         if (_errorCounts[chatId] >= 999)
         {
@@ -1174,7 +1188,13 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         {
             _errorCounts[chatId] = 1;
         }
-
+        // 如果错误信息包含 "Exception during making request"，等待五分钟后重启任务
+        if (ex.Message.Contains("Exception during making request"))
+        {
+            await Task.Delay(TimeSpan.FromMinutes(5));
+            StartMonitoring(botClient, chatId);
+            return;
+        }
         // 如果错误次数达到3次，取消任务并发送通知
         if (_errorCounts[chatId] >= 999)
         {
