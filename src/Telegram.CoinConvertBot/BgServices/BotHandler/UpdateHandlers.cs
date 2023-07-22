@@ -756,7 +756,7 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
 {
     int retryCount = 0; // 添加一个重试计数器
 
-    while (retryCount < 3) // 如果重试次数小于3次，继续尝试
+    while (retryCount < 999) // 如果重试次数小于3次，继续尝试
     {
         try
         {
@@ -795,7 +795,7 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
                     }
 
                     // 在每次请求之间添加延迟
-                    await Task.Delay(TimeSpan.FromSeconds(2));
+                    await Task.Delay(TimeSpan.FromSeconds(3));
                 }
             }
             else
@@ -813,7 +813,7 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
             }
 
             // 为这个群组创建一个新的定时器
-            var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
+            var timer = new Timer(async _ => await CheckUserChangesAsync(botClient, chatId), null, TimeSpan.Zero, TimeSpan.FromSeconds(20));
             _timers[chatId] = timer;
 
             break; // 如果成功启动监控任务，跳出循环
@@ -849,9 +849,9 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
 
             retryCount++; // 增加重试计数器
 
-            if (retryCount < 3) // 如果重试次数小于3次，等待5秒后再次尝试
+            if (retryCount < 999) // 如果重试次数小于3次，等待10秒后再次尝试
             {
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                await Task.Delay(TimeSpan.FromSeconds(10));
             }
             else // 如果重试次数达到3次，打印错误信息并跳出循环
             {
@@ -916,7 +916,7 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
                     changeInfo += $"名字：{oldInfo.name} 更改为 {name}\n";
                 }
                 // 在每次请求之间添加延迟
-                await Task.Delay(TimeSpan.FromSeconds(2));
+                await Task.Delay(TimeSpan.FromSeconds(3));
                 if (!string.IsNullOrEmpty(changeInfo))
                 {
                     var notification = $"⚠️用户资料变更通知⚠️\n\n名字: <a href=\"tg://user?id={userId}\">{name}</a>\n用户名：@{username}\n用户ID:<code>{userId}</code>\n\n变更资料：\n{changeInfo}";
@@ -1036,7 +1036,7 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
         }
 
         // 如果错误次数达到3次，取消任务并发送通知
-        if (_errorCounts[chatId] >= 3)
+        if (_errorCounts[chatId] >= 999)
         {
             // 取消当前群聊的监控任务
             if (_timers.ContainsKey(chatId))
@@ -1131,7 +1131,7 @@ public static async Task MonitorUsernameAndNameChangesAsync(ITelegramBotClient b
                     throw;
                 }
                 // 在每次请求之间添加延迟
-                await Task.Delay(TimeSpan.FromSeconds(2));                
+                await Task.Delay(TimeSpan.FromSeconds(3));                
             }
         }
 
@@ -1176,7 +1176,7 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         }
 
         // 如果错误次数达到3次，取消任务并发送通知
-        if (_errorCounts[chatId] >= 3)
+        if (_errorCounts[chatId] >= 999)
         {
             // 取消当前群聊的监控任务
             if (_timers.ContainsKey(chatId))
@@ -1193,7 +1193,7 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         }
         else
         {
-            // 如果错误次数未达到3次，尝试重新启动监控任务
+            // 如果错误次数未达到999次，尝试重新启动监控任务
             try
             {
                 StartMonitoring(botClient, chatId);
