@@ -795,7 +795,7 @@ public static async void StartMonitoring(ITelegramBotClient botClient, long chat
                     }
 
                     // 在每次请求之间添加延迟
-                    await Task.Delay(TimeSpan.FromSeconds(3));
+                    await Task.Delay(TimeSpan.FromSeconds(5));
                 }
             }
             else
