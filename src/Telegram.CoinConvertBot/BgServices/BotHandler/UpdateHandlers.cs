@@ -547,6 +547,7 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
                 {
                     // 用户阻止了机器人，或者用户注销了机器人，取消定时器任务
                     timer.Dispose();
+                    timer = null; // 添加这行代码
                     // 从字典中移除该用户的定时器和地址
                     userTimers.Remove(userId);
                     userTronAddresses.Remove(userId);
@@ -562,6 +563,7 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
             {
                 // 取消定时器任务
                 timer.Dispose();
+                timer = null; // 添加这行代码
                 // 从字典中移除该用户的定时器和地址
                 userTimers.Remove(userId);
                 userTronAddresses.Remove(userId);
@@ -570,22 +572,30 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
             finally
             {
                 // 如果下发提醒失败或查询失败，过10秒重新启动
-                timer.Change(TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1));
+                if (timer != null) // 添加这行代码
+                {    
+                   timer.Change(TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1));
+                }    
             }
-            // 余额不足，停止480分钟 8小时
-            timer.Change(TimeSpan.FromMinutes(480), TimeSpan.FromMinutes(480));
+            if (timer != null) // 添加这行代码
+            {    
+                // 余额不足，停止480分钟 8小时
+                timer.Change(TimeSpan.FromMinutes(480), TimeSpan.FromMinutes(480));
+            }     
         }
         else
         {
-            // 余额充足，每分钟检查一次
-            timer.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+            if (timer != null) // 添加这行代码
+            {    
+                // 余额充足，每分钟检查一次
+                timer.Change(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+            }
         }
     }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
     // 将定时器和用户ID存储起来
     userTimers[userId] = timer;
 }
-
 // 处理绑定波场地址的命令
 private static async Task HandleBindTronAddressCommand(ITelegramBotClient botClient, Message message)
 {
