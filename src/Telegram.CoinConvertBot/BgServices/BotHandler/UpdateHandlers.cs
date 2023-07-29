@@ -58,7 +58,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 // 获取任务的结果
 //decimal todayIncome = Math.Round(todayIncomeTask.Result, 2);
 //decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
-//decimal totalIncome = Math.Round(totalIncomeTask.Result - 18157, 2); 累计承兑-21639USDT  如果是新号可以不用减
+//decimal totalIncome = Math.Round(totalIncomeTask.Result - 19045, 2); 累计承兑-21639USDT  如果是新号可以不用减
 // 先发送GIF
 // string gifUrl = "https://i.postimg.cc/0QKYJ0Cb/333.gif"; // 替换为您的GIF URL  网站自己上传
 // 发送GIF和带按钮的文本
@@ -5236,7 +5236,7 @@ var TRX = Convert.ToDecimal(account.Balance) / 1_000_000L;
 var USDT = USDTTask.Result;
 decimal todayIncome = Math.Round(todayIncomeTask.Result, 2);
 decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
-decimal totalIncome = Math.Round(totalIncomeTask.Result - 17957, 2);
+decimal totalIncome = Math.Round(totalIncomeTask.Result - 19045, 2);
             
 var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
