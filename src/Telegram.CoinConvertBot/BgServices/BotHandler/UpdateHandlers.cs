@@ -1578,7 +1578,7 @@ public static class TronscanHelper
 
 public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
 {
-    string apiUrlTemplate = "https://apilist.tronscan.org/api/account?address={0}";
+    string apiUrlTemplate = "https://api.trongrid.io/v1/accounts/{0}";
     string resultText = $"<b> 承兑地址：</b><code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n";
 
     try
@@ -1649,7 +1649,8 @@ private static async Task<(int index, AccountInfo accountInfo)> GetAccountInfoAs
             if (response.IsSuccessStatusCode)
             {
                 string jsonResult = await response.Content.ReadAsStringAsync();
-                var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
+                var accountInfoResponse = JsonSerializer.Deserialize<AccountInfoResponse>(jsonResult);
+                var accountInfo = new AccountInfo { Balance = accountInfoResponse.Data[0].Balance };
                 return (index, accountInfo);
             }
             else if (response.StatusCode == HttpStatusCode.Forbidden)
@@ -1691,7 +1692,17 @@ private static async Task<(int index, AccountInfo accountInfo)> GetAccountInfoAs
         }
     }
 }
+public class AccountInfoResponse
+{
+    [JsonPropertyName("data")]
+    public List<AccountData> Data { get; set; }
 
+    public class AccountData
+    {
+        [JsonPropertyName("balance")]
+        public long Balance { get; set; }
+    }
+}
 public class TransferList
 {
     [JsonPropertyName("data")]
