@@ -996,48 +996,53 @@ private static async Task CheckUserChangesAsync(ITelegramBotClient botClient, lo
             userInfo.Remove(userId);
         }
     }
-    catch (ApiRequestException ex)
+catch (ApiRequestException ex)
+{
+    if (ex.Message.Contains("Too Many Requests"))
     {
-        if (ex.ErrorCode == 400 && ex.Message == "Bad Request: group chat was upgraded to a supergroup chat")
-        {
-            // 群组升级为超级群组，更新群组id
-            var chat = await botClient.GetChatAsync(chatId);
-            var newChatId = chat.Id;
-            if (_timers.ContainsKey(chatId))
-            {
-                _timers[newChatId] = _timers[chatId];
-                _timers.Remove(chatId);
-            }
-            if (groupUserInfo.ContainsKey(chatId))
-            {
-                groupUserInfo[newChatId] = groupUserInfo[chatId];
-                groupUserInfo.Remove(chatId);
-            }
-            return;
-        }    
-        if (ex.ErrorCode == 400 && ex.Message == "Bad Request: chat not found")
-        {
-            // 群组不存在，跳过
-            return;
-        }
-        else if (ex.Message == "Forbidden: bot was kicked from the group chat")
-        {
-            // 机器人被踢出群组，跳过
-            return;
-        }
-        else if (ex.Message == "Forbidden: bot was kicked from the supergroup chat")
-        {
-            // 机器人被踢出超级群组，跳过
-            return;
-        }
-        else if (ex.Message == "Forbidden: the group chat was deleted")
-        {
-            // 群组已被删除，跳过
-            return;
-        }        
-        throw;  // 其他错误，继续抛出
+        // 如果遇到 "Too Many Requests" 的提示，则休息5分钟再继续执行
+        await Task.Delay(TimeSpan.FromMinutes(5));
+        return;
     }
-
+    else if (ex.ErrorCode == 400 && ex.Message == "Bad Request: group chat was upgraded to a supergroup chat")
+    {
+        // 群组升级为超级群组，更新群组id
+        var chat = await botClient.GetChatAsync(chatId);
+        var newChatId = chat.Id;
+        if (_timers.ContainsKey(chatId))
+        {
+            _timers[newChatId] = _timers[chatId];
+            _timers.Remove(chatId);
+        }
+        if (groupUserInfo.ContainsKey(chatId))
+        {
+            groupUserInfo[newChatId] = groupUserInfo[chatId];
+            groupUserInfo.Remove(chatId);
+        }
+        return;
+    }   
+    else if (ex.ErrorCode == 400 && ex.Message == "Bad Request: chat not found")
+    {
+        // 群组不存在，跳过
+        return;
+    }
+    else if (ex.Message == "Forbidden: bot was kicked from the group chat")
+    {
+        // 机器人被踢出群组，跳过
+        return;
+    }
+    else if (ex.Message == "Forbidden: bot was kicked from the supergroup chat")
+    {
+        // 机器人被踢出超级群组，跳过
+        return;
+    }
+    else if (ex.Message == "Forbidden: the group chat was deleted")
+    {
+        // 群组已被删除，跳过
+        return;
+    }        
+    throw;  // 其他错误，继续抛出
+}
     catch (Exception ex) // 捕获所有异常
     {
         // 打印错误信息
