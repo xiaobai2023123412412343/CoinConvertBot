@@ -5005,7 +5005,9 @@ if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
             // 检查错误消息以确定是否应该删除用户
             if (e.Message.Contains("bot can't send messages to bots") ||
                 e.Message.Contains("bot was blocked by the user") ||
-                e.Message.Contains("chat not found"))
+                e.Message.Contains("user is deactivated") ||
+                e.Message.Contains("chat not found")||
+                e.Message.Contains("bot can't initiate conversation with a user"))
             {
                 // 从存储库中删除用户
                 Followers.Remove(follower);
