@@ -110,6 +110,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
         new BotCommand(){Command="usd",Description="外汇助手"},
         new BotCommand(){Command="vip",Description="会员代开"},
         new BotCommand(){Command="cny",Description="合约助手"},
+        new BotCommand(){Command="zijin",Description="资金费用"},            
         new BotCommand(){Command="trc",Description="查询余额"},
         new BotCommand(){Command="home",Description="个人中心"},            
         }).GetAwaiter().GetResult();
