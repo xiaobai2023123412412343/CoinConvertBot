@@ -1438,7 +1438,24 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
         Console.WriteLine($"发生意外错误: {ex.Message}");
     }
 }
+//完整列表
+    private static async Task HandleFullListCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>\n");
 
+        foreach (var follower in Followers.OrderByDescending(f => f.FollowTime))
+        {
+            sb.AppendLine($"<b>{follower.Name}</b>  用户名：@{follower.Username}   ID：<code>{follower.Id}</code>");
+        }
+
+        await botClient.EditMessageTextAsync(
+            chatId: callbackQuery.Message.Chat.Id,
+            messageId: callbackQuery.Message.MessageId,
+            text: sb.ToString(),
+            parseMode: ParseMode.Html
+        );
+    }    
 //获取关注列表   
 private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
@@ -1495,6 +1512,10 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
             InlineKeyboardButton.WithCallbackData("下一页", $"next_page_{page}")
         },
         new [] // 第二行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("完整列表", "show_full_list")
+        },        
+        new [] // 第三行按钮
         {
             InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_recordds")
         }
@@ -4168,6 +4189,9 @@ if (update.Type == UpdateType.CallbackQuery)
         {
             switch (callbackData)
             {
+                case "show_full_list":
+                    await HandleFullListCallbackAsync(botClient, callbackQuery);
+                    break;
                 case "show_transaction_recordds":
                     await HandleTransactionRecordsCallbackAsync(botClient, callbackQuery);
                     break;
@@ -4189,7 +4213,7 @@ if (update.Type == UpdateType.CallbackQuery)
             // 处理其他类型的异常
         }
     }
-} 
+}
         if (update.Type == UpdateType.Message)
     {
 var message = update.Message;
