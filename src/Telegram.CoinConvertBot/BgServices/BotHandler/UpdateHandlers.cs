@@ -5684,12 +5684,28 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     var addressArray = configuration.GetSection("Address:USDT-TRC20").Get<string[]>();
     var ReciveAddress = addressArray.Length == 0 ? "未配置" : addressArray[UserId % addressArray.Length];
 
-  //  if (message.Chat.Id == AdminUserId)
-   // {
-   //     await HandleGetFollowersCommandAsync(botClient, message);
-   // }
-   // else
-   // {
+    if (message.Chat.Id == AdminUserId) //管理直接返回资金费率  取消的话注释 5687-5708以及5764
+    {
+        try
+        {
+            var fundingRates = await BinanceFundingRates.GetFundingRates();
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: fundingRates,
+                parseMode: ParseMode.Html
+            );
+        }
+        catch (Exception ex)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"获取资金费率时发生错误：{ex.Message}"
+            );
+        }
+        return await Task.FromResult<Message>(null);
+    }
+    else
+    {
         var msg = @$"<b>实时汇率表：</b>
 
 <b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX   ≈ {100m * usdtPrice} CNY</b>
@@ -5745,7 +5761,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
             parseMode: ParseMode.Html,
             disableWebPagePreview: true // 添加这一行来禁用链接预览
         );
-  //  }
+    }
 
     // 在这里添加一个返回空消息的语句
     return await Task.FromResult<Message>(null);
