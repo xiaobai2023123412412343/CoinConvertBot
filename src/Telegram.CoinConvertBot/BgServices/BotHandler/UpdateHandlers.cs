@@ -91,6 +91,62 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public class KlineDataItem
+{
+    public long OpenTime { get; set; }
+    public string Open { get; set; }
+    public string High { get; set; }
+    public string Low { get; set; }
+    public string Close { get; set; }
+    // 其他字段...
+}
+
+public static class BinancePriceInfo
+{
+    private static readonly HttpClient httpClient = new HttpClient();
+
+    public static async Task<string> GetPriceInfo(string symbol)
+    {
+        // 获取当前价格
+        var response = await httpClient.GetAsync($"https://api.binance.com/api/v3/ticker/price?symbol={symbol.ToUpper()}USDT");
+        var currentPriceData = JsonSerializer.Deserialize<CurrentPrice>(await response.Content.ReadAsStringAsync());
+        double currentPrice = double.Parse(currentPriceData.price);
+
+        // 获取历史K线数据
+        response = await httpClient.GetAsync($"https://api.binance.com/api/v3/klines?symbol={symbol.ToUpper()}USDT&interval=1d&limit=200");
+        var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await response.Content.ReadAsStringAsync());
+
+        var klineData = klineDataRaw.Select(item => new KlineDataItem
+        {
+            OpenTime = item[0].GetInt64(),
+            Open = item[1].GetString(),
+            High = item[2].GetString(),
+            Low = item[3].GetString(),
+            Close = item[4].GetString()
+            // 其他字段...
+        }).ToList();
+
+        // 计算压力位和阻力位
+        var result = $"<b>{symbol.ToUpper()}当前价格：</b> {currentPrice}\n\n";
+
+        var periods = new[] { 7, 30, 90, 200 };
+        foreach (var period in periods)
+        {
+            var recentData = klineData.TakeLast(period);
+            double resistance = recentData.Max(x => double.Parse(x.High)); // 最高价
+            double support = recentData.Min(x => double.Parse(x.Low)); // 最低价
+            result += $"<b>{period}D压力位：</b> {support}   <b>阻力位：</b> {resistance}\n\n";
+        }
+
+        return result;
+    }
+}
+
+public class CurrentPrice
+{
+    public string symbol { get; set; }
+    public string price { get; set; }
+}
 //合约资金费排行
 public class FundingRate
 {
@@ -4687,6 +4743,25 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
+if (messageText.Length <= 10 && messageText.All(char.IsLetter)) // 假设货币代码不超过10个字母
+{
+    try
+    {
+        var priceInfo = await BinancePriceInfo.GetPriceInfo(messageText);
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: priceInfo,
+            parseMode: ParseMode.Html
+        );
+    }
+    catch (Exception ex)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"获取价格信息时发生错误：{ex.Message}"
+        );
+    }
+}        
 if (messageText.Equals("/zijin", StringComparison.OrdinalIgnoreCase))
 {
     try
