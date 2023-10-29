@@ -4783,7 +4783,16 @@ if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", Str
     }
 }
 //查询所有币价        
-if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$") && !messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase)) // 检查消息是否只包含英文字母，并且不是"TRX"或"trx"
+if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText.Equals("trx", StringComparison.OrdinalIgnoreCase))
+{
+    // 如果消息是"TRX"或"trx"，则返回特殊的消息
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "<b>TRX能量兑换地址</b>：\n\n<code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>",
+        parseMode: ParseMode.Html
+    );
+}
+else if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$")) // 检查消息是否只包含英文字母
 {
     var symbol = messageText.ToUpper(); // 将消息转换为大写
     var url = $"https://api.bitget.com/api/spot/v1/market/ticker?symbol={symbol}USDT_SPBL"; // 构造API URL
@@ -4809,7 +4818,8 @@ if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$") && !messageText.Equals("TRX", Str
                                 $"<b>最新成交价：</b><code>{data["close"]}</code>\n" +            
                                 $"<b>24小时最高价：</b><code>{data["high24h"]}</code>\n" +
                                 $"<b>24小时最低价：</b><code>{data["low24h"]}</code>\n" +
-                                $"<b>24小时涨跌幅：</b><code>{Math.Round(double.Parse((string)data["change"]) * 100, 2)}%</code>\n\n";
+                                $"<b>24小时涨跌幅：</b><code>{Math.Round(double.Parse((string)data["change"]) * 100, 2)}%</code>\n" +
+                                "-----------------------------------------------\n";
 
                     // 获取压力位和阻力位信息
                     var priceInfo = await BinancePriceInfo.GetPriceInfo(symbol);
@@ -4830,7 +4840,7 @@ if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$") && !messageText.Equals("TRX", Str
             Console.WriteLine($"Error when calling API: {ex.Message}");
         }
     }
-}        
+}       
 // 监控名字和用户名变更
 if (message.Type == MessageType.Text || message.Type == MessageType.ChatMembersAdded)
 {
