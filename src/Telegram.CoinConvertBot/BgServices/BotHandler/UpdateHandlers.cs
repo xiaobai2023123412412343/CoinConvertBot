@@ -122,13 +122,13 @@ public static class BinanceFundingRates
         var result = "<b>币安正资金费TOP5：</b>\n";
         foreach (var rate in positiveFundingRates)
         {
-            result += $"<b>{rate.symbol}    {Math.Round(rate.lastFundingRate * 100, 3)}%</b>\n";
+            result += $"{rate.symbol}    {Math.Round(rate.lastFundingRate * 100, 3)}%\n";
         }
 
         result += "\n<b>币安负资金费TOP5：</b>\n";
         foreach (var rate in negativeFundingRates)
         {
-            result += $"<b>{rate.symbol}    -{Math.Round(Math.Abs(rate.lastFundingRate) * 100, 3)}%</b>\n";
+            result += $"{rate.symbol}    -{Math.Round(Math.Abs(rate.lastFundingRate) * 100, 3)}%\n";
         }
 
         return result;
