@@ -91,6 +91,49 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//合约资金费排行
+public class FundingRate
+{
+    public string symbol { get; set; }
+    public string lastFundingRate { get; set; }
+}
+
+public static class BinanceFundingRates
+{
+    private static readonly HttpClient httpClient = new HttpClient();
+
+    public static async Task<string> GetFundingRates()
+    {
+        var response = await httpClient.GetAsync("https://fapi.binance.com/fapi/v1/premiumIndex");
+        var data = JsonSerializer.Deserialize<List<FundingRate>>(await response.Content.ReadAsStringAsync());
+
+        var negativeFundingRates = data
+            .Select(x => new { symbol = x.symbol.Replace("USDT", "_USDT"), lastFundingRate = double.Parse(x.lastFundingRate) })
+            .Where(x => Math.Abs(x.lastFundingRate) >= 0.00001)
+            .OrderBy(x => x.lastFundingRate)
+            .Take(5);
+
+        var positiveFundingRates = data
+            .Select(x => new { symbol = x.symbol.Replace("USDT", "_USDT"), lastFundingRate = double.Parse(x.lastFundingRate) })
+            .Where(x => x.lastFundingRate >= 0.00001)
+            .OrderByDescending(x => x.lastFundingRate)
+            .Take(5);
+
+        var result = "<b>币安正资金费TOP5：</b>\n";
+        foreach (var rate in positiveFundingRates)
+        {
+            result += $"<b>{rate.symbol}    {Math.Round(rate.lastFundingRate * 100, 3)}%</b>\n";
+        }
+
+        result += "\n<b>币安负资金费TOP5：</b>\n";
+        foreach (var rate in negativeFundingRates)
+        {
+            result += $"<b>{rate.symbol}    -{Math.Round(Math.Abs(rate.lastFundingRate) * 100, 3)}%</b>\n";
+        }
+
+        return result;
+    }
+}
 //个人中心    
 public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient botClient, Message message, IServiceProvider provider)
 {
@@ -4644,6 +4687,25 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
+if (messageText.Equals("/zijin", StringComparison.OrdinalIgnoreCase))
+{
+    try
+    {
+        var fundingRates = await BinanceFundingRates.GetFundingRates();
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: fundingRates,
+            parseMode: ParseMode.Html
+        );
+    }
+    catch (Exception ex)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"获取资金费率时发生错误：{ex.Message}"
+        );
+    }
+}       
 // 检查是否是"查询余额"命令或 "/trc"
 if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
