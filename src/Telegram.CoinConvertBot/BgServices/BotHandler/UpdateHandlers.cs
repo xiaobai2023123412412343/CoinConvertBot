@@ -4822,8 +4822,17 @@ else if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$")) // 检查消息是否只包
                                 $"<b>最新成交价：</b><code>{data["close"]}</code>\n" +            
                                 $"<b>24小时最高价：</b><code>{data["high24h"]}</code>\n" +
                                 $"<b>24小时最低价：</b><code>{data["low24h"]}</code>\n" +
-                                $"<b>24小时涨跌幅：</b><code>{Math.Round(double.Parse((string)data["change"]) * 100, 2)}%</code>\n" +
-                                "-----------------------------------------------\n";
+                                $"<b>24小时涨跌幅：</b><code>{Math.Round(double.Parse((string)data["change"]) * 100, 2)}%</code>\n";
+
+                    // 获取资金费
+                    var fundingRateResponse = await httpClient.GetAsync($"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}USDT");
+                    var fundingRateData = JsonSerializer.Deserialize<FundingRate>(await fundingRateResponse.Content.ReadAsStringAsync());
+                    if (fundingRateData != null && !string.IsNullOrEmpty(fundingRateData.lastFundingRate))
+                    {
+                        reply += $"<b>合约资金费：</b><code>{Math.Round(double.Parse(fundingRateData.lastFundingRate) * 100, 3)}%</code>\n";
+                    }
+
+                    reply += "-----------------------------------------------\n";
 
                     // 获取压力位和阻力位信息
                     var priceInfo = await BinancePriceInfo.GetPriceInfo(symbol);
