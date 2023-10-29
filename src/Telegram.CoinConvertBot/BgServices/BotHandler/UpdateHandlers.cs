@@ -91,6 +91,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//计算压力位阻力位    
 public class KlineDataItem
 {
     public long OpenTime { get; set; }
