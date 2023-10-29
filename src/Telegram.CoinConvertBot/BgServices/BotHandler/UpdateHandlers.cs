@@ -128,7 +128,7 @@ public static class BinancePriceInfo
         }).ToList();
 
         // 计算压力位和阻力位
-        var result = $"<b>{symbol.ToUpper()}当前价格：</b> {currentPrice}\n\n";
+        var result = "";
 
         var periods = new[] { 7, 30, 90, 200 };
         foreach (var period in periods)
@@ -4744,25 +4744,7 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
-if (messageText.Length <= 10 && messageText.All(char.IsLetter)) // 假设货币代码不超过10个字母
-{
-    try
-    {
-        var priceInfo = await BinancePriceInfo.GetPriceInfo(messageText);
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: priceInfo,
-            parseMode: ParseMode.Html
-        );
-    }
-    catch (Exception ex)
-    {
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: $"获取价格信息时发生错误：{ex.Message}"
-        );
-    }
-}        
+ 
 if (messageText.Equals("/zijin", StringComparison.OrdinalIgnoreCase))
 {
     try
@@ -4816,27 +4798,30 @@ if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$") && !messageText.Equals("TRX", Str
             if (json["data"] != null)
             {
                 var data = json["data"];
-    if (data["ts"] != null && data["openUtc0"] != null && data["high24h"] != null && data["low24h"] != null && data["close"] != null && data["buyOne"] != null && data["sellOne"] != null && data["usdtVol"] != null && data["change"] != null)
-    {
-        // 格式化返回给用户的消息
-        var reply = $"<b> {symbol}/USDT 数据</b>\n\n" +
-                    $"<b>时间：</b><code>{new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((long)data["ts"]).ToLocalTime():yyyy-MM-dd HH:mm:ss}</code>\n" +
-                    $"<b>开盘价：</b><code>{data["openUtc0"]}</code>\n" +
-                    $"<b>买一价：</b><code>{data["buyOne"]}</code>\n" +
-                    $"<b>卖一价：</b><code>{data["sellOne"]}</code>\n" +   
-                    $"<b>最新成交价：</b><code>{data["close"]}</code>\n" +            
-                    $"<b>24小时最高价：</b><code>{data["high24h"]}</code>\n" +
-                    $"<b>24小时最低价：</b><code>{data["low24h"]}</code>\n" +
-                   // $"<b>成交额：</b><code>{string.Format("{0:N2}", double.Parse((string)data["usdtVol"]))}</code>\n" +
-                    $"<b>24小时涨跌幅：</b><code>{Math.Round(double.Parse((string)data["change"]) * 100, 2)}%</code>";
+                if (data["ts"] != null && data["openUtc0"] != null && data["high24h"] != null && data["low24h"] != null && data["close"] != null && data["buyOne"] != null && data["sellOne"] != null && data["usdtVol"] != null && data["change"] != null)
+                {
+                    // 格式化返回给用户的消息
+                    var reply = $"<b> {symbol}/USDT 数据</b>\n\n" +
+                                $"<b>时间：</b><code>{new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((long)data["ts"]).ToLocalTime():yyyy-MM-dd HH:mm:ss}</code>\n" +
+                                $"<b>开盘价：</b><code>{data["openUtc0"]}</code>\n" +
+                                $"<b>买一价：</b><code>{data["buyOne"]}</code>\n" +
+                                $"<b>卖一价：</b><code>{data["sellOne"]}</code>\n" +   
+                                $"<b>最新成交价：</b><code>{data["close"]}</code>\n" +            
+                                $"<b>24小时最高价：</b><code>{data["high24h"]}</code>\n" +
+                                $"<b>24小时最低价：</b><code>{data["low24h"]}</code>\n" +
+                                $"<b>24小时涨跌幅：</b><code>{Math.Round(double.Parse((string)data["change"]) * 100, 2)}%</code>\n\n";
 
-// 发送消息给用户
-await botClient.SendTextMessageAsync(
-    chatId: message.Chat.Id,
-    text: reply,
-    parseMode: ParseMode.Html
-);
-    }
+                    // 获取压力位和阻力位信息
+                    var priceInfo = await BinancePriceInfo.GetPriceInfo(symbol);
+                    reply += priceInfo;
+
+                    // 发送消息给用户
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: reply,
+                        parseMode: ParseMode.Html
+                    );
+                }
             }
         }
         catch (Exception ex)
