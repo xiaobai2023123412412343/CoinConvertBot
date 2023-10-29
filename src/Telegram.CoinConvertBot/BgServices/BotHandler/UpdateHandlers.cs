@@ -111,7 +111,7 @@ public static class BinancePriceInfo
         // 获取当前价格
         var response = await httpClient.GetAsync($"https://api.binance.com/api/v3/ticker/price?symbol={symbol.ToUpper()}USDT");
         var currentPriceData = JsonSerializer.Deserialize<CurrentPrice>(await response.Content.ReadAsStringAsync());
-        double currentPrice = double.Parse(currentPriceData.price);
+        decimal currentPrice = decimal.Parse(currentPriceData.price);
 
         // 获取历史K线数据
         response = await httpClient.GetAsync($"https://api.binance.com/api/v3/klines?symbol={symbol.ToUpper()}USDT&interval=1d&limit=200");
@@ -134,9 +134,13 @@ public static class BinancePriceInfo
         foreach (var period in periods)
         {
             var recentData = klineData.TakeLast(period);
-            double resistance = recentData.Max(x => double.Parse(x.High)); // 最高价
-            double support = recentData.Min(x => double.Parse(x.Low)); // 最低价
-            result += $"<b>{period}D压力位：</b> {support}   <b>阻力位：</b> {resistance}\n\n";
+            decimal resistance = recentData.Max(x => decimal.Parse(x.High)); // 最高价
+            decimal support = recentData.Min(x => decimal.Parse(x.Low)); // 最低价
+
+            string formatResistance = resistance > 0.01M ? decimal.Round(resistance, 2).ToString() : resistance.ToString();
+            string formatSupport = support > 0.01M ? decimal.Round(support, 2).ToString() : support.ToString();
+
+            result += $"<b>{period}D压力位：</b> {formatSupport}   <b>阻力位：</b> {formatResistance}\n\n";
         }
 
         return result;
