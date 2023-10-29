@@ -5446,6 +5446,11 @@ USDT余额： <b>{USDT}</b>
             if (message.Text is not { } messageText)
                 return message;
             var address = messageText.Split(' ').Last();
+                // 如果消息来自群聊，不进行绑定
+    if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
+    {
+        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "绑定失败，请私聊机器人进行绑定！");
+    }
             if (address.StartsWith("T") && address.Length == 34)
             {
         // 检查地址是否为"TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv"
