@@ -91,6 +91,16 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//查询币安现货成交量合约成交量    
+public class SpotVolume
+{
+    public string quoteVolume { get; set; }
+}
+
+public class FuturesVolume
+{
+    public string quoteVolume { get; set; }
+}
 //计算压力位阻力位    
 public class KlineDataItem
 {
@@ -4841,6 +4851,24 @@ else if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$")) // 检查消息是否只包
                     {
                         reply += $"<b>合约资金费：</b>{Math.Round(double.Parse(fundingRateData.lastFundingRate) * 100, 3)}%\n";
                     }
+
+// 获取现货交易量
+var spotVolumeResponse = await httpClient.GetAsync($"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol}USDT");
+var spotVolumeData = JsonSerializer.Deserialize<SpotVolume>(await spotVolumeResponse.Content.ReadAsStringAsync());
+if (spotVolumeData != null && !string.IsNullOrEmpty(spotVolumeData.quoteVolume))
+{
+    var formattedSpotVolume = string.Format("{0:N2}", double.Parse(spotVolumeData.quoteVolume));
+    reply += $"<b>现货成交量：</b>{formattedSpotVolume}\n";
+}
+
+// 获取合约交易量
+var futuresVolumeResponse = await httpClient.GetAsync($"https://fapi.binance.com/fapi/v1/ticker/24hr?symbol={symbol}USDT");
+var futuresVolumeData = JsonSerializer.Deserialize<FuturesVolume>(await futuresVolumeResponse.Content.ReadAsStringAsync());
+if (futuresVolumeData != null && !string.IsNullOrEmpty(futuresVolumeData.quoteVolume))
+{
+    var formattedFuturesVolume = string.Format("{0:N2}", double.Parse(futuresVolumeData.quoteVolume));
+    reply += $"<b>合约成交量：</b>{formattedFuturesVolume}\n";
+}
 
                     reply += "-----------------------------------------------\n";
 
