@@ -91,6 +91,17 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public class OpenInterest
+{
+    public string symbol { get; set; }
+    public string openInterest { get; set; }
+}
+
+public class TopTraders
+{
+    public string timestamp { get; set; }
+    public double longShortRatio { get; set; }
+}    
 public static string FormatPrice(decimal price)
 {
     if (price >= 1.0m)
@@ -4917,6 +4928,24 @@ var reply = $"<b> {symbol}/USDT 数据     </b>\n\n" +
                         var formattedFuturesVolume = string.Format("{0:N2}", double.Parse(futuresVolumeData.quoteVolume));
                         reply += $"<b>合约成交量：</b>{formattedFuturesVolume}\n";
                     }
+                    // 尝试获取未平仓合约的数量
+                    try
+                    {
+                        var openInterestResponse = await httpClient.GetAsync($"https://fapi.binance.com/fapi/v1/openInterest?symbol={symbol}USDT");
+                        var openInterestData = JsonSerializer.Deserialize<OpenInterest>(await openInterestResponse.Content.ReadAsStringAsync());
+                        if (openInterestData != null && !string.IsNullOrEmpty(openInterestData.openInterest))
+                        {
+                            var formattedOpenInterest = string.Format("{0:N2}", double.Parse(openInterestData.openInterest));
+                            var openInterestValue = decimal.Parse(openInterestData.openInterest) * decimal.Parse((string)json["lastPrice"]);
+                            var formattedOpenInterestValue = string.Format("{0:N2}", openInterestValue);
+                            reply += $"<b>未平仓合约：</b>{formattedOpenInterestValue} \n";
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // 如果获取未平仓合约的数量失败，假设该币种没有上架合约
+                        // 不显示任何信息
+                    }                    
                     // 添加历史最高价和最低价到返回的消息中
                     reply += $"<b>↗️历史最高价：</b>{formattedHistoricalHigh}\n";
                     reply += $"<b>↘️历史最低价：</b>{formattedHistoricalLow}\n";                         
