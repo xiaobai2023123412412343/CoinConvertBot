@@ -4824,14 +4824,14 @@ else if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$")) // 检查消息是否只包
                 if (data["ts"] != null && data["openUtc0"] != null && data["high24h"] != null && data["low24h"] != null && data["close"] != null && data["buyOne"] != null && data["sellOne"] != null && data["usdtVol"] != null && data["change"] != null)
                 {
                     // 格式化返回给用户的消息
-                    var reply = $"<b> {symbol}/USDT 价格     \U0001F4B0{data["close"]}</b>\n\n" +
+                    var reply = $"<b> {symbol}/USDT 数据     </b>\n\n" +
                                 $"<b>时间：</b>{new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((long)data["ts"]).ToLocalTime():yyyy-MM-dd HH:mm:ss}\n" +
                                 $"<b>开盘价：</b>{data["openUtc0"]}\n" +
                                 //$"<b>买一价：</b>{data["buyOne"]}\n" +
                                 //$"<b>卖一价：</b>{data["sellOne"]}\n" +   
-                                //$"<b>最新成交价：</b>{data["close"]}\n" +            
-                                $"<b>24小时最高价：</b>{data["high24h"]}\n" +
-                                $"<b>24小时最低价：</b>{data["low24h"]}\n" +
+                                $"<b>最新价：</b>{data["close"]}\n" +            
+                                $"<b>⬆️最高价：</b>{data["high24h"]}\n" +
+                                $"<b>⬇️最低价：</b>{data["low24h"]}\n" +
                                 $"<b>24小时涨跌幅：</b>{Math.Round(double.Parse((string)data["change"]) * 100, 2)}%\n";
 
                     // 获取资金费
