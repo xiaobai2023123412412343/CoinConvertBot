@@ -4028,6 +4028,19 @@ if (update.Type == UpdateType.CallbackQuery)
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data; // 这里的callbackData就是你之前设置的symbol
+
+    // 调用你的查询函数来查询并返回结果
+    await BotOnMessageReceived(botClient, new Message
+    {
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From,
+        Text = callbackData
+    });
+}     
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
     var callbackData = callbackQuery.Data;
 
     try
@@ -4886,12 +4899,24 @@ var reply = $"<b> {symbol}/USDT 数据     </b>\n\n" +
                     var priceInfo = await BinancePriceInfo.GetPriceInfo(symbol);
                     reply += priceInfo;
 
-                    // 发送消息给用户
-                    await botClient.SendTextMessageAsync(
-                        chatId: message.Chat.Id,
-                        text: reply,
-                        parseMode: ParseMode.Html
-                    );
+// 创建内联键盘按钮
+var inlineKeyboard = new InlineKeyboardMarkup(new[]
+{
+    new [] // 所有按钮都在这一行
+    {
+        InlineKeyboardButton.WithCallbackData("比特币", "BTC"),
+        InlineKeyboardButton.WithCallbackData("以太坊", "ETH"),
+        InlineKeyboardButton.WithCallbackData("一键复查", symbol),
+    }
+});
+
+// 发送消息给用户
+await botClient.SendTextMessageAsync(
+    chatId: message.Chat.Id,
+    text: reply,
+    parseMode: ParseMode.Html,
+    replyMarkup: inlineKeyboard
+);
                 }
             }
         }
