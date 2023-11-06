@@ -4883,7 +4883,7 @@ var reply = $"<b> {symbol}/USDT 数据     </b>\n\n" +
             $"<b>\U0001F4B0最新价：</b>{lastPrice}\n" +            
             $"<b>⬆️最高价：</b>{highPrice}\n" +
             $"<b>⬇️最低价：</b>{lowPrice}\n" +
-            $"<b>24小时涨跌幅：</b>{json["priceChangePercent"]}%\n";
+            $"<b>全天涨跌幅：</b>{json["priceChangePercent"]}%\n";
                     // 获取历史K线数据
                     var klineResponse = await httpClient.GetAsync($"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1d&limit=1000");
                     var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await klineResponse.Content.ReadAsStringAsync());
@@ -4977,8 +4977,8 @@ catch (Exception ex)
     Console.WriteLine($"Error when calling API: {ex.Message}");
 }                    
                     // 添加历史最高价和最低价到返回的消息中
-                    reply += $"<b>↗️历史最高价：</b>{formattedHistoricalHigh}\n";
-                    reply += $"<b>↘️历史最低价：</b>{formattedHistoricalLow}\n";                         
+                    reply += $"<b>↗️历史最高：</b>{formattedHistoricalHigh}\n";
+                    reply += $"<b>↘️历史最低：</b>{formattedHistoricalLow}\n";                         
 
                     reply += "-----------------------------------------------\n";
 
