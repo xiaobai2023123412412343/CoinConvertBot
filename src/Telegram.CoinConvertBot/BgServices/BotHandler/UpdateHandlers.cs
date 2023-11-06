@@ -91,6 +91,13 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//币安合约数据
+public class TopTradersRatio
+{
+    public long timestamp { get; set; }
+    public string longAccount { get; set; }
+    public string shortAccount { get; set; }
+}  
 public class OpenInterest
 {
     public string symbol { get; set; }
@@ -4873,7 +4880,7 @@ var lastPrice = FormatPrice(decimal.Parse((string)json["lastPrice"]));
 var highPrice = FormatPrice(decimal.Parse((string)json["highPrice"]));
 var lowPrice = FormatPrice(decimal.Parse((string)json["lowPrice"]));
 var reply = $"<b> {symbol}/USDT 数据     </b>\n\n" +
-            $"<b>最新价：</b>{lastPrice}\n" +            
+            $"<b>\U0001F4B0最新价：</b>{lastPrice}\n" +            
             $"<b>⬆️最高价：</b>{highPrice}\n" +
             $"<b>⬇️最低价：</b>{lowPrice}\n" +
             $"<b>24小时涨跌幅：</b>{json["priceChangePercent"]}%\n";
@@ -4945,7 +4952,30 @@ var reply = $"<b> {symbol}/USDT 数据     </b>\n\n" +
                     {
                         // 如果获取未平仓合约的数量失败，假设该币种没有上架合约
                         // 不显示任何信息
-                    }                    
+                    } 
+// 获取大户持仓量多空比信息
+try
+{
+    var topTradersResponse = await httpClient.GetAsync($"https://fapi.binance.com/futures/data/topLongShortPositionRatio?symbol={symbol}USDT&period=1h");
+    var topTradersData = JsonSerializer.Deserialize<List<TopTradersRatio>>(await topTradersResponse.Content.ReadAsStringAsync());
+    if (topTradersData != null && topTradersData.Count > 0)
+    {
+        var latestData = topTradersData.Last();
+        var longAccount = Math.Round(double.Parse(latestData.longAccount) * 100, 2);
+        var shortAccount = Math.Round(double.Parse(latestData.shortAccount) * 100, 2);
+        reply += $"<b>大户多空比：</b>{longAccount}% / {shortAccount}%\n";
+    }
+    else
+    {
+        Console.WriteLine("No data returned from the API.");
+    }
+}
+catch (Exception ex)
+{
+    // 如果获取大户持仓量多空比信息失败，假设该币种没有上架合约
+    // 不显示任何信息
+    Console.WriteLine($"Error when calling API: {ex.Message}");
+}                    
                     // 添加历史最高价和最低价到返回的消息中
                     reply += $"<b>↗️历史最高价：</b>{formattedHistoricalHigh}\n";
                     reply += $"<b>↘️历史最低价：</b>{formattedHistoricalLow}\n";                         
