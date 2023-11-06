@@ -91,6 +91,18 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static string FormatPrice(decimal price)
+{
+    if (price >= 1.0m)
+    {
+        return price.ToString("0.00");
+    }
+    else
+    {
+        return price.ToString("0.########");
+    }
+}
+    
 //查询币安现货成交量合约成交量    
 public class SpotVolume
 {
@@ -4819,7 +4831,7 @@ if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText
 else if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$")) // 检查消息是否只包含英文字母
 {
     var symbol = messageText.ToUpper(); // 将消息转换为大写
-    var url = $"https://api.bitget.com/api/spot/v1/market/ticker?symbol={symbol}USDT_SPBL"; // 构造API URL
+    var url = $"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol}USDT"; // 构造API URL
 
     using (var httpClient = new HttpClient())
     {
@@ -4828,21 +4840,19 @@ else if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$")) // 检查消息是否只包
             var response = await httpClient.GetStringAsync(url); // 调用API
             var json = JObject.Parse(response); // 解析API返回的JSON数据
 
-            if (json["data"] != null)
+            if (json != null)
             {
-                var data = json["data"];
-                if (data["ts"] != null && data["openUtc0"] != null && data["high24h"] != null && data["low24h"] != null && data["close"] != null && data["buyOne"] != null && data["sellOne"] != null && data["usdtVol"] != null && data["change"] != null)
+                if (json["lastPrice"] != null && json["highPrice"] != null && json["lowPrice"] != null && json["priceChangePercent"] != null)
                 {
-                    // 格式化返回给用户的消息
-                    var reply = $"<b> {symbol}/USDT 数据     </b>\n\n" +
-                                $"<b>时间：</b>{new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds((long)data["ts"]).ToLocalTime():yyyy-MM-dd HH:mm:ss}\n" +
-                                $"<b>开盘价：</b>{data["openUtc0"]}\n" +
-                                //$"<b>买一价：</b>{data["buyOne"]}\n" +
-                                //$"<b>卖一价：</b>{data["sellOne"]}\n" +   
-                                $"<b>最新价：</b>{data["close"]}\n" +            
-                                $"<b>⬆️最高价：</b>{data["high24h"]}\n" +
-                                $"<b>⬇️最低价：</b>{data["low24h"]}\n" +
-                                $"<b>24小时涨跌幅：</b>{Math.Round(double.Parse((string)data["change"]) * 100, 2)}%\n";
+// 格式化返回给用户的消息
+var lastPrice = FormatPrice(decimal.Parse((string)json["lastPrice"]));
+var highPrice = FormatPrice(decimal.Parse((string)json["highPrice"]));
+var lowPrice = FormatPrice(decimal.Parse((string)json["lowPrice"]));
+var reply = $"<b> {symbol}/USDT 数据     </b>\n\n" +
+            $"<b>最新价：</b>{lastPrice}\n" +            
+            $"<b>⬆️最高价：</b>{highPrice}\n" +
+            $"<b>⬇️最低价：</b>{lowPrice}\n" +
+            $"<b>24小时涨跌幅：</b>{json["priceChangePercent"]}%\n";
 
                     // 获取资金费
                     var fundingRateResponse = await httpClient.GetAsync($"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}USDT");
@@ -4852,23 +4862,23 @@ else if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$")) // 检查消息是否只包
                         reply += $"<b>合约资金费：</b>{Math.Round(double.Parse(fundingRateData.lastFundingRate) * 100, 3)}%\n";
                     }
 
-// 获取现货交易量
-var spotVolumeResponse = await httpClient.GetAsync($"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol}USDT");
-var spotVolumeData = JsonSerializer.Deserialize<SpotVolume>(await spotVolumeResponse.Content.ReadAsStringAsync());
-if (spotVolumeData != null && !string.IsNullOrEmpty(spotVolumeData.quoteVolume))
-{
-    var formattedSpotVolume = string.Format("{0:N2}", double.Parse(spotVolumeData.quoteVolume));
-    reply += $"<b>现货成交量：</b>{formattedSpotVolume}\n";
-}
+                    // 获取现货交易量
+                    var spotVolumeResponse = await httpClient.GetAsync($"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol}USDT");
+                    var spotVolumeData = JsonSerializer.Deserialize<SpotVolume>(await spotVolumeResponse.Content.ReadAsStringAsync());
+                    if (spotVolumeData != null && !string.IsNullOrEmpty(spotVolumeData.quoteVolume))
+                    {
+                        var formattedSpotVolume = string.Format("{0:N2}", double.Parse(spotVolumeData.quoteVolume));
+                        reply += $"<b>现货成交量：</b>{formattedSpotVolume}\n";
+                    }
 
-// 获取合约交易量
-var futuresVolumeResponse = await httpClient.GetAsync($"https://fapi.binance.com/fapi/v1/ticker/24hr?symbol={symbol}USDT");
-var futuresVolumeData = JsonSerializer.Deserialize<FuturesVolume>(await futuresVolumeResponse.Content.ReadAsStringAsync());
-if (futuresVolumeData != null && !string.IsNullOrEmpty(futuresVolumeData.quoteVolume))
-{
-    var formattedFuturesVolume = string.Format("{0:N2}", double.Parse(futuresVolumeData.quoteVolume));
-    reply += $"<b>合约成交量：</b>{formattedFuturesVolume}\n";
-}
+                    // 获取合约交易量
+                    var futuresVolumeResponse = await httpClient.GetAsync($"https://fapi.binance.com/fapi/v1/ticker/24hr?symbol={symbol}USDT");
+                    var futuresVolumeData = JsonSerializer.Deserialize<FuturesVolume>(await futuresVolumeResponse.Content.ReadAsStringAsync());
+                    if (futuresVolumeData != null && !string.IsNullOrEmpty(futuresVolumeData.quoteVolume))
+                    {
+                        var formattedFuturesVolume = string.Format("{0:N2}", double.Parse(futuresVolumeData.quoteVolume));
+                        reply += $"<b>合约成交量：</b>{formattedFuturesVolume}\n";
+                    }
 
                     reply += "-----------------------------------------------\n";
 
