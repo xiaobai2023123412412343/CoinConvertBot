@@ -4884,27 +4884,31 @@ var reply = $"<b> {symbol}/USDT 数据     </b>\n\n" +
             $"<b>⬆️最高价：</b>{highPrice}\n" +
             $"<b>⬇️最低价：</b>{lowPrice}\n" +
             $"<b>全天涨跌幅：</b>{json["priceChangePercent"]}%\n";
-                    // 获取历史K线数据
-                    var klineResponse = await httpClient.GetAsync($"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1d&limit=1000");
-                    var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await klineResponse.Content.ReadAsStringAsync());
+// 获取历史K线数据
+var klineResponse = await httpClient.GetAsync($"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1d&limit=1000");
+var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await klineResponse.Content.ReadAsStringAsync());
 
-                    var klineData = klineDataRaw.Select(item => new KlineDataItem
-                    {
-                        OpenTime = item[0].GetInt64(),
-                        Open = item[1].GetString(),
-                        High = item[2].GetString(),
-                        Low = item[3].GetString(),
-                        Close = item[4].GetString()
-                        // 其他字段...
-                    }).ToList();
+var klineData = klineDataRaw.Select(item => new KlineDataItem
+{
+    OpenTime = item[0].GetInt64(),
+    Open = item[1].GetString(),
+    High = item[2].GetString(),
+    Low = item[3].GetString(),
+    Close = item[4].GetString()
+    // 其他字段...
+}).ToList();
 
-                    // 计算历史最高价和最低价
-                    decimal historicalHigh = klineData.Max(x => decimal.Parse(x.High)); // 最高价
-                    decimal historicalLow = klineData.Min(x => decimal.Parse(x.Low)); // 最低价
+// 计算历史最高价和最低价
+var historicalHighItem = klineData.OrderByDescending(x => decimal.Parse(x.High)).First(); // 最高价
+var historicalLowItem = klineData.OrderBy(x => decimal.Parse(x.Low)).First(); // 最低价
 
-                    // 格式化历史最高价和最低价
-                    var formattedHistoricalHigh = FormatPrice(historicalHigh);
-                    var formattedHistoricalLow = FormatPrice(historicalLow);
+// 格式化历史最高价和最低价
+var formattedHistoricalHigh = FormatPrice(decimal.Parse(historicalHighItem.High));
+var formattedHistoricalLow = FormatPrice(decimal.Parse(historicalLowItem.Low));
+
+// 获取历史最高价和最低价的日期
+var historicalHighDate = DateTimeOffset.FromUnixTimeMilliseconds(historicalHighItem.OpenTime).DateTime.ToString("yyyy/MM/dd");
+var historicalLowDate = DateTimeOffset.FromUnixTimeMilliseconds(historicalLowItem.OpenTime).DateTime.ToString("yyyy/MM/dd");               
 
                     // 添加历史最高价和最低价到返回的消息中
                    // reply += $"<b>历史最高价：</b>{formattedHistoricalHigh}\n";
@@ -4976,9 +4980,9 @@ catch (Exception ex)
     // 不显示任何信息
     Console.WriteLine($"Error when calling API: {ex.Message}");
 }                    
-                    // 添加历史最高价和最低价到返回的消息中
-                    reply += $"<b>↗️历史最高：</b>{formattedHistoricalHigh}\n";
-                    reply += $"<b>↘️历史最低：</b>{formattedHistoricalLow}\n";                         
+// 添加历史最高价和最低价到返回的消息中
+reply += $"<b>↗️历史最高：</b>{historicalHighDate}   {formattedHistoricalHigh}\n";
+reply += $"<b>↘️历史最低：</b>{historicalLowDate}   {formattedHistoricalLow}\n";                     
 
                     reply += "-----------------------------------------------\n";
 
