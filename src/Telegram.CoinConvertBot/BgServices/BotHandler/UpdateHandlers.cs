@@ -119,8 +119,8 @@ private static async Task UpdateRanking()
             // 过滤出以USDT结尾的交易对
             var usdtSymbols = allSymbols.Where(symbol => symbol.symbol.EndsWith("USDT")).ToList();
 
-            riseList.Clear();
-            fallList.Clear();
+            var riseList = new List<CoinInfo>(); // 创建新的列表
+            var fallList = new List<CoinInfo>(); // 创建新的列表
 
             foreach (var symbol in usdtSymbols)
             {
@@ -155,6 +155,9 @@ private static async Task UpdateRanking()
                     fallList.Add(new CoinInfo { Symbol = symbol.symbol, Days = fallDays, Price = decimal.Parse(klineData.Last().Close) });
                 }
             }
+
+            UpdateHandlers.riseList = riseList; // 更新类的成员变量
+            UpdateHandlers.fallList = fallList; // 更新类的成员变量
         }
         catch (Exception ex)
         {
@@ -162,7 +165,7 @@ private static async Task UpdateRanking()
             Console.WriteLine($"Error when calling API: {ex.Message}");
         }
     }
-}    
+}
 // 获取涨跌天数统计    
 public class SymbolInfo
 {
@@ -4473,7 +4476,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|cny|trc|home|jiankong|zijin)|会员代开|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|个人中心|币圈行情|外汇助手|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|cny|trc|home|jiankong|zijin|faxian|chaxun)|会员代开|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|个人中心|币圈行情|外汇助手|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -5001,7 +5004,7 @@ if (messageText.Equals("/chaxun", StringComparison.OrdinalIgnoreCase))
     timer.Change(TimeSpan.Zero, TimeSpan.FromMinutes(30)); // 启动定时器
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: "启动查询中...",
+        text: "自动查询中...",
         parseMode: ParseMode.Html
     );
 }
