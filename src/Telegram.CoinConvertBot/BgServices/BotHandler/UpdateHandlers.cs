@@ -91,6 +91,62 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 获取涨跌天数统计    
+public class SymbolInfo
+{
+    public string symbol { get; set; }
+}
+
+public class HistoricalKlineDataItem
+{
+    public long OpenTime { get; set; }
+    public string Open { get; set; }
+    public string High { get; set; }
+    public string Low { get; set; }
+    public string Close { get; set; }
+}
+
+public class CoinInfo
+{
+    public string Symbol { get; set; }
+    public int Days { get; set; }
+    public decimal Price { get; set; }
+}
+
+public static class AnalysisHelper
+{
+    public static (int riseDays, int fallDays) GetContinuousRiseFallDays(List<HistoricalKlineDataItem> klineData)
+    {
+        int riseDays = 0, fallDays = 0;
+        bool? isRising = null; // 用于记录当前的涨跌状态，null表示还未确定
+
+        for (int i = klineData.Count - 1; i > 0; i--)
+        {
+            var todayClose = decimal.Parse(klineData[i].Close);
+            var yesterdayClose = decimal.Parse(klineData[i - 1].Close);
+
+            if (todayClose > yesterdayClose) // 今天涨了
+            {
+                if (isRising == false) // 如果之前是下跌，那么重置计数器
+                {
+                    break;
+                }
+                riseDays++;
+                isRising = true;
+            }
+            else if (todayClose < yesterdayClose) // 今天跌了
+            {
+                if (isRising == true) // 如果之前是上涨，那么重置计数器
+                {
+                    break;
+                }
+                fallDays++;
+                isRising = false;
+            }
+        }
+        return (riseDays, fallDays);
+    }
+}
 //统计涨跌    
 public static (int riseDays, int fallDays) GetContinuousRiseFallDays(List<KlineDataItem> klineData)
 {
@@ -4866,6 +4922,86 @@ if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", Str
             text: "请发送您要查询的<b>TRC-20(波场)地址：</b> ", 
             parseMode: ParseMode.Html
         );
+    }
+}
+// 获取涨跌天数统计
+if (messageText.Equals("/jihui", StringComparison.OrdinalIgnoreCase))
+{
+    var url = "https://api.binance.com/api/v3/ticker/price"; // 获取所有交易对
+
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            var response = await httpClient.GetStringAsync(url); // 调用API
+            var allSymbols = JsonSerializer.Deserialize<List<SymbolInfo>>(response); // 使用System.Text.Json解析API返回的JSON数据
+
+            // 过滤出以USDT结尾的交易对
+            var usdtSymbols = allSymbols.Where(symbol => symbol.symbol.EndsWith("USDT")).ToList();
+
+            var riseList = new List<CoinInfo>();
+            var fallList = new List<CoinInfo>();
+
+            foreach (var symbol in usdtSymbols)
+            {
+                var currentPriceResponse = await httpClient.GetStringAsync($"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol.symbol}");
+                var currentPrice = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(currentPriceResponse);
+                if (decimal.Parse(currentPrice["lastPrice"].GetString()) == 0)
+                {
+                    continue; // 如果当前价格为0，那么跳过这个币种
+                }
+
+                var klineResponse = await httpClient.GetAsync($"https://api.binance.com/api/v3/klines?symbol={symbol.symbol}&interval=1d&limit=1000");
+                var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await klineResponse.Content.ReadAsStringAsync());
+
+                var klineData = klineDataRaw.Select(item => new HistoricalKlineDataItem
+                {
+                    OpenTime = item[0].GetInt64(),
+                    Open = item[1].GetString(),
+                    High = item[2].GetString(),
+                    Low = item[3].GetString(),
+                    Close = item[4].GetString()
+                }).ToList();
+
+                (int riseDays, int fallDays) = AnalysisHelper.GetContinuousRiseFallDays(klineData);
+
+                if (riseDays > 0)
+                {
+                    riseList.Add(new CoinInfo { Symbol = symbol.symbol, Days = riseDays, Price = decimal.Parse(klineData.Last().Close) });
+                }
+
+                if (fallDays > 0)
+                {
+                    fallList.Add(new CoinInfo { Symbol = symbol.symbol, Days = fallDays, Price = decimal.Parse(klineData.Last().Close) });
+                }
+            }
+
+            var topRise = riseList.OrderByDescending(x => x.Days).Take(5);
+            var topFall = fallList.OrderByDescending(x => x.Days).Take(5);
+
+            var reply = "<b>连续上涨TOP5：</b>\n";
+            foreach (var coin in topRise)
+            {
+                reply += $"{coin.Symbol.Replace("USDT", "/USDT")} 连涨{coin.Days}天  ${coin.Price.ToString("0.####")}\n";
+            }
+
+            reply += "\n<b>连续下跌TOP5：</b>\n";
+            foreach (var coin in topFall)
+            {
+                reply += $"{coin.Symbol.Replace("USDT", "/USDT")} 连跌{coin.Days}天  ${coin.Price.ToString("0.####")}\n";
+            }
+
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: reply,
+                parseMode: ParseMode.Html
+            );
+        }
+        catch (Exception ex)
+        {
+            // 记录错误信息
+            Console.WriteLine($"Error when calling API: {ex.Message}");
+        }
     }
 }
 //查询所有币价        
