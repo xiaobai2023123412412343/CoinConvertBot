@@ -91,6 +91,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//统计涨跌    
 public static (int riseDays, int fallDays) GetContinuousRiseFallDays(List<KlineDataItem> klineData)
 {
     int riseDays = 0, fallDays = 0;
