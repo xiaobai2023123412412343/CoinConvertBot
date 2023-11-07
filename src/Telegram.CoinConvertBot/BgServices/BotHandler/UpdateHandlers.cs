@@ -359,13 +359,13 @@ public static class BinanceFundingRates
         var data = JsonSerializer.Deserialize<List<FundingRate>>(await response.Content.ReadAsStringAsync());
 
         var negativeFundingRates = data
-            .Select(x => new { symbol = x.symbol.Replace("USDT", "_USDT"), lastFundingRate = double.Parse(x.lastFundingRate) })
+            .Select(x => new { symbol = x.symbol.Replace("USDT", "/USDT"), lastFundingRate = double.Parse(x.lastFundingRate) })
             .Where(x => Math.Abs(x.lastFundingRate) >= 0.00001)
             .OrderBy(x => x.lastFundingRate)
             .Take(5);
 
         var positiveFundingRates = data
-            .Select(x => new { symbol = x.symbol.Replace("USDT", "_USDT"), lastFundingRate = double.Parse(x.lastFundingRate) })
+            .Select(x => new { symbol = x.symbol.Replace("USDT", "/USDT"), lastFundingRate = double.Parse(x.lastFundingRate) })
             .Where(x => x.lastFundingRate >= 0.00001)
             .OrderByDescending(x => x.lastFundingRate)
             .Take(5);
