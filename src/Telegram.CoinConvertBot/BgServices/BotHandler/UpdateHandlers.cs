@@ -177,8 +177,8 @@ public static class BinancePriceInfo
             decimal resistance = recentData.Max(x => decimal.Parse(x.High)); // 最高价
             decimal support = recentData.Min(x => decimal.Parse(x.Low)); // 最低价
 
-            string formatResistance = resistance > 0.01M ? decimal.Round(resistance, 2).ToString() : resistance.ToString();
-            string formatSupport = support > 0.01M ? decimal.Round(support, 2).ToString() : support.ToString();
+            string formatResistance = FormatPrice(resistance);
+            string formatSupport = FormatPrice(support);
 
             result += $"<b>{period}D压力位：</b> {formatSupport}   <b>阻力位：</b> {formatResistance}\n\n";
         }
