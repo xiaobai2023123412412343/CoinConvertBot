@@ -78,6 +78,9 @@ rm -r  UpdateHandlers.cs
 nano UpdateHandlers.cs
 
 ————————————————————————————
+docker stop coin-convert-bot
+
+docker rm coin-convert-bot 
 
 cd ~/CoinConvertBot/src/Telegram.CoinConvertBot
 
