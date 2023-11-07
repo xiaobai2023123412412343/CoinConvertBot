@@ -91,6 +91,24 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static (int riseDays, int fallDays) GetContinuousRiseFallDays(List<KlineDataItem> klineData)
+{
+    int riseDays = 0, fallDays = 0;
+    for (int i = klineData.Count - 1; i > 0; i--)
+    {
+        if (decimal.Parse(klineData[i].Close) > decimal.Parse(klineData[i - 1].Close))
+        {
+            riseDays++;
+            if (fallDays != 0) break; // 如果之前是下跌，现在开始上涨，就跳出循环
+        }
+        else if (decimal.Parse(klineData[i].Close) < decimal.Parse(klineData[i - 1].Close))
+        {
+            fallDays++;
+            if (riseDays != 0) break; // 如果之前是上涨，现在开始下跌，就跳出循环
+        }
+    }
+    return (riseDays, fallDays);
+}    
 //币安合约数据
 public class TopTradersRatio
 {
@@ -4875,15 +4893,6 @@ else if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$")) // 检查消息是否只包
             {
                 if (json["lastPrice"] != null && json["highPrice"] != null && json["lowPrice"] != null && json["priceChangePercent"] != null)
                 {
-// 格式化返回给用户的消息
-var lastPrice = FormatPrice(decimal.Parse((string)json["lastPrice"]));
-var highPrice = FormatPrice(decimal.Parse((string)json["highPrice"]));
-var lowPrice = FormatPrice(decimal.Parse((string)json["lowPrice"]));
-var reply = $"<b> {symbol}/USDT 数据     </b>\n\n" +
-            $"<b>\U0001F4B0最新价：</b>{lastPrice}\n" +            
-            $"<b>⬆️最高价：</b>{highPrice}\n" +
-            $"<b>⬇️最低价：</b>{lowPrice}\n" +
-            $"<b>全天涨跌幅：</b>{json["priceChangePercent"]}%\n";
 // 获取历史K线数据
 var klineResponse = await httpClient.GetAsync($"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1d&limit=1000");
 var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await klineResponse.Content.ReadAsStringAsync());
@@ -4897,6 +4906,35 @@ var klineData = klineDataRaw.Select(item => new KlineDataItem
     Close = item[4].GetString()
     // 其他字段...
 }).ToList();
+
+// 计算连续上涨或下跌的天数
+var (riseDays, fallDays) = GetContinuousRiseFallDays(klineData);
+
+// 如果连续上涨或下跌的天数大于2，就添加到返回的消息中
+string reply;
+if (riseDays > 2)
+{
+    reply = $"<b> {symbol}/USDT 数据     连续上涨{riseDays}天！</b>\n\n";
+}
+else if (fallDays > 2)
+{
+    reply = $"<b> {symbol}/USDT 数据     连续下跌{fallDays}天！</b>\n\n";
+}
+else
+{
+    reply = $"<b> {symbol}/USDT 数据     </b>\n\n";
+}
+
+var lastPrice = FormatPrice(decimal.Parse((string)json["lastPrice"]));
+var highPrice = FormatPrice(decimal.Parse((string)json["highPrice"]));
+var lowPrice = FormatPrice(decimal.Parse((string)json["lowPrice"]));
+
+reply += $"<b>\U0001F4B0最新价：</b>{lastPrice}\n" +            
+        $"<b>⬆️最高价：</b>{highPrice}\n" +
+        $"<b>⬇️最低价：</b>{lowPrice}\n" +
+        $"<b>全天涨跌幅：</b>{json["priceChangePercent"]}%\n";
+
+
 
 // 计算历史最高价和最低价
 var historicalHighItem = klineData.OrderByDescending(x => decimal.Parse(x.High)).First(); // 最高价
