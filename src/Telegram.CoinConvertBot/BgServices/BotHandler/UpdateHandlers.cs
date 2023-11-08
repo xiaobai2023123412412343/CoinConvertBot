@@ -5191,7 +5191,7 @@ try
     var marketCapUrl = $"https://min-api.cryptocompare.com/data/pricemultifull?fsyms={symbol}&tsyms=USD";
     var marketCapResponse = await httpClient.GetStringAsync(marketCapUrl);
     var marketCapJson = JObject.Parse(marketCapResponse);
-    var marketCap = marketCapJson["RAW"][symbol]["USD"]["MKTCAP"].Value<decimal>();
+    var marketCap = marketCapJson["RAW"][symbol]["USD"]["CIRCULATINGSUPPLYMKTCAP"].Value<decimal>();
     var formattedMarketCap = string.Format("{0:N0}", marketCap);
     if (marketCap > 100000000)
     {
