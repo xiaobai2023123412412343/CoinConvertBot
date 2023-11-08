@@ -4047,12 +4047,12 @@ string fearGreedDescription = GetFearGreedDescription(today);
         decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
-        string advertisementText = $"\U0001F4B9实时兑换汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
+        string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
             "机器人收款地址:\n (<b>点击自动复制</b>):<code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n\n" + //手动输入地址
             "\U0000267B转U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
             $"\U0000267B有任何问题,请私聊联系<a href=\"{channelLink}\">机器人管理员</a>\n\n" +
-            "<b>可代开TG会员</b>:\n\n" +
+            "<b>代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
             "\u2708一年高级会员   70.99 u\n" +
