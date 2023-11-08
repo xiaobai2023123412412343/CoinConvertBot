@@ -4908,10 +4908,27 @@ if (messageText.Equals("个人中心", StringComparison.OrdinalIgnoreCase) || me
 {
     if (message.From.Id == AdminUserId)
     {
-        // 如果用户是管理员，执行 "\U0001F947合约助手" 的方法
-        var cancellationTokenSource = new CancellationTokenSource();
-        var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-        _ = SendAdvertisementOnce(botClient, cancellationTokenSource.Token, rateRepository, FeeRate, message.Chat.Id);
+        // 如果用户是管理员，执行 "/faxian" 的方法
+        var topRise = riseList.OrderByDescending(x => x.Days).Take(5);
+        var topFall = fallList.OrderByDescending(x => x.Days).Take(5);
+
+        var reply = "<b>连续上涨TOP5：</b>\n";
+        foreach (var coin in topRise)
+        {
+            reply += $"{coin.Symbol.Replace("USDT", "/USDT")} 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+        }
+
+        reply += "\n<b>连续下跌TOP5：</b>\n";
+        foreach (var coin in topFall)
+        {
+            reply += $"{coin.Symbol.Replace("USDT", "/USDT")} 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+        }
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: reply,
+            parseMode: ParseMode.Html
+        );
     }
     else
     {
@@ -4919,7 +4936,7 @@ if (messageText.Equals("个人中心", StringComparison.OrdinalIgnoreCase) || me
         await HandlePersonalCenterCommandAsync(botClient, message, provider);
     }
     return;
-}         
+}             
 // 检查是否是/jiankong命令
 if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
 {
