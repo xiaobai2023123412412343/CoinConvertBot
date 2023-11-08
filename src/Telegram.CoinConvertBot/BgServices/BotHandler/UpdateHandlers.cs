@@ -5185,7 +5185,21 @@ else
 {
     reply = $"<b> {symbol}/USDT 数据     </b>\n\n";
 }
-
+// 获取市值
+try
+{
+    var marketCapUrl = $"https://min-api.cryptocompare.com/data/pricemultifull?fsyms={symbol}&tsyms=USD";
+    var marketCapResponse = await httpClient.GetStringAsync(marketCapUrl);
+    var marketCapJson = JObject.Parse(marketCapResponse);
+    var marketCap = marketCapJson["RAW"][symbol]["USD"]["MKTCAP"].Value<decimal>();
+    var formattedMarketCap = string.Format("{0:N0}", marketCap);
+    reply += $"<b>\U0001F4B0总市值：</b>{formattedMarketCap}\n";
+}
+catch (Exception ex)
+{
+    // 记录错误信息
+    Console.WriteLine($"Error when getting market cap: {ex.Message}");
+}
 var lastPrice = FormatPrice(decimal.Parse((string)json["lastPrice"]));
 var highPrice = FormatPrice(decimal.Parse((string)json["highPrice"]));
 var lowPrice = FormatPrice(decimal.Parse((string)json["lowPrice"]));
