@@ -97,14 +97,37 @@ private static bool isVirtualAdvertisementRunning = false;
 static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
     var random = new Random();
-    var amounts = new decimal[] { 50, 100, 200, 300, 500, 1000 }; // 确保 amounts 数组的类型是 decimal
+    var amounts = new decimal[] { 50, 100, 200, 300, 500, 1000 };
     var addressChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    bool hasSentAdInQuietHours = false;
     while (!cancellationToken.IsCancellationRequested)
     {
+        var now = DateTime.Now;
+        var hour = now.Hour;
+        if (hour >= 1 && hour < 8)
+        {
+            if (hasSentAdInQuietHours)
+            {
+                // 在安静的小时内已经发送过广告，所以跳过这个小时
+                await Task.Delay(TimeSpan.FromHours(1), cancellationToken);
+                continue;
+            }
+            else
+            {
+                // 在安静的小时内还没有发送过广告，所以发送一条广告并设置标志
+                hasSentAdInQuietHours = true;
+            }
+        }
+        else
+        {
+            // 不在安静的小时内，所以重置标志
+            hasSentAdInQuietHours = false;
+        }
+
         var amount = amounts[random.Next(amounts.Length)];
         var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-        var trxAmount = amount.USDT_To_TRX(rate, FeeRate, 0); // 使用实时汇率进行计算
-        var now = DateTime.Now.AddSeconds(-random.Next(10, 31));
+        var trxAmount = amount.USDT_To_TRX(rate, FeeRate, 0);
+        now = now.AddSeconds(-random.Next(10, 31));
         var address = "T" + new string(Enumerable.Range(0, 33).Select(_ => addressChars[random.Next(addressChars.Length)]).ToArray());
         var advertisementText = $@"<b>新交易 {"\U0001F4B8"} 兑换 {trxAmount:#.######} TRX</b>
 
@@ -115,15 +138,15 @@ static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, Cancell
 
         var visitButton = new InlineKeyboardButton("查看交易")
         {
-            Url = "https://tronscan.org/#/blockchain/transactions" // 将此链接替换为你想要跳转的链接
+            Url = "https://tronscan.org/#/blockchain/transactions"
         };
 
         var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-            new[] { visitButton } // 第一行按钮
+            new[] { visitButton }
         });
 
-        // 遍历群组 ID 并发送广告消息
+         // 遍历群组 ID 并发送广告消息
         var groupIds = GroupManager.GroupIds.ToList();
         foreach (var groupId in groupIds)
         {
@@ -140,10 +163,10 @@ static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, Cancell
             }
         }
 
-        // 等待1分钟
-        await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
+        // 在1-2分钟内随机等待
+        await Task.Delay(TimeSpan.FromMinutes(random.Next(1, 3)), cancellationToken);
     }
-}    
+}
 // 在类的成员变量中定义一个定时器和榜单
 private static System.Threading.Timer timer;
 private static List<CoinInfo> riseList;
