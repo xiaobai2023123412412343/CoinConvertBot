@@ -3976,7 +3976,7 @@ string fearGreedDescription = GetFearGreedDescription(today);
             "\U0000267B转U即兑,全自动返TRX,10U起兑!\n" +
             "\U0000267B请勿使用交易所或中心化钱包转账!\n" +
             $"\U0000267B有任何问题,请私聊联系<a href=\"{channelLink}\">机器人管理员</a>\n\n" +
-            "<b>另代开TG会员</b>:\n\n" +
+            "<b>可代开TG会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
             "\u2708一年高级会员   70.99 u\n" +
