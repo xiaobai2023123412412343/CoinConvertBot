@@ -91,6 +91,59 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 添加一个类级别的变量来跟踪虚拟广告是否正在运行
+private static bool isVirtualAdvertisementRunning = false;
+
+static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
+{
+    var random = new Random();
+    var amounts = new decimal[] { 50, 100, 200, 300, 500, 1000 }; // 确保 amounts 数组的类型是 decimal
+    var addressChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    while (!cancellationToken.IsCancellationRequested)
+    {
+        var amount = amounts[random.Next(amounts.Length)];
+        var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+        var trxAmount = amount.USDT_To_TRX(rate, FeeRate, 0); // 使用实时汇率进行计算
+        var now = DateTime.Now.AddSeconds(-random.Next(10, 31));
+        var address = "T" + new string(Enumerable.Range(0, 33).Select(_ => addressChars[random.Next(addressChars.Length)]).ToArray());
+        var advertisementText = $@"<b>新交易 {"\U0001F4B8"} 兑换 {trxAmount:#.######} TRX</b>
+
+兑换金额：<b>{amount} USDT</b>
+兑换时间：<b>{now:yyyy-MM-dd HH:mm:ss}</b>
+兑换地址：<code>{address.Substring(0, 5)}****{address.Substring(address.Length - 5, 5)}</code>
+兑换时间：<b>{DateTime.Now:yyyy-MM-dd HH:mm:ss}</b>";
+
+        var visitButton = new InlineKeyboardButton("查看交易")
+        {
+            Url = "https://tronscan.org/#/blockchain/transactions" // 将此链接替换为你想要跳转的链接
+        };
+
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new[] { visitButton } // 第一行按钮
+        });
+
+        // 遍历群组 ID 并发送广告消息
+        var groupIds = GroupManager.GroupIds.ToList();
+        foreach (var groupId in groupIds)
+        {
+            try
+            {
+                await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
+            }
+            catch
+            {
+                // 如果在尝试发送消息时出现错误，就从 groupIds 列表中移除这个群组
+                GroupManager.RemoveGroupId(groupId);
+                // 然后继续下一个群组，而不是停止整个任务
+                continue;
+            }
+        }
+
+        // 等待1分钟
+        await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
+    }
+}    
 // 在类的成员变量中定义一个定时器和榜单
 private static System.Threading.Timer timer;
 private static List<CoinInfo> riseList;
@@ -5126,6 +5179,26 @@ if (messageText.Equals("/jihui", StringComparison.OrdinalIgnoreCase))
             // 记录错误信息
             Console.WriteLine($"Error when calling API: {ex.Message}");
         }
+    }
+}
+// 检查是否接收到了 /xuni 消息，收到就启动广告
+if (messageText.StartsWith("/xuni"))
+{
+    // 如果虚拟广告没有在运行，就启动虚拟广告
+    if (!isVirtualAdvertisementRunning)
+    {
+        isVirtualAdvertisementRunning = true; // 将变量设置为 true，表示虚拟广告正在运行
+
+        var cancellationTokenSource = new CancellationTokenSource();
+        var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+        _ = SendVirtualAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate)
+            .ContinueWith(_ => isVirtualAdvertisementRunning = false); // 广告结束后将变量设置为 false
+
+        // 向用户发送一条消息，告知他们虚拟广告已经启动
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "虚拟广告已启动！"
+        );
     }
 }
 //查询所有币价        
