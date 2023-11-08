@@ -5193,6 +5193,11 @@ try
     var marketCapJson = JObject.Parse(marketCapResponse);
     var marketCap = marketCapJson["RAW"][symbol]["USD"]["MKTCAP"].Value<decimal>();
     var formattedMarketCap = string.Format("{0:N0}", marketCap);
+    if (marketCap > 100000000)
+    {
+        var marketCapInBillion = marketCap / 100000000;
+        formattedMarketCap += $" ≈ {marketCapInBillion:N2}亿";
+    }
     reply += $"<b>\U0001F4B0总市值：</b>{formattedMarketCap}\n";
 }
 catch (Exception ex)
