@@ -5294,6 +5294,10 @@ try
         var marketCapInBillion = marketCap / 100000000;
         formattedMarketCap += $" ≈ {marketCapInBillion:N2}亿";
     }
+    if (marketCap == 0)
+    {
+        formattedMarketCap = "未收录";
+    }    
     reply += $"<b>\U0001F4B0总市值：</b>{formattedMarketCap}\n";
 }
 catch (Exception ex)
