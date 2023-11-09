@@ -5342,10 +5342,20 @@ if (messageText.StartsWith("/xuni"))
 }
 if (messageText.StartsWith("/jkbtc"))
 {
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: "发送 监控+数字货币 例如发送：监控 BTC\n则启动监控任务，当币价涨跌超过5%会触发提醒\n\n发送 取消监控+数字货币 例如发送： 取消监控 BTC\n则停止监控任务，后续涨跌不再下发币价波动提醒！"
-    );
+    if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "请私聊机器人启动监控！"
+        );
+    }
+    else
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "发送 监控+数字货币 例如发送：监控 BTC\n则启动监控任务，当币价涨跌超过5%会触发提醒\n\n发送 取消监控+数字货币 例如发送： 取消监控 BTC\n则停止监控任务，后续涨跌不再下发币价波动提醒！"
+        );
+    }
 }        
 if (messageText.StartsWith("监控 "))
 {
