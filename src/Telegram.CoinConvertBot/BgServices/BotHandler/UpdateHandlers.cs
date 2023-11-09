@@ -5359,13 +5359,33 @@ if (messageText.StartsWith("/jkbtc"))
 }        
 if (messageText.StartsWith("监控 "))
 {
-    var symbol = messageText.Substring(3);
-    await PriceMonitor.Monitor(botClient, message.Chat.Id, symbol);
+    if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "请私聊机器人启动监控！"
+        );
+    }
+    else
+    {
+        var symbol = messageText.Substring(3);
+        await PriceMonitor.Monitor(botClient, message.Chat.Id, symbol);
+    }
 }
 else if (messageText.StartsWith("取消监控 "))
 {
-    var symbol = messageText.Substring(5);
-    await PriceMonitor.Unmonitor(botClient, message.Chat.Id, symbol);
+    if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "请私聊机器人取消监控！"
+        );
+    }
+    else
+    {
+        var symbol = messageText.Substring(5);
+        await PriceMonitor.Unmonitor(botClient, message.Chat.Id, symbol);
+    }
 }
 //查询所有币价        
 if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText.Equals("trx", StringComparison.OrdinalIgnoreCase))
