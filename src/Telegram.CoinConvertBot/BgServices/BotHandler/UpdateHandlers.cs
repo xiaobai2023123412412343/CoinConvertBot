@@ -5409,12 +5409,17 @@ reply += $"<b>↘️历史最低：</b>{historicalLowDate}   {formattedHistorica
                     reply += priceInfo;
 
 // 创建内联键盘按钮
+// 创建内联键盘按钮
 var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
-    new [] // 所有按钮都在这一行
+    new [] // 第一行
     {
         InlineKeyboardButton.WithCallbackData("比特币", "BTC"),
         InlineKeyboardButton.WithCallbackData("以太坊", "ETH"),
+    },
+    new [] // 第二行
+    {
+        InlineKeyboardButton.WithUrl("技术分析", $"https://cn.tradingview.com/symbols/{symbol}USD/technicals/?exchange=CRYPTO"),
         InlineKeyboardButton.WithCallbackData("一键复查", symbol),
     }
 });
