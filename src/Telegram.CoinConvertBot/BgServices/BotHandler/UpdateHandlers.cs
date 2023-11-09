@@ -131,7 +131,7 @@ public static class PriceMonitor
             Threshold = symbol.Equals("BTC", StringComparison.OrdinalIgnoreCase) || symbol.Equals("ETH", StringComparison.OrdinalIgnoreCase) ? 0.02m : 0.05m
         });
 
-        await botClient.SendTextMessageAsync(userId, $"<b>开始监控 {symbol} 的价格变动\n\n⚠️当前价格为：$ {price.Value.ToString("G29")}</b>", parseMode: ParseMode.Html);
+        await botClient.SendTextMessageAsync(userId, $"开始监控 {symbol} 的价格变动\n\n⚠️当前价格为：$ {price.Value.ToString("G29")}", parseMode: ParseMode.Html);
     }
 
     public static async Task Unmonitor(ITelegramBotClient botClient, long userId, string symbol)
