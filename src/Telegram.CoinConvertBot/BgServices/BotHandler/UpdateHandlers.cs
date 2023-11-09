@@ -91,6 +91,120 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class PriceMonitor
+{
+    private static Dictionary<long, List<MonitorInfo>> monitorInfos = new Dictionary<long, List<MonitorInfo>>();
+    private static Timer timer;
+
+    static PriceMonitor()
+    {
+        timer = new Timer(CheckPrice, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+    }
+
+    public static async Task Monitor(ITelegramBotClient botClient, long userId, string symbol)
+    {
+        symbol = symbol.ToUpper();
+
+        if (symbol.Equals("TRX", StringComparison.OrdinalIgnoreCase))
+        {
+            await botClient.SendTextMessageAsync(userId, "TRX能量价格变动请进群查看！");
+            return;
+        }
+
+        var price = await GetPrice(symbol);
+        if (price == null)
+        {
+            await botClient.SendTextMessageAsync(userId, "监控失败，暂未收录该币种！");
+            return;
+        }
+
+        if (!monitorInfos.ContainsKey(userId))
+        {
+            monitorInfos[userId] = new List<MonitorInfo>();
+        }
+
+        monitorInfos[userId].Add(new MonitorInfo
+        {
+            BotClient = botClient,
+            Symbol = symbol,
+            LastPrice = price.Value,
+            Threshold = symbol.Equals("BTC", StringComparison.OrdinalIgnoreCase) || symbol.Equals("ETH", StringComparison.OrdinalIgnoreCase) ? 0.002m : 0.005m
+        });
+
+        await botClient.SendTextMessageAsync(userId, $"<b>开始监控 {symbol} 的价格变动\n\n⚠️当前价格为：$ {price.Value.ToString("G29")}</b>", parseMode: ParseMode.Html);
+    }
+
+    public static async Task Unmonitor(ITelegramBotClient botClient, long userId, string symbol)
+    {
+        symbol = symbol.ToUpper();
+
+        if (monitorInfos.ContainsKey(userId))
+        {
+            var monitorInfo = monitorInfos[userId].FirstOrDefault(x => x.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase));
+            if (monitorInfo != null)
+            {
+                monitorInfos[userId].Remove(monitorInfo);
+                await botClient.SendTextMessageAsync(userId, $"已停止监控 {symbol} 的价格变动");
+            }
+        }
+    }
+
+    private static async void CheckPrice(object state)
+    {
+        foreach (var pair in monitorInfos)
+        {
+            foreach (var monitorInfo in pair.Value)
+            {
+                var price = await GetPrice(monitorInfo.Symbol);
+                if (price == null)
+                {
+                    continue;
+                }
+
+                var change = (price.Value - monitorInfo.LastPrice) / monitorInfo.LastPrice;
+                if (Math.Abs(change) >= monitorInfo.Threshold)
+                {
+                    monitorInfo.CurrentPrice = price.Value;
+                    await monitorInfo.BotClient.SendTextMessageAsync(pair.Key, $@"<b>⚠️价格变动提醒</b>：
+
+<b>监控币种</b>：<code>{monitorInfo.Symbol}</code>
+<b>当前币价</b>：$ {monitorInfo.CurrentPrice.ToString("G29")}
+<b>价格变动</b>：{(change > 0 ? "上涨" : "下跌")}  {change:P}
+<b>变动时间</b>：{DateTime.Now:yyyy/MM/dd HH:mm}", parseMode: ParseMode.Html);
+
+                    monitorInfo.LastPrice = price.Value;
+                }
+            }
+        }
+    }
+
+    private static async Task<decimal?> GetPrice(string symbol)
+    {
+        using (var httpClient = new HttpClient())
+        {
+            try
+            {
+                var url = $"https://api.binance.com/api/v3/ticker/price?symbol={symbol}USDT";
+                var response = await httpClient.GetStringAsync(url);
+                var json = JObject.Parse(response);
+                return decimal.Parse((string)json["price"]);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
+    private class MonitorInfo
+    {
+        public ITelegramBotClient BotClient { get; set; }
+        public string Symbol { get; set; }
+        public decimal LastPrice { get; set; }
+        public decimal Threshold { get; set; }
+        public decimal CurrentPrice { get; set; } // 新增属性
+    }
+}
 // 添加一个类级别的变量来跟踪虚拟广告是否正在运行
 private static bool isVirtualAdvertisementRunning = false;
 
@@ -5224,6 +5338,16 @@ if (messageText.StartsWith("/xuni"))
             text: "虚拟广告已启动！"
         );
     }
+}
+if (messageText.StartsWith("监控 "))
+{
+    var symbol = messageText.Substring(3);
+    await PriceMonitor.Monitor(botClient, message.Chat.Id, symbol);
+}
+else if (messageText.StartsWith("取消监控 "))
+{
+    var symbol = messageText.Substring(5);
+    await PriceMonitor.Unmonitor(botClient, message.Chat.Id, symbol);
 }
 //查询所有币价        
 if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText.Equals("trx", StringComparison.OrdinalIgnoreCase))
