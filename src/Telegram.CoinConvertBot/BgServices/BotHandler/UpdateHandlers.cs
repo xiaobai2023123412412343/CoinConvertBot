@@ -91,6 +91,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//监控币价    
 public static class PriceMonitor
 {
     private static Dictionary<long, List<MonitorInfo>> monitorInfos = new Dictionary<long, List<MonitorInfo>>();
