@@ -5755,14 +5755,20 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
     if (command == "关闭翻译")
     {
         groupTranslationSettings[groupId] = false;
-        await botClient.SendTextMessageAsync(groupId, "已关闭翻译功能。");
+        var sentMessage1 = await botClient.SendTextMessageAsync(groupId, "已关闭翻译功能。");
+        await Task.Delay(1000); // 等待5秒
+        await botClient.DeleteMessageAsync(groupId, sentMessage1.MessageId); // 撤回机器人的消息
+        await botClient.DeleteMessageAsync(groupId, message.MessageId); // 尝试撤回关闭翻译命令
     }
     else if (command == "开启翻译")
     {
         groupTranslationSettings[groupId] = true;
-        await botClient.SendTextMessageAsync(groupId, "已开启翻译功能。");
+        var sentMessage2 = await botClient.SendTextMessageAsync(groupId, "已开启翻译功能。");
+        await Task.Delay(1000); // 等待5秒
+        await botClient.DeleteMessageAsync(groupId, sentMessage2.MessageId); // 撤回机器人的消息
+        await botClient.DeleteMessageAsync(groupId, message.MessageId); // 尝试撤回开启翻译命令
     }
-} 
+}
 if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
 {
     var parts = messageText.Split(' ');
