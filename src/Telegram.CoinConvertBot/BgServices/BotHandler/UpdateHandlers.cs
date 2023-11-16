@@ -5109,13 +5109,15 @@ if (messageText.Equals("个人中心", StringComparison.OrdinalIgnoreCase) || me
         var reply = "<b>连续上涨TOP5：</b>\n";
         foreach (var coin in topRise)
         {
-            reply += $"{coin.Symbol.Replace("USDT", "/USDT")} 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+            var symbol = coin.Symbol.Replace("USDT", "");
+            reply += $"<code>{symbol}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
         }
 
         reply += "\n<b>连续下跌TOP5：</b>\n";
         foreach (var coin in topFall)
         {
-            reply += $"{coin.Symbol.Replace("USDT", "/USDT")} 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+            var symbol = coin.Symbol.Replace("USDT", "");
+            reply += $"<code>{symbol}</code>/USDT 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
         }
 
         await botClient.SendTextMessageAsync(
@@ -5130,7 +5132,7 @@ if (messageText.Equals("个人中心", StringComparison.OrdinalIgnoreCase) || me
         await HandlePersonalCenterCommandAsync(botClient, message, provider);
     }
     return;
-}             
+}
 // 检查是否是/jiankong命令
 if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
 {
