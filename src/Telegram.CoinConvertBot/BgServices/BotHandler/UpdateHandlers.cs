@@ -5438,15 +5438,15 @@ var (riseDays, fallDays) = GetContinuousRiseFallDays(klineData);
 string reply;
 if (riseDays > 2)
 {
-    reply = $"<b> {symbol}/USDT 数据     连续上涨{riseDays}天！</b>\n\n";
+    reply = $"<b> <code>{symbol}</code>/USDT 数据     连续上涨{riseDays}天！</b>\n\n";
 }
 else if (fallDays > 2)
 {
-    reply = $"<b> {symbol}/USDT 数据     连续下跌{fallDays}天！</b>\n\n";
+    reply = $"<b> <code>{symbol}</code>/USDT 数据     连续下跌{fallDays}天！</b>\n\n";
 }
 else
 {
-    reply = $"<b> {symbol}/USDT 数据     </b>\n\n";
+    reply = $"<b> <code>{symbol}</code>/USDT 数据     </b>\n\n";
 }
 // 获取市值
 try
