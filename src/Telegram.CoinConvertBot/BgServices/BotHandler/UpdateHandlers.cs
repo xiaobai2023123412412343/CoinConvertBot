@@ -150,34 +150,35 @@ public static class PriceMonitor
         }
     }
 
-    private static async void CheckPrice(object state)
+private static async void CheckPrice(object state)
+{
+    var monitorInfosCopy = new Dictionary<long, List<MonitorInfo>>(monitorInfos);
+    foreach (var pair in monitorInfosCopy)
     {
-        foreach (var pair in monitorInfos)
+        foreach (var monitorInfo in pair.Value)
         {
-            foreach (var monitorInfo in pair.Value)
+            var price = await GetPrice(monitorInfo.Symbol);
+            if (price == null)
             {
-                var price = await GetPrice(monitorInfo.Symbol);
-                if (price == null)
-                {
-                    continue;
-                }
+                continue;
+            }
 
-                var change = (price.Value - monitorInfo.LastPrice) / monitorInfo.LastPrice;
-                if (Math.Abs(change) >= monitorInfo.Threshold)
-                {
-                    monitorInfo.CurrentPrice = price.Value;
-                    await monitorInfo.BotClient.SendTextMessageAsync(pair.Key, $@"<b>⚠️价格变动提醒</b>：
+            var change = (price.Value - monitorInfo.LastPrice) / monitorInfo.LastPrice;
+            if (Math.Abs(change) >= monitorInfo.Threshold)
+            {
+                monitorInfo.CurrentPrice = price.Value;
+                await monitorInfo.BotClient.SendTextMessageAsync(pair.Key, $@"<b>⚠️价格变动提醒</b>：
 
 <b>监控币种</b>：<code>{monitorInfo.Symbol}</code>
 <b>当前币价</b>：$ {monitorInfo.CurrentPrice.ToString("G29")}
 <b>价格变动</b>：{(change > 0 ? "上涨" : "下跌")}  {change:P}
 <b>变动时间</b>：{DateTime.Now:yyyy/MM/dd HH:mm}", parseMode: ParseMode.Html);
 
-                    monitorInfo.LastPrice = price.Value;
-                }
+                monitorInfo.LastPrice = price.Value;
             }
         }
     }
+}
 
     private static async Task<decimal?> GetPrice(string symbol)
     {
