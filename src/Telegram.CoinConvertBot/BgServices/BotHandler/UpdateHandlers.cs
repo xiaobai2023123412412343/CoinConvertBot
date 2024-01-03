@@ -1828,23 +1828,28 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
     }
 }
 //完整列表
-    private static async Task HandleFullListCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
+private static async Task HandleFullListCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
+{
+    var followers = Followers.OrderByDescending(f => f.FollowTime).ToList();
+
+    for (int i = 0; i < followers.Count; i += 100)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>\n");
 
-        foreach (var follower in Followers.OrderByDescending(f => f.FollowTime))
+        var followersBatch = followers.Skip(i).Take(100);
+        foreach (var follower in followersBatch)
         {
             sb.AppendLine($"<b>{follower.Name}</b>  用户名：@{follower.Username}   ID：<code>{follower.Id}</code>");
         }
 
-        await botClient.EditMessageTextAsync(
+        await botClient.SendTextMessageAsync(
             chatId: callbackQuery.Message.Chat.Id,
-            messageId: callbackQuery.Message.MessageId,
             text: sb.ToString(),
             parseMode: ParseMode.Html
         );
-    }    
+    }
+}  
 //获取关注列表   
 private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
