@@ -3563,6 +3563,7 @@ static async Task<Dictionary<string, (decimal, string)>> GetCurrencyRatesAsync()
 
     return rates;
 }
+//统计恐惧已贪婪指数
 public static async Task<(int Today, int Yesterday, double Weekly, double Monthly)> GetFearAndGreedIndexAsync()
 {
     var apiUrl = "https://api.alternative.me/fng/?limit=62&format=csv&date_format=cn";
