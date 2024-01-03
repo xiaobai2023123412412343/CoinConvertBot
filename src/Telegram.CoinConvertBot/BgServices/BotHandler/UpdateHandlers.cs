@@ -5625,7 +5625,10 @@ reply += $"<b>↘️历史最低：</b>{historicalLowDate}   {formattedHistorica
                     reply += priceInfo;
 
 // 创建内联键盘按钮
-// 创建内联键盘按钮
+    string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+    string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+    string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
+                    
 var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
     new [] // 第一行
@@ -5637,7 +5640,12 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         InlineKeyboardButton.WithUrl("技术分析", $"https://cn.tradingview.com/symbols/{symbol}USD/technicals/?exchange=CRYPTO"),
         InlineKeyboardButton.WithCallbackData("一键复查", symbol),
-    }
+    },
+    new [] // 第三行
+    {
+        //InlineKeyboardButton.WithSwitchInlineQuery("一键分享", "SHARE"),
+        InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
+    }    
 });
 
 // 发送消息给用户
