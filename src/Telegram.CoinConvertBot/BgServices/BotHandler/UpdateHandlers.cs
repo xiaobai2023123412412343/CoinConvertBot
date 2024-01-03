@@ -91,6 +91,11 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//币安永续合约    
+public class FuturesPrice
+{
+    public string price { get; set; }
+}    
 //监控币价    
 public static class PriceMonitor
 {
@@ -5492,13 +5497,32 @@ catch (Exception ex)
     // 记录错误信息
     Console.WriteLine($"Error when getting market cap: {ex.Message}");
 }
+
+// 获取永续合约价格
+string futuresPrice = "该币种未上线永续合约";
+try
+{
+    var futuresPriceResponse = await httpClient.GetAsync($"https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}USDT");
+    var futuresPriceData = JsonSerializer.Deserialize<FuturesPrice>(await futuresPriceResponse.Content.ReadAsStringAsync());
+    if (futuresPriceData != null && !string.IsNullOrEmpty(futuresPriceData.price))
+    {
+        futuresPrice = FormatPrice(decimal.Parse(futuresPriceData.price));
+    }
+}
+catch (Exception)
+{
+    // 如果获取永续合约价格失败，假设该币种没有上架永续合约
+    // 不显示任何信息
+}
+
 var lastPrice = FormatPrice(decimal.Parse((string)json["lastPrice"]));
 var highPrice = FormatPrice(decimal.Parse((string)json["highPrice"]));
 var lowPrice = FormatPrice(decimal.Parse((string)json["lowPrice"]));
-
-reply += $"<b>\U0001F4B0最新价：</b>{lastPrice}\n" +            
-        $"<b>⬆️最高价：</b>{highPrice}\n" +
-        $"<b>⬇️最低价：</b>{lowPrice}\n" +
+                    
+reply += $"<b>\U0001F4B0现货价格：</b>{lastPrice}\n" +  
+        $"<b>\U0001F4B0合约价格：</b>{futuresPrice}\n" +
+        $"<b>⬆️今日最高价：</b>{highPrice}\n" +
+        $"<b>⬇️今日最低价：</b>{lowPrice}\n" +
         $"<b>全天涨跌幅：</b>{json["priceChangePercent"]}%\n";
 
 
