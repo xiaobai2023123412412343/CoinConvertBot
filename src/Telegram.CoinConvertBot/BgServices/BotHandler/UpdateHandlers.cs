@@ -3576,38 +3576,56 @@ public static async Task<(int Today, int Yesterday, double Weekly, double Monthl
             response.EnsureSuccessStatusCode();
 
             var rawData = await response.Content.ReadAsStringAsync();
-            //Console.WriteLine($"Raw Data: {rawData}");//打印api
 
-            var csvDataStartIndex = rawData.IndexOf("fng_value");
+            var match = Regex.Match(rawData, @"\d{4}-\d{2}-\d{2}");
+            if (!match.Success)
+            {
+                Console.WriteLine("Error: Cannot find the start of the data.");
+                return (0, 0, 0, 0); // 返回默认值
+            }
+
+            var csvDataStartIndex = match.Index;
             var csvData = rawData.Substring(csvDataStartIndex);
-            //Console.WriteLine($"CSV Data: {csvData}");//打印api
 
             var rows = csvData.Split('\n');
             var dataList = new List<FngData>();
 
-            for (int i = 1; i < rows.Length; i++)
-            {
-                var columns = rows[i].Split(',');
+for (int i = 0; i < rows.Length; i++)
+{
+    var columns = rows[i].Split(',');
 
-                if (columns.Length >= 3)
-                {
-                    dataList.Add(new FngData
-                    {
-                        Date = DateTime.Parse(columns[0]),
-                        FngValue = int.Parse(columns[1]),
-                        FngClassification = columns[2]
-                    });
-                }
-            }
+    if (columns.Length >= 3)
+    {
+        if (!DateTime.TryParse(columns[0], out var date))
+        {
+            Console.WriteLine($"Error: Cannot parse date '{columns[0]}'. Skipping this row.");
+            continue;
+        }
+
+        if (!int.TryParse(columns[1], out var fngValue))
+        {
+            Console.WriteLine($"Error: Cannot parse FNG value '{columns[1]}'. Skipping this row.");
+            continue;
+        }
+
+        dataList.Add(new FngData
+        {
+            Date = date,
+            FngValue = fngValue,
+            FngClassification = columns[2]
+        });
+    }
+}
 
             var today = dataList[0].FngValue;
             var yesterday = dataList[1].FngValue;
 
-            // 计算上周和上月的日期范围
-            var endOfWeek = dataList[0].Date.AddDays(-((int)dataList[0].Date.DayOfWeek + 6) % 7);
-            var startOfWeek = endOfWeek.AddDays(-6);
-            var startOfMonth = new DateTime(dataList[0].Date.Year, dataList[0].Date.Month - 1, 1);
-            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+// 计算上周和上月的日期范围
+var endOfWeek = dataList[0].Date.AddDays(-((int)dataList[0].Date.DayOfWeek + 6) % 7);
+var startOfWeek = endOfWeek.AddDays(-6);
+var startOfMonth = dataList[0].Date.AddMonths(-1);
+startOfMonth = new DateTime(startOfMonth.Year, startOfMonth.Month, 1);
+var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
             // 使用LINQ筛选满足日期范围的数据，并计算平均值
             var weeklyAverage = dataList.Where(d => d.Date >= startOfWeek && d.Date <= endOfWeek).Average(d => d.FngValue);
