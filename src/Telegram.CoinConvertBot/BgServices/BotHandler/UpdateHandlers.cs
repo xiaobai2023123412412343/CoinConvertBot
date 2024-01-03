@@ -5253,8 +5253,11 @@ if (messageText.Equals("/chaxun", StringComparison.OrdinalIgnoreCase))
 }
 else if (messageText.Equals("/faxian", StringComparison.OrdinalIgnoreCase))
 {
-    var topRise = riseList.OrderByDescending(x => x.Days).Take(5);
-    var topFall = fallList.OrderByDescending(x => x.Days).Take(5);
+    // 过滤出不包含TRX的上涨列表
+    var topRise = riseList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
+
+    // 过滤出不包含TRX的下跌列表
+    var topFall = fallList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
 
     var reply = "<b>连续上涨TOP5：</b>\n";
     foreach (var coin in topRise)
@@ -5326,8 +5329,11 @@ if (messageText.Equals("/jihui", StringComparison.OrdinalIgnoreCase))
                 }
             }
 
-            var topRise = riseList.OrderByDescending(x => x.Days).Take(5);
-            var topFall = fallList.OrderByDescending(x => x.Days).Take(5);
+    // 过滤出不包含TRX的上涨列表
+    var topRise = riseList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
+
+    // 过滤出不包含TRX的下跌列表
+    var topFall = fallList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
 
             var reply = "<b>连续上涨TOP5：</b>\n";
             foreach (var coin in topRise)
