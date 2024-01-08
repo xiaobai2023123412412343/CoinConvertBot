@@ -214,7 +214,7 @@ private static async void CheckPrice(object state)
 }
 // 添加一个类级别的变量来跟踪虚拟广告是否正在运行
 private static bool isVirtualAdvertisementRunning = false;
-
+private static CancellationTokenSource virtualAdCancellationTokenSource = new CancellationTokenSource();
 static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
     var random = new Random();
@@ -5368,17 +5368,47 @@ if (messageText.StartsWith("/xuni"))
     {
         isVirtualAdvertisementRunning = true; // 将变量设置为 true，表示虚拟广告正在运行
 
-        var cancellationTokenSource = new CancellationTokenSource();
+        virtualAdCancellationTokenSource = new CancellationTokenSource(); // 更新类级别的 CancellationTokenSource
         var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-        _ = SendVirtualAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate)
+        _ = SendVirtualAdvertisement(botClient, virtualAdCancellationTokenSource.Token, rateRepository, FeeRate)
             .ContinueWith(_ => isVirtualAdvertisementRunning = false); // 广告结束后将变量设置为 false
 
         // 向用户发送一条消息，告知他们虚拟广告已经启动
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: "虚拟广告已启动！"
+            text: "兑换通知已启动！"
         );
     }
+}
+// 检查是否为指定用户并执行相应的操作
+if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup))
+{
+    var groupId = message.Chat.Id;
+    var command = messageText.ToLower();
+
+    if (command == "关闭兑换通知")
+    {
+        if (isVirtualAdvertisementRunning)
+        {
+            virtualAdCancellationTokenSource.Cancel(); // 取消虚拟广告任务
+            isVirtualAdvertisementRunning = false; // 更新运行状态
+            await botClient.SendTextMessageAsync(groupId, "兑换通知已关闭。");
+        }
+    }
+    else if (command == "开启兑换通知")
+    {
+        if (!isVirtualAdvertisementRunning)
+        {
+            virtualAdCancellationTokenSource = new CancellationTokenSource(); // 创建新的 CancellationTokenSource
+            isVirtualAdvertisementRunning = true; // 更新运行状态
+            var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+            _ = SendVirtualAdvertisement(botClient, virtualAdCancellationTokenSource.Token, rateRepository, FeeRate)
+                .ContinueWith(_ => isVirtualAdvertisementRunning = false); // 广告结束后更新运行状态
+
+            await botClient.SendTextMessageAsync(groupId, "兑换通知已开启。");
+        }
+    }
+    // ... 其他代码 ...
 }
 if (messageText.StartsWith("/jkbtc"))
 {
