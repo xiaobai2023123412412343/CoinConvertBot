@@ -5385,6 +5385,8 @@ if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || mes
 {
     var groupId = message.Chat.Id;
     var command = messageText.ToLower();
+    var userMessageId = message.MessageId; // 用户消息的ID
+    Message botResponseMessage = null; // 用于存储机器人发送的消息
 
     if (command == "关闭兑换通知")
     {
@@ -5392,7 +5394,7 @@ if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || mes
         {
             virtualAdCancellationTokenSource.Cancel(); // 取消虚拟广告任务
             isVirtualAdvertisementRunning = false; // 更新运行状态
-            await botClient.SendTextMessageAsync(groupId, "兑换通知已关闭。");
+            botResponseMessage = await botClient.SendTextMessageAsync(groupId, "兑换通知已关闭。");
         }
     }
     else if (command == "开启兑换通知")
@@ -5405,10 +5407,25 @@ if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || mes
             _ = SendVirtualAdvertisement(botClient, virtualAdCancellationTokenSource.Token, rateRepository, FeeRate)
                 .ContinueWith(_ => isVirtualAdvertisementRunning = false); // 广告结束后更新运行状态
 
-            await botClient.SendTextMessageAsync(groupId, "兑换通知已开启。");
+            botResponseMessage = await botClient.SendTextMessageAsync(groupId, "兑换通知已开启。");
         }
     }
     // ... 其他代码 ...
+
+    // 如果机器人发送了消息，则等待1秒后尝试撤回
+    if (botResponseMessage != null)
+    {
+        await Task.Delay(1000); // 等待1秒
+        await botClient.DeleteMessageAsync(groupId, botResponseMessage.MessageId); // 尝试撤回机器人的消息
+        try
+        {
+            await botClient.DeleteMessageAsync(groupId, userMessageId); // 尝试撤回用户的消息
+        }
+        catch
+        {
+            // 如果撤回用户消息失败，则不做任何事情
+        }
+    }
 }
 if (messageText.StartsWith("/jkbtc"))
 {
