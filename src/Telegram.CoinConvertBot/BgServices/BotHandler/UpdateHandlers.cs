@@ -91,6 +91,28 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//绑定地址
+private static async Task SendAllBindingsInBatches(ITelegramBotClient botClient, long chatId, IBaseRepository<TokenBind> bindRepository, int batchSize = 50)
+{
+    var allBindings = bindRepository.Where(x => true).ToList(); // 使用 Where(x => true) 来获取所有记录
+    int totalBatches = (allBindings.Count + batchSize - 1) / batchSize; // 计算需要发送的批次总数
+
+    for (int batchNumber = 0; batchNumber < totalBatches; batchNumber++)
+    {
+        var batch = allBindings.Skip(batchNumber * batchSize).Take(batchSize);
+        var messageText = string.Join(Environment.NewLine + "----------------------------------------------------------" + Environment.NewLine, 
+            batch.Select(b => 
+                $"<b>用户名:</b> {b.UserName}  <b>ID:</b> <code>{b.UserId}</code>\n" +
+                $"<b>绑定地址:</b> <code>{b.Address}</code>"
+            )
+        );
+        // 在最后一条信息后不添加横线
+        if (batchNumber < totalBatches - 1) {
+            messageText += Environment.NewLine + "----------------------------------------------------------";
+        }
+        await botClient.SendTextMessageAsync(chatId, messageText, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+    }
+}   
 //币安永续合约    
 public class FuturesPrice
 {
@@ -5359,6 +5381,12 @@ if (messageText.Equals("/jihui", StringComparison.OrdinalIgnoreCase))
             Console.WriteLine($"Error when calling API: {ex.Message}");
         }
     }
+}
+// 检查是否接收到了 /bangdingdizhi 消息，如果是管理员发送的，则返回所有绑定的地址信息
+if (message.Text.StartsWith("/bangdingdizhi") && message.From.Id == 1427768220)
+{
+    var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
+    await SendAllBindingsInBatches(botClient, message.Chat.Id, _bindRepository);
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
