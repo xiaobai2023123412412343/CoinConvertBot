@@ -3298,14 +3298,17 @@ decimal monthlyProfit = monthlyIncome - monthlyOutcome;//月盈亏
 decimal dailyProfit = dailyIncome - dailyOutcome; //日盈亏 
 
 //不想要可以把 3301-3315删除    3318-3320删除 $"<b>来自 </b>{userLink}<b>的查询</b>\n\n" +删除即可
-    // 获取发送消息的用户信息
-    var fromUser = message.From;
+// 获取发送消息的用户信息
+var fromUser = message.From;
+string userLink = "未知用户";
+
+if (fromUser != null)
+{
     string fromUsername = fromUser.Username;
     string fromFirstName = fromUser.FirstName;
     string fromLastName = fromUser.LastName;
 
     // 创建用户链接
-    string userLink;
     if (!string.IsNullOrEmpty(fromUsername))
     {
         userLink = $"<a href=\"tg://user?id={fromUser.Id}\">{fromFirstName} {fromLastName}</a>";
@@ -3313,7 +3316,8 @@ decimal dailyProfit = dailyIncome - dailyOutcome; //日盈亏
     else
     {
         userLink = $"{fromFirstName} {fromLastName}";
-    }  
+    }
+}
  
 // 判断 TRX 余额是否小于100
 if (message.Chat.Type != ChatType.Private)
