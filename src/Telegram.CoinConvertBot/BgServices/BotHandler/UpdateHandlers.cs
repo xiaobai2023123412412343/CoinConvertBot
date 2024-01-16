@@ -5176,7 +5176,13 @@ Telegram 官方只开放了语言包翻译接口, 官方没有提供中文语言
         text: languagePackMessage
     );
 }    
-    var timestamp = message.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
+// 获取北京时区
+TimeZoneInfo chinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+
+// 获取当前时间或消息时间，并转换为北京时间
+var timestamp = message.Date != default(DateTime) 
+    ? TimeZoneInfo.ConvertTimeFromUtc(message.Date.ToUniversalTime(), chinaTimeZone).ToString("yyyy-MM-dd HH:mm:ss") 
+    : TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaTimeZone).ToString("yyyy-MM-dd HH:mm:ss");
     var userFullName = $"{message.From.FirstName} {message.From.LastName}".Trim();
     var username = message.From.Username;
     var userId = message.From.Id;
