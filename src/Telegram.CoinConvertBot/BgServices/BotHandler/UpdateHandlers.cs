@@ -3295,7 +3295,9 @@ else
 string exchangeUrl = "https://t.me/yifanfubot";
 string exchangeLink = $"<a href=\"{exchangeUrl}\">立即兑换</a>";
 decimal monthlyProfit = monthlyIncome - monthlyOutcome;//月盈亏
-decimal dailyProfit = dailyIncome - dailyOutcome; //日盈亏   
+decimal dailyProfit = dailyIncome - dailyOutcome; //日盈亏 
+
+//不想要可以把 3301-3315删除    3318-3320删除 $"<b>来自 </b>{userLink}<b>的查询</b>\n\n" +删除即可
     // 获取发送消息的用户信息
     var fromUser = message.From;
     string fromUsername = fromUser.Username;
@@ -4472,7 +4474,28 @@ if (update.Type == UpdateType.CallbackQuery)
         });
     }
     // ... 其他现有代码 ...
-}        
+}
+//再查一次回调代码
+//这是旧的
+//if (update.Type == UpdateType.CallbackQuery)
+//{
+//    var callbackQuery = update.CallbackQuery;
+//    var callbackData = callbackQuery.Data.Split(',');
+//    if (callbackData[0] == "query_again")
+//    {
+//        // 从 CallbackData 中获取Tron地址
+//        var tronAddress = callbackData[1];
+
+//        // 调用 HandleQueryCommandAsync 方法来查询并返回结果
+//        await HandleQueryCommandAsync(botClient, new Message
+//        {
+//            Chat = callbackQuery.Message.Chat,
+//            Text = tronAddress
+//        });
+//    }
+    // ... 其他现有代码 ...
+//} 
+//这是新的回调
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
