@@ -4482,15 +4482,19 @@ if (update.Type == UpdateType.CallbackQuery)
         // 从 CallbackData 中获取Tron地址
         var tronAddress = callbackData[1];
 
-        // 调用 HandleQueryCommandAsync 方法来查询并返回结果
-        await HandleQueryCommandAsync(botClient, new Message
+        // 创建一个新的 Message 对象，并确保包含 From 属性
+        var message = new Message
         {
             Chat = callbackQuery.Message.Chat,
+            From = callbackQuery.From, // 新增的：设置 From 属性
             Text = tronAddress
-        });
+        };
+
+        // 调用 HandleQueryCommandAsync 方法来查询并返回结果
+        await HandleQueryCommandAsync(botClient, message);
     }
     // ... 其他现有代码 ...
-}        
+}       
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
