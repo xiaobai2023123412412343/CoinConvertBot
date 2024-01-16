@@ -3296,7 +3296,79 @@ string exchangeUrl = "https://t.me/yifanfubot";
 string exchangeLink = $"<a href=\"{exchangeUrl}\">立即兑换</a>";
 decimal monthlyProfit = monthlyIncome - monthlyOutcome;//月盈亏
 decimal dailyProfit = dailyIncome - dailyOutcome; //日盈亏   
+    // 获取发送消息的用户信息
+    var fromUser = message.From;
+    string fromUsername = fromUser.Username;
+    string fromFirstName = fromUser.FirstName;
+    string fromLastName = fromUser.LastName;
+
+    // 创建用户链接
+    string userLink;
+    if (!string.IsNullOrEmpty(fromUsername))
+    {
+        userLink = $"<a href=\"tg://user?id={fromUser.Id}\">{fromFirstName} {fromLastName}</a>";
+    }
+    else
+    {
+        userLink = $"{fromFirstName} {fromLastName}";
+    }  
+ 
 // 判断 TRX 余额是否小于100
+if (message.Chat.Type != ChatType.Private)
+{
+if (trxBalance < 100)
+{
+    resultText = $"<b>来自 </b>{userLink}<b>的查询</b>\n\n" +
+    $"查询地址：<code>{tronAddress}</code>\n" +
+    $"多签地址：<b>{addressPermissionText}</b>\n" +    
+    $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"————————<b>资源</b>————————\n"+
+    $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
+    $"交易次数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +        
+    $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
+    $"TRX余额：<b>{trxBalance.ToString("N2")}  |  TRX能量不足，请{exchangeLink}</b>\n" +
+    $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
+    $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
+    $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +   
+    $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
+    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
+    $"———————<b>USDT账单</b>———————\n" +
+    $"{lastFiveTransactions}\n"+
+    //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
+    //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
+    $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
+    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>";
+    //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
+}
+else
+{
+    resultText = $"<b>来自 </b>{userLink}<b>的查询</b>\n\n" +
+    $"查询地址：<code>{tronAddress}</code>\n" +
+    $"多签地址：<b>{addressPermissionText}</b>\n" +    
+    $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"————————<b>资源</b>————————\n"+
+    $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
+    $"交易次数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
+    $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
+    $"TRX余额：<b>{trxBalance.ToString("N2")}  |  可供转账{availableTransferCount}次</b> \n" +
+    $"免费带宽：<b>{remainingBandwidth.ToString("N0")}/{totalBandwidth.ToString("N0")}</b>\n" +
+    $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
+    $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +       
+    $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
+    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
+    $"———————<b>USDT账单</b>———————\n" +
+    $"{lastFiveTransactions}\n"+
+    //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
+    //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
+    $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
+    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>"; 
+    //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
+}
+}  
+else
+{  
 if (trxBalance < 100)
 {
     resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
@@ -3323,7 +3395,7 @@ if (trxBalance < 100)
 }
 else
 {
-    resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
+    resultText = $"查询地址：<code>{tronAddress}</code>\n" +
     $"多签地址：<b>{addressPermissionText}</b>\n" +    
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
@@ -3345,6 +3417,7 @@ else
     $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>"; 
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
 }
+}    
 
 
         // 创建内联键盘
