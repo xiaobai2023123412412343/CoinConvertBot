@@ -100,7 +100,7 @@ private static async Task SendAllBindingsInBatches(ITelegramBotClient botClient,
     for (int batchNumber = 0; batchNumber < totalBatches; batchNumber++)
     {
         var batch = allBindings.Skip(batchNumber * batchSize).Take(batchSize);
-        var messageText = string.Join(Environment.NewLine + "----------------------------------------------------------" + Environment.NewLine, 
+        var messageText = string.Join(Environment.NewLine + "--------------------------------------------------------------------------" + Environment.NewLine, 
             batch.Select(b => 
                 $"<b>用户名:</b> {b.UserName}  <b>ID:</b> <code>{b.UserId}</code>\n" +
                 $"<b>绑定地址:</b> <code>{b.Address}</code>"
@@ -1934,7 +1934,11 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
         new [] // 第三行按钮
         {
             InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_recordds")
-        }
+        },
+        new [] // 第四行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("用户资料", "show_user_info")
+        }        
     });
 
     if (edit)
@@ -4358,6 +4362,26 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         // ... 其他现有代码 ...
     }
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data;
+
+    switch (callbackData)
+    {
+        case "show_user_info": // 处理新按钮的回调
+            var fakeMessage = new Message
+            {
+                Text = "/bangdingdizhi",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
+            break;
+
+        // 处理其他回调...
+    }
+}        
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
