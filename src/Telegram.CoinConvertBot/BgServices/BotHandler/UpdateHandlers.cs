@@ -1959,7 +1959,11 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
         new [] // 第四行按钮
         {
             InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info")
-        }        
+        },   
+        new [] // 第5行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info")
+        }           
     });
 
     if (edit)
@@ -4477,11 +4481,12 @@ if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
     var callbackData = callbackQuery.Data;
+    Message fakeMessage = null; // 将 fakeMessage 的定义移到 switch 语句之前
 
     switch (callbackData)
     {
         case "show_user_info": // 处理新按钮的回调
-            var fakeMessage = new Message
+            fakeMessage = new Message
             {
                 Text = "/bangdingdizhi",
                 Chat = callbackQuery.Message.Chat,
@@ -4489,10 +4494,20 @@ if (update.Type == UpdateType.CallbackQuery)
             };
             await BotOnMessageReceived(botClient, fakeMessage);
             break;
+            
+        case "show_group_info": // 处理群聊资料按钮的回调
+            fakeMessage = new Message
+            {
+                Text = "/qunliaoziliao",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
+            break;            
 
         // 处理其他回调...
     }
-}        
+}
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
