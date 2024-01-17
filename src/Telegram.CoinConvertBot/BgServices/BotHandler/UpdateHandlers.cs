@@ -3245,8 +3245,8 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
                 // 遍历授权记录
                 foreach (var record in result.data[0].authorizedList)
                 {
-                    string projectName = record.approvedProjectName ?? "未知项目";
-                    string amount = record.approvedAmount == "unlimited" ? "无限" : record.approvedAmount;
+                    string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "未知项目" : record.approvedProjectName;
+                    string amount = record.approvedAmount == "unlimited" ? "无限" : $"{record.approvedAmount} USDT";
                     string address = record.approvedContractAddress;
                     // 确保从JsonElement获取字符串表示
                     string approvedTimeString = record.approvedTime.ToString();
