@@ -3242,40 +3242,47 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
             }
             else
             {
-                // 遍历授权记录
-                foreach (var record in result.data[0].authorizedList)
-                {
-                    string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "未知项目" : record.approvedProjectName;
-                    string amount = record.approvedAmount == "unlimited" ? "无限" : $"{record.approvedAmount} USDT";
-                    string address = record.approvedContractAddress;
-                    // 确保从JsonElement获取字符串表示
-                    string approvedTimeString = record.approvedTime.ToString();
-                    if (!long.TryParse(approvedTimeString, out long approvedTime))
-                    {
-                        Console.WriteLine($"无法将'{approvedTimeString}'转换为长整型。");
-                        continue; // 跳过这个记录，继续处理下一个记录
-                    }
-                    // 将Unix时间戳转换为北京时间（UTC+8）
-                    DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
-                    string tokenFullName = result.data[0].tokenFullName + " (泰达币/USDT)"; // 添加中文名称
-
-                    sb.AppendLine($"授权币种： {tokenFullName}");
-                    sb.AppendLine($"授权金额： {amount}");
-                    sb.AppendLine($"授权地址： {address}");
-                    // 添加时分秒到授权时间
-                    sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
-                    sb.AppendLine($"授权项目： {projectName}");
-                    sb.AppendLine("------------------");
-                }
-            }
-
-            // 移除最后的分隔线
-            if (sb.Length > 0)
+// 遍历授权记录
+foreach (var dataItem in result.data)
+{
+    // 只处理 Tether USD 或 USDT 的记录
+    if (dataItem.tokenFullName == "Tether USD" || dataItem.token == "USDT")
+    {
+        foreach (var record in dataItem.authorizedList)
+        {
+            string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "未知项目" : record.approvedProjectName;
+            string amount = record.approvedAmount == "unlimited" ? "无限" : $"{record.approvedAmount} USDT";
+            string address = record.approvedContractAddress;
+            // 确保从JsonElement获取字符串表示
+            string approvedTimeString = record.approvedTime.ToString();
+            if (!long.TryParse(approvedTimeString, out long approvedTime))
             {
-                sb.Length -= Environment.NewLine.Length + 18; // "------------------".Length + Environment.NewLine.Length
+                Console.WriteLine($"无法将'{approvedTimeString}'转换为长整型。");
+                continue; // 跳过这个记录，继续处理下一个记录
+            }
+            // 将Unix时间戳转换为北京时间（UTC+8）
+            DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
+            string tokenFullName = "Tether USD (泰达币/USDT)"; // 使用固定的中文名称
+
+            sb.AppendLine($"授权币种： {tokenFullName}");
+            sb.AppendLine($"授权金额： {amount}");
+            sb.AppendLine($"授权地址： {address}");
+            // 添加时分秒到授权时间
+            sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
+            sb.AppendLine($"授权项目： {projectName}");
+            sb.AppendLine("------------------");
+        }
+    }
+}
             }
 
-            return sb.ToString();
+// 移除最后的分隔线
+if (sb.Length > 0)
+{
+    sb.Length -= Environment.NewLine.Length + 18; // "------------------".Length + Environment.NewLine.Length
+}
+
+return sb.ToString();
         }
     }
     catch (Exception ex)
