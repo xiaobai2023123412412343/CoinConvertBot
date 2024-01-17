@@ -3257,7 +3257,7 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
                     }
                     // 将Unix时间戳转换为北京时间（UTC+8）
                     DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
-                    string tokenFullName = result.data[0].tokenFullName + " (泰达币USDT)"; // 添加中文名称
+                    string tokenFullName = result.data[0].tokenFullName + " (泰达币/USDT)"; // 添加中文名称
 
                     sb.AppendLine($"授权币种： {tokenFullName}");
                     sb.AppendLine($"授权金额： {amount}");
