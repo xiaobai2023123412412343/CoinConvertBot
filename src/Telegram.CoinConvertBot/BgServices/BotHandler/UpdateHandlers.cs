@@ -3171,7 +3171,120 @@ private static int CountConsecutiveIdenticalChars(string input)
     }
 
     return count;
-} 
+}
+public class AuthorizedRecord
+{
+    public string approvedContractAddress { get; set; }
+    public string approvedAmount { get; set; }
+    public string tokenId { get; set; }
+    public string approvedTime { get; set; }
+    public string approvedTxId { get; set; }
+    public string approvedProjectName { get; set; }
+}
+
+public class Data
+{
+    public string chainShortName { get; set; }
+    public string protocolType { get; set; }
+    public string tokenContractAddress { get; set; }
+    public string authorizationAddress { get; set; }
+    public string precision { get; set; }
+    public string tokenFullName { get; set; }
+    public string token { get; set; }
+    public string holdingAmount { get; set; }
+    public List<AuthorizedRecord> authorizedList { get; set; }
+}
+
+public class Root
+{
+    public string code { get; set; }
+    public string msg { get; set; }
+    public List<Data> data { get; set; }
+}                                                                 
+public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
+{
+    try
+    {
+        using (var httpClient = new HttpClient())
+        {
+            // 添加请求头
+            httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", "5090e006-163f-4d61-8fa1-1f41fa70d7f8");
+
+            // 构建请求URI
+            string requestUri = $"https://www.oklink.com/api/v5/tracker/contractscanner/token-authorized-list?chainShortName=tron&address={tronAddress}";
+            var response = await httpClient.GetAsync(requestUri);
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
+                return "无法获取授权记录，请稍后再试。";
+            }
+
+            string content = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"响应内容：{content}");
+
+            // 反序列化响应内容
+            var result = System.Text.Json.JsonSerializer.Deserialize<Root>(content);
+            Console.WriteLine($"解析后的结果：{result}");
+
+            // 检查返回的code是否为"0"
+            if (result.code != "0")
+            {
+                return "查询授权记录出错：" + result.msg;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            //sb.AppendLine("———————授权列表———————"); // 移动到循环外面
+
+            // 检查data数组是否为空
+            if (result.data == null || result.data.Count == 0 || result.data[0].authorizedList == null)
+            {
+                sb.AppendLine("无授权记录。");
+            }
+            else
+            {
+                // 遍历授权记录
+                foreach (var record in result.data[0].authorizedList)
+                {
+                    string projectName = record.approvedProjectName ?? "未知项目";
+                    string amount = record.approvedAmount == "unlimited" ? "无限" : record.approvedAmount;
+                    string address = record.approvedContractAddress;
+                    // 确保从JsonElement获取字符串表示
+                    string approvedTimeString = record.approvedTime.ToString();
+                    if (!long.TryParse(approvedTimeString, out long approvedTime))
+                    {
+                        Console.WriteLine($"无法将'{approvedTimeString}'转换为长整型。");
+                        continue; // 跳过这个记录，继续处理下一个记录
+                    }
+                    // 将Unix时间戳转换为北京时间（UTC+8）
+                    DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
+                    string tokenFullName = result.data[0].tokenFullName + " (泰达币USDT)"; // 添加中文名称
+
+                    sb.AppendLine($"授权币种： {tokenFullName}");
+                    sb.AppendLine($"授权金额： {amount}");
+                    sb.AppendLine($"授权地址： {address}");
+                    // 添加时分秒到授权时间
+                    sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
+                    sb.AppendLine($"授权项目： {projectName}");
+                    sb.AppendLine("------------------");
+                }
+            }
+
+            // 移除最后的分隔线
+            if (sb.Length > 0)
+            {
+                sb.Length -= Environment.NewLine.Length + 18; // "------------------".Length + Environment.NewLine.Length
+            }
+
+            return sb.ToString();
+        }
+    }
+    catch (Exception ex)
+    {
+        // 捕获并处理异常
+        Console.WriteLine($"在获取授权记录时发生异常：{ex.Message}");
+        return "无授权记录，地址很安全！\n";
+    }
+}
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
@@ -3206,9 +3319,12 @@ var getTotalIncomeTask = GetTotalIncomeAsync(tronAddress, false);
 var getBandwidthTask = GetBandwidthAsync(tronAddress);
 var getLastFiveTransactionsTask = GetLastFiveTransactionsAsync(tronAddress);
 var getOwnerPermissionTask = GetOwnerPermissionAsync(tronAddress);
+var usdtAuthorizedListTask = GetUsdtAuthorizedListAsync(tronAddress);    
 
 // 等待所有任务完成
-await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask, getOwnerPermissionTask);
+//await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask, getOwnerPermissionTask);
+await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask, getOwnerPermissionTask, usdtAuthorizedListTask);
+    
 
 // 处理结果
 var usdtTransferTotalResult = getUsdtTransferTotalTask.Result;
@@ -3234,6 +3350,8 @@ var (usdtTotalIncome, usdtTotalOutcome, monthlyIncome, monthlyOutcome, dailyInco
 
 var getOwnerPermissionResult = getOwnerPermissionTask.Result;
 var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResult;
+
+var usdtAuthorizedListResult = usdtAuthorizedListTask.Result;
     
  // 计算人民币余额
  decimal cnyBalance = usdtBalance * okxPrice;
@@ -3350,6 +3468,13 @@ string botUsername = "yifanfubot"; // 你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";    
 string groupExclusiveText = $"<a href=\"{shareLink}\">累计收入/支出为群聊独享，将机器人拉进任意群组方可查询！</a>\n";
+
+ // 添加授权列表的信息
+string usdtAuthorizedListText = "";
+if (!string.IsNullOrEmpty(usdtAuthorizedListResult))
+{
+    usdtAuthorizedListText = "———————<b>授权列表</b>———————\n" + usdtAuthorizedListResult;
+}
     
 // 判断 TRX 余额是否小于100
 if (message.Chat.Type != ChatType.Private)
@@ -3370,7 +3495,8 @@ if (trxBalance < 100)
     $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
     $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +   
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
-    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
+    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +  
+    usdtAuthorizedListText + // 添加授权列表的信息
     $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
@@ -3396,7 +3522,8 @@ else
     $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
     $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +       
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
-    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
+    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +   
+    usdtAuthorizedListText + // 添加授权列表的信息        
     $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
