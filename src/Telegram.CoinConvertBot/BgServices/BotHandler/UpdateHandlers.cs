@@ -92,7 +92,11 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-//保存群聊资料    
+//保存群聊资料   
+public static string EscapeHtml(string text)
+{
+    return System.Net.WebUtility.HtmlEncode(text);
+}    
 public class GroupChat
 {
     public long Id { get; set; }
