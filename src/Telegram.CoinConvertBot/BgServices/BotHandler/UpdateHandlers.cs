@@ -3245,13 +3245,16 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
 // 遍历授权记录
 foreach (var dataItem in result.data)
 {
-    // 只处理 Tether USD 或 USDT 的记录
-    if (dataItem.tokenFullName == "Tether USD" || dataItem.token == "USDT")
+    // 只处理 Tether USD (USDT) 或 USD Coin (USDC) 的记录
+    if (dataItem.tokenFullName == "Tether USD" || dataItem.token == "USDT" ||
+        dataItem.tokenFullName == "USD Coin" || dataItem.token == "USDC")
     {
-        foreach (var record in dataItem.authorizedList)
+        // 只处理第一条记录
+        var record = dataItem.authorizedList.FirstOrDefault();
+        if (record != null)
         {
             string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "未知项目" : record.approvedProjectName;
-            string amount = record.approvedAmount == "unlimited" ? "无限" : $"{record.approvedAmount} USDT";
+            string amount = record.approvedAmount == "unlimited" ? "无限" : $"{decimal.Parse(record.approvedAmount):N0}"; // 使用带有逗号的数字格式
             string address = record.approvedContractAddress;
             // 确保从JsonElement获取字符串表示
             string approvedTimeString = record.approvedTime.ToString();
@@ -3262,7 +3265,7 @@ foreach (var dataItem in result.data)
             }
             // 将Unix时间戳转换为北京时间（UTC+8）
             DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
-            string tokenFullName = "Tether USD (泰达币/USDT)"; // 使用固定的中文名称
+            string tokenFullName = dataItem.tokenFullName == "Tether USD" ? "Tether USD (USDT)" : "USD Coin (USDC)";
 
             sb.AppendLine($"授权币种： {tokenFullName}");
             sb.AppendLine($"授权金额： {amount}");
@@ -3272,6 +3275,7 @@ foreach (var dataItem in result.data)
             sb.AppendLine($"授权项目： {projectName}");
             sb.AppendLine("------------------");
         }
+        break; // 只处理第一条记录，然后跳出循环
     }
 }
             }
