@@ -72,6 +72,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //发送用户名：**或ID：**  会触发储存资料
 //运行机器人发送 /yccl   启动全局异常处理    /qdgg  启动广告
 //代绑 id 地址  可以帮用户绑定地址
+//Console.WriteLine($"API URL: {apiUrl}, Response status code: {response.StatusCode}");//增加调试输出日志输出服务器日志 都可以用这个方法
 
 public static class UpdateHandlers
 {
