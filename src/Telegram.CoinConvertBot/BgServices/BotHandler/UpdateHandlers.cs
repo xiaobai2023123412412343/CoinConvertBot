@@ -3253,7 +3253,7 @@ foreach (var dataItem in result.data)
         var record = dataItem.authorizedList.FirstOrDefault();
         if (record != null)
         {
-            string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "点击查看交易详情" : record.approvedProjectName;
+            string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "点击查看授权详情" : record.approvedProjectName;
             string amount = record.approvedAmount == "unlimited" ? "无限" : $"{decimal.Parse(record.approvedAmount):N0}"; // 使用带有逗号的数字格式
             string address = record.approvedContractAddress;
             // 确保从JsonElement获取字符串表示
