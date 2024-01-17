@@ -3253,7 +3253,7 @@ foreach (var dataItem in result.data)
         var record = dataItem.authorizedList.FirstOrDefault();
         if (record != null)
         {
-            string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "未知项目" : record.approvedProjectName;
+            string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "点击查看交易详情" : record.approvedProjectName;
             string amount = record.approvedAmount == "unlimited" ? "无限" : $"{decimal.Parse(record.approvedAmount):N0}"; // 使用带有逗号的数字格式
             string address = record.approvedContractAddress;
             // 确保从JsonElement获取字符串表示
@@ -3267,12 +3267,18 @@ foreach (var dataItem in result.data)
             DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
             string tokenFullName = dataItem.tokenFullName == "Tether USD" ? "Tether USD (USDT)" : "USD Coin (USDC)";
 
+            // 创建授权项目的链接
+            string projectLink = $"https://tronscan.org/#/transaction/{record.approvedTxId}";
+            string linkedProjectName = $"<a href=\"{projectLink}\">{projectName}</a>";
+
             sb.AppendLine($"授权币种： {tokenFullName}");
             sb.AppendLine($"授权金额： {amount}");
-            sb.AppendLine($"授权地址： {address}");
+            sb.AppendLine($"授权项目： {linkedProjectName}");
+            //sb.AppendLine($"授权地址： {address}");
             // 添加时分秒到授权时间
             sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
-            sb.AppendLine($"授权项目： {projectName}");
+            //sb.AppendLine($"授权项目： {linkedProjectName}");
+            sb.AppendLine($"授权地址： {address}");
             sb.AppendLine("------------------");
         }
         break; // 只处理第一条记录，然后跳出循环
@@ -3293,7 +3299,7 @@ return sb.ToString();
     {
         // 捕获并处理异常
         Console.WriteLine($"在获取授权记录时发生异常：{ex.Message}");
-        return "无授权记录，地址很安全！\n";
+        return "无授权记录\n";
     }
 }
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
