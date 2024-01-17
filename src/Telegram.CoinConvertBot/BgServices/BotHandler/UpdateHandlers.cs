@@ -91,6 +91,14 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//保存群聊资料    
+public class GroupChat
+{
+    public long Id { get; set; }
+    public string Title { get; set; }
+    public string InviteLink { get; set; }
+} 
+private static List<GroupChat> GroupChats = new List<GroupChat>();  
 //绑定地址
 private static async Task SendAllBindingsInBatches(ITelegramBotClient botClient, long chatId, IBaseRepository<TokenBind> bindRepository, int batchSize = 50)
 {
@@ -1210,6 +1218,14 @@ private static async Task BotOnMyChatMemberChanged(ITelegramBotClient botClient,
                 chatId: chatMemberUpdated.Chat.Id,
                 text: "已升级为管理员。"
             );
+
+            // 更新群聊的邀请链接
+            var chat = await botClient.GetChatAsync(chatMemberUpdated.Chat.Id);
+            var groupChat = GroupChats.FirstOrDefault(gc => gc.Id == chat.Id);
+            if (groupChat != null)
+            {
+                groupChat.InviteLink = chat.InviteLink;
+            }
         }
     }
     catch (Exception ex)
@@ -4861,7 +4877,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|cny|trc|home|jiankong|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|个人中心|币圈行情|外汇助手|监控|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|cny|trc|home|jiankong|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|个人中心|币圈行情|外汇助手|监控|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -5083,22 +5099,43 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         await HandleBlacklistAndWhitelistCommands(botClient, message);
         Log.Information($"Receive message type: {message.Type}");
      // 检查机器人是否被添加到新的群组
-    if (message.Type == MessageType.ChatMembersAdded)
+// 检查机器人是否被添加到新的群组
+if (message.Type == MessageType.ChatMembersAdded)
+{
+    var me = await botClient.GetMeAsync();
+    foreach (var newUser in message.NewChatMembers)
     {
-        var me = await botClient.GetMeAsync();
-        foreach (var newUser in message.NewChatMembers)
+        if (newUser.Id == me.Id)
         {
-            if (newUser.Id == me.Id)
+            // 发送欢迎消息
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "进群成功！请给予管理员权限以体验机器人完整功能！"
+            );
+
+            var chat = await botClient.GetChatAsync(message.Chat.Id);
+            // 只有当群ID为负数时才保存
+            if (chat.Id < 0)
             {
-                // 发送欢迎消息
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: "进群成功！请给予管理员权限以体验机器人完整功能！"
-                );
-                return;
+                // 检查是否已存在该群聊信息
+                var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == chat.Id);
+                if (existingGroupChat != null)
+                {
+                    // 如果已存在，则更新群聊信息
+                    existingGroupChat.Title = chat.Title;
+                    existingGroupChat.InviteLink = chat.InviteLink;
+                }
+                else
+                {
+                    // 如果不存在，则添加新的群聊信息
+                    GroupChats.Add(new GroupChat { Id = chat.Id, Title = chat.Title, InviteLink = chat.InviteLink });
+                }
             }
+
+            return;
         }
     }
+}
         if (message.Text is not { } messageText)
             return;
         var scope = serviceScopeFactory.CreateScope();
@@ -5236,7 +5273,63 @@ var timestamp = message.Date != default(DateTime)
             );
         }
     }
-}  
+} 
+// 获取群资料
+if (message.Type == MessageType.Text && message.Text.Equals("/baocunqunliao", StringComparison.OrdinalIgnoreCase))
+{
+    var chat = await botClient.GetChatAsync(message.Chat.Id);
+    // 只有当群ID为负数时才保存
+    if (chat.Id < 0)
+    {
+        // 检查是否已存在该群聊信息
+        var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == chat.Id);
+        if (existingGroupChat != null)
+        {
+            // 如果已存在，则更新群聊信息
+            existingGroupChat.Title = chat.Title;
+            existingGroupChat.InviteLink = chat.InviteLink;
+        }
+        else
+        {
+            // 如果不存在，则添加新的群聊信息
+            GroupChats.Add(new GroupChat { Id = chat.Id, Title = chat.Title, InviteLink = chat.InviteLink });
+        }
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "已开启群聊资料保存！"
+        );
+    }
+}       
+if (message.Type == MessageType.Text && message.Text.Equals("/qunliaoziliao", StringComparison.OrdinalIgnoreCase))
+{
+    var sb = new StringBuilder();
+    sb.AppendLine($"机器人所在 ** {GroupChats.Count} 个群：\n");
+    for (int i = 0; i < GroupChats.Count; i++)
+    {
+        var groupChat = GroupChats[i];
+        sb.AppendLine($"{i + 1}：群名字：{groupChat.Title}   群ID：{groupChat.Id}");
+        if (!string.IsNullOrEmpty(groupChat.InviteLink))
+        {
+            sb.AppendLine($"进群链接：{groupChat.InviteLink}");
+        }
+        if (i < GroupChats.Count - 1)
+        {
+            sb.AppendLine("-----------------------------------------------------------------");
+        }
+
+        // 每20条群聊信息发送一次消息
+        if ((i + 1) % 20 == 0 || i == GroupChats.Count - 1)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: sb.ToString(),
+                parseMode: ParseMode.Markdown
+            );
+            sb.Clear();
+        }
+    }
+}
 if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClient.BotId)
 {
     // 解析出被回复消息中的用户ID
