@@ -3318,7 +3318,14 @@ if (fromUser != null)
         userLink = $"{fromFirstName} {fromLastName}";
     }
 }
- 
+//计算累计盈亏
+decimal usdtProfit = usdtTotalIncome - usdtTotalOutcome; 
+//私聊广告    
+string botUsername = "yifanfubot"; // 你的机器人的用户名
+string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";    
+string groupExclusiveText = $"<a href=\"{shareLink}\">累计收入/支出为群聊独享，将机器人拉进任意群组方可查询！</a>\n";
+    
 // 判断 TRX 余额是否小于100
 if (message.Chat.Type != ChatType.Private)
 {
@@ -3343,6 +3350,7 @@ if (trxBalance < 100)
     $"{lastFiveTransactions}\n"+
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
+    $"累计收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +
     $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
     $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>";
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
@@ -3368,6 +3376,7 @@ else
     $"{lastFiveTransactions}\n"+
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
+    $"累计收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +    
     $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
     $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>"; 
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
@@ -3396,7 +3405,8 @@ if (trxBalance < 100)
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>";
+    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +    
+    $"{groupExclusiveText}"; // 在这里使用 groupExclusiveText
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
 }
 else
@@ -3420,16 +3430,17 @@ else
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>"; 
+    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" + 
+    $"{groupExclusiveText}"; // 在这里使用 groupExclusiveText 
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
 }
 }    
 
 
         // 创建内联键盘
-    string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
-    string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
-    string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
+   // string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+   // string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+   // string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
