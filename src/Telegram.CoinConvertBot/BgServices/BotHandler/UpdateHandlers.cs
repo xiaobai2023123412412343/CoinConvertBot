@@ -1958,7 +1958,7 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
         },
         new [] // 第四行按钮
         {
-            InlineKeyboardButton.WithCallbackData("用户资料", "show_user_info")
+            InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info")
         }        
     });
 
