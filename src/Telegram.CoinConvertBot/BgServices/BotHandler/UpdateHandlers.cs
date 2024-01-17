@@ -5276,60 +5276,106 @@ var timestamp = message.Date != default(DateTime)
     }
 } 
 // 获取群资料
-if (message.Type == MessageType.Text && message.Text.Equals("/baocunqunliao", StringComparison.OrdinalIgnoreCase))
+try
 {
-    var chat = await botClient.GetChatAsync(message.Chat.Id);
-    // 只有当群ID为负数时才保存
-    if (chat.Id < 0)
+    if (message.Type == MessageType.Text && message.Text.Equals("/baocunqunliao", StringComparison.OrdinalIgnoreCase))
     {
-        // 检查是否已存在该群聊信息
-        var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == chat.Id);
-        if (existingGroupChat != null)
-        {
-            // 如果已存在，则更新群聊信息
-            existingGroupChat.Title = chat.Title;
-            existingGroupChat.InviteLink = chat.InviteLink;
-        }
-        else
-        {
-            // 如果不存在，则添加新的群聊信息
-            GroupChats.Add(new GroupChat { Id = chat.Id, Title = chat.Title, InviteLink = chat.InviteLink });
-        }
-
+        var chat = await botClient.GetChatAsync(message.Chat.Id);
+        Console.WriteLine($"收到保存群聊指令，群ID：{chat.Id}");
+        // 无论如何都回复
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: "已开启群聊资料保存！"
         );
+        Console.WriteLine("已回复用户：已开启群聊资料保存！");
+        // 只有当群ID为负数时才保存
+        if (chat.Id < 0)
+        {
+            // 检查是否已存在该群聊信息
+            var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == chat.Id);
+            if (existingGroupChat != null)
+            {
+                // 如果已存在，则更新群聊信息
+                existingGroupChat.Title = chat.Title;
+                existingGroupChat.InviteLink = chat.InviteLink;
+                Console.WriteLine($"更新群聊信息，群ID：{chat.Id}");
+            }
+            else
+            {
+                // 如果不存在，则添加新的群聊信息
+                GroupChats.Add(new GroupChat { Id = chat.Id, Title = chat.Title, InviteLink = chat.InviteLink });
+                Console.WriteLine($"保存新的群聊信息，群ID：{chat.Id}");
+            }
+        }
+        else
+        {
+            Console.WriteLine("群ID为正数，不保存群聊信息");
+        }
     }
-}       
-if (message.Type == MessageType.Text && message.Text.Equals("/qunliaoziliao", StringComparison.OrdinalIgnoreCase))
+}
+catch (Exception ex)
 {
-    var sb = new StringBuilder();
-    sb.AppendLine($"机器人所在 ** {GroupChats.Count} 个群：\n");
-    for (int i = 0; i < GroupChats.Count; i++)
-    {
-        var groupChat = GroupChats[i];
-        sb.AppendLine($"{i + 1}：群名字：{groupChat.Title}   群ID：{groupChat.Id}");
-        if (!string.IsNullOrEmpty(groupChat.InviteLink))
-        {
-            sb.AppendLine($"进群链接：{groupChat.InviteLink}");
-        }
-        if (i < GroupChats.Count - 1)
-        {
-            sb.AppendLine("-----------------------------------------------------------------");
-        }
+    Console.WriteLine($"处理/baocunqunliao命令时发生异常：{ex.Message}");
+}
 
-        // 每20条群聊信息发送一次消息
-        if ((i + 1) % 20 == 0 || i == GroupChats.Count - 1)
+// 查询群聊资料
+try
+{
+    if (message.Type == MessageType.Text && message.Text.Equals("/qunliaoziliao", StringComparison.OrdinalIgnoreCase))
+    {
+        Console.WriteLine($"收到查询群聊资料指令，用户ID：{message.From.Id}");
+        // 检查是否为指定管理员
+        if (message.From.Id == 1427768220)
         {
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: sb.ToString(),
-                parseMode: ParseMode.Markdown
-            );
-            sb.Clear();
+            if (GroupChats.Count == 0)
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "机器人所在 <b>0</b> 个群：",
+                    parseMode: ParseMode.Html
+                );
+                Console.WriteLine("回复用户：机器人所在 0 个群");
+            }
+            else
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine($"机器人所在 <b>{GroupChats.Count}</b> 个群：\n");
+                for (int i = 0; i < GroupChats.Count; i++)
+                {
+                    var groupChat = GroupChats[i];
+                    sb.AppendLine($"{i + 1}：群名字：{EscapeHtml(groupChat.Title)}   群ID：{groupChat.Id}");
+                    if (!string.IsNullOrEmpty(groupChat.InviteLink))
+                    {
+                        sb.AppendLine($"进群链接：{groupChat.InviteLink}");
+                    }
+                    if (i < GroupChats.Count - 1)
+                    {
+                        sb.AppendLine("-----------------------------------------------------------------");
+                    }
+
+                    // 每20条群聊信息发送一次消息
+                    if ((i + 1) % 20 == 0 || i == GroupChats.Count - 1)
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId: message.Chat.Id,
+                            text: sb.ToString(),
+                            parseMode: ParseMode.Html
+                        );
+                        Console.WriteLine($"发送群聊资料，群数量：{i + 1}");
+                        sb.Clear();
+                    }
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine($"非指定管理员尝试查询群聊资料，用户ID：{message.From.Id}");
         }
     }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"处理/qunliaoziliao命令时发生异常：{ex.Message}");
 }
 if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClient.BotId)
 {
