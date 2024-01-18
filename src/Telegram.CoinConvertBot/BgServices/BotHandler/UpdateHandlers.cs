@@ -4858,6 +4858,15 @@ if (update.Type == UpdateType.CallbackQuery)
                 From = callbackQuery.From
             };
             await BotOnMessageReceived(botClient, fakeMessage);
+            break;       
+        case "send_help": // 处理群聊资料按钮的回调
+            fakeMessage = new Message
+            {
+                Text = "帮助",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
             break;            
 
         // 处理其他回调...
@@ -5422,7 +5431,8 @@ if(update.CallbackQuery != null)
                 {
                     //InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
                     InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions"),
-                    InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1")
+                   // InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1")
+                    InlineKeyboardButton.WithCallbackData("\U0001F50D 使用帮助", "send_help")
                 }
             });
 
@@ -6925,7 +6935,8 @@ if (UserId != AdminUserId)
         {
             //InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
             InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions"),
-            InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1")
+            //InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1")
+            InlineKeyboardButton.WithCallbackData("\U0001F50D 使用帮助", "send_help")
         }
     });
 
