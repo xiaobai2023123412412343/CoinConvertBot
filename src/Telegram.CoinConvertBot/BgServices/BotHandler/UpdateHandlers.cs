@@ -3663,7 +3663,7 @@ decimal usdtProfit = usdtTotalIncome - usdtTotalOutcome;
 string botUsername = "yifanfubot"; // 你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";    
-string groupExclusiveText = $"<a href=\"{shareLink}\">累计收入/支出为群聊独享，将机器人拉进任意群组方可查询！</a>\n";
+string groupExclusiveText = $"<a href=\"{shareLink}\">群聊查询独享：\n所有收入/支出统计，波场地址授权记录。\n将机器人拉进任意群组发送地址即可查看！\n(ps：为了您的地址安全，请定期查询授权记录！)</a>\n";
 
  // 添加授权列表的信息
 string usdtAuthorizedListText = "";
