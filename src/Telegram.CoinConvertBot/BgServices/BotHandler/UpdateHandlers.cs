@@ -3459,7 +3459,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
                     sb.AppendLine($"授权项目： {linkedProjectName}");
                     sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
                     sb.AppendLine($"授权地址： {address}");
-                    sb.AppendLine("------------------");
+                    sb.AppendLine("--------------------------------------------------------");
                 }
             }
         }
