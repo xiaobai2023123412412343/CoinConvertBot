@@ -7359,26 +7359,39 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     // 在这里添加一个返回空消息的语句
     return await Task.FromResult<Message>(null);
 }
-        //通用回复
-        static async Task<Message> Start(ITelegramBotClient botClient, Message message)
-        {
-            // 先发送GIF
-            string gifUrl = "https://i.postimg.cc/0QKYJ0Cb/333.gif"; // 替换为您的GIF URL
-            await botClient.SendAnimationAsync(
-                chatId: message.Chat.Id,
-                animation: gifUrl
-            );
-            long userId = message.From.Id; // 更改为 long 类型
-            string username = message.From.FirstName;
-            string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
-            string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
-            string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
-            string groupFunctionText = $"<a href=\"{shareLink}\">防骗助手：点击拉我进群，群成员修改资料会发送提醒哦！</a>";
-            
-            //1带ID  2不带
-            //string usage = @$"<b>{username}</b> (ID:<code>{userId}</code>) 你好，欢迎使用TRX自助兑换机器人！
-            string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
-            
+//通用回复
+static async Task<Message> Start(ITelegramBotClient botClient, Message message)
+{
+    long userId = message.From.Id;
+    var userProfilePhotos = await botClient.GetUserProfilePhotosAsync(userId);
+    if (userProfilePhotos.Photos.Length > 0 && userProfilePhotos.Photos[0].Length > 0)
+    {
+        // 选择最小尺寸的头像版本
+        var smallestPhotoSize = userProfilePhotos.Photos[0][0];
+        await botClient.SendPhotoAsync(
+            chatId: message.Chat.Id,
+            photo: new InputOnlineFile(smallestPhotoSize.FileId)
+        );
+    }
+    else
+    {
+        // 用户没有头像或无法获取，发送默认GIF
+        string gifUrl = "https://i.postimg.cc/0QKYJ0Cb/333.gif";
+        await botClient.SendAnimationAsync(
+            chatId: message.Chat.Id,
+            animation: gifUrl
+        );
+    }
+
+    // 发送欢迎消息和键盘
+    string username = message.From.FirstName;
+    string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+    string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+    string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
+    string groupFunctionText = $"<a href=\"{shareLink}\">防骗助手：点击拉我进群，群成员修改资料会发送提醒哦！</a>";
+
+    string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
+
 使用方法：
    点击菜单 选择U兑TRX
    转账USDT到指定地址，即可秒回TRX！
@@ -7387,32 +7400,38 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
    {groupFunctionText}
    
 ";
-// 创建包含两行，每行两个按钮的虚拟键盘
-        var keyboard = new ReplyKeyboardMarkup(new[]
+
+    // 创建包含两行，每行两个按钮的虚拟键盘
+    var keyboard = new ReplyKeyboardMarkup(new[]
+    {
+        new [] // 第一行
         {
-            new [] // 第一行
-            {
-                new KeyboardButton("U兑TRX"),
-                new KeyboardButton("实时汇率"),
-                new KeyboardButton("查询余额"),
-                new KeyboardButton("汇率换算"),
-            },   
-                new [] // 第二行
-                {
-                    new KeyboardButton("币圈行情"),
-                    new KeyboardButton("外汇助手"),
-                    new KeyboardButton("会员代开"),
-                    new KeyboardButton("个人中心"),
-                }
-        });
-            keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
-            keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: usage,
-                                                        parseMode: ParseMode.Html,
-                                                        disableWebPagePreview: true,
-                                                        replyMarkup: keyboard);
+            new KeyboardButton("U兑TRX"),
+            new KeyboardButton("实时汇率"),
+            new KeyboardButton("查询余额"),
+            new KeyboardButton("汇率换算"),
+        },   
+        new [] // 第二行
+        {
+            new KeyboardButton("币圈行情"),
+            new KeyboardButton("外汇助手"),
+            new KeyboardButton("会员代开"),
+            new KeyboardButton("个人中心"),
         }
+    })
+    {
+        ResizeKeyboard = true,
+        OneTimeKeyboard = false
+    };
+
+    return await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: usage,
+        parseMode: ParseMode.Html,
+        disableWebPagePreview: true,
+        replyMarkup: keyboard
+    );
+}
         //估价
        static async Task<Message> Valuation(ITelegramBotClient botClient, Message message)
 {
