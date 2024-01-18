@@ -6089,7 +6089,9 @@ if (messageText.StartsWith("/xuni"))
     }
 }
 // 检查是否为指定用户并执行相应的操作
-if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup))
+//if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup))
+//任何人都可以开启关闭
+if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
 {
     var groupId = message.Chat.Id;
     var command = messageText.ToLower();
