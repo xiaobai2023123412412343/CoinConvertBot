@@ -3207,8 +3207,21 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
     {
         using (var httpClient = new HttpClient())
         {
+            // 添加所有的秘钥到列表
+            List<string> keys = new List<string>
+            {
+                "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+                "f49353bd-db65-4719-a56c-064b2eb231bf",
+                "92854974-68da-4fd8-9e50-3948c1e6fa7e"
+            };
+
+            // 随机选择一个秘钥
+            Random random = new Random();
+            int index = random.Next(keys.Count);
+            string key = keys[index];
+
             // 添加请求头
-            httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", "5090e006-163f-4d61-8fa1-1f41fa70d7f8");
+            httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", key);
 
             // 构建请求URI
             string requestUri = $"https://www.oklink.com/api/v5/tracker/contractscanner/token-authorized-list?chainShortName=tron&address={tronAddress}";
@@ -3216,7 +3229,28 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
-                return "无法获取授权记录，请稍后再试。";
+
+                // 移除失败的秘钥
+                keys.Remove(key);
+
+                // 如果还有其他秘钥，随机选择一个并重试请求
+                if (keys.Count > 0)
+                {
+                    index = random.Next(keys.Count);
+                    key = keys[index];
+                    httpClient.DefaultRequestHeaders.Remove("OK-ACCESS-KEY");
+                    httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", key);
+                    response = await httpClient.GetAsync(requestUri);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"重试请求失败，状态码：{response.StatusCode}");
+                        return "无法获取授权记录，请稍后再试。";
+                    }
+                }
+                else
+                {
+                    return "无法获取授权记录，请稍后再试。";
+                }
             }
 
             string content = await response.Content.ReadAsStringAsync();
