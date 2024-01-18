@@ -4936,6 +4936,7 @@ if (update.Type == UpdateType.CallbackQuery)
             await botClient.SendTextMessageAsync(
                 chatId: callbackQuery.Message.Chat.Id,
                 text: chunk,
+                disableWebPagePreview: true, // 这将关闭链接预览
                 parseMode: ParseMode.Html
             );
         }
