@@ -3175,6 +3175,7 @@ private static int CountConsecutiveIdenticalChars(string input)
 
     return count;
 }
+//oklink查询授权                                                                 
 public class AuthorizedRecord
 {
     public string approvedContractAddress { get; set; }
@@ -3203,7 +3204,8 @@ public class Root
     public string code { get; set; }
     public string msg { get; set; }
     public List<Data> data { get; set; }
-}                                                                 
+}  
+//只查询一条                                                                 
 public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
 {
     try
@@ -3339,6 +3341,146 @@ return sb.ToString();
         return "无授权记录\n";
     }
 }
+//// 辅助方法：将长文本分割成指定数量的记录                                                                 
+private static IEnumerable<string> SplitIntoChunks(string text, int recordsPerChunk)
+{
+    var lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+    var chunk = new List<string>();
+    foreach (var line in lines)
+    {
+        chunk.Add(line);
+        if (chunk.Count >= recordsPerChunk * 6) // 每条记录6行
+        {
+            yield return string.Join(Environment.NewLine, chunk);
+            chunk.Clear();
+        }
+    }
+    if (chunk.Count > 0)
+    {
+        yield return string.Join(Environment.NewLine, chunk);
+    }
+}                                                                 
+//完整授权列表                                                                 
+public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAddress)
+{
+    try
+    {
+        using (var httpClient = new HttpClient())
+        {
+            // 添加所有的秘钥到列表
+            List<string> keys = new List<string>
+            {
+                "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+                "f49353bd-db65-4719-a56c-064b2eb231bf",
+                "92854974-68da-4fd8-9e50-3948c1e6fa7e"
+            };
+
+            // 随机选择一个秘钥
+            Random random = new Random();
+            int index = random.Next(keys.Count);
+            string key = keys[index];
+
+            // 添加请求头
+            httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", key);
+
+            // 构建请求URI
+            string requestUri = $"https://www.oklink.com/api/v5/tracker/contractscanner/token-authorized-list?chainShortName=tron&address={tronAddress}";
+            var response = await httpClient.GetAsync(requestUri);
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
+
+                // 移除失败的秘钥
+                keys.Remove(key);
+
+                // 如果还有其他秘钥，随机选择一个并重试请求
+                if (keys.Count > 0)
+                {
+                    index = random.Next(keys.Count);
+                    key = keys[index];
+                    httpClient.DefaultRequestHeaders.Remove("OK-ACCESS-KEY");
+                    httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", key);
+                    response = await httpClient.GetAsync(requestUri);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"重试请求失败，状态码：{response.StatusCode}");
+                        return "无法获取授权记录，请稍后再试。";
+                    }
+                }
+                else
+                {
+                    return "无法获取授权记录，请稍后再试。";
+                }
+            }
+
+            string content = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"响应内容：{content}");
+
+            // 反序列化响应内容
+            var result = System.Text.Json.JsonSerializer.Deserialize<Root>(content);
+            Console.WriteLine($"解析后的结果：{result}");
+
+            // 检查返回的code是否为"0"
+            if (result.code != "0")
+            {
+                return "查询授权记录出错：" + result.msg;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            //sb.AppendLine("———————授权列表———————"); // 移动到循环外面
+
+            // 检查data数组是否为空
+            if (result.data == null || result.data.Count == 0 || result.data[0].authorizedList == null)
+            {
+                sb.AppendLine("无授权记录。");
+            }
+            else
+            {
+        foreach (var dataItem in result.data)
+        {
+            // 只处理 Tether USD (USDT) 或 USD Coin (USDC) 的记录
+            if (dataItem.tokenFullName == "Tether USD" || dataItem.token == "USDT" ||
+                dataItem.tokenFullName == "USD Coin" || dataItem.token == "USDC")
+            {
+                foreach (var record in dataItem.authorizedList)
+                {
+                    string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "点击查看授权详情" : record.approvedProjectName;
+                    string amount = record.approvedAmount == "unlimited" ? "无限" : $"{decimal.Parse(record.approvedAmount):N0}";
+                    string address = record.approvedContractAddress;
+                    long approvedTime = long.Parse(record.approvedTime);
+                    DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
+                    string tokenFullName = dataItem.tokenFullName == "Tether USD" ? "Tether USD (USDT)" : "USD Coin (USDC)";
+
+                    string projectLink = $"https://tronscan.org/#/transaction/{record.approvedTxId}";
+                    string linkedProjectName = $"<a href=\"{projectLink}\">{projectName}</a>";
+
+                    sb.AppendLine($"授权币种： {tokenFullName}");
+                    sb.AppendLine($"授权金额： {amount}");
+                    sb.AppendLine($"授权项目： {linkedProjectName}");
+                    sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
+                    sb.AppendLine($"授权地址： {address}");
+                    sb.AppendLine("------------------");
+                }
+            }
+        }
+            }
+
+    // 移除最后的分隔线
+    if (sb.Length > 0)
+    {
+        sb.Length -= Environment.NewLine.Length + 18; // "---------------------------------------------------------------------".Length + Environment.NewLine.Length
+    }
+
+    return sb.ToString();
+        }
+    }
+    catch (Exception ex)
+    {
+        // 捕获并处理异常
+        Console.WriteLine($"在获取授权记录时发生异常：{ex.Message}");
+        return "无授权记录\n";
+    }
+}                                                                 
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
@@ -3648,16 +3790,45 @@ else
    // string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
    // string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+// 创建内联键盘
+InlineKeyboardMarkup inlineKeyboard;
+if (message.Chat.Type == ChatType.Private)
+{
+    inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
+        {
+            //InlineKeyboardButton.WithUrl("详细信息", $"https://tronscan.org/#/address/{tronAddress}"), // 链接到Tron地址的详细信息
+            //InlineKeyboardButton.WithUrl("链上天眼", $"https://www.oklink.com/cn/trx/address/{tronAddress}"), // 链接到欧意地址的详细信息
+            InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
+            InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
+        }
+    });
+}
+else
+{
+    inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         new [] // 第一行按钮
         {
             InlineKeyboardButton.WithUrl("详细信息", $"https://tronscan.org/#/address/{tronAddress}"), // 链接到Tron地址的详细信息
             InlineKeyboardButton.WithUrl("链上天眼", $"https://www.oklink.com/cn/trx/address/{tronAddress}"), // 链接到欧意地址的详细信息
+           // InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
+           // InlineKeyboardButton.WithUrl("进群使用", shareLink), // 添加机器人到群组的链接
+            //InlineKeyboardButton.WithCallbackData("授权列表", $"authorized_list,{tronAddress}") // 添加新的按钮
+        },
+        new [] // 第二行按钮
+        {
             InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
+            InlineKeyboardButton.WithUrl("进群使用", shareLink), // 添加机器人到群组的链接
+        },
+        new [] // 第二行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("授权列表", $"authorized_list,{tronAddress}") // 添加新的按钮
         }
+        
     });
+}
 
     // 发送GIF和带按钮的文本
     string gifUrl = "https://i.postimg.cc/Jzrm1m9c/277574078-352558983556639-7702866525169266409-n.png";
@@ -4748,7 +4919,27 @@ if (update.Type == UpdateType.CallbackQuery)
         // 调用 HandleQueryCommandAsync 方法来查询并返回结果
         await HandleQueryCommandAsync(botClient, message);
     }
-    // ... 其他现有代码 ...
+    else if (callbackData[0] == "authorized_list")
+    {
+        // 从 CallbackData 中获取Tron地址
+        var tronAddress = callbackData[1];
+
+        // 查询授权列表
+        var authorizedListText = await GetUsdtAuthorizedListAsyncquanbu(tronAddress);
+
+        // 分割授权列表文本，每5条记录为一组
+        var authorizedListChunks = SplitIntoChunks(authorizedListText, 5);
+
+        // 发送每一组授权记录
+        foreach (var chunk in authorizedListChunks)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: callbackQuery.Message.Chat.Id,
+                text: chunk,
+                parseMode: ParseMode.Html
+            );
+        }
+    }
 }       
 if (update.Type == UpdateType.CallbackQuery)
 {
