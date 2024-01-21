@@ -95,6 +95,77 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 定义欧易API响应的类
+public class OkxResponse
+{
+    public int Code { get; set; }
+    public OkxData Data { get; set; }
+}
+
+public class OkxData
+{
+    public List<OkxOrderBookEntry> Buy { get; set; }
+    public List<OkxOrderBookEntry> Sell { get; set; }
+}
+   
+public class OkxOrderBookEntry
+{
+    public string NickName { get; set; }
+    public string Price { get; set; }
+    public string PublicUserId { get; set; } // 新增属性
+}    
+public class OkxPriceFetcher
+{
+    private const string BuyApi = "https://www.okx.com/v3/c2c/tradingOrders/books?quoteCurrency=cny&baseCurrency=usdt&side=buy&paymentMethod";
+    private const string SellApi = "https://www.okx.com/v3/c2c/tradingOrders/books?quoteCurrency=cny&baseCurrency=usdt&side=sell&paymentMethod";
+
+    public static async Task<string> GetUsdtPriceAsync()
+    {
+        try
+        {
+            using (var httpClient = new HttpClient())
+            {
+                Console.WriteLine("Fetching buy prices...");
+                var buyResponse = await httpClient.GetStringAsync(BuyApi);
+                var buyData = JsonDocument.Parse(buyResponse).RootElement.GetProperty("data").GetProperty("buy").EnumerateArray().Take(3);
+
+                Console.WriteLine("Fetching sell prices...");
+                var sellResponse = await httpClient.GetStringAsync(SellApi);
+                var sellData = JsonDocument.Parse(sellResponse).RootElement.GetProperty("data").GetProperty("sell").EnumerateArray().Take(3);
+
+            string result = "<b>okx实时U价 TOP3</b> \n\n";
+            result += "<b>buy：</b>\n";
+            string[] emojis = new string[] { "1️⃣", "2️⃣", "3️⃣" };
+            int count = 0;
+            foreach (var item in buyData)
+            {
+                string publicUserId = item.GetProperty("publicUserId").GetString();
+                string merchantUrl = $"https://www.okx.com/cn/p2p/ads-merchant?publicUserId={publicUserId}";
+                result += $"{emojis[count]}：{item.GetProperty("price")}   <a href=\"{merchantUrl}\">{item.GetProperty("nickName")}</a>\n";
+                count++;
+            }
+
+            result += "----------------------------------------\n";
+            result += "<b>sell:</b>\n";
+            count = 0;
+            foreach (var item in sellData)
+            {
+                string publicUserId = item.GetProperty("publicUserId").GetString();
+                string merchantUrl = $"https://www.okx.com/cn/p2p/ads-merchant?publicUserId={publicUserId}";
+                result += $"{emojis[count]}：{item.GetProperty("price")}   <a href=\"{merchantUrl}\">{item.GetProperty("nickName")}</a>\n";
+                count++;
+            }
+
+            return result;
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred: {ex.Message}");
+        return "api异常，请稍后重试！";
+    }
+    }
+}    
 //保存群聊资料   
 public static string EscapeHtml(string text)
 {
@@ -5288,7 +5359,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|个人中心|币圈行情|外汇助手|监控|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|个人中心|币圈行情|外汇助手|监控|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -5578,7 +5649,7 @@ const string BOT_USERNAME = "yifanfubot";//机器人用户名
 const int ADMIN_ID = 1427768220;//指定管理员ID不转发
 
 // 存储机器人的所有命令
-string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/vip", "/cny", "/trc", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "会员代开", "汇率换算", "实时汇率", "U兑TRX", "合约助手", "查询余额", "个人中心", "币圈行情", "外汇助手", "监控" };    
+string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/vip", "/cny", "/trc", "/usdt", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "会员代开", "汇率换算", "实时汇率", "U兑TRX", "合约助手", "查询余额", "个人中心", "币圈行情", "外汇助手", "监控" };    
 
 if (message.Type == MessageType.Text)
 {
@@ -5941,7 +6012,36 @@ if (messageText.Equals("/zijin", StringComparison.OrdinalIgnoreCase))
             text: $"获取资金费率时发生错误：{ex.Message}"
         );
     }
-}       
+}    
+// 检查是否接收到了 z0 或 /usdt 消息，收到就查询USDT价格
+if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt"))
+{
+    // 启动查询USDT价格的方法
+    _ = OkxPriceFetcher.GetUsdtPriceAsync()
+        .ContinueWith(async task =>
+        {
+            string responseText;
+            if (task.IsFaulted)
+            {
+                // 如果发生异常，向用户发送错误消息
+                responseText = "api异常，请稍后重试！";
+            }
+            else
+            {
+                // 否则，使用查询到的USDT价格信息
+                responseText = task.Result;
+            }
+
+            // 向用户发送查询到的USDT价格信息或错误消息
+            // 使用ParseMode.Html以便Telegram解析HTML链接，并关闭链接预览
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: responseText,
+                parseMode: ParseMode.Html,
+                disableWebPagePreview: true
+            );
+        });
+}    
 // 检查是否是"查询余额"命令或 "/trc"
 if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
