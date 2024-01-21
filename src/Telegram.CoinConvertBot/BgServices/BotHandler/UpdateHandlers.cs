@@ -2483,6 +2483,7 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
                           "能量监控：<code>使用前推荐发送：绑定 Txxxxxxx(您的钱包地址，中间有空格)绑定钱包地址，当TRX余额不足时机器人会自动下发提醒！</code>\n\n" +
                           "防骗助手：<code>把机器人拉进群聊并设置为管理员，当群内成员更改名字或用户名后，机器人会发送资料变更提醒，以防被骗！</code>\n\n" +
                           "授权查询：<code>在任意群组发送波场地址即可查询该地址授权情况，支持查询USDT和USDC授权！</code>\n\n" +    
+                          "实时u价：<code>发送 z0 或者 /usdt 返回okx实时usdt买入卖出价格表</code>\n\n" +                
                           "兑换通知：<code>如果不想在群组内接受机器人兑换通知，可以发送：关闭兑换通知/开启兑换通知</code>\n\n" +            
                           //"谷歌搜索：<code>发送：谷歌+空格+搜索词自动启动谷歌搜索并返回，例如发送：</code><code>谷歌 上海天气</code>\n\n" +
                           "汇率计算：<code>发送数字+币种(支持货币代码及数字货币)自动计算并返回对应的人民币价值，例如发送1000美元或1000usd 自动按实时汇率计算并返回1000美元 ≈ ****元人民币</code>\n\n" +
