@@ -5312,7 +5312,12 @@ if (message?.Text != null)
         if (message?.Text != null && message.Text.StartsWith("转"))
         {
             await HandleTranslateCommandAsync(botClient, message); // 在这里处理翻译命令
-        }          
+        } 
+else if (message?.Text != null && message.Text.StartsWith("z0"))
+{
+    // 如果消息文本以 "z0" 开头，则不执行翻译
+    return;
+}            
 else
 {
 // 检查用户是否在黑名单中
