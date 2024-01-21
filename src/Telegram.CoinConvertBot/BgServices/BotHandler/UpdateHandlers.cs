@@ -256,7 +256,7 @@ private static CancellationTokenSource virtualAdCancellationTokenSource = new Ca
 static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
     var random = new Random();
-    var amounts = new decimal[] { 50, 100, 200, 300, 500, 1000 };
+    var amounts = new decimal[] { 50, 100, 150, 200, 300, 400, 500, 1000 };
     var addressChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     bool hasSentAdInQuietHours = false;
     while (!cancellationToken.IsCancellationRequested)
@@ -309,6 +309,12 @@ static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, Cancell
         var groupIds = GroupManager.GroupIds.ToList();
         foreach (var groupId in groupIds)
         {
+    // 检查当前群组 ID 是否在被拉黑的集合中
+    if (GroupManager.BlacklistedGroupIds.Contains(groupId))
+    {
+        // 如果是，则跳过本次循环，不在该群组发送兑换通知
+        continue;
+    }            
             try
             {
                 await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
@@ -4614,7 +4620,7 @@ private static async Task<(decimal longRate, decimal shortRate)> GetH1EthLongSho
 public static class GroupManager
 {
     private static HashSet<long> groupIds = new HashSet<long>();
-
+    public static HashSet<long> BlacklistedGroupIds = new HashSet<long>();
     static GroupManager()
     {
         // 添加初始群组 ID
@@ -6110,15 +6116,12 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
 
     if (command == "关闭兑换通知")
     {
-        if (isVirtualAdvertisementRunning)
-        {
-            virtualAdCancellationTokenSource.Cancel(); // 取消虚拟广告任务
-            isVirtualAdvertisementRunning = false; // 更新运行状态
-            botResponseMessage = await botClient.SendTextMessageAsync(groupId, "兑换通知已关闭。");
-        }
+        GroupManager.BlacklistedGroupIds.Add(groupId);
+        botResponseMessage = await botClient.SendTextMessageAsync(groupId, "兑换通知已关闭。");
     }
     else if (command == "开启兑换通知")
     {
+        GroupManager.BlacklistedGroupIds.Remove(groupId);
         if (!isVirtualAdvertisementRunning)
         {
             virtualAdCancellationTokenSource = new CancellationTokenSource(); // 创建新的 CancellationTokenSource
