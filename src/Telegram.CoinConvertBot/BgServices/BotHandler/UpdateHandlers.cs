@@ -6122,6 +6122,8 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
     else if (command == "开启兑换通知")
     {
         GroupManager.BlacklistedGroupIds.Remove(groupId);
+        botResponseMessage = await botClient.SendTextMessageAsync(groupId, "兑换通知已开启。"); // 发送确认消息
+
         if (!isVirtualAdvertisementRunning)
         {
             virtualAdCancellationTokenSource = new CancellationTokenSource(); // 创建新的 CancellationTokenSource
@@ -6129,8 +6131,6 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
             var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
             _ = SendVirtualAdvertisement(botClient, virtualAdCancellationTokenSource.Token, rateRepository, FeeRate)
                 .ContinueWith(_ => isVirtualAdvertisementRunning = false); // 广告结束后更新运行状态
-
-            botResponseMessage = await botClient.SendTextMessageAsync(groupId, "兑换通知已开启。");
         }
     }
     // ... 其他代码 ...
