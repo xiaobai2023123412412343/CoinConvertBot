@@ -114,6 +114,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
         new BotCommand(){Command="faxian",Description="涨跌榜单"},    
         new BotCommand(){Command="jkbtc",Description="币价通知"},            
         new BotCommand(){Command="trc",Description="查询余额"},
+        new BotCommand(){Command="usdt",Description="实时u价"},            
         new BotCommand(){Command="home",Description="个人中心"},   
         new BotCommand(){Command="help",Description="使用帮助"},               
         }).GetAwaiter().GetResult();
