@@ -4944,7 +4944,16 @@ if (update.Type == UpdateType.CallbackQuery)
                 From = callbackQuery.From
             };
             await BotOnMessageReceived(botClient, fakeMessage);
-            break;            
+            break;    
+        case "zaicha": // 处理群聊资料按钮的回调
+            fakeMessage = new Message
+            {
+                Text = "z0",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
+            break;             
 
         // 处理其他回调...
     }
@@ -6037,16 +6046,27 @@ if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt"))
                 responseText = task.Result;
             }
 
+            // 创建内联键盘
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new [] // 第一行按钮
+                {
+                    InlineKeyboardButton.WithCallbackData("再查一次", "zaicha"), // 修改这里
+                    InlineKeyboardButton.WithUrl("白资兑换", "https://t.me/yifanfu")
+                }
+            });
+
             // 向用户发送查询到的USDT价格信息或错误消息
             // 使用ParseMode.Html以便Telegram解析HTML链接，并关闭链接预览
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: responseText,
                 parseMode: ParseMode.Html,
-                disableWebPagePreview: true
+                disableWebPagePreview: true,
+                replyMarkup: inlineKeyboard
             );
         });
-}    
+}
 // 检查是否是"查询余额"命令或 "/trc"
 if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
