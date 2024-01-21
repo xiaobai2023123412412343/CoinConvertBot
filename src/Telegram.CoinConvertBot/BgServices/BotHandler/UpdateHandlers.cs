@@ -125,11 +125,11 @@ public class OkxPriceFetcher
         {
             using (var httpClient = new HttpClient())
             {
-                Console.WriteLine("Fetching buy prices...");
+                Console.WriteLine("正在获取买入价格...");
                 var buyResponse = await httpClient.GetStringAsync(BuyApi);
                 var buyData = JsonDocument.Parse(buyResponse).RootElement.GetProperty("data").GetProperty("buy").EnumerateArray().Take(5);
 
-                Console.WriteLine("Fetching sell prices...");
+                Console.WriteLine("正在获取售出价格...");
                 var sellResponse = await httpClient.GetStringAsync(SellApi);
                 var sellData = JsonDocument.Parse(sellResponse).RootElement.GetProperty("data").GetProperty("sell").EnumerateArray().Take(5);
 
