@@ -253,11 +253,10 @@ private static async void CheckPrice(object state)
 // 添加一个类级别的变量来跟踪虚拟广告是否正在运行
 private static bool isVirtualAdvertisementRunning = false;
 private static CancellationTokenSource virtualAdCancellationTokenSource = new CancellationTokenSource();
-private static Dictionary<long, CancellationTokenSource> groupAdCancellationTokens = new Dictionary<long, CancellationTokenSource>();                                                                 
 static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
     var random = new Random();
-    var amounts = new decimal[] { 50, 100, 150, 200, 300, 400, 500, 1000 };
+    var amounts = new decimal[] { 50, 100, 200, 300, 500, 1000 };
     var addressChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     bool hasSentAdInQuietHours = false;
     while (!cancellationToken.IsCancellationRequested)
@@ -310,38 +309,21 @@ static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, Cancell
         var groupIds = GroupManager.GroupIds.ToList();
         foreach (var groupId in groupIds)
         {
-    // 检查是否有为该群组设置的 CancellationTokenSource，并且是否请求了取消
-    if (groupAdCancellationTokens.TryGetValue(groupId, out var cts) && cts.IsCancellationRequested)
-    {
-        continue; // 如果这个群组请求了取消，跳过这个群组
-    }            
             try
             {
                 await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
             }
-// 在尝试发送消息时出现错误，就从 groupIds 列表和 groupAdCancellationTokens 字典中移除这个群组
-catch
-{
-    GroupManager.RemoveGroupId(groupId);
-    if (groupAdCancellationTokens.ContainsKey(groupId))
-    {
-        groupAdCancellationTokens.Remove(groupId);
-    }
-    continue;
-}
+            catch
+            {
+                // 如果在尝试发送消息时出现错误，就从 groupIds 列表中移除这个群组
+                GroupManager.RemoveGroupId(groupId);
+                // 然后继续下一个群组，而不是停止整个任务
+                continue;
+            }
         }
 
-// 在1-2分钟内随机等待
-try
-{
-    // 在1-2分钟内随机等待
-    await Task.Delay(TimeSpan.FromSeconds(random.Next(3600, 4000)), cancellationToken);
-}
-catch (TaskCanceledException)
-{
-    // 如果任务被取消，退出循环
-    break;
-}
+        // 在1-2分钟内随机等待
+        await Task.Delay(TimeSpan.FromSeconds(random.Next(3600, 4000)), cancellationToken);
     }
 }
 // 在类的成员变量中定义一个定时器和榜单
@@ -6126,36 +6108,28 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
     var userMessageId = message.MessageId; // 用户消息的ID
     Message botResponseMessage = null; // 用于存储机器人发送的消息
 
-     // 获取 rateRepository 实例
-    var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-    
-if (command == "关闭兑换通知")
-{
-    if (groupAdCancellationTokens.TryGetValue(groupId, out var cts))
+    if (command == "关闭兑换通知")
     {
-        cts.Cancel(); // 取消本群组的虚拟广告任务
+        if (isVirtualAdvertisementRunning)
+        {
+            virtualAdCancellationTokenSource.Cancel(); // 取消虚拟广告任务
+            isVirtualAdvertisementRunning = false; // 更新运行状态
+            botResponseMessage = await botClient.SendTextMessageAsync(groupId, "兑换通知已关闭。");
+        }
     }
-    else
+    else if (command == "开启兑换通知")
     {
-        // 如果没有找到对应的 CancellationTokenSource，创建一个新的，并立即请求取消
-        cts = new CancellationTokenSource();
-        cts.Cancel();
-        groupAdCancellationTokens[groupId] = cts;
+        if (!isVirtualAdvertisementRunning)
+        {
+            virtualAdCancellationTokenSource = new CancellationTokenSource(); // 创建新的 CancellationTokenSource
+            isVirtualAdvertisementRunning = true; // 更新运行状态
+            var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+            _ = SendVirtualAdvertisement(botClient, virtualAdCancellationTokenSource.Token, rateRepository, FeeRate)
+                .ContinueWith(_ => isVirtualAdvertisementRunning = false); // 广告结束后更新运行状态
+
+            botResponseMessage = await botClient.SendTextMessageAsync(groupId, "兑换通知已开启。");
+        }
     }
-    botResponseMessage = await botClient.SendTextMessageAsync(groupId, "兑换通知已关闭。");
-}
-else if (command == "开启兑换通知")
-{
-    if (!groupAdCancellationTokens.TryGetValue(groupId, out var cts) || cts.IsCancellationRequested)
-    {
-        // 创建新的 CancellationTokenSource 或重置现有的
-        cts = new CancellationTokenSource();
-        groupAdCancellationTokens[groupId] = cts;
-        _ = SendVirtualAdvertisement(botClient, cts.Token, rateRepository, FeeRate)
-            .ContinueWith(_ => { /* 可以在这里处理任务结束后的逻辑 */ });
-        botResponseMessage = await botClient.SendTextMessageAsync(groupId, "兑换通知已开启。");
-    }
-}
     // ... 其他代码 ...
 
     // 如果机器人发送了消息，则等待1秒后尝试撤回
