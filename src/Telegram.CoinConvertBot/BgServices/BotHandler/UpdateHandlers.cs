@@ -119,7 +119,7 @@ public class OkxPriceFetcher
     private const string BuyApi = "https://www.okx.com/v3/c2c/tradingOrders/books?quoteCurrency=cny&baseCurrency=usdt&side=buy&paymentMethod";
     private const string SellApi = "https://www.okx.com/v3/c2c/tradingOrders/books?quoteCurrency=cny&baseCurrency=usdt&side=sell&paymentMethod";
 
-    public static async Task<string> GetUsdtPriceAsync()
+    public static async Task<string> GetUsdtPriceAsync(string userCommand)
     {
         try
         {
@@ -127,15 +127,15 @@ public class OkxPriceFetcher
             {
                 Console.WriteLine("Fetching buy prices...");
                 var buyResponse = await httpClient.GetStringAsync(BuyApi);
-                var buyData = JsonDocument.Parse(buyResponse).RootElement.GetProperty("data").GetProperty("buy").EnumerateArray().Take(3);
+                var buyData = JsonDocument.Parse(buyResponse).RootElement.GetProperty("data").GetProperty("buy").EnumerateArray().Take(5);
 
                 Console.WriteLine("Fetching sell prices...");
                 var sellResponse = await httpClient.GetStringAsync(SellApi);
-                var sellData = JsonDocument.Parse(sellResponse).RootElement.GetProperty("data").GetProperty("sell").EnumerateArray().Take(3);
+                var sellData = JsonDocument.Parse(sellResponse).RootElement.GetProperty("data").GetProperty("sell").EnumerateArray().Take(5);
 
-            string result = "<b>okx实时U价 TOP3</b> \n\n";
+            string result = "<b>okx实时U价 TOP5</b> \n\n";
             result += "<b>buy：</b>\n";
-            string[] emojis = new string[] { "1️⃣", "2️⃣", "3️⃣" };
+            string[] emojis = new string[] { "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣" };
             int count = 0;
             foreach (var item in buyData)
             {
@@ -156,7 +156,12 @@ public class OkxPriceFetcher
                 count++;
             }
 
-            return result;
+                // 添加当前查询时间（北京时间）
+                var beijingTime = DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(8));
+                result += $"\n查询时间：{beijingTime:yyyy-MM-dd HH:mm:ss}";
+
+
+                return result;
         }
     }
     catch (Exception ex)
@@ -6032,7 +6037,7 @@ if (messageText.Equals("/zijin", StringComparison.OrdinalIgnoreCase))
 if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt"))
 {
     // 启动查询USDT价格的方法
-    _ = OkxPriceFetcher.GetUsdtPriceAsync()
+    _ = OkxPriceFetcher.GetUsdtPriceAsync(messageText)
         .ContinueWith(async task =>
         {
             string responseText;
@@ -6064,7 +6069,8 @@ if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt"))
                 text: responseText,
                 parseMode: ParseMode.Html,
                 disableWebPagePreview: true,
-                replyMarkup: inlineKeyboard
+                replyMarkup: inlineKeyboard,
+                replyToMessageId: message.MessageId // 添加这一行
             );
         });
 }
