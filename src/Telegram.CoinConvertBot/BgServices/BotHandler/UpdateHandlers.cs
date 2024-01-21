@@ -137,7 +137,8 @@ public class OkxPriceFetcher
             result += "<b>buy：</b>\n";
             string[] emojis = new string[] { "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣" };
             int count = 0;
-            foreach (var item in buyData)
+            //foreach (var item in buyData) //买方出价，相当于你卖
+            foreach (var item in sellData)  //卖方出价，相当于你买  
             {
                 string publicUserId = item.GetProperty("publicUserId").GetString();
                 string merchantUrl = $"https://www.okx.com/cn/p2p/ads-merchant?publicUserId={publicUserId}";
@@ -148,7 +149,8 @@ public class OkxPriceFetcher
             result += "----------------------------------------\n";
             result += "<b>sell:</b>\n";
             count = 0;
-            foreach (var item in sellData)
+            foreach (var item in buyData)   //买方出价，相当于你卖 
+            //foreach (var item in sellData) //卖方出价，相当于你买
             {
                 string publicUserId = item.GetProperty("publicUserId").GetString();
                 string merchantUrl = $"https://www.okx.com/cn/p2p/ads-merchant?publicUserId={publicUserId}";
