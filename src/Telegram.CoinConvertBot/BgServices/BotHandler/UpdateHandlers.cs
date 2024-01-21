@@ -6497,23 +6497,39 @@ if (messageText.StartsWith("谷歌 "))
         }
     }
 
-    // 检查是否为指定用户并执行相应的操作
-    if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup))
-    {
-        var groupId = message.Chat.Id;
-        var command = messageText.ToLower();
+// 检查是否为指定用户并执行相应的操作
+if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup))
+{
+    var groupId = message.Chat.Id;
+    var command = messageText.ToLower();
+    Message botResponseMessage = null; // 用于存储机器人发送的消息
 
-        if (command == "关闭广告")
+    if (command == "关闭广告")
+    {
+        GroupManager.ToggleAdvertisement(groupId, false);
+        botResponseMessage = await botClient.SendTextMessageAsync(groupId, "已关闭广告功能。");
+    }
+    else if (command == "开启广告")
+    {
+        GroupManager.ToggleAdvertisement(groupId, true);
+        botResponseMessage = await botClient.SendTextMessageAsync(groupId, "已开启广告功能。");
+    }
+
+    // 如果机器人发送了消息，则等待1秒后尝试撤回
+    if (botResponseMessage != null)
+    {
+        await Task.Delay(1000); // 等待1秒
+        await botClient.DeleteMessageAsync(groupId, botResponseMessage.MessageId); // 尝试撤回机器人的消息
+        try
         {
-            GroupManager.ToggleAdvertisement(groupId, false);
-            await botClient.SendTextMessageAsync(groupId, "已关闭广告功能。");
+            await botClient.DeleteMessageAsync(groupId, message.MessageId); // 尝试撤回用户的消息
         }
-        else if (command == "开启广告")
+        catch
         {
-            GroupManager.ToggleAdvertisement(groupId, true);
-            await botClient.SendTextMessageAsync(groupId, "已开启广告功能。");
+            // 如果撤回用户消息失败，则不做任何事情
         }
     }
+}
 //if (message.Text.StartsWith("@") || 
 //    message.Text.StartsWith("https://t.me/") || 
 //    message.Text.StartsWith("http://t.me/") || 
