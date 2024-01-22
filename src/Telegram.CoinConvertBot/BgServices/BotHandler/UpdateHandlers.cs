@@ -174,6 +174,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
             {
                 bool isOutgoing = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase);
                 var transactionType = isOutgoing ? "出账" : "入账";
+                var transactionSign = isOutgoing ? "-" : "+";
                 var transactionTime = DateTimeOffset.FromUnixTimeMilliseconds(transactionTimestamp).AddHours(8).ToString("yyyy-MM-dd HH:mm:ss");
                 var amount = transaction.Value.ToString("0.######");
 
@@ -181,13 +182,14 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                 var (userUsdtBalance, userTrxBalance, _) = await GetBalancesAsync(address);
                 var (counterUsdtBalance, counterTrxBalance, _) = await GetBalancesAsync(isOutgoing ? transaction.To : transaction.From);
 
-                var message = $"<b>您有一笔 USDT {transactionType}交易</b>\n\n" +
+                var message = $"<b>新交易   {transactionSign}{amount} USDT</b> \n\n" +
+                              $"交易类型：<b>{transactionType}</b>\n" +
                               $"{transactionType}金额：<b>{amount}</b>\n" +
                               $"交易时间：<b>{transactionTime}</b>\n" +
-                              $"监听地址： <b>{address}</b>\n" +
+                              $"监听地址： <code>{address}</code>\n" +
                               $"地址余额：<b>{userUsdtBalance.ToString("#,##0.##")} USDT</b>    <b>{userTrxBalance.ToString("#,##0.##")} TRX</b>\n" +
                               $"------------------------------------------------------------------------\n" +
-                              $"对方地址： <b>{(isOutgoing ? transaction.To : transaction.From)}</b>\n" +
+                              $"对方地址： <code>{(isOutgoing ? transaction.To : transaction.From)}</code>\n" +
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b>    <b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>";
 
                 Console.WriteLine($"发送通知：{message}");
