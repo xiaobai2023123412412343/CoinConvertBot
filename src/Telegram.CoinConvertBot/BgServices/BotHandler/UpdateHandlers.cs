@@ -197,7 +197,12 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                     new [] // first row
                     {
                         InlineKeyboardButton.WithUrl("交易详情", transactionUrl),
-                    }
+                    },
+                    new [] // first row
+                    {
+                        InlineKeyboardButton.WithCallbackData("查自己", $"query_self,{address}"),
+                        InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}")
+                    }                   
                 });                
 
                 try
@@ -5279,6 +5284,31 @@ if (update.Type == UpdateType.CallbackQuery)
 //    }
     // ... 其他现有代码 ...
 //} 
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data.Split(',');
+    switch (callbackData[0])
+    {
+        case "query_self":
+        case "query_other":
+            // 从 CallbackData 中获取Tron地址
+            var tronAddress = callbackData[1];
+
+            // 创建一个新的 Message 对象，并确保包含 From 属性
+            var message = new Message
+            {
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From,
+                Text = tronAddress
+            };
+
+            // 调用 HandleQueryCommandAsync 方法来查询并返回结果
+            await HandleQueryCommandAsync(botClient, message);
+            break;
+        // ... 保留其他 case 分支不变 ...
+    }
+}        
 //这是新的回调
 if (update.Type == UpdateType.CallbackQuery)
 {
