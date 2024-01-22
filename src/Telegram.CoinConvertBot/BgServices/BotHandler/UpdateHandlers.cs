@@ -172,16 +172,21 @@ foreach (var transaction in newTransactions)
 
     if (transaction.Value > 0.01m)
     {
-        var transactionType = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase) ? "支出" : "收入";
-            // 仅在发送通知时调整时间
-                var transactionTime = DateTimeOffset.FromUnixTimeMilliseconds(transactionTimestamp).AddHours(8).ToString("yyyy-MM-dd HH:mm:ss");
-                var message = $"新交易\n交易类型：{transactionType} {transaction.Value} USDT\n交易时间：{transactionTime}\n您的地址：{address}\n对方地址：{(transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase) ? transaction.To : transaction.From)}";
+        bool isOutgoing = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase);
+        var transactionType = isOutgoing ? "出账" : "入账";
+        var transactionTime = DateTimeOffset.FromUnixTimeMilliseconds(transactionTimestamp).AddHours(8).ToString("yyyy-MM-dd HH:mm:ss");
+        var amount = transaction.Value.ToString("0.######");
+        var message = $"<b>您有一笔 USDT {transactionType}交易</b>\n\n" +
+                      $"{transactionType}金额：<b>{amount}</b>\n" +
+                      $"交易时间：<b>{transactionTime}</b>\n" +
+                      $"监听地址：<b>{address}</b>\n" +
+                      $"对方地址：<b>{(isOutgoing ? transaction.To : transaction.From)}</b>";
 
         Console.WriteLine($"发送通知：{message}");
-        await botClient.SendTextMessageAsync(userId, message);
+        await botClient.SendTextMessageAsync(userId, message, ParseMode.Html);
     }
 }
-
+        
 // 更新用户的最后交易时间戳
 if (maxTimestamp > lastTimestamp)
 {
