@@ -1004,7 +1004,7 @@ public static class BinanceFundingRates
         return result;
     }
 }
-//个人中心    
+//地址监听    
 public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient botClient, Message message, IServiceProvider provider)
 {
     try
@@ -4664,7 +4664,7 @@ for (int i = startIndex; i < endIndex; i++)
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
                     new KeyboardButton("会员代开"),
-                    new KeyboardButton("个人中心"),
+                    new KeyboardButton("地址监听"),
                 }
         });
 
@@ -5704,7 +5704,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|个人中心|币圈行情|外汇助手|监控|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -5994,7 +5994,7 @@ const string BOT_USERNAME = "yifanfubot";//机器人用户名
 const int ADMIN_ID = 1427768220;//指定管理员ID不转发
 
 // 存储机器人的所有命令
-string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/vip", "/cny", "/trc", "/usdt", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "会员代开", "汇率换算", "实时汇率", "U兑TRX", "合约助手", "查询余额", "个人中心", "币圈行情", "外汇助手", "监控" };    
+string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/vip", "/cny", "/trc", "/usdt", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "会员代开", "汇率换算", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "币圈行情", "外汇助手", "监控" };    
 
 if (message.Type == MessageType.Text)
 {
@@ -6262,7 +6262,7 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         );
     }
 }  
-if (messageText.Equals("个人中心", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
+if (messageText.Equals("地址监听", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
 {
     if (message.From.Id == AdminUserId)
     {
@@ -7499,7 +7499,7 @@ USDT余额： <b>{USDT}</b>
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
                     new KeyboardButton("会员代开"),
-                    new KeyboardButton("个人中心"),
+                    new KeyboardButton("地址监听"),
                 }
         });
             keyboard.ResizeKeyboard = true;           
@@ -7578,7 +7578,7 @@ USDT余额： <b>{USDT}</b>
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
                     new KeyboardButton("会员代开"),
-                    new KeyboardButton("个人中心"),
+                    new KeyboardButton("地址监听"),
                 }
         });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
@@ -7604,7 +7604,7 @@ USDT余额： <b>{USDT}</b>
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
                     new KeyboardButton("会员代开"),
-                    new KeyboardButton("个人中心"),
+                    new KeyboardButton("地址监听"),
                 }
         });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
@@ -7651,7 +7651,7 @@ USDT余额： <b>{USDT}</b>
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
                     new KeyboardButton("会员代开"),
-                    new KeyboardButton("个人中心"),
+                    new KeyboardButton("地址监听"),
                 }
         });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
@@ -7736,7 +7736,7 @@ USDT余额： <b>{USDT}</b>
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
                     new KeyboardButton("会员代开"),
-                    new KeyboardButton("个人中心"),
+                    new KeyboardButton("地址监听"),
                 }
         });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
@@ -7827,7 +7827,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
                     new KeyboardButton("会员代开"),
-                    new KeyboardButton("个人中心"),
+                    new KeyboardButton("地址监听"),
                 }
         });
 
@@ -7903,7 +7903,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
             new KeyboardButton("币圈行情"),
             new KeyboardButton("外汇助手"),
             new KeyboardButton("会员代开"),
-            new KeyboardButton("个人中心"),
+            new KeyboardButton("地址监听"),
         }
     })
     {
@@ -7966,7 +7966,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
                     new KeyboardButton("会员代开"),
-                    new KeyboardButton("个人中心"),
+                    new KeyboardButton("地址监听"),
                 }
         });
 
@@ -8077,7 +8077,7 @@ static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, 
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
                     new KeyboardButton("会员代开"),
-                    new KeyboardButton("个人中心"),
+                    new KeyboardButton("地址监听"),
                 }
         });
             keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
