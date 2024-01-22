@@ -2785,7 +2785,8 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
                           "实时汇率：<code>TRX能量跟包括比特币在内的所有数字货币一样，价格起起落落有涨有跌，受市场行情影响，机器人的兑换汇率自动跟随市场行情进行波动！</code>\n\n" +
                           "资金费率：<code>发送 /zijin 即可查询币安永续合约资金费正负前五币种以及资金费率！</code>\n\n" +      
                           "涨跌榜单：<code>发送 /faxian 即可查询币安加密货币连续上涨或下跌榜单TOP5</code>\n\n" +                  
-                          "能量监控：<code>使用前推荐发送：绑定 Txxxxxxx(您的钱包地址，中间有空格)绑定钱包地址，当TRX余额不足时机器人会自动下发提醒！</code>\n\n" +
+                          "地址监听：<code>绑定您的钱包地址，即可开启交易通知！一有交易就提示，假U，假截图，完全不起作用。发送：绑定 Txxxxxxx(您的钱包地址，，中间有个空格)即可完成绑定！ </code>\n\n" +
+                          "能量监控：<code>使用前发送：绑定 Txxxxxxx(您的钱包地址，中间有空格)绑定钱包地址，当TRX余额不足时机器人会自动下发提醒！</code>\n\n" +            
                           "防骗助手：<code>把机器人拉进群聊并设置为管理员，当群内成员更改名字或用户名后，机器人会发送资料变更提醒，以防被骗！</code>\n\n" +
                           "授权查询：<code>在任意群组发送波场地址即可查询该地址授权情况，支持查询USDT和USDC授权！</code>\n\n" +    
                           "实时u价：<code>发送 z0 或者 /usdt 返回okx实时usdt买入卖出价格表</code>\n\n" +                
