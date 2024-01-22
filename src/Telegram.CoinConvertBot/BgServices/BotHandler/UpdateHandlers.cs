@@ -186,7 +186,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"交易时间：<b>{transactionTime}</b>\n" +
                               $"监听地址： <b>{address}</b>\n" +
                               $"地址余额：<b>{userUsdtBalance.ToString("#,##0.##")} USDT</b>    <b>{userTrxBalance.ToString("#,##0.##")} TRX</b>\n" +
-                              $"----------------------------------------------------------\n" +
+                              $"----------------------------------------------------------------------------------\n" +
                               $"对方地址： <b>{(isOutgoing ? transaction.To : transaction.From)}</b>\n" +
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b>    <b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>";
 
