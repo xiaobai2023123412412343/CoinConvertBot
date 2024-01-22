@@ -191,11 +191,19 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"------------------------------------------------------------------------\n" +
                               $"对方地址： <code>{(isOutgoing ? transaction.To : transaction.From)}</code>\n" +
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b>    <b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>";
+                var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";
+                var inlineKeyboard = new InlineKeyboardMarkup(new[]
+                {
+                    new [] // first row
+                    {
+                        InlineKeyboardButton.WithUrl("交易详情", transactionUrl),
+                    }
+                });                
 
                 try
                 {
                     Console.WriteLine($"发送通知：{message}");
-                    await botClient.SendTextMessageAsync(userId, message, ParseMode.Html);
+                    await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
                 }
                 catch (Exception ex)
                 {
