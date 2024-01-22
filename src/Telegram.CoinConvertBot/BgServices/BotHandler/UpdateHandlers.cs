@@ -160,44 +160,47 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
 
         long maxTimestamp = lastTimestamp;
 
-foreach (var transaction in newTransactions)
-{
-    long transactionTimestamp = transaction.BlockTimestamp;
+        foreach (var transaction in newTransactions)
+        {
+            long transactionTimestamp = transaction.BlockTimestamp;
 
-    // 更新最大时间戳
-    if (transactionTimestamp > maxTimestamp)
-    {
-        maxTimestamp = transactionTimestamp;
-    }
+            // 更新最大时间戳
+            if (transactionTimestamp > maxTimestamp)
+            {
+                maxTimestamp = transactionTimestamp;
+            }
 
-    if (transaction.Value > 0.01m)
-    {
-        bool isOutgoing = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase);
-        var transactionType = isOutgoing ? "出账" : "入账";
-        var transactionTime = DateTimeOffset.FromUnixTimeMilliseconds(transactionTimestamp).AddHours(8).ToString("yyyy-MM-dd HH:mm:ss");
-        var amount = transaction.Value.ToString("0.######");
-        var message = $"<b>您有一笔 USDT {transactionType}交易</b>\n\n" +
-                      $"{transactionType}金额：<b>{amount}</b>\n" +
-                      $"交易时间：<b>{transactionTime}</b>\n" +
-                      $"监听地址：<b>{address}</b>\n" +
-                      $"对方地址：<b>{(isOutgoing ? transaction.To : transaction.From)}</b>";
+            if (transaction.Value > 0.01m)
+            {
+                bool isOutgoing = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase);
+                var transactionType = isOutgoing ? "出账" : "入账";
+                var transactionTime = DateTimeOffset.FromUnixTimeMilliseconds(transactionTimestamp).AddHours(8).ToString("yyyy-MM-dd HH:mm:ss");
+                var amount = transaction.Value.ToString("0.######");
 
-        Console.WriteLine($"发送通知：{message}");
-        await botClient.SendTextMessageAsync(userId, message, ParseMode.Html);
-    }
-}
-        
-// 更新用户的最后交易时间戳
-if (maxTimestamp > lastTimestamp)
-{
-    userTronTransactions[userId] = (address, maxTimestamp);
-}
+                // 获取地址余额
+                var (userUsdtBalance, userTrxBalance, _) = await GetBalancesAsync(address);
+                var (counterUsdtBalance, counterTrxBalance, _) = await GetBalancesAsync(isOutgoing ? transaction.To : transaction.From);
+
+                var message = $"<b>您有一笔 USDT {transactionType}交易</b>\n\n" +
+                              $"{transactionType}金额：<b>{amount}</b>\n" +
+                              $"交易时间：<b>{transactionTime}</b>\n" +
+                              $"监听地址：<b>{address}</b>\n" +
+                              $"地址余额：<b>{userUsdtBalance.ToString("#,##0.##")} USDT</b>    <b>{userTrxBalance.ToString("#,##0.##")} TRX</b>\n" +
+                              $"----------------------------------------------------------\n" +
+                              $"对方地址：<b>{(isOutgoing ? transaction.To : transaction.From)}</b>\n" +
+                              $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b>    <b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>";
+
+                Console.WriteLine($"发送通知：{message}");
+                await botClient.SendTextMessageAsync(userId, message, ParseMode.Html);
+            }
+        }
+
+        // 更新用户的最后交易时间戳
+        userTronTransactions[userId] = (address, maxTimestamp);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"检查新交易时出错：{ex.Message}");
-        await Task.Delay(10000);
-        await CheckForNewTransactions(botClient, userId, tronAddress);
+        Console.WriteLine($"Error in method {nameof(CheckForNewTransactions)}: {ex.Message}");
     }
 }
 // 获取最新的交易记录
