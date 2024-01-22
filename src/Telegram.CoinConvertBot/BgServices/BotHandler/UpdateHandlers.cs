@@ -124,7 +124,7 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
         var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(tronAddress);
 
         // 检查余额和交易次数是否超过阈值
-        if (usdtBalance > 10000000m || transactions > 200000)
+        if (usdtBalance > 10000000m || transactions > 300000)
         {
             Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions}，不启动监控USDT交易记录。");
             return;
@@ -171,10 +171,10 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
     {
         var (address, lastTimestamp) = userTronTransactions[userId];
         var lastTransactionTime = DateTimeOffset.FromUnixTimeMilliseconds(lastTimestamp).ToString("yyyy-MM-dd HH:mm:ss");
-        Console.WriteLine($"检查新交易：用户 {userId}, 地址 {address}, 上次交易时间 {lastTransactionTime}");
+        //Console.WriteLine($"检查新交易：用户 {userId}, 地址 {address}, 上次交易时间 {lastTransactionTime}");
 
         var newTransactions = (await GetNewTronTransactionsAsync(address, lastTimestamp)).ToList();
-        Console.WriteLine($"找到 {newTransactions.Count} 个新交易");
+        //Console.WriteLine($"找到 {newTransactions.Count} 个新交易");
 
         long maxTimestamp = lastTimestamp;
 
@@ -225,7 +225,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
 
                 try
                 {
-                    Console.WriteLine($"发送通知：{message}");
+                    //Console.WriteLine($"发送通知：{message}");
                     await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
                 }
                 catch (Exception ex)
@@ -291,7 +291,7 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsAsync
                 // 格式化并打印每个交易
                 foreach (var t in transactionsResponse.Data)
                 {
-                    Console.WriteLine(FormatTransactionData(t, tronAddress)); // 确保传递 tronAddress 参数
+                    //Console.WriteLine(FormatTransactionData(t, tronAddress)); // 确保传递 tronAddress 参数
                 }
 
                 return transactionsResponse.Data.Select(t => new TronTransaction
