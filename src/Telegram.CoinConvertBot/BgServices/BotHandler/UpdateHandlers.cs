@@ -182,7 +182,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                 var (userUsdtBalance, userTrxBalance, _) = await GetBalancesAsync(address);
                 var (counterUsdtBalance, counterTrxBalance, _) = await GetBalancesAsync(isOutgoing ? transaction.To : transaction.From);
 
-                var message = $"<b>新交易   {transactionSign}{amount} USDT</b> \n\n" +
+                var message = $"<b>新交易   \U0001F4B0  {transactionSign}{amount} USDT</b> \n\n" +
                               $"交易类型：<b>{transactionType}</b>\n" +
                               $"{transactionType}金额：<b>{amount}</b>\n" +
                               $"交易时间：<b>{transactionTime}</b>\n" +
