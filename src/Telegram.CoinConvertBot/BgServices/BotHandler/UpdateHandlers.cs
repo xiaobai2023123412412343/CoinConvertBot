@@ -113,39 +113,57 @@ private static void StopUSDTMonitoring(long userId)
     userTronTransactions.Remove(userId);
 }
 
-private static void StartUSDTMonitoring(ITelegramBotClient botClient, long userId, string tronAddress)
+private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long userId, string tronAddress)
 {
-    Console.WriteLine($"开始监控地址 {tronAddress} 的USDT交易记录。");
+    try
+    {
+        Console.WriteLine($"开始监控地址 {tronAddress} 的USDT交易记录。");
 
-    var transactions = GetTronTransactionsAsync(tronAddress).Result;
-    if (transactions.Any())
-    {
-        var lastTransaction = transactions.OrderByDescending(t => t.BlockTimestamp).First();
-        // 使用北京时间的时间戳并转换为字符串格式
-        var lastTransactionTime = DateTimeOffset.FromUnixTimeMilliseconds(ConvertToBeijingTime(lastTransaction.BlockTimestamp)).ToString("yyyy-MM-dd HH:mm:ss");
-        userTronTransactions[userId] = (tronAddress, lastTransaction.BlockTimestamp);
-        Console.WriteLine($"绑定成功，开始监控 {tronAddress} 的USDT交易记录。最新交易时间：{lastTransactionTime}");
-    }
-    else
-    {
-        userTronTransactions[userId] = (tronAddress, 0);
-        Console.WriteLine($"地址 {tronAddress} 没有USDT交易记录。将从现在开始监控新的交易。");
-    }
+        // 获取余额和交易次数
+        var (usdtBalance, _, _) = await GetBalancesAsync(tronAddress);
+        var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(tronAddress);
 
-    // 启动定时器，每5-10秒随机时间检查新的交易记录
-    Timer timer = new Timer(async _ =>
-    {
-        await CheckForNewTransactions(botClient, userId, tronAddress);
-    }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(new Random().Next(5, 11)));
+        // 检查余额和交易次数是否超过阈值
+        if (usdtBalance > 10000000m || transactions > 200000)
+        {
+            Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions}，不启动监控USDT交易记录。");
+            return;
+        }
 
-    // 存储定时器引用
-    if (userMonitoringTimers.ContainsKey(userId))
-    {
-        userMonitoringTimers[userId].Dispose(); // 如果已经有定时器，先释放
+        // 如果没有超过阈值，继续监控
+        var transactionsList = await GetTronTransactionsAsync(tronAddress);
+        if (transactionsList.Any())
+        {
+            var lastTransaction = transactionsList.OrderByDescending(t => t.BlockTimestamp).First();
+            var lastTransactionTime = DateTimeOffset.FromUnixTimeMilliseconds(ConvertToBeijingTime(lastTransaction.BlockTimestamp)).ToString("yyyy-MM-dd HH:mm:ss");
+            userTronTransactions[userId] = (tronAddress, lastTransaction.BlockTimestamp);
+            Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions} 开始监控USDT交易记录。最新交易时间：{lastTransactionTime}");
+        }
+        else
+        {
+            userTronTransactions[userId] = (tronAddress, 0);
+            Console.WriteLine($"地址 {tronAddress} 没有USDT交易记录。将从现在开始监控新的交易。");
+        }
+
+        // 启动定时器，每5-10秒随机时间检查新的交易记录
+        Timer timer = new Timer(async _ =>
+        {
+            await CheckForNewTransactions(botClient, userId, tronAddress);
+        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(new Random().Next(5, 11)));
+
+        // 存储定时器引用
+        if (userMonitoringTimers.ContainsKey(userId))
+        {
+            userMonitoringTimers[userId].Dispose(); // 如果已经有定时器，先释放
+        }
+        userMonitoringTimers[userId] = timer;
     }
-    userMonitoringTimers[userId] = timer;
+    catch (Exception ex)
+    {
+        Console.WriteLine($"启动监控时发生异常：{ex.Message}");
+        // 可以在这里实现更复杂的异常处理逻辑，例如重试或通知用户
+    }
 }
-
 // 检查新的交易记录
 private static async Task CheckForNewTransactions(ITelegramBotClient botClient, long userId, string tronAddress)
 {
