@@ -192,8 +192,16 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"对方地址： <code>{(isOutgoing ? transaction.To : transaction.From)}</code>\n" +
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b>    <b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>";
 
-                Console.WriteLine($"发送通知：{message}");
-                await botClient.SendTextMessageAsync(userId, message, ParseMode.Html);
+                try
+                {
+                    Console.WriteLine($"发送通知：{message}");
+                    await botClient.SendTextMessageAsync(userId, message, ParseMode.Html);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"发送通知失败：{ex.Message}. 将在下次检查时重试。");
+                    // 这里可以记录失败的消息，以便下次重试
+                }
             }
         }
 
