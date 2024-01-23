@@ -7750,7 +7750,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 如果TRX余额不足可发送 预支 领取一次转账能量！
 只限钱包转账，自动原地址返TRX，如需兑换到其它地址请{adminText}！
 
-转帐前，推荐您绑定钱包地址来接收入账通知及TRX余额不足提醒： 
+转帐前，推荐您绑定钱包地址来接收交易通知： 
 发送：<code>绑定 Txxxxxxx</code>(您的钱包地址)         {leftPointingIndex} <b>推荐使用！！！</b> 
 
 
@@ -7840,7 +7840,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 如果TRX余额不足可发送 预支 领取一次转账能量！
 只限钱包转账，自动原地址返TRX，如需兑换到其它地址请{adminText}！
 
-转帐前，推荐您绑定钱包地址来接收入账通知及TRX余额不足提醒： 
+转帐前，推荐您绑定钱包地址来接收交易通知： 
 发送：<code>绑定 Txxxxxxx</code>(您的钱包地址)         {leftPointingIndex} <b>推荐使用！！！</b> 
 
 
