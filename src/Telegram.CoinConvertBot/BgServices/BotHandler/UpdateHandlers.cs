@@ -96,21 +96,21 @@ public static class UpdateHandlers
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
 // 存储用户ID、波场地址和最后一次交易时间戳的字典
-private static Dictionary<long, (string TronAddress, long LastTransactionTimestamp)> userTronTransactions = new Dictionary<long, (string, long)>();
+private static Dictionary<(long UserId, string TronAddress), (string TronAddress, long LastTransactionTimestamp)> userTronTransactions = new Dictionary<(long, string), (string, long)>();
 // 存储用户ID和对应的定时器
-private static Dictionary<long, Timer> userMonitoringTimers = new Dictionary<long, Timer>();
+private static Dictionary<(long UserId, string TronAddress), Timer> userMonitoringTimers = new Dictionary<(long, string), Timer>();
 
-private static void StopUSDTMonitoring(long userId)
+private static void StopUSDTMonitoring(long userId, string tronAddress)
 {
     // 停止并移除定时器
-    if (userMonitoringTimers.TryGetValue(userId, out var timer))
+    if (userMonitoringTimers.TryGetValue((userId, tronAddress), out var timer))
     {
         timer.Dispose();
-        userMonitoringTimers.Remove(userId);
+        userMonitoringTimers.Remove((userId, tronAddress));
     }
 
     // 移除用户的交易记录
-    userTronTransactions.Remove(userId);
+    userTronTransactions.Remove((userId, tronAddress));
 }
 
 private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long userId, string tronAddress)
@@ -124,7 +124,7 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
         var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(tronAddress);
 
         // 检查余额和交易次数是否超过阈值
-        if (usdtBalance > 10000000m || transactions > 300000)
+        if (usdtBalance > 100000000m || transactions > 300000000)
         {
             Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions}，不启动监控USDT交易记录。");
             return;
@@ -136,27 +136,27 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
         {
             var lastTransaction = transactionsList.OrderByDescending(t => t.BlockTimestamp).First();
             var lastTransactionTime = DateTimeOffset.FromUnixTimeMilliseconds(ConvertToBeijingTime(lastTransaction.BlockTimestamp)).ToString("yyyy-MM-dd HH:mm:ss");
-            userTronTransactions[userId] = (tronAddress, lastTransaction.BlockTimestamp);
+            userTronTransactions[(userId, tronAddress)] = (tronAddress, lastTransaction.BlockTimestamp);
             Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions} 开始监控USDT交易记录。最新交易时间：{lastTransactionTime}");
         }
         else
         {
-            userTronTransactions[userId] = (tronAddress, 0);
+            userTronTransactions[(userId, tronAddress)] = (tronAddress, 0);
             Console.WriteLine($"地址 {tronAddress} 没有USDT交易记录。将从现在开始监控新的交易。");
         }
 
-        // 启动定时器，每5-10秒随机时间检查新的交易记录
-        Timer timer = new Timer(async _ =>
-        {
-            await CheckForNewTransactions(botClient, userId, tronAddress);
-        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(new Random().Next(5, 11)));
+    // 启动定时器，每5-10秒随机时间检查新的交易记录
+    Timer timer = new Timer(async _ =>
+    {
+        await CheckForNewTransactions(botClient, userId, tronAddress);
+    }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(new Random().Next(5, 11)));
 
-        // 存储定时器引用
-        if (userMonitoringTimers.ContainsKey(userId))
-        {
-            userMonitoringTimers[userId].Dispose(); // 如果已经有定时器，先释放
-        }
-        userMonitoringTimers[userId] = timer;
+    // 存储定时器引用
+    if (userMonitoringTimers.ContainsKey((userId, tronAddress)))
+    {
+        userMonitoringTimers[(userId, tronAddress)].Dispose(); // 如果已经有定时器，先释放
+    }
+    userMonitoringTimers[(userId, tronAddress)] = timer;
     }
     catch (Exception ex)
     {
@@ -169,7 +169,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
 {
     try
     {
-        var (address, lastTimestamp) = userTronTransactions[userId];
+        var (address, lastTimestamp) = userTronTransactions[(userId, tronAddress)];
         var lastTransactionTime = DateTimeOffset.FromUnixTimeMilliseconds(lastTimestamp).ToString("yyyy-MM-dd HH:mm:ss");
         //Console.WriteLine($"检查新交易：用户 {userId}, 地址 {address}, 上次交易时间 {lastTransactionTime}");
 
@@ -237,7 +237,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
         }
 
         // 更新用户的最后交易时间戳
-        userTronTransactions[userId] = (address, maxTimestamp);
+        userTronTransactions[(userId, tronAddress)] = (address, maxTimestamp);
     }
     catch (Exception ex)
     {
@@ -7633,53 +7633,52 @@ USDT余额： <b>{USDT}</b>
                 return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您输入的波场地址<b>{address}</b>有误！", parseMode: ParseMode.Html, replyMarkup: keyboard);
             }
         }
-        async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
-        {
-            if (message.From == null) return message;
-            if (message.Text is not { } messageText)
-                return message;
-            var address = messageText.Split(' ').Last();
+async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
+{
+    if (message.From == null) return message;
+    if (message.Text is not { } messageText)
+        return message;
+    var address = messageText.Split(' ').Last();
 
-            var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
-            var from = message.From;
-            var UserId = message.Chat.Id;
-            var bind = await _bindRepository.Where(x => x.UserId == UserId && x.Address == address).FirstAsync();
-            if (bind != null)
-            {
-                await _bindRepository.DeleteAsync(bind);
-            }
-     // 停止向用户发送 TRX 余额不足的提醒
+    var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
+    var from = message.From;
+    var UserId = message.Chat.Id;
+    var bind = await _bindRepository.Where(x => x.UserId == UserId && x.Address == address).FirstAsync();
+    if (bind != null)
+    {
+        await _bindRepository.DeleteAsync(bind);
+    }
+    // 停止向用户发送 TRX 余额不足的提醒
     if (userTimers.TryGetValue(UserId, out var timer))
     {
         timer.Dispose();
         userTimers.Remove(UserId);
     }    
-    // // 停止USDT监控
-    StopUSDTMonitoring(UserId);
+    // 停止USDT监控
+    StopUSDTMonitoring(UserId, address);
     Console.WriteLine($"用户 {UserId} 解绑地址 {address} 成功，取消监控USDT交易记录。");        
-// 创建包含两行，每行两个按钮的虚拟键盘
-        var keyboard = new ReplyKeyboardMarkup(new[]
+    // 创建包含两行，每行两个按钮的虚拟键盘
+    var keyboard = new ReplyKeyboardMarkup(new[]
+    {
+        new [] // 第一行
         {
-            new [] // 第一行
+            new KeyboardButton("U兑TRX"),
+            new KeyboardButton("实时汇率"),
+            new KeyboardButton("查询余额"),
+            new KeyboardButton("汇率换算"),
+        },   
+            new [] // 第二行
             {
-                new KeyboardButton("U兑TRX"),
-                new KeyboardButton("实时汇率"),
-                new KeyboardButton("查询余额"),
-                new KeyboardButton("汇率换算"),
-            },   
-                new [] // 第二行
-                {
-                    new KeyboardButton("币圈行情"),
-                    new KeyboardButton("外汇助手"),
-                    new KeyboardButton("会员代开"),
-                    new KeyboardButton("地址监听"),
-                }
-        });
-                keyboard.ResizeKeyboard = true; // 调整键盘高度
-                keyboard.OneTimeKeyboard = false;
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您已成功解绑：<b>{address}</b> ", parseMode: ParseMode.Html, replyMarkup: keyboard);
-
-        }
+                new KeyboardButton("币圈行情"),
+                new KeyboardButton("外汇助手"),
+                new KeyboardButton("会员代开"),
+                new KeyboardButton("地址监听"),
+            }
+    });
+    keyboard.ResizeKeyboard = true; // 调整键盘高度
+    keyboard.OneTimeKeyboard = false;
+    return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您已成功解绑：<b>{address}</b> ", parseMode: ParseMode.Html, replyMarkup: keyboard);
+}
         async Task<Message> ConvertCoinTRX(ITelegramBotClient botClient, Message message)
         {
             if (message.From == null) return message;
