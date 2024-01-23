@@ -113,7 +113,60 @@ private static void StopUSDTMonitoring(long userId, string tronAddress)
     // 移除用户的交易记录
     userTronTransactions.Remove((userId, tronAddress));
 }
+// 使用TronGrid API获取特定交易的费用
+private static async Task<decimal> GetTransactionFeeAsync(string transactionId)
+{
+    using (var httpClient = new HttpClient())
+    {
+        string apiUrl = $"https://api.trongrid.io/wallet/gettransactioninfobyid?value={transactionId}";
 
+        while (true) // 添加一个无限循环，直到成功获取交易费用
+        {
+            var response = await httpClient.GetAsync(apiUrl);
+            string content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                // 检查是否因为请求频率超过限制而失败
+                if (content.Contains("request rate exceeded"))
+                {
+                    // 如果是，等待2-4秒后重试
+                    var waitTime = new Random().Next(2000, 4000);
+                    await Task.Delay(waitTime);
+                    continue;
+                }
+                else
+                {
+                    throw new HttpRequestException($"获取交易费用出错: {content}");
+                }
+            }
+
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                var transactionInfo = JsonSerializer.Deserialize<TronTransactionInfo>(content, options);
+
+                if (transactionInfo != null)
+                {
+                    // 费用以sun为单位，转换为TRX
+                    return ConvertFromSun(transactionInfo.Fee.ToString());
+                }
+                else
+                {
+                    return 0m;
+                }
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON解析错误: {ex.Message}");
+                return 0m;
+            }
+        }
+    }
+}
 private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long userId, string tronAddress)
 {
     try
@@ -201,6 +254,11 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                 var (userUsdtBalance, userTrxBalance, _) = await GetBalancesAsync(address);
                 var (counterUsdtBalance, counterTrxBalance, _) = await GetBalancesAsync(isOutgoing ? transaction.To : transaction.From);
 
+                 // 获取交易费用
+                 decimal transactionFee = await GetTransactionFeeAsync(transaction.TransactionId);
+                 // 判断交易费用是“我方出”还是“对方出”
+                 string feePayer = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase) ? "我方出" : "对方出";
+
                 var message = $"<b>新交易   \U0001F4B0  {transactionSign}{amount} USDT</b> \n\n" +
                               $"交易类型：<b>{transactionType}</b>\n" +
                               $"{transactionType}金额：<b>{amount}</b>\n" +
@@ -209,7 +267,8 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"地址余额：<b>{userUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{userTrxBalance.ToString("#,##0.##")} TRX</b>\n" +
                               $"------------------------------------------------------------------------\n" +
                               $"对方地址： <code>{(isOutgoing ? transaction.To : transaction.From)}</code>\n" +
-                              $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>";
+                              $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n\n" +                  
+                              $"交易费用：<b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n"; // 根据交易方向调整文本
                 var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
@@ -254,6 +313,17 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                 userNotificationFailures.Remove((userId, tronAddress));
             }
         }
+    catch (ApiRequestException ex) when (ex.Message.Contains("Too Many Requests: retry after"))
+    {
+        var match = Regex.Match(ex.Message, @"Too Many Requests: retry after (\d+)");
+        if (match.Success)
+        {
+            var retryAfterSeconds = int.Parse(match.Groups[1].Value);
+            Console.WriteLine($"发送通知失败：{ex.Message}. 将在{retryAfterSeconds}秒后重试。");
+            await Task.Delay(retryAfterSeconds * 1000);
+            await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
+        }
+    }              
         catch (Exception ex)
         {
             // 处理其他异常
@@ -380,7 +450,13 @@ public class TronTransactionsResponse
 {
     public List<TronTransactionData> Data { get; set; }
 }
-
+// 波场交易费用信息的数据结构
+public class TronTransactionInfo
+{
+    [JsonPropertyName("fee")]
+    public long Fee { get; set; }
+    // ... 其他属性
+}
 public class TronTransactionData
 {
     [JsonPropertyName("transaction_id")]
@@ -1636,30 +1712,44 @@ private static async Task<decimal> GetTronBalanceAsync(string tronAddress)
 {
     using (var httpClient = new HttpClient())
     {
-        try
+        while (true) // 添加一个无限循环，直到成功获取TRX余额
         {
-            var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
-            var content = await response.Content.ReadAsStringAsync();
-            var match = Regex.Match(content, "\"balance\":(\\d+)");
-            if (match.Success)
+            try
             {
-                var balanceInSun = long.Parse(match.Groups[1].Value);
-                var balanceInTrx = balanceInSun / 1_000_000.0m;
-                return balanceInTrx;
+                var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
+                var content = await response.Content.ReadAsStringAsync();
+                var match = Regex.Match(content, "\"balance\":(\\d+)");
+                if (match.Success)
+                {
+                    var balanceInSun = long.Parse(match.Groups[1].Value);
+                    var balanceInTrx = balanceInSun / 1_000_000.0m;
+                    return balanceInTrx;
+                }
+                else
+                {
+                    throw new Exception("无法获取波场地址的TRX余额");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                throw new Exception("无法获取波场地址的TRX余额。");
+                // 记录异常信息，但不中断程序运行
+                Console.WriteLine($"Error getting Tron balance: {ex.Message}");
+
+                // 如果无法获取TRX余额，等待1-3秒后重试
+                if (ex.Message.Contains("无法获取波场地址的TRX余额。"))
+                {
+                    var waitTime = new Random().Next(1000, 3000);
+                    await Task.Delay(waitTime);
+                    continue;
+                }
+                else
+                {
+                    return 0;
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            // 记录异常信息，但不中断程序运行
-            Console.WriteLine($"Error getting Tron balance: {ex.Message}");
-            return 0;
         }
     }
-}        
+}       
 //升级管理员提醒    
 private static async Task BotOnMyChatMemberChanged(ITelegramBotClient botClient, ChatMemberUpdated chatMemberUpdated)
 {
