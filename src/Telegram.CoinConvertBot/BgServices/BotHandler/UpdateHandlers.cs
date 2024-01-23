@@ -3454,11 +3454,11 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
 
                 if (tronAddress.Equals(fromAddress, StringComparison.OrdinalIgnoreCase))
                 {
-                    type = "支出 ";
+                    type = "出 ";
                 }
                 else
                 {
-                    type = "收入 ";
+                    type = "入 ";
                 }
 
                 // 获取交易金额，并转换为USDT
@@ -3468,7 +3468,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
                 //Console.WriteLine(jsonString);
 
                 // 构建交易文本并添加链接
-                transactionTextBuilder.AppendLine($"<a href=\"https://tronscan.org/#/transaction/{txHash}\">{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}   {type}{usdtAmount:N2} USDT</a>");
+                transactionTextBuilder.AppendLine($"{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}<a href=\"https://tronscan.org/#/transaction/{txHash}\">{usdtAmount:N2} U</a>");
             }
 
             return (transactionTextBuilder.ToString(), false); // 如果没有发生错误，返回结果和IsError=false
