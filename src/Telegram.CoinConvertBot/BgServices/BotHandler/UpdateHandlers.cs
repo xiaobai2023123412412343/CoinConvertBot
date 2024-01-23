@@ -99,7 +99,8 @@ public static class UpdateHandlers
 private static Dictionary<(long UserId, string TronAddress), (string TronAddress, long LastTransactionTimestamp)> userTronTransactions = new Dictionary<(long, string), (string, long)>();
 // 存储用户ID和对应的定时器
 private static Dictionary<(long UserId, string TronAddress), Timer> userMonitoringTimers = new Dictionary<(long, string), Timer>();
-
+// 存储用户ID、波场地址和失败计数器的字典
+private static Dictionary<(long UserId, string TronAddress), int> userNotificationFailures = new Dictionary<(long, string), int>();
 private static void StopUSDTMonitoring(long userId, string tronAddress)
 {
     // 停止并移除定时器
@@ -223,16 +224,41 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                     }                   
                 });                
 
-                try
-                {
-                    //Console.WriteLine($"发送通知：{message}");
-                    await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"发送通知失败：{ex.Message}. 将在下次检查时重试。");
-                    // 这里可以记录失败的消息，以便下次重试
-                }
+        try
+        {
+            // 发送通知
+            await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
+            // 如果发送成功，重置失败计数器
+            userNotificationFailures[(userId, tronAddress)] = 0;
+        }
+        catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
+        {
+            Console.WriteLine($"发送通知失败：{ex.Message}. 将在下次检查时重试。");
+            // 增加失败计数器
+            if (userNotificationFailures.TryGetValue((userId, tronAddress), out var failureCount))
+            {
+                failureCount++;
+                userNotificationFailures[(userId, tronAddress)] = failureCount;
+            }
+            else
+            {
+                userNotificationFailures[(userId, tronAddress)] = 1;
+            }
+
+            // 如果失败次数超过3次，停止监控
+            if (failureCount >= 3)
+            {
+                Console.WriteLine($"用户 {userId} 的通知失败次数超过3次，停止监控地址 {tronAddress}。");
+                StopUSDTMonitoring(userId, tronAddress);
+                // 从失败计数器字典中移除该用户
+                userNotificationFailures.Remove((userId, tronAddress));
+            }
+        }
+        catch (Exception ex)
+        {
+            // 处理其他异常
+            Console.WriteLine($"发送通知失败：{ex.Message}. 将在下次检查时重试。");
+        }
             }
         }
 
