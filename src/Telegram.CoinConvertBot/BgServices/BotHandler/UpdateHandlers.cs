@@ -124,7 +124,7 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
         var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(tronAddress);
 
         // 检查余额和交易次数是否超过阈值
-        if (usdtBalance > 100000000m || transactions > 300000000)
+        if (usdtBalance > 10000000m || transactions > 300000)
         {
             Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions}，不启动监控USDT交易记录。");
             return;
