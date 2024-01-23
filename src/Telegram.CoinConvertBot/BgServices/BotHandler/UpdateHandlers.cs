@@ -1086,14 +1086,28 @@ public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient bot
                 );
             }
         }
-        else
-        {
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id, 
-                text: "您还未绑定地址，发送：<code>绑定 Txxxxxxx</code>(您的钱包地址) 即可绑定！",
-                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
-            );
-        }
+else
+{
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id, 
+        text: "您还未绑定地址，发送：<code>绑定 Txxxxxxx</code>(您的钱包地址) 即可绑定！\n" +
+               "<b>一有交易就下发通知，假U，假截图，完全不起作用！</b>\n\n" +
+               "<b>注意：</b>目前只支持绑定TRC-20地址；\n" +  
+               "发送绑定指令： “绑定” 和 “您的地址” 中间需带个空格；\n" +  
+               "交易所地址暂不支持监听，判断标准为：余额大于1000万USDT或累计交易笔数大于30万笔！\n\n" +  
+               "<b>全网独家</b>：<u>机器人除了能播报交易信息，还能查询对方地址的余额！</u>\n\n" +
+               "示例：  <b>新交易   \U0001F4B0  -1039.936596 USDT</b>\n\n" +
+               "交易类型：<b>出账</b>\n" +
+               "出账金额：<b>1039.936596</b>\n" +
+               "交易时间：<b>2024-01-23 16:08:03</b>\n" +
+               "监听地址：<code>TUpHuDkiCCmwaTZBHZvQdwWzGNm5t8J2b9</code>\n" +
+               "地址余额：<b>426,817.32 USDT | 9,163.02 TRX</b>\n" +
+               "------------------------------------------------------------------------\n" +
+               "对方地址：<code>TTHQzKACqtxTGuaiYEXpPappe4SPpxs2do</code>\n" +
+               "对方余额：<b>1,039.94 USDT | 34.98 TRX</b>",
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+    );
+}
     }
     catch (Exception)
     {
