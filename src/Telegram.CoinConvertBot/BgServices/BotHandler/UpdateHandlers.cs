@@ -7586,6 +7586,7 @@ USDT余额： <b>{USDT}</b>
                 keyboard.OneTimeKeyboard = false;
         // 查询USDT和TRX的余额
         var (usdtBalance, trxBalance, _) = await GetBalancesAsync(address);
+        var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(address); // 交易笔数             
 
         // 发送绑定成功和余额的消息
         string bindSuccessMessage = $"您已成功绑定：<code>{address}</code>\n" +
@@ -7593,20 +7594,34 @@ USDT余额： <b>{USDT}</b>
                                     "当我们向您的钱包转账时，您将收到通知！";
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: bindSuccessMessage, parseMode: ParseMode.Html, replyMarkup: keyboard);
 
+    // 等待0.5秒
+    await Task.Delay(500);
+
+    // 根据余额和交易笔数判断发送哪条文本消息
+    if (usdtBalance > 10000000m || transactions > 300000)
+    {
+        // 如果超过阈值，先发送TRX余额监控启动的消息
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
         // 等待0.5秒
         await Task.Delay(500);
-
-        // 发送USDT交易监听启动的消息
-        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "USDT交易监听已启动...");
-
+        // 然后发送疑似交易所地址的警告消息
+        string warningMessage = $"疑似交易所地址：\n" +
+                                $"余额：<b>{usdtBalance.ToString("#,##0.##")} USDT，" +
+                                $"{transactions}次交易</b>\n暂不支持监听交易所地址！";
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: warningMessage, parseMode: ParseMode.Html);
+    }
+    else
+    {
+        // 如果没有超过阈值，发送USDT交易监听启动的消息
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "USDT交易监听已启动...", parseMode: ParseMode.Html);
         // 等待0.5秒
         await Task.Delay(500);
+        // 然后发送TRX余额监控启动的消息
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
+    }
 
-        // 发送TRX余额监控启动的消息
-        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...");
-
-        // 这里返回一个消息对象或者null
-        return await Task.FromResult<Message>(null);
+    // 这里返回一个消息对象或者null
+    return await Task.FromResult<Message>(null);
             }
             else
             {
