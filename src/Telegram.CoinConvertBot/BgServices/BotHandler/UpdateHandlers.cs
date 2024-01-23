@@ -7584,9 +7584,29 @@ USDT余额： <b>{USDT}</b>
         });
                 keyboard.ResizeKeyboard = true; // 调整键盘高度
                 keyboard.OneTimeKeyboard = false;
-                return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: @$"您已成功绑定：<code>{address}</code>
-当我们向您的钱包转账或钱包TRX余额不足时，您将收到通知！
-", parseMode: ParseMode.Html, replyMarkup: keyboard);
+        // 查询USDT和TRX的余额
+        var (usdtBalance, trxBalance, _) = await GetBalancesAsync(address);
+
+        // 发送绑定成功和余额的消息
+        string bindSuccessMessage = $"您已成功绑定：<code>{address}</code>\n" +
+                                    $"余额：<b>{usdtBalance.ToString("#,##0.##")} USDT  |  {trxBalance.ToString("#,##0.##")} TRX</b>\n" +
+                                    "当我们向您的钱包转账时，您将收到通知！";
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: bindSuccessMessage, parseMode: ParseMode.Html, replyMarkup: keyboard);
+
+        // 等待0.5秒
+        await Task.Delay(500);
+
+        // 发送USDT交易监听启动的消息
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "USDT交易监听已启动...");
+
+        // 等待0.5秒
+        await Task.Delay(500);
+
+        // 发送TRX余额监控启动的消息
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...");
+
+        // 这里返回一个消息对象或者null
+        return await Task.FromResult<Message>(null);
             }
             else
             {
