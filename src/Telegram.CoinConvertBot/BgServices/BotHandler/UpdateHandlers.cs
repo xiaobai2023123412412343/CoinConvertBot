@@ -1042,18 +1042,50 @@ public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient bot
         // 查询是否存在一个与当前用户ID匹配的TokenBind对象
         var bindList = _bindRepository.Where(x => x.UserId == userId).ToList();
 
-if (bindList.Any())
-{
-    var buttons = bindList.Select(b => new[] { InlineKeyboardButton.WithCallbackData(b.Address, $"query,{b.Address}") }).ToArray();
-    var inlineKeyboard = new InlineKeyboardMarkup(buttons);
+        if (bindList.Any())
+        {
+            var buttons = new List<InlineKeyboardButton[]>();
+            var pausedButtons = new List<InlineKeyboardButton[]>();
+            var monitoringAddresses = new List<string>();
 
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id, 
-        text: $"您绑定了<b>{bindList.Count}</b>个地址，点击下方按钮查看详情：",
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-        replyMarkup: inlineKeyboard
-    );
-}
+            foreach (var bind in bindList)
+            {
+                if (userMonitoringTimers.ContainsKey((userId, bind.Address)))
+                {
+                    // 正在监控的地址
+                    monitoringAddresses.Add(bind.Address);
+                    buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(bind.Address, $"query,{bind.Address}") });
+                }
+                else
+                {
+                    // 暂停监控的地址
+                    pausedButtons.Add(new[] { InlineKeyboardButton.WithCallbackData(bind.Address, $"绑定 {bind.Address}") });
+                }
+            }
+
+            var inlineKeyboard = new InlineKeyboardMarkup(buttons);
+            var pausedInlineKeyboard = new InlineKeyboardMarkup(pausedButtons);
+
+            if (monitoringAddresses.Any())
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id, 
+                    text: $"您监听了<b>{monitoringAddresses.Count}</b>个地址，点击下方按钮查看详情：",
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                    replyMarkup: inlineKeyboard
+                );
+            }
+
+            if (pausedButtons.Any())
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id, 
+                    text: "以下地址已取消监听，点击按钮重新启动监听：",
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                    replyMarkup: pausedInlineKeyboard
+                );
+            }
+        }
         else
         {
             await botClient.SendTextMessageAsync(
