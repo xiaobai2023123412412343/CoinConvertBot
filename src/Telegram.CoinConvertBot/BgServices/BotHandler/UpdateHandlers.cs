@@ -1172,15 +1172,16 @@ else
                "发送绑定指令： “绑定” 和 “您的地址” 中间需带个空格；\n" +  
                "交易所地址暂不支持监听，判断标准为：余额大于1000万USDT或累计交易笔数大于30万笔！\n\n" +  
                "<b>全网独家</b>：<u>机器人除了能播报交易信息，还能查询对方地址的余额！</u>\n\n" +
-               "示例：  <b>新交易   \U0001F4B0  -1039.936596 USDT</b>\n\n" +
+               "示例：  <b>新交易   \U0001F4B0  -10 USDT</b>\n\n" +
                "交易类型：<b>出账</b>\n" +
-               "出账金额：<b>1039.936596</b>\n" +
-               "交易时间：<b>2024-01-23 16:08:03</b>\n" +
-               "监听地址：<code>TUpHuDkiCCmwaTZBHZvQdwWzGNm5t8J2b9</code>\n" +
-               "地址余额：<b>426,817.32 USDT | 9,163.02 TRX</b>\n" +
+               "出账金额：<b>10</b>\n" +
+               "交易时间：<b>2024-01-23 20:23:18</b>\n" +
+               "监听地址：<code>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</code>\n" +
+               "地址余额：<b>100,609,833.06 USDT  |  23,575,860.52 TRX</b>\n" +
                "------------------------------------------------------------------------\n" +
-               "对方地址：<code>TTHQzKACqtxTGuaiYEXpPappe4SPpxs2do</code>\n" +
-               "对方余额：<b>1,039.94 USDT | 34.98 TRX</b>",
+               "对方地址：<code>TAQt2mCvsGtAFi9uY36X7MriJKQr2Pndhx</code>\n" +
+               "对方余额：<b>40,633.97 USDT  |  526.16 TRX</b>\n\n" +
+               "交易费用：<b>13.7409 TRX    我方出</b>",
         parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
     );
 }
