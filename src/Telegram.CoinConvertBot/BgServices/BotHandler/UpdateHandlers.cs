@@ -7654,7 +7654,7 @@ USDT余额： <b>{USDT}</b>
         timer.Dispose();
         userTimers.Remove(UserId);
     }    
-    // 停止向用户发送 TRX 余额不足的提醒
+    // // 停止USDT监控
     StopUSDTMonitoring(UserId);
     Console.WriteLine($"用户 {UserId} 解绑地址 {address} 成功，取消监控USDT交易记录。");        
 // 创建包含两行，每行两个按钮的虚拟键盘
