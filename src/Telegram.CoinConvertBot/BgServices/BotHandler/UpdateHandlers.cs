@@ -7544,7 +7544,7 @@ USDT余额： <b>{USDT}</b>
                     await _bindRepository.InsertAsync(bind);
                     // 启动定时器来监控这个地址的TRX余额
                     StartMonitoring(botClient, UserId, address);
-                     // 启动定时器来监控这个地址的TRX余额
+                     // 启动定时器来监控这个地址的交易
                     StartUSDTMonitoring(botClient, UserId, address);
                     Console.WriteLine($"用户 {UserId} 绑定地址 {address} 成功，开始监控USDT交易记录。");
 
@@ -7559,7 +7559,7 @@ USDT余额： <b>{USDT}</b>
                     await _bindRepository.UpdateAsync(bind);
                     // 启动定时器来监控这个地址的TRX余额
                     StartMonitoring(botClient, UserId, address);
-                   // 启动定时器来监控这个地址的TRX余额
+                   // 启动定时器来监控这个地址的交易
                    StartUSDTMonitoring(botClient, UserId, address);
                    Console.WriteLine($"用户 {UserId} 绑定地址 {address} 成功，开始监控USDT交易记录。");
 
