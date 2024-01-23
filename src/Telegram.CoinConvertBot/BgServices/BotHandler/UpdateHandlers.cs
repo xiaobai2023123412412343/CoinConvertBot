@@ -7815,8 +7815,9 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 
 操作示例：
 <code>转入金额：<b>100 USDT</b>
-实时汇率：<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>
-获得TRX：<b>100 * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {100m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
+实时汇率：</code><del>100 USDT = {95m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</del>
+<code>您的优惠汇率：<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>    
+可获得TRX：<b>100 * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {100m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
     
 注意：<b>只支持{MinUSDT} USDT以上的金额兑换！</b>    
 如果TRX余额不足可发送 预支 领取一次转账能量！
