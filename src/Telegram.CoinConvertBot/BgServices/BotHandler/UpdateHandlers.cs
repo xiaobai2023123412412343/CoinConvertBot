@@ -5834,10 +5834,10 @@ if (update.Type == UpdateType.CallbackQuery)
 var message = update.Message;
 if (message?.Text != null)
 {
-                if (message.Text.StartsWith("/gzgzgz"))
-                {
-                    await HandleGetFollowersCommandAsync(botClient, message);
-                }    
+if (message.Text.StartsWith("/gzgzgz") && message.From.Id == 1427768220)
+{
+    await HandleGetFollowersCommandAsync(botClient, message);
+}
     
     // 检查输入文本是否为 Tron 地址
     var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
