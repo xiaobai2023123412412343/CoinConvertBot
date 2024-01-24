@@ -8000,33 +8000,32 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     else
     {
         var msg = @$"<b>实时汇率表：</b>
-<b><del>100 USDT = {95m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX   ≈ {100m * usdtPrice} CNY</del></b>   
+<b><del>100 USDT = {95m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</del></b>   
             
 <b>您的优惠汇率：</b>                
-<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX   ≈ {100m * usdtPrice} CNY</b>            
+<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>            
 ————————————————————<code>
-  10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 2) * usdtPrice}  CNY
-  20 USDT = {(5m * 4).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 4) * usdtPrice} CNY
-  50 USDT = {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 10) * usdtPrice} CNY
- 100 USDT = {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX ≈ {(5m * 20) * usdtPrice} CNY
+  10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 2) * usdtPrice}   CNY
+  20 USDT = {(5m * 4).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX ≈ {(5m * 4) * usdtPrice}  CNY
+  50 USDT = {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX ≈ {(5m * 10) * usdtPrice}  CNY
+ 100 USDT = {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX ≈ {(5m * 20) * usdtPrice}  CNY
  500 USDT = {(5m * 100).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX ≈ {(5m * 100) * usdtPrice} CNY
-1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX≈ {(5m * 200) * usdtPrice} CNY
-
-转账费用：（浮动）
-对方地址有u：13.3959 TRX - 13.7409 TRX 
-对方地址无u：27.2559 TRX - 27.6009 TRX 
+1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX ≈ {(5m * 200) * usdtPrice} CNY
 </code>
 <b>机器人收款地址:(↓点击自动复制↓</b>):
         
-<code>{ReciveAddress}</code>
+<code>{ReciveAddress}</code>      
+    
+<b>注意：只支持{MinUSDT} USDT以上的金额兑换！</b>   
+<b>给机器人收款地址转u自动原地址秒回TRX！</b> 
+————————————————————    
+转账费用：（浮动）
+对方地址有u：13.3959 TRX - 13.7409 TRX 
+对方地址无u：27.2559 TRX - 27.6009 TRX 
 
-注意：<b>只支持{MinUSDT} USDT以上的金额兑换！</b>    
-如果TRX余额不足可发送 预支 领取一次转账能量！
-只限钱包转账，自动原地址返TRX，如需兑换到其它地址请{adminText}！
-
-转帐前，推荐您绑定钱包地址来接收交易通知： 
-发送：<code>绑定 Txxxxxxx</code>(您的钱包地址)         {leftPointingIndex} <b>推荐使用！！！</b> 
-
+{adminText} 租赁能量更划算：
+对方地址有u：仅需10.00 TRX，节省 3.39 TRX (节省约30%)
+对方地址无u：仅需18.00 TRX，节省 9.25 TRX (节省约52%)            
 
 
 ";
