@@ -4975,6 +4975,35 @@ public static async Task<decimal> GetOkxPriceAsync(string baseCurrency, string q
 
 static async Task SendAdvertisementOnce(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate, long chatId)
 {    
+    // 获取大户持仓量多空比信息
+static async Task<string> GetTopTradersRatio(string symbol)
+{
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            var topTradersResponse = await httpClient.GetAsync($"https://fapi.binance.com/futures/data/topLongShortPositionRatio?symbol={symbol}USDT&period=1h");
+            var topTradersData = JsonSerializer.Deserialize<List<TopTradersRatio>>(await topTradersResponse.Content.ReadAsStringAsync());
+            if (topTradersData != null && topTradersData.Any())
+            {
+                var latestData = topTradersData.Last();
+                var longRatio = Math.Round(double.Parse(latestData.longAccount) * 100, 2);
+                var shortRatio = Math.Round(double.Parse(latestData.shortAccount) * 100, 2);
+                return $" {longRatio}% / {shortRatio}%";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error when calling API: {ex.Message}");
+        }
+    }
+    return " 0% / 0%"; // 返回0%的多空比
+}
+
+    // 获取比特币和以太坊的大户多空比
+    var btcTopTradersRatio = await GetTopTradersRatio("BTC");
+    var ethTopTradersRatio = await GetTopTradersRatio("ETH");
+    
     var rateTask = rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
     var fearAndGreedIndexTask = GetFearAndGreedIndexAsync();
     var cryptoPricesTask = GetCryptoPricesAsync(new[] { "bitcoin", "ethereum" });
@@ -5021,13 +5050,16 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
     var usdRate = 1 / usdRateTuple.Item1;
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
-string advertisementText = $"—————————<b>数据集合</b>—————————\n" +
+string advertisementText = $"—————————<b>合约大数据</b>—————————\n" +
     $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####}</b>\n" +
     $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +
-    $"<b>\U0001F4B0 兑换汇率：100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
+    $"<b>\U0001F4B0 专属兑换汇率：100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
     $"<code>\U0001F4B8 币圈今日恐惧与贪婪指数：{today} {fearGreedDescription}</code>\n" +                 
     $"<code>\U0001F4B8 比特币价格 ≈ {bitcoinPrice} USDT    {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </code>\n" +
-    $"<code>\U0001F4B8 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </code>\n" ;
+    //$"<code>\U0001F4B8 比特币合约多空比：{btcTopTradersRatio}</code>\n" +
+    $"<code>\U0001F4B8 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </code>\n" +
+    $"<code>\U0001F4B8 比特币合约多空比：{btcTopTradersRatio}</code>\n" +    
+    $"<code>\U0001F4B8 以太坊合约多空比：{ethTopTradersRatio}</code>\n";
     //$"<code>\U0001F4B8 全网24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</code>\n" +     
    // $"<code>\U0001F4B8 以太坊1小时合约： {ethLongRate:#.##}% 做多  {ethShortRate:#.##}% 做空</code>\n" +
    // $"<code>\U0001F4B8 比特币24小时合约：{btcLongRate:#.##}% 做多  {btcShortRate:#.##}% 做空</code>\n" ;
