@@ -5000,29 +5000,26 @@ static async Task<string> GetTopTradersRatio(string symbol)
     return " 0% / 0%"; // 返回0%的多空比
 }
 
-    // 获取比特币和以太坊的大户多空比
-    var btcTopTradersRatio = await GetTopTradersRatio("BTC");
-    var ethTopTradersRatio = await GetTopTradersRatio("ETH");
-    
+    // 启动所有异步任务
+    var btcTopTradersRatioTask = GetTopTradersRatio("BTC");
+    var ethTopTradersRatioTask = GetTopTradersRatio("ETH");
     var rateTask = rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
     var fearAndGreedIndexTask = GetFearAndGreedIndexAsync();
     var cryptoPricesTask = GetCryptoPricesAsync(new[] { "bitcoin", "ethereum" });
     var currencyRatesTask = GetCurrencyRatesAsync();
     var okxPriceTask = GetOkxPriceAsync("USDT", "CNY", "all");
-    //var h24TotalVolUsdTask = GetH24TotalVolUsdAsync("https://open-api.coinglass.com/public/v2/liquidation_info?time_type=h24&symbol=all", "9e8ff0ca25f14355a015972f21f162de");
-    //var btcLongShortTask = GetH24LongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h24&symbol=BTC", "9e8ff0ca25f14355a015972f21f162de");
-    //var ethLongShortTask = GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
 
-    //await Task.WhenAll(rateTask, fearAndGreedIndexTask, cryptoPricesTask, currencyRatesTask, okxPriceTask, h24TotalVolUsdTask, btcLongShortTask, ethLongShortTask);
+    // 等待所有任务完成
+    await Task.WhenAll(btcTopTradersRatioTask, ethTopTradersRatioTask, rateTask, fearAndGreedIndexTask, cryptoPricesTask, currencyRatesTask, okxPriceTask);
 
+    // 获取所有任务的结果
+    var btcTopTradersRatio = await btcTopTradersRatioTask;
+    var ethTopTradersRatio = await ethTopTradersRatioTask;
     var rate = await rateTask;
     var (today, yesterday, weekly, monthly) = await fearAndGreedIndexTask;
     var (prices, changes) = await cryptoPricesTask;
     var currencyRates = await currencyRatesTask;
     var okxPrice = await okxPriceTask;
-    //var h24TotalVolUsd = await h24TotalVolUsdTask;
-    //var (btcLongRate, btcShortRate) = await btcLongShortTask;
-    //var (ethLongRate, ethShortRate) = await ethLongShortTask;
 
     string GetFearGreedDescription(int value)
     {
