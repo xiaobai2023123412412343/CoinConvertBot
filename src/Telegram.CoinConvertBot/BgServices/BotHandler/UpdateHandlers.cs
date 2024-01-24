@@ -5423,7 +5423,16 @@ if (update.Type == UpdateType.CallbackQuery)
                 From = callbackQuery.From
             };
             await BotOnMessageReceived(botClient, fakeMessage);
-            break;             
+            break;   
+        case "energy_intro": // 处理群聊资料按钮的回调
+            fakeMessage = new Message
+            {
+                Text = "能量",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
+            break;              
 
         // 处理其他回调...
     }
@@ -8076,13 +8085,33 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
         keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
         keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后不会消失。
 
-        return await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: msg,
-            replyMarkup: keyboard,
-            parseMode: ParseMode.Html,
-            disableWebPagePreview: true // 添加这一行来禁用链接预览
-        );
+    // 发送带有回复键盘的消息
+    var sentMessage = await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: msg,
+        replyMarkup: keyboard,
+        parseMode: ParseMode.Html,
+        disableWebPagePreview: true
+    );
+
+    // 等待 0.1 秒
+    await Task.Delay(100);
+
+    // 创建内联键盘
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("更多关于波场能量介绍", "energy_intro") // 新增的按钮
+        }
+    });
+
+    // 发送带有内联键盘的消息
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "点击按钮了解更多：",
+        replyMarkup: inlineKeyboard
+    );
     }
 
     // 在这里添加一个返回空消息的语句
