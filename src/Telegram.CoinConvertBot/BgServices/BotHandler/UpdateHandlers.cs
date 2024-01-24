@@ -4980,20 +4980,20 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
     var cryptoPricesTask = GetCryptoPricesAsync(new[] { "bitcoin", "ethereum" });
     var currencyRatesTask = GetCurrencyRatesAsync();
     var okxPriceTask = GetOkxPriceAsync("USDT", "CNY", "all");
-    var h24TotalVolUsdTask = GetH24TotalVolUsdAsync("https://open-api.coinglass.com/public/v2/liquidation_info?time_type=h24&symbol=all", "9e8ff0ca25f14355a015972f21f162de");
-    var btcLongShortTask = GetH24LongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h24&symbol=BTC", "9e8ff0ca25f14355a015972f21f162de");
-    var ethLongShortTask = GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
+    //var h24TotalVolUsdTask = GetH24TotalVolUsdAsync("https://open-api.coinglass.com/public/v2/liquidation_info?time_type=h24&symbol=all", "9e8ff0ca25f14355a015972f21f162de");
+    //var btcLongShortTask = GetH24LongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h24&symbol=BTC", "9e8ff0ca25f14355a015972f21f162de");
+    //var ethLongShortTask = GetH1EthLongShortAsync("https://open-api.coinglass.com/public/v2/long_short?time_type=h1&symbol=ETH", "9e8ff0ca25f14355a015972f21f162de");
 
-    await Task.WhenAll(rateTask, fearAndGreedIndexTask, cryptoPricesTask, currencyRatesTask, okxPriceTask, h24TotalVolUsdTask, btcLongShortTask, ethLongShortTask);
+    //await Task.WhenAll(rateTask, fearAndGreedIndexTask, cryptoPricesTask, currencyRatesTask, okxPriceTask, h24TotalVolUsdTask, btcLongShortTask, ethLongShortTask);
 
     var rate = await rateTask;
     var (today, yesterday, weekly, monthly) = await fearAndGreedIndexTask;
     var (prices, changes) = await cryptoPricesTask;
     var currencyRates = await currencyRatesTask;
     var okxPrice = await okxPriceTask;
-    var h24TotalVolUsd = await h24TotalVolUsdTask;
-    var (btcLongRate, btcShortRate) = await btcLongShortTask;
-    var (ethLongRate, ethShortRate) = await ethLongShortTask;
+    //var h24TotalVolUsd = await h24TotalVolUsdTask;
+    //var (btcLongRate, btcShortRate) = await btcLongShortTask;
+    //var (ethLongRate, ethShortRate) = await ethLongShortTask;
 
     string GetFearGreedDescription(int value)
     {
@@ -5021,16 +5021,16 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
     var usdRate = 1 / usdRateTuple.Item1;
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
-string advertisementText = $"—————————<b>合约大数据</b>—————————\n" +
+string advertisementText = $"—————————<b>数据集合</b>—————————\n" +
     $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####}</b>\n" +
     $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +
     $"<b>\U0001F4B0 兑换汇率：100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
     $"<code>\U0001F4B8 币圈今日恐惧与贪婪指数：{today} {fearGreedDescription}</code>\n" +                 
     $"<code>\U0001F4B8 比特币价格 ≈ {bitcoinPrice} USDT    {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </code>\n" +
-    $"<code>\U0001F4B8 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </code>\n" +
-    $"<code>\U0001F4B8 全网24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</code>\n" +     
-    $"<code>\U0001F4B8 以太坊1小时合约： {ethLongRate:#.##}% 做多  {ethShortRate:#.##}% 做空</code>\n" +
-    $"<code>\U0001F4B8 比特币24小时合约：{btcLongRate:#.##}% 做多  {btcShortRate:#.##}% 做空</code>\n" ;
+    $"<code>\U0001F4B8 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </code>\n" ;
+    //$"<code>\U0001F4B8 全网24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</code>\n" +     
+   // $"<code>\U0001F4B8 以太坊1小时合约： {ethLongRate:#.##}% 做多  {ethShortRate:#.##}% 做空</code>\n" +
+   // $"<code>\U0001F4B8 比特币24小时合约：{btcLongRate:#.##}% 做多  {btcShortRate:#.##}% 做空</code>\n" ;
             
             
 string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
