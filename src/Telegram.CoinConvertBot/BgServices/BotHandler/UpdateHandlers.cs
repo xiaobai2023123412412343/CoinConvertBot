@@ -95,6 +95,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//USDT交易监控代码    
 // 存储用户ID、波场地址和最后一次交易时间戳的字典
 private static Dictionary<(long UserId, string TronAddress), (string TronAddress, long LastTransactionTimestamp)> userTronTransactions = new Dictionary<(long, string), (string, long)>();
 // 存储用户ID和对应的定时器
