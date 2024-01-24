@@ -8011,6 +8011,10 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
  100 USDT = {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX ≈ {(5m * 20) * usdtPrice} CNY
  500 USDT = {(5m * 100).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX ≈ {(5m * 100) * usdtPrice} CNY
 1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX≈ {(5m * 200) * usdtPrice} CNY
+
+转账费用：（浮动）
+对方地址有u：13.3959 TRX - 13.7409 TRX 
+对方地址无u：27.2559 TRX - 27.6009 TRX 
 </code>
 <b>机器人收款地址:(↓点击自动复制↓</b>):
         
