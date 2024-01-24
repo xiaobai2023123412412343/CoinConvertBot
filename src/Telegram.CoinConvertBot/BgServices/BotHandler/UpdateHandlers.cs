@@ -8102,14 +8102,14 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     {
         new [] // 第一行按钮
         {
-            InlineKeyboardButton.WithCallbackData("更多关于波场能量介绍", "energy_intro") // 新增的按钮
+            InlineKeyboardButton.WithCallbackData("更多关于波场地址转账手续费介绍", "energy_intro") // 新增的按钮
         }
     });
 
     // 发送带有内联键盘的消息
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: "点击按钮了解更多：",
+        text: "转账手续费与转账金额无关，主要看对方地址是否有USDT！",
         replyMarkup: inlineKeyboard
     );
     }
