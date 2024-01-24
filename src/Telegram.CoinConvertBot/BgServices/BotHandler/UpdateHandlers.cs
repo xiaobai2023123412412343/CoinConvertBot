@@ -6504,7 +6504,7 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
 }
 if (messageText.Contains("费用") || messageText.Contains("能量"))
 {
-    // 向用户发送多签介绍
+    // 向用户发送能量介绍
     string multisigText = @"波场手续费说明（⚠️务必仔细阅读⚠️）
 
 波场具有独特的资源模型，分为【带宽】和【能量】，每个账户初始具有 600 带宽 和 0 能量。
