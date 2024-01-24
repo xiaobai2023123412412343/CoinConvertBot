@@ -7632,6 +7632,16 @@ var USDT = USDTTask.Result;
 decimal todayIncome = Math.Round(todayIncomeTask.Result, 2);
 decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
 decimal totalIncome = Math.Round(totalIncomeTask.Result - 19045, 2);
+
+decimal requiredEnergy1 = 31895;
+decimal requiredEnergy2 = 64895;
+decimal energyPer100TRX = resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100;
+decimal requiredTRX1 = Math.Floor(requiredEnergy1 / (energyPer100TRX / 100)) + 1;
+decimal requiredTRX2 = Math.Floor(requiredEnergy2 / (energyPer100TRX / 100)) + 1;  
+decimal requiredBandwidth = 345;
+decimal bandwidthPer100TRX = resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100;
+decimal requiredTRXForBandwidth = Math.Floor(requiredBandwidth / (bandwidthPer100TRX / 100)) + 1;
+            
             
 var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
@@ -7639,11 +7649,16 @@ TRX余额： <b>{TRX}</b>
 USDT余额： <b>{USDT}</b>
 免费带宽： <b>{resource.FreeNetLimit - resource.FreeNetUsed}/{resource.FreeNetLimit}</b>
 质押带宽： <b>{resource.NetLimit - resource.NetUsed}/{resource.NetLimit}</b>
-质押能量： <b>{energyRemaining}/{resource.EnergyLimit}</b>
-————————————————————
+质押能量： <b>{energyRemaining}/{resource.EnergyLimit}</b>    
+————————质押TRX————————    
 带宽质押比：<b>100 TRX = {resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100:0.000} 带宽</b>
-能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>
-————————————————————
+能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>   
+    
+示例： 
+质押{requiredTRXForBandwidth} TRX = 345 带宽   
+质押{requiredTRX1} TRX = 31895 能量
+质押{requiredTRX2} TRX = 64895 能量     
+————————承兑账单————————    
 今日承兑：<b>{todayIncome} USDT</b>
 本月承兑：<b>{monthlyIncome} USDT</b>
 累计承兑：<b>{totalIncome} USDT</b>                
