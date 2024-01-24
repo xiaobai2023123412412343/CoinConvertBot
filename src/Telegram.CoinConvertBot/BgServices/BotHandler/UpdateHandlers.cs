@@ -6589,7 +6589,7 @@ if (messageText.Equals("/zijin", StringComparison.OrdinalIgnoreCase))
     }
 }    
 // 检查是否接收到了 z0 或 /usdt 消息，收到就查询USDT价格
-if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt"))
+if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt")| messageText.StartsWith("zo"))
 {
     // 启动查询USDT价格的方法
     _ = OkxPriceFetcher.GetUsdtPriceAsync(messageText)
