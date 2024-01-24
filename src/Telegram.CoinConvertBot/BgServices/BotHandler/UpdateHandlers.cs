@@ -6502,7 +6502,31 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
- 
+if (messageText.Contains("费用") || messageText.Contains("能量"))
+{
+    // 向用户发送多签介绍
+    string multisigText = @"波场手续费说明（⚠️务必仔细阅读⚠️）
+
+波场具有独特的资源模型，分为【带宽】和【能量】，每个账户初始具有 600 带宽 和 0 能量。
+转账USDT主要消耗能量，当账户可用能量不足时，燃烧TRX获取能量，燃烧的TRX就是我们常说的转账手续费。
+
+<b>转账消耗的能量与转账金额无关，与对方地址是否有USDT有关！</b>
+
+转账给有U的地址，消耗约 3.2万 能量；转账给没U的地址，消耗约 6.5万 能量。
+
+如果通过燃烧TRX获取3.2万能量，约需燃烧 13.39 TRX；如果通过燃烧TRX获取6.5万能量，约需燃烧 27.25 TRX。
+
+通过提前租赁能量，可以避免燃烧TRX来获取能量，为您的转账节省大量TRX：
+
+租赁3.2万能量/日，仅需10.00 TRX，节省 3.39 TRX (节省约30%)
+租赁6.5万能量/日，仅需18.00 TRX，节省 9.25 TRX (节省约52%)";
+    
+    await botClient.SendTextMessageAsync(
+    chatId: message.Chat.Id,
+    text: multisigText,
+    parseMode: ParseMode.Html
+);
+}  
 if (messageText.Equals("/zijin", StringComparison.OrdinalIgnoreCase))
 {
     try
