@@ -8094,8 +8094,8 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
         disableWebPagePreview: true
     );
 
-    // 等待 0.1 秒
-    await Task.Delay(100);
+    // 等待 0.01 秒
+    await Task.Delay(1);
 
     // 创建内联键盘
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
