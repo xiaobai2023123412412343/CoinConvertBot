@@ -5856,7 +5856,7 @@ if (message?.Text != null)
         {
             await HandleTranslateCommandAsync(botClient, message); // 在这里处理翻译命令
         } 
-else if (message?.Text != null && message.Text.StartsWith("z0"))
+else if (message?.Text != null && (message.Text.StartsWith("z0") || message.Text.StartsWith("zo")))
 {
     // 如果消息文本以 "z0" 开头，则不执行翻译
     return;
