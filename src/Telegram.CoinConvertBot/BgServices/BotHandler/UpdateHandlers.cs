@@ -1581,15 +1581,27 @@ catch (Exception ex)
 }
 
 // 存储用户ID和波场地址的字典
-private static Dictionary<long, string> userTronAddresses = new Dictionary<long, string>();
-// 存储用户ID和定时器的字典
-private static Dictionary<long, Timer> userTimers = new Dictionary<long, Timer>();    
+private static Dictionary<long, List<string>> userTronAddresses = new Dictionary<long, List<string>>();
+// 存储地址和定时器的字典
+private static Dictionary<(long UserId, string Address), Timer> userTimers = new Dictionary<(long UserId, string Address), Timer>();
+private static readonly object timerLock = new object();
 private static void StartMonitoring(ITelegramBotClient botClient, long userId, string tronAddress)
 {
     // 创建一个定时器来定期检查地址的TRX余额
     Timer timer = null;
     timer = new Timer(async _ =>
     {
+        bool timerExists;
+        lock (timerLock)
+        {
+            timerExists = userTimers.ContainsKey((userId, tronAddress));
+        }
+
+        if (!timerExists)
+        {
+            // 如果定时器已经不存在，就不执行回调逻辑
+            return;
+        }        
         var balance = await GetTronBalanceAsync(tronAddress);
         var roundedBalance = Math.Round(balance, 2); // 四舍五入到小数点后两位
         // 计算可供转账次数，这是新添加的代码
@@ -1611,10 +1623,10 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
                     // 用户阻止了机器人，或者用户注销了机器人，取消定时器任务
                     timer.Dispose();
                     timer = null; // 添加这行代码
-                    // 从字典中移除该用户的定时器和地址
-                    userTimers.Remove(userId);
-                    userTronAddresses.Remove(userId);
-                    return;
+        // 从字典中移除该用户的定时器和地址
+        var key = (userId, tronAddress);
+        userTimers.Remove(key);
+        RemoveAddressFromUser(userId, tronAddress);
                 }
                 else
                 {
@@ -1627,10 +1639,10 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
                 // 取消定时器任务
                 timer.Dispose();
                 timer = null; // 添加这行代码
-                // 从字典中移除该用户的定时器和地址
-                userTimers.Remove(userId);
-                userTronAddresses.Remove(userId);
-                return;
+        // 从字典中移除该用户的定时器和地址
+        var key = (userId, tronAddress);
+        userTimers.Remove(key);
+        RemoveAddressFromUser(userId, tronAddress);
             }
             finally
             {
@@ -1657,8 +1669,22 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
     }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
     // 将定时器和用户ID存储起来
-    userTimers[userId] = timer;
+    lock (timerLock)
+    {
+        userTimers[(userId, tronAddress)] = timer;
+    } 
 }
+private static void RemoveAddressFromUser(long userId, string tronAddress)
+{
+    if (userTronAddresses.TryGetValue(userId, out var addresses))
+    {
+        addresses.Remove(tronAddress);
+        if (addresses.Count == 0)
+        {
+            userTronAddresses.Remove(userId);
+        }
+    }
+}                                                                 
 // 处理绑定波场地址的命令
 private static async Task HandleBindTronAddressCommand(ITelegramBotClient botClient, Message message)
 {
@@ -1674,11 +1700,23 @@ private static async Task HandleBindTronAddressCommand(ITelegramBotClient botCli
             {
                 var userId = message.From.Id;
 
-                // 将地址和用户ID存储起来
-                userTronAddresses[userId] = tronAddress;
+                // 检查用户是否已经绑定了这个地址
+                if (userTronAddresses.TryGetValue(userId, out var addresses) && !addresses.Contains(tronAddress))
+                {
+                    addresses.Add(tronAddress);
+                }
+                else if (!userTronAddresses.ContainsKey(userId))
+                {
+                    userTronAddresses[userId] = new List<string> { tronAddress };
+                }
 
-                // 创建一个定时器来定期检查地址的TRX余额
-                StartMonitoring(botClient, userId, tronAddress);
+                // 检查是否已经有一个定时器在监控这个地址
+                var key = (userId, tronAddress);
+                if (!userTimers.ContainsKey(key))
+                {
+                    // 创建一个定时器来定期检查地址的TRX余额
+                    StartMonitoring(botClient, userId, tronAddress);
+                }
             }
         }
     }
@@ -7918,11 +7956,24 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
         await _bindRepository.DeleteAsync(bind);
     }
     // 停止向用户发送 TRX 余额不足的提醒
-    if (userTimers.TryGetValue(UserId, out var timer))
+    var key = (UserId, address);
+    lock (timerLock)
     {
-        timer.Dispose();
-        userTimers.Remove(UserId);
-    }    
+        if (userTimers.TryGetValue(key, out var timer))
+        {
+            timer.Dispose();
+            userTimers.Remove(key);
+        }
+    }
+
+    if (userTronAddresses.TryGetValue(UserId, out var addresses))
+    {
+        addresses.Remove(address);
+        if (addresses.Count == 0)
+        {
+            userTronAddresses.Remove(UserId);
+        }
+    }
     // 停止USDT监控
     StopUSDTMonitoring(UserId, address);
     Console.WriteLine($"用户 {UserId} 解绑地址 {address} 成功，取消监控USDT交易记录。");        
