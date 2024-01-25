@@ -103,7 +103,7 @@ private static Dictionary<(long UserId, string TronAddress), Timer> userMonitori
 // 存储用户ID、波场地址和失败计数器的字典
 private static Dictionary<(long UserId, string TronAddress), int> userNotificationFailures = new Dictionary<(long, string), int>();
 // 存储用户ID、波场地址和备注信息的字典
-private static Dictionary<string, (long UserId, string Note)> userAddressNotes = new Dictionary<string, (long, string)>();    
+private static Dictionary<(long UserId, string TronAddress), string> userAddressNotes = new Dictionary<(long, string), string>();
 private static void StopUSDTMonitoring(long userId, string tronAddress)
 {
     // 停止并移除定时器
@@ -258,7 +258,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                 var (counterUsdtBalance, counterTrxBalance, _) = await GetBalancesAsync(isOutgoing ? transaction.To : transaction.From);
 
                 // 获取备注信息
-                string note = userAddressNotes.TryGetValue(transaction.From, out var userInfo) && userInfo.UserId == userId ? userInfo.Note : "无";
+                string note = userAddressNotes.TryGetValue((userId, tronAddress), out var userNote) ? userNote : "无";
 
                  // 获取交易费用
                  decimal transactionFee = await GetTransactionFeeAsync(transaction.TransactionId);
@@ -6933,11 +6933,23 @@ if (messageText.Contains("绑定") && messageText.Contains("备注"))
     if (parts.Length >= 3 && Regex.IsMatch(parts[1], @"^T[A-Za-z0-9]{33}$"))
     {
         var tronAddress = parts[1];
-        var noteIndex = Array.IndexOf(parts, "备注") + 1;
-        var note = noteIndex < parts.Length ? parts[noteIndex] : string.Empty;
+        var note = string.Empty;
+        // 查找以“备注”开头的段落
+        var noteKeywordIndex = Array.FindIndex(parts, part => part.StartsWith("备注"));
+        if (noteKeywordIndex != -1 && noteKeywordIndex < parts.Length - 1)
+        {
+            // 提取“备注”之后的所有文本作为备注信息
+            note = string.Join(" ", parts.Skip(noteKeywordIndex + 1));
+        }
+
+        // 如果备注信息超过10个字符，只保留前10个字符，并添加"..."
+        if (note.Length > 10)
+        {
+            note = note.Substring(0, 10) + "...";
+        }
 
         // 存储用户的地址和备注信息
-        userAddressNotes[tronAddress] = (message.From.Id, note);
+        userAddressNotes[(message.From.Id, tronAddress)] = note;
 
         // 向用户发送一条消息，告知他们地址和备注已经更新
         await botClient.SendTextMessageAsync(
@@ -6945,7 +6957,7 @@ if (messageText.Contains("绑定") && messageText.Contains("备注"))
             text: "地址备注已更新！"
         );
     }
-}        
+}
 //查询所有币价        
 if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText.Equals("trx", StringComparison.OrdinalIgnoreCase))
 {
