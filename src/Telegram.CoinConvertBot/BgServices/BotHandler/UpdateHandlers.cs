@@ -133,9 +133,20 @@ private static async Task<decimal> GetTransactionFeeAsync(string transactionId)
                 // 检查是否因为请求频率超过限制而失败
                 if (content.Contains("request rate exceeded"))
                 {
-                    // 如果是，等待2-4秒后重试
-                    var waitTime = new Random().Next(2000, 4000);
-                    await Task.Delay(waitTime);
+                    // 解析API返回的暂停时间
+                    var match = Regex.Match(content, @"suspended for (\d+) s");
+                    if (match.Success)
+                    {
+                        var waitTime = int.Parse(match.Groups[1].Value) * 1000; // 将秒转换为毫秒
+                        //Console.WriteLine($"请求频率超限，API暂停服务 {waitTime / 1000} 秒。");
+                        await Task.Delay(waitTime);
+                    }
+                    else
+                    {
+                        // 如果没有匹配到暂停时间，使用默认等待时间
+                        //Console.WriteLine("请求频率超限，未能解析出暂停时间，将默认等待 4 秒。");
+                        await Task.Delay(4000);
+                    }
                     continue;
                 }
                 else
