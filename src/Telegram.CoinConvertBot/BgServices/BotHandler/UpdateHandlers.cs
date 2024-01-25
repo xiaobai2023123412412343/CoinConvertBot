@@ -7951,28 +7951,34 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
     // 等待0.5秒
     await Task.Delay(500);
 
-    // 根据余额和交易笔数判断发送哪条文本消息
-    if (usdtBalance > 10000000m || transactions > 300000)
+// 根据余额和交易笔数判断发送哪条文本消息
+if (usdtBalance > 10000000m || transactions > 300000)
+{
+    // 如果超过阈值，先发送TRX余额监控启动的消息
+    if (!skipTRXMonitoring)
     {
-        // 如果超过阈值，先发送TRX余额监控启动的消息
-        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
-        // 等待0.5秒
-        await Task.Delay(500);
-        // 然后发送疑似交易所地址的警告消息
-        string warningMessage = $"疑似交易所地址：\n" +
-                                $"余额：<b>{usdtBalance.ToString("#,##0.##")} USDT，" +
-                                $"{transactions}次交易</b>\n暂不支持监听交易所地址！";
-        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: warningMessage, parseMode: ParseMode.Html);
-    }
-    else
-    {
-        // 如果没有超过阈值，发送USDT交易监听启动的消息
-        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "USDT交易监听已启动...", parseMode: ParseMode.Html);
-        // 等待0.5秒
-        await Task.Delay(500);
-        // 然后发送TRX余额监控启动的消息
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
     }
+    // 等待0.5秒
+    await Task.Delay(500);
+    // 然后发送疑似交易所地址的警告消息
+    string warningMessage = $"疑似交易所地址：\n" +
+                            $"余额：<b>{usdtBalance.ToString("#,##0.##")} USDT，" +
+                            $"{transactions}次交易</b>\n暂不支持监听交易所地址！";
+    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: warningMessage, parseMode: ParseMode.Html);
+}
+else
+{
+    // 如果没有超过阈值，发送USDT交易监听启动的消息
+    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "USDT交易监听已启动...", parseMode: ParseMode.Html);
+    // 等待0.5秒
+    await Task.Delay(500);
+    // 然后发送TRX余额监控启动的消息，如果没有跳过TRX监控
+    if (!skipTRXMonitoring)
+    {
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
+    }
+}
 
     // 这里返回一个消息对象或者null
     return await Task.FromResult<Message>(null);
