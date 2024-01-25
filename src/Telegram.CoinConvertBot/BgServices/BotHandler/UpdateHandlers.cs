@@ -102,6 +102,8 @@ private static Dictionary<(long UserId, string TronAddress), (string TronAddress
 private static Dictionary<(long UserId, string TronAddress), Timer> userMonitoringTimers = new Dictionary<(long, string), Timer>();
 // 存储用户ID、波场地址和失败计数器的字典
 private static Dictionary<(long UserId, string TronAddress), int> userNotificationFailures = new Dictionary<(long, string), int>();
+// 存储用户ID、波场地址和备注信息的字典
+private static Dictionary<string, (long UserId, string Note)> userAddressNotes = new Dictionary<string, (long, string)>();    
 private static void StopUSDTMonitoring(long userId, string tronAddress)
 {
     // 停止并移除定时器
@@ -255,6 +257,9 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                 var (userUsdtBalance, userTrxBalance, _) = await GetBalancesAsync(address);
                 var (counterUsdtBalance, counterTrxBalance, _) = await GetBalancesAsync(isOutgoing ? transaction.To : transaction.From);
 
+                // 获取备注信息
+                string note = userAddressNotes.TryGetValue(transaction.From, out var userInfo) && userInfo.UserId == userId ? userInfo.Note : "无";
+
                  // 获取交易费用
                  decimal transactionFee = await GetTransactionFeeAsync(transaction.TransactionId);
                  // 判断交易费用是“我方出”还是“对方出”
@@ -265,6 +270,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"{transactionType}金额：<b>{amount}</b>\n" +
                               $"交易时间：<b>{transactionTime}</b>\n" +
                               $"监听地址： <code>{address}</code>\n" +
+                              $"地址备注：<b>{note}</b>\n" + // 插入备注信息
                               $"地址余额：<b>{userUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{userTrxBalance.ToString("#,##0.##")} TRX</b>\n" +
                               $"------------------------------------------------------------------------\n" +
                               $"对方地址： <code>{(isOutgoing ? transaction.To : transaction.From)}</code>\n" +
@@ -6919,6 +6925,27 @@ else if (messageText.StartsWith("取消监控 "))
         await PriceMonitor.Unmonitor(botClient, message.Chat.Id, symbol);
     }
 }
+// 检查是否接收到了包含“绑定”和“备注”的消息
+if (messageText.Contains("绑定") && messageText.Contains("备注"))
+{
+    var parts = messageText.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+    // 确保消息格式正确，并且包含波场地址
+    if (parts.Length >= 3 && Regex.IsMatch(parts[1], @"^T[A-Za-z0-9]{33}$"))
+    {
+        var tronAddress = parts[1];
+        var noteIndex = Array.IndexOf(parts, "备注") + 1;
+        var note = noteIndex < parts.Length ? parts[noteIndex] : string.Empty;
+
+        // 存储用户的地址和备注信息
+        userAddressNotes[tronAddress] = (message.From.Id, note);
+
+        // 向用户发送一条消息，告知他们地址和备注已经更新
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "地址备注已更新！"
+        );
+    }
+}        
 //查询所有币价        
 if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText.Equals("trx", StringComparison.OrdinalIgnoreCase))
 {
