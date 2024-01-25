@@ -1627,9 +1627,12 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
         {
             try
             {
+                // 获取地址备注信息
+                string note = userAddressNotes.TryGetValue((userId, tronAddress), out var userNote) ? userNote : "";
+                string noteMessagePart = !string.IsNullOrEmpty(note) ? $"地址备注信息：<b>{note}</b>\n" : "";
                 await botClient.SendTextMessageAsync(
                     chatId: userId,
-                    text: $"<b>温馨提示：</b>\n您绑定的地址：<code>{tronAddress}</code>\n\n⚠️ TRX余额只剩：{roundedBalance}，剩余可供转账：{transferTimes}次 ⚠️\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
+                    text: $"<b>温馨提示：</b>\n您绑定的地址：<code>{tronAddress}</code>\n{noteMessagePart}\n⚠️ TRX余额只剩：{roundedBalance}，剩余可供转账：{transferTimes}次 ⚠️\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
                     parseMode: ParseMode.Html
                 );
             }
