@@ -7813,6 +7813,9 @@ USDT余额： <b>{USDT}</b>
     {
         return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "绑定失败，请私聊机器人进行绑定！");
     }
+// 检查是否包含"TRX"，如果包含则不启动TRX余额检查
+bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.OrdinalIgnoreCase));
+            
             if (address.StartsWith("T") && address.Length == 34)
             {
         // 检查地址是否为"TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv"
@@ -7834,8 +7837,11 @@ USDT余额： <b>{USDT}</b>
                     bind.UserName = $"@{from.Username}";
                     bind.FullName = $"{from.FirstName} {from.LastName}";
                     await _bindRepository.InsertAsync(bind);
-                    // 启动定时器来监控这个地址的TRX余额
-                    StartMonitoring(botClient, UserId, address);
+    if (!skipTRXMonitoring)
+    {
+        // 启动定时器来监控这个地址的TRX余额
+        StartMonitoring(botClient, UserId, address);
+    }
                      // 启动定时器来监控这个地址的交易
                     StartUSDTMonitoring(botClient, UserId, address);
                     Console.WriteLine($"用户 {UserId} 绑定地址 {address} 成功，开始监控USDT交易记录。");
@@ -7849,8 +7855,11 @@ USDT余额： <b>{USDT}</b>
                     bind.UserName = $"@{from.Username}";
                     bind.FullName = $"{from.FirstName} {from.LastName}";
                     await _bindRepository.UpdateAsync(bind);
-                    // 启动定时器来监控这个地址的TRX余额
-                    StartMonitoring(botClient, UserId, address);
+    if (!skipTRXMonitoring)
+    {
+        // 启动定时器来监控这个地址的TRX余额
+        StartMonitoring(botClient, UserId, address);
+    }
                    // 启动定时器来监控这个地址的交易
                    StartUSDTMonitoring(botClient, UserId, address);
                    Console.WriteLine($"用户 {UserId} 绑定地址 {address} 成功，开始监控USDT交易记录。");
