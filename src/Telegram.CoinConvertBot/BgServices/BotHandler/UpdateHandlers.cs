@@ -7755,8 +7755,22 @@ USDT余额： <b>{USDT}</b>
             if (message.From == null) return message;
             if (message.Text is not { } messageText)
                 return message;
-            var address = messageText.Split(' ').Last();
-                // 如果消息来自群聊，不进行绑定
+    // 分割消息文本
+    var parts = messageText.Split(' ');
+    if (parts.Length < 2)
+        return message; // 如果没有足够的部分，则返回原消息
+
+    // 尝试提取地址
+    var address = parts[1]; // 默认取第一个空格后的字符串作为地址
+
+    // 如果存在第三部分，检查第二部分是否符合地址格式
+    if (parts.Length > 2 && (!address.StartsWith("T") || address.Length != 34))
+    {
+        // 如果第二部分不符合地址格式，发送错误消息
+        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您输入的波场地址<b>{address}</b>有误！", parseMode: ParseMode.Html);
+    }
+
+    // 如果消息来自群聊，不进行绑定
     if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
     {
         return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "绑定失败，请私聊机器人进行绑定！");
