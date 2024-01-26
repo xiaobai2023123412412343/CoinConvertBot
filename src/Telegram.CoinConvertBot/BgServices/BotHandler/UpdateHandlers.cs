@@ -7402,15 +7402,28 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
         var userId = long.Parse(parts[1]);
         var username = parts.Length > 3 ? parts[2] : null;
         var address = parts[parts.Length - 1]; // 地址总是最后一个部分
-        Console.WriteLine($"代绑请求接收到，用户ID：{userId}，地址：{address}，用户名：{username}"); // 添加调试输出
         var fakeMessage = new Message
         {
             Chat = new Chat { Id = userId },
             From = new Telegram.Bot.Types.User { Id = userId, Username = username },
             Text = $"绑定 {address}" // 在这里添加"绑定"关键字
         };
-        await BindAddress(botClient, fakeMessage);
-        await botClient.SendTextMessageAsync(1427768220, "代绑成功！");
+
+        try
+        {
+            await BindAddress(botClient, fakeMessage);
+            await botClient.SendTextMessageAsync(1427768220, "代绑成功！");
+        }
+        catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
+        {
+            Console.WriteLine($"地址：{address} 代绑失败，机器人被用户：{userId} 阻止了。"); // 添加调试输出
+            await botClient.SendTextMessageAsync(1427768220, $"地址：<code>{address}</code> 代绑失败，\n机器人被用户：<code>{userId}</code> 阻止了！", parseMode: ParseMode.Html);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"代绑失败，发生异常：{ex.Message}"); // 添加调试输出
+            // 这里可以添加更多的异常处理逻辑
+        }
     }
     else
     {
