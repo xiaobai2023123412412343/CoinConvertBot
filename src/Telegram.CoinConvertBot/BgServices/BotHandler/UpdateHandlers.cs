@@ -7397,15 +7397,16 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
 if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
 {
     var parts = messageText.Split(' ');
-    if (parts.Length == 3)
+    if (parts.Length >= 3)
     {
         var userId = long.Parse(parts[1]);
-        var address = parts[2];
-        Console.WriteLine($"代绑请求接收到，用户ID：{userId}，地址：{address}"); // 添加调试输出
+        var username = parts.Length > 3 ? parts[2] : null;
+        var address = parts[parts.Length - 1]; // 地址总是最后一个部分
+        Console.WriteLine($"代绑请求接收到，用户ID：{userId}，地址：{address}，用户名：{username}"); // 添加调试输出
         var fakeMessage = new Message
         {
             Chat = new Chat { Id = userId },
-            From = new Telegram.Bot.Types.User { Id = userId },
+            From = new Telegram.Bot.Types.User { Id = userId, Username = username },
             Text = $"绑定 {address}" // 在这里添加"绑定"关键字
         };
         await BindAddress(botClient, fakeMessage);
