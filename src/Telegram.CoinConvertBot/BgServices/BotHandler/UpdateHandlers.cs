@@ -7401,15 +7401,24 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
     {
         var userId = long.Parse(parts[1]);
         var address = parts[2];
+        Console.WriteLine($"代绑请求接收到，用户ID：{userId}，地址：{address}"); // 添加调试输出
         var fakeMessage = new Message
         {
             Chat = new Chat { Id = userId },
             From = new Telegram.Bot.Types.User { Id = userId },
-            Text = address
+            Text = $"绑定 {address}" // 在这里添加"绑定"关键字
         };
         await BindAddress(botClient, fakeMessage);
         await botClient.SendTextMessageAsync(1427768220, "代绑成功！");
     }
+    else
+    {
+        Console.WriteLine($"代绑请求格式错误，接收到的消息：{messageText}"); // 添加调试输出
+    }
+}
+else
+{
+    Console.WriteLine($"接收到非代绑请求或请求者ID不正确，接收到的消息：{messageText}，发送者ID：{message.From.Id}"); // 添加调试输出
 }
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
 if (messageText.StartsWith("预支"))
