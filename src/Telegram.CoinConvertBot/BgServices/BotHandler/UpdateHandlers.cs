@@ -71,7 +71,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))  指定用户可以群发
 //发送用户名：**或ID：**  会触发储存资料
 //运行机器人发送 /yccl   启动全局异常处理    /qdgg  启动广告
-//代绑 id 地址  可以帮用户绑定地址
+//代绑 id 地址  可以帮用户绑定地址 代解 id 地址 帮用户解绑地址  原理是模仿用户发送 绑定指令/解绑指令
 //Console.WriteLine($"API URL: {apiUrl}, Response status code: {response.StatusCode}");//增加调试输出日志输出服务器日志 都可以用这个方法
 //                "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
 //                "f49353bd-db65-4719-a56c-064b2eb231bf",
@@ -5936,7 +5936,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
     }        
         var inputText = message.Text.Trim();
         // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
-        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑)");
+        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解)");
 
         // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
         if (isBindOrUnbindCommand)
@@ -7430,7 +7430,42 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
         Console.WriteLine($"代绑请求格式错误，接收到的消息：{messageText}"); // 添加调试输出
     }
 }
+if (messageText.StartsWith("代解") && message.From.Id == 1427768220)
+{
+    var parts = messageText.Split(' ');
+    if (parts.Length >= 3)
+    {
+        var userId = long.Parse(parts[1]);
+        var username = parts.Length > 3 ? parts[2] : null;
+        var address = parts[parts.Length - 1]; // 地址总是最后一个部分
+        var fakeMessage = new Message
+        {
+            Chat = new Chat { Id = userId },
+            From = new Telegram.Bot.Types.User { Id = userId, Username = username },
+            Text = $"解绑 {address}" // 在这里添加"解绑"关键字
+        };
 
+        try
+        {
+            await UnBindAddress(botClient, fakeMessage); // 使用您已有的UnBindAddress方法
+            await botClient.SendTextMessageAsync(1427768220, "代解成功！");
+        }
+        catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
+        {
+            Console.WriteLine($"地址：{address}\n代解失败，机器人被用户：{userId} 阻止了。"); // 添加调试输出
+            await botClient.SendTextMessageAsync(1427768220, $"地址：<code>{address}</code>\n代解失败，机器人被用户：<code>{userId}</code> 阻止了！", parseMode: ParseMode.Html);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"代解失败，发生异常：{ex.Message}"); // 添加调试输出
+            // 这里可以添加更多的异常处理逻辑
+        }
+    }
+    else
+    {
+        Console.WriteLine($"代解请求格式错误，接收到的消息：{messageText}"); // 添加调试输出
+    }
+}
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
 if (messageText.StartsWith("预支"))
 {
