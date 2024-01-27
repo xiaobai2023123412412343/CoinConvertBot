@@ -3009,7 +3009,7 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
                           "资金费率：<code>发送 /zijin 即可查询币安永续合约资金费正负前五币种以及资金费率！</code>\n\n" +      
                           "涨跌榜单：<code>发送 /faxian 即可查询币安加密货币连续上涨或下跌榜单TOP5</code>\n\n" +                  
                           "地址监听：<code>绑定您的钱包地址，即可开启交易通知！一有交易就提示，假U，假截图，完全不起作用。发送：绑定 Txxxxxxx(您的钱包地址，，中间有个空格)即可完成绑定！ 注：为了不浪费服务器资源，暂不支持监听交易所地址，判定标准为：钱包余额大于1000万USDT或累计交易笔数大于30万笔！同时0.01USDT以下的交易将会被过滤掉！ </code>\n\n" +
-                          "能量监控：<code>使用前发送：绑定 Txxxxxxx(您的钱包地址，中间有个空格)绑定钱包地址，当TRX余额不足100时机器人会自动下发提醒！</code>\n\n" +            
+                          //"能量监控：<code>使用前发送：绑定 Txxxxxxx(您的钱包地址，中间有个空格)绑定钱包地址，当TRX余额不足100时机器人会自动下发提醒！</code>\n\n" +            
                           "防骗助手：<code>把机器人拉进群聊并设置为管理员，当群内成员更改名字或用户名后，机器人会发送资料变更提醒，以防被骗！</code>\n\n" +
                           "授权查询：<code>在任意群组发送波场地址即可查询该地址授权情况，支持查询USDT和USDC授权！</code>\n\n" +    
                           "实时u价：<code>发送 z0 或者 /usdt 返回okx实时usdt买入卖出价格表</code>\n\n" +                
@@ -3023,6 +3023,7 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
                           "实时查看：<code>如果想自动获取TRX-比特币-美元-USDT等在内的所有汇率，把机器人拉到群里即可，24小时自动推送！（注：如果发现推送停止，把机器人移出群重新拉群即可恢复推送！）</code>\n\n" +
                           "关于ID：<code>直接发送id自动返回用户ID，群内发送会返回用户ID以及本群群ID！ </code>\n\n" +
                           "群里使用：<code>所有功能都可在机器人私聊使用，如果在群里，需要设置机器人为管理或者回复机器人消息才可使用！</code>\n\n" +
+                          "管理员：<code>机器人管理员额外支持用户列表管理，地址管理，群聊列表，双向回复，承兑账单等功能！</code>\n\n" +             
                           "机器人兑换过程公平公正公开，交易记录全开放，发送：<code>兑换记录</code> 自动返回近期USDT收入以及TRX转出记录，欢迎监督！\n\n" +
                           "\U0001F449        本机器人源码出售，如有需要可联系" + adminLinkText + "      \U0001F448";
 
