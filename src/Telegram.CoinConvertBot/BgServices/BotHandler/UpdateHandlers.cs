@@ -7721,7 +7721,55 @@ async Task<decimal> GetMonthlyUSDTIncomeAsync(string ReciveAddress, string contr
 
     return usdtIncome;
 }
+async Task<decimal> GetYearlyUSDTIncomeAsync(string ReciveAddress, string contractAddress)
+{
+    const int PageSize = 200; // 每页查询的交易记录数量，最大值为 200
+    int currentPage = 0;
 
+    // 获取今年1月1号零点的时间戳
+    var firstDayOfYear = new DateTime(DateTime.Today.Year, 1, 1);
+    var firstDayOfYearMidnight = new DateTimeOffset(firstDayOfYear).ToUnixTimeSeconds();
+
+    decimal usdtIncome = 0;
+    bool hasMoreData = true;
+
+    while (hasMoreData)
+    {
+        // 调用TronGrid API以获取交易记录
+        var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{ReciveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={firstDayOfYearMidnight * 1000}&contract_address={contractAddress}&limit={PageSize}&start={(currentPage * PageSize) + 1}";
+        var response = await httpClient.GetAsync(apiEndpoint);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // 请求失败，返回0
+            return 0;
+        }
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        JObject transactions = JObject.Parse(jsonResponse);
+
+        // 遍历交易记录并累计 USDT 收入
+        foreach (var tx in transactions["data"])
+        {
+            // 只统计 type 为 "Transfer" 的交易
+            if ((string)tx["type"] != "Transfer")
+            {
+                continue;
+            }            
+            
+            var rawAmount = (decimal)tx["value"];
+            usdtIncome += rawAmount / 1_000_000L;
+        }
+
+        // 判断是否还有更多数据
+        hasMoreData = transactions["data"].Count() == PageSize;
+        currentPage++;
+    }
+
+    return usdtIncome;
+}
 async Task<decimal> GetTodayUSDTIncomeAsync(string ReciveAddress, string contractAddress)
 {
     const int PageSize = 200; // 每页查询的交易记录数量，最大值为 200
@@ -7806,6 +7854,10 @@ var protocol = _wallet.GetProtocol();
 var Address = _myTronConfig.Value.Address;
 var addr = _wallet.ParseAddress(Address);
 
+// 这两个变量需要在使用它们的任务之前声明
+string targetReciveAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
+var contractAddress = _myTronConfig.Value.USDTContractAddress;            
+
 // 同时运行获取账户资源和账户信息的任务
 Task<TronNet.Protocol.AccountResourceMessage> resourceTask = protocol.GetAccountResourceAsync(new TronNet.Protocol.Account
 {
@@ -7820,18 +7872,18 @@ Task<TronNet.Protocol.Account> accountTask = protocol.GetAccountAsync(new TronNe
 var bandwidthTask = GetBandwidthAsync(Address);
 
 // 同时运行获取账户余额的任务
-var contractAddress = _myTronConfig.Value.USDTContractAddress;
 var contractClient = _contractClientFactory.CreateClient(ContractProtocol.TRC20);
 Task<decimal> USDTTask = contractClient.BalanceOfAsync(contractAddress, _wallet.GetAccount(_myTronConfig.Value.PrivateKey));
 
 // 同时运行获取今日、本月和总收入的任务
-string targetReciveAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
 Task<decimal> todayIncomeTask = GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
 Task<decimal> monthlyIncomeTask = GetMonthlyUSDTIncomeAsync(targetReciveAddress, contractAddress);
 Task<decimal> totalIncomeTask = GetTotalUSDTIncomeAsync(targetReciveAddress, contractAddress);
+Task<decimal> yearlyIncomeTask = GetYearlyUSDTIncomeAsync(targetReciveAddress, contractAddress); // 同时运行获取今年收入的任务            
 
 // 等待所有任务完成
-await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, todayIncomeTask, monthlyIncomeTask, totalIncomeTask);
+await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, todayIncomeTask, monthlyIncomeTask, totalIncomeTask, yearlyIncomeTask);
+
 
 // 获取任务的结果
 var resource = resourceTask.Result;
@@ -7842,6 +7894,7 @@ var USDT = USDTTask.Result;
 decimal todayIncome = Math.Round(todayIncomeTask.Result, 2);
 decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
 decimal totalIncome = Math.Round(totalIncomeTask.Result - 19045, 2);
+decimal yearlyIncome = Math.Round(yearlyIncomeTask.Result, 2); // 新增年度收入结果            
 
 decimal requiredEnergy1 = 31895;
 decimal requiredEnergy2 = 64895;
@@ -7870,6 +7923,7 @@ USDT余额： <b>{USDT}</b>
 ——————————————————————    
 今日承兑：<b>{todayIncome} USDT</b>
 本月承兑：<b>{monthlyIncome} USDT</b>
+年度承兑：<b>{yearlyIncome} USDT</b>    
 累计承兑：<b>{totalIncome} USDT</b>                
 ";
             // 创建包含两行，每行两个按钮的虚拟键盘
