@@ -7819,6 +7819,67 @@ async Task<decimal> GetTodayUSDTIncomeAsync(string ReciveAddress, string contrac
 
     return usdtIncome;
 }
+//获取今日TRX转账记录
+async Task<decimal> GetTodayTRXOutAsync(string ReciveAddress)
+{
+    const int PageSize = 200; // 每页查询的交易记录数量，最大值为 200
+    int currentPage = 0;
+
+    // 获取今天零点的时间戳
+    var todayMidnight = new DateTimeOffset(DateTime.Today).ToUnixTimeSeconds();
+
+    decimal trxOut = 0;
+    bool hasMoreData = true;
+
+    while (hasMoreData)
+    {
+        try
+        {
+            // 调用Tronscan API以获取交易记录
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            string apiEndpoint = $"https://apilist.tronscanapi.com/api/new/transfer?sort=-timestamp&count=true&limit={PageSize}&start={(currentPage * PageSize)}&address={ReciveAddress}&filterTokenValue=1";
+            var response = await httpClient.GetAsync(apiEndpoint);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                // 请求失败，返回0
+                return 0;
+            }
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            JObject transactions = JObject.Parse(jsonResponse);
+
+            // 遍历交易记录并累计 TRX 转出
+            foreach (var tx in transactions["data"])
+            {
+                // 只统计今日的转出记录
+                var timestamp = (long)tx["timestamp"];
+                var dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(timestamp);
+                var localDateTime = dateTimeOffset.ToOffset(TimeSpan.FromHours(8)).DateTime; // 转换为北京时间
+
+                if (localDateTime.Date != DateTime.Today)
+                {
+                    hasMoreData = false;
+                    break;
+                }
+
+                var rawAmount = (decimal)tx["amount"];
+                trxOut += rawAmount / 1_000_000L;
+            }
+
+            currentPage++;
+        }
+        catch (Exception ex)
+        {
+            // 记录错误
+            Console.WriteLine($"Error getting TRX out records: {ex.Message}");
+            return 0;
+        }
+    }
+
+    return trxOut;
+}          
         Message sentMessage = await action;
         async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
         {
@@ -7880,10 +7941,12 @@ Task<decimal> USDTTask = contractClient.BalanceOfAsync(contractAddress, _wallet.
 Task<decimal> todayIncomeTask = GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
 Task<decimal> monthlyIncomeTask = GetMonthlyUSDTIncomeAsync(targetReciveAddress, contractAddress);
 Task<decimal> totalIncomeTask = GetTotalUSDTIncomeAsync(targetReciveAddress, contractAddress);
-Task<decimal> yearlyIncomeTask = GetYearlyUSDTIncomeAsync(targetReciveAddress, contractAddress); // 同时运行获取今年收入的任务            
+Task<decimal> yearlyIncomeTask = GetYearlyUSDTIncomeAsync(targetReciveAddress, contractAddress); // 同时运行获取今年收入的任务   
+Task<decimal> todayTRXOutTask = GetTodayTRXOutAsync(Address);//获取TRX今日支出            
 
 // 等待所有任务完成
-await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, todayIncomeTask, monthlyIncomeTask, totalIncomeTask, yearlyIncomeTask);
+await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, todayIncomeTask, monthlyIncomeTask, totalIncomeTask, yearlyIncomeTask, todayTRXOutTask);
+
 
 
 // 获取任务的结果
@@ -7905,7 +7968,7 @@ decimal requiredTRX2 = Math.Floor(requiredEnergy2 / (energyPer100TRX / 100)) + 1
 decimal requiredBandwidth = 345;
 decimal bandwidthPer100TRX = resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100;
 decimal requiredTRXForBandwidth = Math.Floor(requiredBandwidth / (bandwidthPer100TRX / 100)) + 1;
-            
+decimal todayTRXOut = Math.Round(todayTRXOutTask.Result, 2);            
             
 var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
@@ -7922,7 +7985,7 @@ USDT余额： <b>{USDT}</b>
 质押{requiredTRX1} TRX = 31895 能量
 质押{requiredTRX2} TRX = 64895 能量     
 ——————————————————————    
-今日承兑：<b>{todayIncome} USDT</b>
+今日承兑：<b>{todayIncome} USDT  | {todayTRXOut} TRX</b>
 本月承兑：<b>{monthlyIncome} USDT</b>
 年度承兑：<b>{yearlyIncome} USDT</b>    
 累计承兑：<b>{totalIncome} USDT</b>                
