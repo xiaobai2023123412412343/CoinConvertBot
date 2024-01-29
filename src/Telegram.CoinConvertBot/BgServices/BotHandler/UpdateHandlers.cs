@@ -72,6 +72,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //发送用户名：**或ID：**  会触发储存资料
 //运行机器人发送 /yccl   启动全局异常处理    /qdgg  启动广告
 //代绑 id 地址  可以帮用户绑定地址 代解 id 地址 帮用户解绑地址  原理是模仿用户发送 绑定指令/解绑指令
+//添加群聊：群名字： 群ID： 群链接：
 //Console.WriteLine($"API URL: {apiUrl}, Response status code: {response.StatusCode}");//增加调试输出日志输出服务器日志 都可以用这个方法
 //                "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
 //                "f49353bd-db65-4719-a56c-064b2eb231bf",
