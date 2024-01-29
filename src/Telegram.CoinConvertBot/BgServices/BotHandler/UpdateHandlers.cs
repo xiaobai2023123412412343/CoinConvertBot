@@ -8194,8 +8194,8 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
 
     // 等待0.5秒
     await Task.Delay(500);
-if (!isProxyBinding) // 添加这个检查
-{    
+//if (!isProxyBinding) // 添加这个检查
+//{    
 // 根据余额和交易笔数判断发送哪条文本消息
 if (usdtBalance > 10000000m || transactions > 300000)
 {
@@ -8224,7 +8224,7 @@ else
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
     }
 }
-}
+//}
     // 这里返回一个消息对象或者null
     return await Task.FromResult<Message>(null);
             }
