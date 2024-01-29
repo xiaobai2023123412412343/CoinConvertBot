@@ -4409,13 +4409,17 @@ if (message.Chat.Type == ChatType.Private)
     {
         new [] // 第一行按钮
         {
-            InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
-            InlineKeyboardButton.WithCallbackData("查授权记录", "query_eye"), // 修改为CallbackData类型
+            //InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
+            //InlineKeyboardButton.WithCallbackData("查授权记录", "query_eye"), // 修改为CallbackData类型
+            InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
+            InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接		
         },
         new [] // 第二行按钮
         {
-            InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
+            //InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
+            //InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
+            InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
+            InlineKeyboardButton.WithCallbackData("查授权记录", "query_eye"), // 修改为CallbackData类型		    
         }
     });
 }
