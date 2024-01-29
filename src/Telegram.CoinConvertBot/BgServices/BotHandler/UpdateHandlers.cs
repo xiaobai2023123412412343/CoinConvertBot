@@ -8123,10 +8123,10 @@ USDT余额： <b>{USDT}</b>
     }
 
     // 如果消息来自群聊，不进行绑定
-    if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
-    {
-        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "绑定失败，请私聊机器人进行绑定！");
-    }
+   // if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
+  //  {
+   //     return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "绑定失败，请私聊机器人进行绑定！");
+ //   }
 // 检查是否包含"TRX"，如果包含则不启动TRX余额检查
 bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.OrdinalIgnoreCase));
             
@@ -8138,7 +8138,7 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "此为机器人收款地址，绑定失败，请绑定您的钱包地址！");
         }                
                 var from = message.From;
-                var UserId = message.Chat.Id;
+                var UserId = from.Id; // 使用发送消息的用户的ID
 
                 var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
                 var bind = await _bindRepository.Where(x => x.UserId == UserId && x.Address == address).FirstAsync();
