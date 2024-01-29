@@ -4434,7 +4434,7 @@ else
         new [] // 第二行按钮
         {
             InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithUrl("进群使用", shareLink), // 添加机器人到群组的链接
+            InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
         },
         new [] // 第三行按钮
         {
