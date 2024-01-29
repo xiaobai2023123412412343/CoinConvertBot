@@ -4409,8 +4409,8 @@ if (message.Chat.Type == ChatType.Private)
     {
         new [] // 第一行按钮
         {
-            InlineKeyboardButton.WithCallbackData("详细信息", "query_detail"), // 修改为CallbackData类型
-            InlineKeyboardButton.WithCallbackData("链上天眼", "query_eye"), // 修改为CallbackData类型
+            InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
+            InlineKeyboardButton.WithCallbackData("查授权记录", "query_eye"), // 修改为CallbackData类型
         },
         new [] // 第二行按钮
         {
@@ -5528,6 +5528,16 @@ if (update.Type == UpdateType.CallbackQuery)
             await BotOnMessageReceived(botClient, fakeMessage);
             break;              
 
+	        case "绑定": // 处理群聊资料按钮的回调
+            fakeMessage = new Message
+            {
+                Text = "绑定 tronAddress",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
+            break;  
+            
         // 处理其他回调...
     }
 }
@@ -5637,14 +5647,14 @@ if (update.Type == UpdateType.CallbackQuery)
             );
         }
     }
-    else if (callbackData[0] == "query_detail")
-    {
-        await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "查询详细信息为群聊查询特供，请在任意群组使用此功能！");
-    }
+   // else if (callbackData[0] == "query_detail")
+   // {
+   //     await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "查询详细信息为群聊查询特供，请在任意群组使用此功能！");
+   // }
     else if (callbackData[0] == "query_eye")
     {
-        await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "查询链上天眼为群聊查询特供，请在任意群组使用此功能！");
-    }    
+        await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "查询波场地址授权记录为群聊查询特供，请在任意群组使用此功能！");
+    }   
 }       
 if (update.Type == UpdateType.CallbackQuery)
 {
