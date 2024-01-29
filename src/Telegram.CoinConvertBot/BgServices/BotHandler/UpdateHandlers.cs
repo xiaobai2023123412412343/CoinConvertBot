@@ -7478,7 +7478,7 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
 
         try
         {
-            await BindAddress(botClient, fakeMessage);
+            await BindAddress(botClient, fakeMessage, isProxyBinding: true);
             await botClient.SendTextMessageAsync(1427768220, "代绑成功！");
         }
         catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
@@ -8081,7 +8081,7 @@ USDT余额： <b>{USDT}</b>
                                                         parseMode: ParseMode.Html,
                                                         replyMarkup: keyboard);
         }
-        async Task<Message> BindAddress(ITelegramBotClient botClient, Message message)
+        async Task<Message> BindAddress(ITelegramBotClient botClient, Message message, bool isProxyBinding = false)
         {
             if (message.From == null) return message;
             if (message.Text is not { } messageText)
@@ -8182,15 +8182,20 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
         var (usdtBalance, trxBalance, _) = await GetBalancesAsync(address);
         var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(address); // 交易笔数             
 
+    // 在发送绑定成功消息之前检查是否是代绑操作
+    if (!isProxyBinding)
+    {
         // 发送绑定成功和余额的消息
         string bindSuccessMessage = $"您已成功绑定：<code>{address}</code>\n" +
                                     $"余额：<b>{usdtBalance.ToString("#,##0.##")} USDT  |  {trxBalance.ToString("#,##0.##")} TRX</b>\n" +
                                     "当我们向您的钱包转账时，您将收到通知！";
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: bindSuccessMessage, parseMode: ParseMode.Html, replyMarkup: keyboard);
+    }
 
     // 等待0.5秒
     await Task.Delay(500);
-
+if (!isProxyBinding) // 添加这个检查
+{    
 // 根据余额和交易笔数判断发送哪条文本消息
 if (usdtBalance > 10000000m || transactions > 300000)
 {
@@ -8219,7 +8224,7 @@ else
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
     }
 }
-
+}
     // 这里返回一个消息对象或者null
     return await Task.FromResult<Message>(null);
             }
