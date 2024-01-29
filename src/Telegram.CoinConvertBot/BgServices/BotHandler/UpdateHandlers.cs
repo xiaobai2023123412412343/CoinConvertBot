@@ -6828,6 +6828,70 @@ if (message.Text.StartsWith("/bangdingdizhi") && message.From.Id == 1427768220)
     var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
     await SendAllBindingsInBatches(botClient, message.Chat.Id, _bindRepository);
 }
+// 处理添加群聊信息的命令
+try
+{
+    if (message.Type == MessageType.Text && message.Text.StartsWith("添加群聊：") && message.From.Id == 1427768220)
+    {
+        Console.WriteLine($"收到添加群聊指令，管理员ID：{message.From.Id}");
+        // 解析消息文本以获取群聊信息
+        var messageParts = message.Text.Split(new[] { "群名字：", "群ID：", "群链接：" }, StringSplitOptions.RemoveEmptyEntries);
+        if (messageParts.Length >= 2)
+        {
+            string groupName = messageParts[1].Trim();
+            if (long.TryParse(messageParts[2].Trim(), out long groupId))
+            {
+                string groupLink = messageParts.Length > 3 ? messageParts[3].Trim() : null;
+                // 检查是否已存在该群聊信息
+                var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == groupId);
+                if (existingGroupChat != null)
+                {
+                    // 如果已存在，则更新群聊信息
+                    existingGroupChat.Title = groupName;
+                    existingGroupChat.InviteLink = groupLink;
+                    Console.WriteLine($"更新群聊信息，群ID：{groupId}");
+                }
+                else
+                {
+                    // 如果不存在，则添加新的群聊信息
+                    GroupChats.Add(new GroupChat { Id = groupId, Title = groupName, InviteLink = groupLink });
+                    Console.WriteLine($"保存新的群聊信息，群ID：{groupId}");
+                }
+                // 将群ID添加到GroupManager中
+                GroupManager.AddGroupId(groupId);
+                Console.WriteLine($"群ID：{groupId} 已添加到广告群组列表");
+
+                // 回复管理员确认信息已保存
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "群聊资料已添加！"
+                );
+            }
+            else
+            {
+                Console.WriteLine("无法解析群ID");
+                // 回复管理员群ID无效
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "无法添加群聊资料：无效的群ID。"
+                );
+            }
+        }
+        else
+        {
+            Console.WriteLine("指令格式错误");
+            // 回复管理员指令格式错误
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "无法添加群聊资料：指令格式错误。"
+            );
+        }
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"处理添加群聊指令时发生异常：{ex.Message}");
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
