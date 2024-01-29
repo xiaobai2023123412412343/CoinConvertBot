@@ -4409,8 +4409,11 @@ if (message.Chat.Type == ChatType.Private)
     {
         new [] // 第一行按钮
         {
-            //InlineKeyboardButton.WithUrl("详细信息", $"https://tronscan.org/#/address/{tronAddress}"), // 链接到Tron地址的详细信息
-            //InlineKeyboardButton.WithUrl("链上天眼", $"https://www.oklink.com/cn/trx/address/{tronAddress}"), // 链接到欧意地址的详细信息
+            InlineKeyboardButton.WithCallbackData("详细信息", "query_detail"), // 修改为CallbackData类型
+            InlineKeyboardButton.WithCallbackData("链上天眼", "query_eye"), // 修改为CallbackData类型
+        },
+        new [] // 第二行按钮
+        {
             InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
             InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
         }
@@ -5634,6 +5637,14 @@ if (update.Type == UpdateType.CallbackQuery)
             );
         }
     }
+    else if (callbackData[0] == "query_detail")
+    {
+        await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "查询详细信息为群聊查询特供，请在任意群组使用此功能！");
+    }
+    else if (callbackData[0] == "query_eye")
+    {
+        await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "查询链上天眼为群聊查询特供，请在任意群组使用此功能！");
+    }    
 }       
 if (update.Type == UpdateType.CallbackQuery)
 {
