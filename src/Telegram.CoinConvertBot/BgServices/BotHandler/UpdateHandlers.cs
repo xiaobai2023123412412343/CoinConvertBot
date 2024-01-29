@@ -5937,7 +5937,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
     }        
         var inputText = message.Text.Trim();
         // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
-        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解)");
+        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊)");
 
         // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
         if (isBindOrUnbindCommand)
@@ -6449,7 +6449,8 @@ try
                         await botClient.SendTextMessageAsync(
                             chatId: message.Chat.Id,
                             text: sb.ToString(),
-                            parseMode: ParseMode.Html
+                            parseMode: ParseMode.Html,
+                            disableWebPagePreview: true // 关闭链接预览
                         );
                         Console.WriteLine($"发送群聊资料，群数量：{i + 1}");
                         sb.Clear();
