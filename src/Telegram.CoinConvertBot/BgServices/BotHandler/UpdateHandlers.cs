@@ -4919,7 +4919,8 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     },
     new [] // 第二行按钮
     {
-        InlineKeyboardButton.WithUrl("\U0001F4B9 一起穿越币圈牛熊 \U0001F4B9", "https://t.me/+b4NunT6Vwf0wZWI1"),
+        InlineKeyboardButton.WithCallbackData("资金费", $"zijinn"),
+        InlineKeyboardButton.WithCallbackData("涨跌榜", $"zhangdiee"),
     },
 });
 
@@ -5546,6 +5547,24 @@ if (update.Type == UpdateType.CallbackQuery)
             };
             await BotOnMessageReceived(botClient, fakeMessage);
             break;  
+	        case "zijinn": // 处理群聊资料按钮的回调
+            fakeMessage = new Message
+            {
+                Text = "/zijin",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
+            break; 	
+	        case "zhangdiee": // 处理群聊资料按钮的回调
+            fakeMessage = new Message
+            {
+                Text = "/faxian",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
+            break; 		    
             
         // 处理其他回调...
     }
