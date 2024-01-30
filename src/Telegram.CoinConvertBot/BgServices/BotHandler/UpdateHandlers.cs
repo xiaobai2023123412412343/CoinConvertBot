@@ -293,7 +293,8 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                 {
                     new [] // first row
                     {
-                        InlineKeyboardButton.WithUrl("交易详情", transactionUrl),
+			InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}"),    
+                        InlineKeyboardButton.WithUrl("交易详情", transactionUrl)
                     },
                     new [] // first row
                     {
@@ -5659,7 +5660,27 @@ if (update.Type == UpdateType.CallbackQuery)
     {
         await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "查询波场地址授权记录为群聊查询特供，请在任意群组使用此功能！");
     }   
-}       
+}
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data.Split(',');
+    if (callbackData[0] == "set_note")
+    {
+        // 从 CallbackData 中获取Tron地址
+        var tronAddress = callbackData[1];
+
+        // 创建备注地址指令
+        var message = "为您的每一个钱包设置单独的名字，方便您进行多钱包监听并识别：\n\n" +
+              $"\U0001F4B3  |  <code>{tronAddress}</code>\n\n" +
+              "<b>接下来 复制您的钱包地址 回复 如下消息 即可修改您的钱包地址备注：</b>\n\n" +
+              $"如：<code>绑定 {tronAddress} 备注 地址1</code>";
+
+        // 发送备注地址指令
+        await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, message, ParseMode.Html);
+    }
+    // handle other buttons...
+}	    
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
