@@ -293,13 +293,17 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                 {
                     new [] // first row
                     {
-			InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}"),    
-                        InlineKeyboardButton.WithUrl("交易详情", transactionUrl)
+			//InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}"),    
+                        //InlineKeyboardButton.WithUrl("交易详情", transactionUrl)
+                        InlineKeyboardButton.WithCallbackData("查自己", $"query_self,{address}"),
+                        InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}")				
                     },
                     new [] // first row
                     {
-                        InlineKeyboardButton.WithCallbackData("查自己", $"query_self,{address}"),
-                        InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}")
+                        //InlineKeyboardButton.WithCallbackData("查自己", $"query_self,{address}"),
+                        //InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}")
+			InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}"),    
+                        InlineKeyboardButton.WithUrl("交易详情", transactionUrl)				
                     }                   
                 });                
 
