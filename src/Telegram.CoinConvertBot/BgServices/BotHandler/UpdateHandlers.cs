@@ -6604,14 +6604,14 @@ if (messageText.Equals("地址监听", StringComparison.OrdinalIgnoreCase) || me
         var topRise = riseList.OrderByDescending(x => x.Days).Take(5);
         var topFall = fallList.OrderByDescending(x => x.Days).Take(5);
 
-        var reply = "<b>连续上涨TOP5：</b>\n";
+        var reply = "<b>币安连续上涨TOP5：</b>\n";
         foreach (var coin in topRise)
         {
             var symbol = coin.Symbol.Replace("USDT", "");
             reply += $"<code>{symbol}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
         }
 
-        reply += "\n<b>连续下跌TOP5：</b>\n";
+        reply += "\n<b>币安连续下跌TOP5：</b>\n";
         foreach (var coin in topFall)
         {
             var symbol = coin.Symbol.Replace("USDT", "");
@@ -6792,13 +6792,13 @@ else if (messageText.Equals("/faxian", StringComparison.OrdinalIgnoreCase))
     // 过滤出不包含TRX的下跌列表
     var topFall = fallList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
 
-    var reply = "<b>连续上涨TOP5：</b>\n";
+    var reply = "<b>币安连续上涨TOP5：</b>\n";
     foreach (var coin in topRise)
     {
         reply += $"<code>{coin.Symbol.Replace("USDT", "")}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
     }
 
-    reply += "\n<b>连续下跌TOP5：</b>\n";
+    reply += "\n<b>币安连续下跌TOP5：</b>\n";
     foreach (var coin in topFall)
     {
         reply += $"<code>{coin.Symbol.Replace("USDT", "")}</code>/USDT 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
@@ -6868,13 +6868,13 @@ if (messageText.Equals("/jihui", StringComparison.OrdinalIgnoreCase))
     // 过滤出不包含TRX的下跌列表
     var topFall = fallList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
 
-            var reply = "<b>连续上涨TOP5：</b>\n";
+            var reply = "<b>币安连续上涨TOP5：</b>\n";
             foreach (var coin in topRise)
             {
                 reply += $"{coin.Symbol.Replace("USDT", "/USDT")} 连涨{coin.Days}天  ${coin.Price.ToString("0.####")}\n";
             }
 
-            reply += "\n<b>连续下跌TOP5：</b>\n";
+            reply += "\n<b>币安连续下跌TOP5：</b>\n";
             foreach (var coin in topFall)
             {
                 reply += $"{coin.Symbol.Replace("USDT", "/USDT")} 连跌{coin.Days}天  ${coin.Price.ToString("0.####")}\n";
