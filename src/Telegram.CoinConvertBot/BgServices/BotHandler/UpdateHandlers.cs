@@ -5608,7 +5608,7 @@ if (update.Type == UpdateType.CallbackQuery)
             $"燃烧TRX获得能量：<b>{lastWeekEnergyBurn}</b>  |  质押能量：<b>{lastWeekEnergyUsage}</b>\n\n" +
             $"近30天能量消耗：总<b> {lastMonthEnergyUsageTotal}</b>\n" +
             $"燃烧TRX获得能量：<b>{lastMonthEnergyBurn}</b>  |  质押能量：<b>{lastMonthEnergyUsage}</b>\n" +
-            "---------------------------------------------------\n" +
+            "------------------------------------------------------------------\n" +
             $"<b>带宽：</b>\n" +
             $"昨日带宽消耗：总<b> {yesterdayNetUsageTotal}</b>\n" +
             $"燃烧TRX获得带宽：<b>{yesterdayNetBurn}</b>  |  免费带宽：<b>{yesterdayNetUsage}</b>\n\n" +
