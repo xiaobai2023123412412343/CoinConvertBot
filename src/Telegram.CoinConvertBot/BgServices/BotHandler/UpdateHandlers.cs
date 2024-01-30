@@ -5592,25 +5592,37 @@ if (update.Type == UpdateType.CallbackQuery)
         if (parts.Length > 1)
         {
             var tronAddress = parts[1];
+            // 首先回复正在统计的消息
+            await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "正在统计，请稍后...", cancellationToken: cancellationToken);
+
             // 调用之前定义的方法获取带宽和能量数据
             var (yesterdayNetUsage, yesterdayNetBurn, yesterdayNetUsageTotal, lastWeekNetUsage, lastWeekNetBurn, lastWeekNetUsageTotal, lastMonthNetUsage, lastMonthNetBurn, lastMonthNetUsageTotal) = await GetBandwidthUsageAsync(tronAddress);
             var (yesterdayEnergyUsage, yesterdayEnergyBurn, yesterdayEnergyUsageTotal, lastWeekEnergyUsage, lastWeekEnergyBurn, lastWeekEnergyUsageTotal, lastMonthEnergyUsage, lastMonthEnergyBurn, lastMonthEnergyUsageTotal) = await GetEnergyUsageAsync(tronAddress);
             
             // 构建响应消息
-            string resultText = $"地址：{tronAddress}\n\n" +
-            $"昨日能量消耗：总{yesterdayEnergyUsageTotal} 燃烧TRX获得能量：{yesterdayEnergyBurn} 使用质押能量：{yesterdayEnergyUsage}\n" +
-            $"近一周能量消耗：总{lastWeekEnergyUsageTotal} 燃烧TRX获得能量：{lastWeekEnergyBurn} 使用质押能量：{lastWeekEnergyUsage}\n" +
-            $"近一个月能量消耗：总{lastMonthEnergyUsageTotal} 燃烧TRX获得能量：{lastMonthEnergyBurn} 使用质押能量：{lastMonthEnergyUsage}\n\n" +
-            $"昨日带宽消耗：总{yesterdayNetUsageTotal} 燃烧TRX获得带宽：{yesterdayNetBurn} 免费带宽：{yesterdayNetUsage}\n" +
-            $"近一周带宽消耗：总{lastWeekNetUsageTotal} 燃烧TRX获得带宽：{lastWeekNetBurn} 免费带宽：{lastWeekNetUsage}\n" +
-            $"近一个月带宽消耗：总{lastMonthNetUsageTotal} 燃烧TRX获得带宽：{lastMonthNetBurn} 免费带宽：{lastMonthNetUsage}\n\n" +
+            string resultText = $"地址：<code>{tronAddress}</code>\n\n" +
+            $"<b>能量：</b>\n" +
+            $"昨日能量消耗：总<b> {yesterdayEnergyUsageTotal}</b>\n" +
+            $"燃烧TRX获得能量：<b>{yesterdayEnergyBurn}</b>  |  质押能量：<b>{yesterdayEnergyUsage}</b>\n\n" +
+            $"近7天能量消耗：总<b> {lastWeekEnergyUsageTotal}</b>\n" +
+            $"燃烧TRX获得能量：<b>{lastWeekEnergyBurn}</b>  |  质押能量：<b>{lastWeekEnergyUsage}</b>\n\n" +
+            $"近30天能量消耗：总<b> {lastMonthEnergyUsageTotal}</b>\n" +
+            $"燃烧TRX获得能量：<b>{lastMonthEnergyBurn}</b>  |  质押能量：<b>{lastMonthEnergyUsage}</b>\n" +
+            "---------------------------------------------------\n" +
+            $"<b>带宽：</b>\n" +
+            $"昨日带宽消耗：总<b> {yesterdayNetUsageTotal}</b>\n" +
+            $"燃烧TRX获得带宽：<b>{yesterdayNetBurn}</b>  |  免费带宽：<b>{yesterdayNetUsage}</b>\n\n" +
+            $"近7天带宽消耗：总 <b>{lastWeekNetUsageTotal}</b>\n" +
+            $"燃烧TRX获得带宽：<b>{lastWeekNetBurn}</b>  |  免费带宽：<b>{lastWeekNetUsage}</b>\n\n" +
+            $"近30天带宽消耗：总<b> {lastMonthNetUsageTotal}</b>\n" +
+            $"燃烧TRX获得带宽：<b>{lastMonthNetBurn}</b>  |  免费带宽：<b>{lastMonthNetUsage}</b>\n\n" +
             $"查询时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}";
 
-            // 发送消息
-            await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, resultText, ParseMode.Markdown, cancellationToken: cancellationToken);
+            // 发送统计完的消息
+            await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, resultText, ParseMode.Html, cancellationToken: cancellationToken);
         }
     }
-} 	    
+}	    
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
