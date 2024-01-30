@@ -4425,7 +4425,12 @@ if (message.Chat.Type == ChatType.Private)
             //InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
             InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
             InlineKeyboardButton.WithCallbackData("查授权记录", "query_eye"), // 修改为CallbackData类型		    
-        }
+        },
+        new [] // 第三行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("TRX消耗统计", $"trx_usage,{tronAddress}"), // 添加新的按钮
+	    InlineKeyboardButton.WithUrl("联系bot作者", "t.me/yifanfu") // 修改为打开链接的按钮      	
+        }	    
     });
 }
 else
@@ -4464,7 +4469,100 @@ else
         replyMarkup: inlineKeyboard // 添加内联键盘
     );
 }
+// 查询带宽消耗
+public static async Task<(decimal, decimal, decimal, decimal, decimal, decimal, decimal, decimal, decimal)> GetBandwidthUsageAsync(string tronAddress)
+{
+    string url = $"https://apilist.tronscanapi.com/api/account/analysis?address={tronAddress}&type=3"; // 注意这里的type=3
+    try
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            var response = await client.GetStringAsync(url);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var data = JsonSerializer.Deserialize<JsonElement>(response, options);
+            var bandwidthData = JsonSerializer.Deserialize<List<BandwidthData>>(data.GetProperty("data").GetRawText(), options)?.OrderBy(d => d.day).ToList();
 
+            if (bandwidthData == null || !bandwidthData.Any()) return (0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+            var yesterdayData = bandwidthData.TakeLast(1);
+            var lastWeekData = bandwidthData.TakeLast(7);
+            var lastMonthData = bandwidthData.TakeLast(30);
+
+            decimal yesterdayNetUsage = yesterdayData.Sum(d => d.net_usage);
+            decimal yesterdayNetBurn = yesterdayData.Sum(d => d.net_burn);
+            decimal yesterdayNetUsageTotal = yesterdayData.Sum(d => d.net_usage_total);
+
+            decimal lastWeekNetUsage = lastWeekData.Sum(d => d.net_usage);
+            decimal lastWeekNetBurn = lastWeekData.Sum(d => d.net_burn);
+            decimal lastWeekNetUsageTotal = lastWeekData.Sum(d => d.net_usage_total);
+
+            decimal lastMonthNetUsage = lastMonthData.Sum(d => d.net_usage);
+            decimal lastMonthNetBurn = lastMonthData.Sum(d => d.net_burn);
+            decimal lastMonthNetUsageTotal = lastMonthData.Sum(d => d.net_usage_total);
+
+            return (yesterdayNetUsage, yesterdayNetBurn, yesterdayNetUsageTotal, lastWeekNetUsage, lastWeekNetBurn, lastWeekNetUsageTotal, lastMonthNetUsage, lastMonthNetBurn, lastMonthNetUsageTotal);
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error fetching bandwidth usage: {ex.Message}");
+        return (0, 0, 0, 0, 0, 0, 0, 0, 0);
+    }
+}
+//查能量使用情况
+public static async Task<(decimal, decimal, decimal, decimal, decimal, decimal, decimal, decimal, decimal)> GetEnergyUsageAsync(string tronAddress)
+{
+    string url = $"https://apilist.tronscanapi.com/api/account/analysis?address={tronAddress}&type=2"; // 注意这里的type=2
+    try
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            var response = await client.GetStringAsync(url);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var data = JsonSerializer.Deserialize<JsonElement>(response, options);
+            var energyData = JsonSerializer.Deserialize<List<EnergyData>>(data.GetProperty("data").GetRawText(), options)?.OrderBy(d => d.day).ToList();
+
+            if (energyData == null || !energyData.Any()) return (0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+            var yesterdayData = energyData.TakeLast(1);
+            var lastWeekData = energyData.TakeLast(7);
+            var lastMonthData = energyData.TakeLast(30);
+
+            decimal yesterdayEnergyUsage = yesterdayData.Sum(d => d.energy_usage);
+            decimal yesterdayEnergyBurn = yesterdayData.Sum(d => d.energy_burn);
+            decimal yesterdayEnergyUsageTotal = yesterdayData.Sum(d => d.energy_usage_total);
+
+            decimal lastWeekEnergyUsage = lastWeekData.Sum(d => d.energy_usage);
+            decimal lastWeekEnergyBurn = lastWeekData.Sum(d => d.energy_burn);
+            decimal lastWeekEnergyUsageTotal = lastWeekData.Sum(d => d.energy_usage_total);
+
+            decimal lastMonthEnergyUsage = lastMonthData.Sum(d => d.energy_usage);
+            decimal lastMonthEnergyBurn = lastMonthData.Sum(d => d.energy_burn);
+            decimal lastMonthEnergyUsageTotal = lastMonthData.Sum(d => d.energy_usage_total);
+
+            return (yesterdayEnergyUsage, yesterdayEnergyBurn, yesterdayEnergyUsageTotal, lastWeekEnergyUsage, lastWeekEnergyBurn, lastWeekEnergyUsageTotal, lastMonthEnergyUsage, lastMonthEnergyBurn, lastMonthEnergyUsageTotal);
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error fetching energy usage: {ex.Message}");
+        return (0, 0, 0, 0, 0, 0, 0, 0, 0);
+    }
+}
+public class EnergyData
+{
+    public string day { get; set; }
+    public decimal energy_usage { get; set; }
+    public decimal energy_burn { get; set; }
+    public decimal energy_usage_total { get; set; }
+}
+public class BandwidthData
+{
+    public string day { get; set; }
+    public decimal net_usage { get; set; }
+    public decimal net_burn { get; set; }
+    public decimal net_usage_total { get; set; }
+}
 
 public static async Task<(decimal UsdtTotal, int TransferCount, bool IsError)> GetUsdtTransferTotalAsync(string fromAddress, string toAddress)
 {
@@ -5483,6 +5581,36 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 
         // ... 其他现有代码 ...
     }
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data;
+    // 假设callbackData是"trx_usage,TRON_ADDRESS"的形式
+    if (callbackData.StartsWith("trx_usage"))
+    {
+        var parts = callbackData.Split(',');
+        if (parts.Length > 1)
+        {
+            var tronAddress = parts[1];
+            // 调用之前定义的方法获取带宽和能量数据
+            var (yesterdayNetUsage, yesterdayNetBurn, yesterdayNetUsageTotal, lastWeekNetUsage, lastWeekNetBurn, lastWeekNetUsageTotal, lastMonthNetUsage, lastMonthNetBurn, lastMonthNetUsageTotal) = await GetBandwidthUsageAsync(tronAddress);
+            var (yesterdayEnergyUsage, yesterdayEnergyBurn, yesterdayEnergyUsageTotal, lastWeekEnergyUsage, lastWeekEnergyBurn, lastWeekEnergyUsageTotal, lastMonthEnergyUsage, lastMonthEnergyBurn, lastMonthEnergyUsageTotal) = await GetEnergyUsageAsync(tronAddress);
+            
+            // 构建响应消息
+            string resultText = $"地址：{tronAddress}\n\n" +
+            $"昨日能量消耗：总{yesterdayEnergyUsageTotal} 燃烧TRX获得能量：{yesterdayEnergyBurn} 使用质押能量：{yesterdayEnergyUsage}\n" +
+            $"近一周能量消耗：总{lastWeekEnergyUsageTotal} 燃烧TRX获得能量：{lastWeekEnergyBurn} 使用质押能量：{lastWeekEnergyUsage}\n" +
+            $"近一个月能量消耗：总{lastMonthEnergyUsageTotal} 燃烧TRX获得能量：{lastMonthEnergyBurn} 使用质押能量：{lastMonthEnergyUsage}\n\n" +
+            $"昨日带宽消耗：总{yesterdayNetUsageTotal} 燃烧TRX获得带宽：{yesterdayNetBurn} 免费带宽：{yesterdayNetUsage}\n" +
+            $"近一周带宽消耗：总{lastWeekNetUsageTotal} 燃烧TRX获得带宽：{lastWeekNetBurn} 免费带宽：{lastWeekNetUsage}\n" +
+            $"近一个月带宽消耗：总{lastMonthNetUsageTotal} 燃烧TRX获得带宽：{lastMonthNetBurn} 免费带宽：{lastMonthNetUsage}\n\n" +
+            $"查询时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+
+            // 发送消息
+            await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, resultText, ParseMode.Markdown, cancellationToken: cancellationToken);
+        }
+    }
+} 	    
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
