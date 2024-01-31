@@ -5632,6 +5632,14 @@ if (update.Type == UpdateType.CallbackQuery)
 var totalBurnedTrxYesterday = burnEnergyCost * yesterdayEnergyBurn + burnNetCost * yesterdayNetBurn;
 var totalBurnedTrxLastWeek = burnEnergyCost * lastWeekEnergyBurn + burnNetCost * lastWeekNetBurn;
 var totalBurnedTrxLastMonth = burnEnergyCost * lastMonthEnergyBurn + burnNetCost * lastMonthNetBurn;
+// 定义固定能量单价
+decimal fixedEnergyPrice = 0.00031352876m;
+
+// 计算现在的价格
+var currentPriceYesterday = Math.Round(fixedEnergyPrice * (yesterdayEnergyUsageTotal + yesterdayNetUsageTotal) + burnNetCost * yesterdayNetBurn, 2);
+var currentPriceLastWeek = Math.Round(fixedEnergyPrice * (lastWeekEnergyUsageTotal + lastWeekNetUsageTotal) + burnNetCost * lastWeekNetBurn, 2);
+var currentPriceLastMonth = Math.Round(fixedEnergyPrice * (lastMonthEnergyUsageTotal + lastMonthNetUsageTotal) + burnNetCost * lastMonthNetBurn, 2);
+		
             
             // 构建响应消息
             string resultText = $"地址：<code>{tronAddress}</code>\n\n" +
@@ -5651,10 +5659,14 @@ var totalBurnedTrxLastMonth = burnEnergyCost * lastMonthEnergyBurn + burnNetCost
             $"近30天带宽消耗：总<b> {lastMonthNetUsageTotal}</b>\n" +
             $"燃烧 <b>{burnNetCost * lastMonthNetBurn}TRX </b>获得带宽：<b>{lastMonthNetBurn}</b>  |  免费带宽：<b>{lastMonthNetUsage}</b>\n" +
 	    "------------------------------------------------------------------\n" +	 
-$"<b>总计：</b>\n" +
-$"昨日转账消耗：<b>{totalBurnedTrxYesterday} TRX</b>\n" +
-$"近7天转账消耗：<b>{totalBurnedTrxLastWeek} TRX</b>\n" +
-$"近30天转账消耗：<b>{totalBurnedTrxLastMonth} TRX</b>\n\n" +		    
+    $"<b>总计：</b>\n" +
+    $"昨日转账消耗：<b>{Math.Round(totalBurnedTrxYesterday, 2)} TRX</b>\n" +
+    $"近7天转账消耗：<b>{Math.Round(totalBurnedTrxLastWeek, 2)} TRX</b>\n" +
+    $"近30天转账消耗：<b>{Math.Round(totalBurnedTrxLastMonth, 2)} TRX</b>\n\n" +	
+    $"<b>通过提前租赁能量，可以节省大量TRX：</b>\n\n" +
+    $"昨日转账消耗：<del>{Math.Round(totalBurnedTrxYesterday, 2)} TRX</del>  <b>现只需： {currentPriceYesterday} TRX</b>\n" +
+    $"近7天转账消耗：<del>{Math.Round(totalBurnedTrxLastWeek, 2)} TRX</del>  <b>现只需： {currentPriceLastWeek} TRX</b>\n" +
+    $"近30天转账消耗：<del>{Math.Round(totalBurnedTrxLastMonth, 2)} TRX</del>  <b>现只需： {currentPriceLastMonth} TRX</b>\n\n" +		    
             $"查询时间：<b>{DateTime.Now:yyyy-MM-dd HH:mm:ss}</b>";
 
             // 发送统计完的消息
