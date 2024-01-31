@@ -5915,7 +5915,7 @@ if (update.Type == UpdateType.CallbackQuery)
         // 创建备注地址指令
         var message = "为您的每一个钱包设置单独的名字，方便您进行多钱包监听并识别：\n\n" +
               $"\U0001F4B3  |  <code>{tronAddress}</code>\n\n" +
-              "<b>接下来 复制您的钱包地址 回复 如下消息 即可修改您的钱包地址备注：</b>\n\n" +
+              "<b>请先复制您的钱包地址 回复 如下消息 即可修改您的钱包地址备注：</b>\n\n" +
               $"如：<code>绑定 {tronAddress} 备注 地址1</code>";
 
         // 发送备注地址指令
