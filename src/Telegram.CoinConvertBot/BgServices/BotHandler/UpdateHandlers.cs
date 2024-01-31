@@ -5644,7 +5644,7 @@ if (update.Type == UpdateType.CallbackQuery)
             $"燃烧 <b>{burnNetCost * lastWeekNetBurn}TRX </b>获得带宽：<b>{lastWeekNetBurn}</b>  |  免费带宽：<b>{lastWeekNetUsage}</b>\n\n" +
             $"近30天带宽消耗：总<b> {lastMonthNetUsageTotal}</b>\n" +
             $"燃烧 <b>{burnNetCost * lastMonthNetBurn}TRX </b>获得带宽：<b>{lastMonthNetBurn}</b>  |  免费带宽：<b>{lastMonthNetUsage}</b>\n\n" +
-            $"查询时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+            $"查询时间：<b>{DateTime.Now:yyyy-MM-dd HH:mm:ss}</b>";
 
             // 发送统计完的消息
             await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, resultText, ParseMode.Html, cancellationToken: cancellationToken);
