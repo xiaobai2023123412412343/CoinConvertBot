@@ -5675,9 +5675,18 @@ var currentPriceLastMonth = Math.Round(fixedEnergyPrice * (lastMonthEnergyUsageT
     $"近7天转账消耗：<del>{Math.Round(totalBurnedTrxLastWeek, 2)} TRX</del>  <b>现只需： {currentPriceLastWeek} TRX</b>\n" +
     $"近30天转账消耗：<del>{Math.Round(totalBurnedTrxLastMonth, 2)} TRX</del>  <b>现只需： {currentPriceLastMonth} TRX</b>\n\n" +		    
             $"查询时间：<b>{DateTime.Now:yyyy-MM-dd HH:mm:ss}</b>";
-
+		
+        // 创建内联键盘按钮
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // first row
+            {
+                InlineKeyboardButton.WithCallbackData("能量介绍", "energy_intro"),
+                InlineKeyboardButton.WithUrl("能量租赁", "https://t.me/yifanfu"),
+            }
+        });
             // 发送统计完的消息
-            await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, resultText, ParseMode.Html, cancellationToken: cancellationToken);
+            await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, resultText, ParseMode.Html, replyMarkup: inlineKeyboard, cancellationToken: cancellationToken);
         }
     }
 }	    
