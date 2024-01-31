@@ -5623,9 +5623,15 @@ if (update.Type == UpdateType.CallbackQuery)
             // 获取能量和带宽的售价
             var (burnEnergyCost, burnNetCost) = await GetAcquisitionCostAsync();
 		
+		
             // 调用之前定义的方法获取带宽和能量数据
             var (yesterdayNetUsage, yesterdayNetBurn, yesterdayNetUsageTotal, lastWeekNetUsage, lastWeekNetBurn, lastWeekNetUsageTotal, lastMonthNetUsage, lastMonthNetBurn, lastMonthNetUsageTotal) = await GetBandwidthUsageAsync(tronAddress);
             var (yesterdayEnergyUsage, yesterdayEnergyBurn, yesterdayEnergyUsageTotal, lastWeekEnergyUsage, lastWeekEnergyBurn, lastWeekEnergyUsageTotal, lastMonthEnergyUsage, lastMonthEnergyBurn, lastMonthEnergyUsageTotal) = await GetEnergyUsageAsync(tronAddress);
+
+// 计算燃烧TRX的总和
+var totalBurnedTrxYesterday = burnEnergyCost * yesterdayEnergyBurn + burnNetCost * yesterdayNetBurn;
+var totalBurnedTrxLastWeek = burnEnergyCost * lastWeekEnergyBurn + burnNetCost * lastWeekNetBurn;
+var totalBurnedTrxLastMonth = burnEnergyCost * lastMonthEnergyBurn + burnNetCost * lastMonthNetBurn;
             
             // 构建响应消息
             string resultText = $"地址：<code>{tronAddress}</code>\n\n" +
@@ -5643,7 +5649,12 @@ if (update.Type == UpdateType.CallbackQuery)
             $"近7天带宽消耗：总 <b>{lastWeekNetUsageTotal}</b>\n" +
             $"燃烧 <b>{burnNetCost * lastWeekNetBurn}TRX </b>获得带宽：<b>{lastWeekNetBurn}</b>  |  免费带宽：<b>{lastWeekNetUsage}</b>\n\n" +
             $"近30天带宽消耗：总<b> {lastMonthNetUsageTotal}</b>\n" +
-            $"燃烧 <b>{burnNetCost * lastMonthNetBurn}TRX </b>获得带宽：<b>{lastMonthNetBurn}</b>  |  免费带宽：<b>{lastMonthNetUsage}</b>\n\n" +
+            $"燃烧 <b>{burnNetCost * lastMonthNetBurn}TRX </b>获得带宽：<b>{lastMonthNetBurn}</b>  |  免费带宽：<b>{lastMonthNetUsage}</b>\n" +
+	    "------------------------------------------------------------------\n" +	 
+$"<b>总计：</b>\n" +
+$"昨日转账消耗：<b>{totalBurnedTrxYesterday} TRX</b>\n" +
+$"近7天转账消耗：<b>{totalBurnedTrxLastWeek} TRX</b>\n" +
+$"近30天转账消耗：<b>{totalBurnedTrxLastMonth} TRX</b>\n\n" +		    
             $"查询时间：<b>{DateTime.Now:yyyy-MM-dd HH:mm:ss}</b>";
 
             // 发送统计完的消息
