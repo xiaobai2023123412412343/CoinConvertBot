@@ -7760,33 +7760,58 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
     {
         var userId = long.Parse(parts[1]);
         var username = parts.Length > 3 ? parts[2] : null;
-        var address = parts[parts.Length - 1]; // 地址总是最后一个部分
+        var addressIndex = username != null ? 3 : 2;
+        var address = parts[addressIndex];
+        var note = parts.Length > addressIndex + 1 ? string.Join(" ", parts.Skip(addressIndex + 1)) : null; // 提取备注信息
+
+        var fakeMessageText = $"绑定 {address}" + (note != null ? $" 备注 {note}" : "");
         var fakeMessage = new Message
         {
             Chat = new Chat { Id = userId },
             From = new Telegram.Bot.Types.User { Id = userId, Username = username },
-            Text = $"绑定 {address}" // 在这里添加"绑定"关键字
+            Text = fakeMessageText
         };
 
         try
         {
             await BindAddress(botClient, fakeMessage, isProxyBinding: true);
-            await botClient.SendTextMessageAsync(1427768220, "代绑成功！");
+            // 检查是否有备注信息，并按照格式存储
+            if (note != null)
+            {
+                // 解析备注信息
+                var noteParts = note.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var noteKeywordIndex = Array.FindIndex(noteParts, part => part.StartsWith("备注"));
+                if (noteKeywordIndex != -1 && noteKeywordIndex < noteParts.Length - 1)
+                {
+                    var actualNote = string.Join(" ", noteParts.Skip(noteKeywordIndex + 1));
+                    if (actualNote.Length > 10)
+                    {
+                        actualNote = actualNote.Substring(0, 10) + "...";
+                    }
+                    // 存储用户的地址和备注信息
+                    userAddressNotes[(userId, address)] = actualNote;
+                }
+                // 向管理员发送一条消息，告知地址和备注已经更新
+                await botClient.SendTextMessageAsync(1427768220, $"用户ID：<code>{userId}</code> 的地址备注已更新！", parseMode: ParseMode.Html);
+            }
+            else
+            {
+                await botClient.SendTextMessageAsync(1427768220, "代绑成功，但没有提供备注信息。");
+            }
         }
         catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
         {
-            Console.WriteLine($"地址：{address} 代绑失败，机器人被用户：{userId} 阻止了。"); // 添加调试输出
+            Console.WriteLine($"地址：{address} 代绑失败，机器人被用户：{userId} 阻止了。");
             await botClient.SendTextMessageAsync(1427768220, $"地址：<code>{address}</code> 代绑失败，\n机器人被用户：<code>{userId}</code> 阻止了！", parseMode: ParseMode.Html);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"代绑失败，发生异常：{ex.Message}"); // 添加调试输出
-            // 这里可以添加更多的异常处理逻辑
+            Console.WriteLine($"代绑失败，发生异常：{ex.Message}");
         }
     }
     else
     {
-        Console.WriteLine($"代绑请求格式错误，接收到的消息：{messageText}"); // 添加调试输出
+        Console.WriteLine($"代绑请求格式错误，接收到的消息：{messageText}");
     }
 }
 if (messageText.StartsWith("代解") && message.From.Id == 1427768220)
