@@ -4563,7 +4563,32 @@ public class BandwidthData
     public decimal net_burn { get; set; }
     public decimal net_usage_total { get; set; }
 }
+//查询能量 带宽售价
+public static async Task<(decimal burnEnergyCost, decimal burnNetCost)> GetAcquisitionCostAsync()
+{
+    string url = "https://apilist.tronscanapi.com/api/acquisition_cost_statistic?limit=1";
+    try
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            var response = await client.GetStringAsync(url);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var data = JsonSerializer.Deserialize<JsonElement>(response, options);
+            var costData = data.GetProperty("data").EnumerateArray().FirstOrDefault();
 
+            decimal burnEnergyCost = costData.GetProperty("burn_energy_cost").GetDecimal();
+            decimal burnNetCost = costData.GetProperty("burn_net_cost").GetDecimal();
+
+            return (burnEnergyCost, burnNetCost);
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error fetching acquisition cost: {ex.Message}");
+        // 如果API调用失败，返回默认的能量和带宽售价
+        return (0.00042M, 0.001M);
+    }
+}								 
 public static async Task<(decimal UsdtTotal, int TransferCount, bool IsError)> GetUsdtTransferTotalAsync(string fromAddress, string toAddress)
 {
     try
@@ -5594,7 +5619,10 @@ if (update.Type == UpdateType.CallbackQuery)
             var tronAddress = parts[1];
             // 首先回复正在统计的消息
             await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "正在统计，请稍后...", cancellationToken: cancellationToken);
-
+		
+            // 获取能量和带宽的售价
+            var (burnEnergyCost, burnNetCost) = await GetAcquisitionCostAsync();
+		
             // 调用之前定义的方法获取带宽和能量数据
             var (yesterdayNetUsage, yesterdayNetBurn, yesterdayNetUsageTotal, lastWeekNetUsage, lastWeekNetBurn, lastWeekNetUsageTotal, lastMonthNetUsage, lastMonthNetBurn, lastMonthNetUsageTotal) = await GetBandwidthUsageAsync(tronAddress);
             var (yesterdayEnergyUsage, yesterdayEnergyBurn, yesterdayEnergyUsageTotal, lastWeekEnergyUsage, lastWeekEnergyBurn, lastWeekEnergyUsageTotal, lastMonthEnergyUsage, lastMonthEnergyBurn, lastMonthEnergyUsageTotal) = await GetEnergyUsageAsync(tronAddress);
@@ -5603,19 +5631,19 @@ if (update.Type == UpdateType.CallbackQuery)
             string resultText = $"地址：<code>{tronAddress}</code>\n\n" +
             $"<b>能量：</b>\n" +
             $"昨日能量消耗：总<b> {yesterdayEnergyUsageTotal}</b>\n" +
-            $"燃烧TRX获得能量：<b>{yesterdayEnergyBurn}</b>  |  质押能量：<b>{yesterdayEnergyUsage}</b>\n\n" +
+            $"燃烧 <b>{burnEnergyCost * yesterdayEnergyBurn}TRX </b>获得能量：<b>{yesterdayEnergyBurn}</b>  |  质押能量：<b>{yesterdayEnergyUsage}</b>\n\n" +
             $"近7天能量消耗：总<b> {lastWeekEnergyUsageTotal}</b>\n" +
-            $"燃烧TRX获得能量：<b>{lastWeekEnergyBurn}</b>  |  质押能量：<b>{lastWeekEnergyUsage}</b>\n\n" +
+            $"燃烧 <b>{burnEnergyCost * lastWeekEnergyBurn}TRX </b>获得能量：<b>{lastWeekEnergyBurn}</b>  |  质押能量：<b>{lastWeekEnergyUsage}</b>\n\n" +
             $"近30天能量消耗：总<b> {lastMonthEnergyUsageTotal}</b>\n" +
-            $"燃烧TRX获得能量：<b>{lastMonthEnergyBurn}</b>  |  质押能量：<b>{lastMonthEnergyUsage}</b>\n" +
+            $"燃烧 <b>{burnEnergyCost * lastMonthEnergyBurn}TRX </b>获得能量：<b>{lastMonthEnergyBurn}</b>  |  质押能量：<b>{lastMonthEnergyUsage}</b>\n" +
             "------------------------------------------------------------------\n" +
             $"<b>带宽：</b>\n" +
             $"昨日带宽消耗：总<b> {yesterdayNetUsageTotal}</b>\n" +
-            $"燃烧TRX获得带宽：<b>{yesterdayNetBurn}</b>  |  免费带宽：<b>{yesterdayNetUsage}</b>\n\n" +
+            $"燃烧 <b>{burnNetCost * yesterdayNetBurn}TRX </b>获得带宽：<b>{yesterdayNetBurn}</b>  |  免费带宽：<b>{yesterdayNetUsage}</b>\n\n" +
             $"近7天带宽消耗：总 <b>{lastWeekNetUsageTotal}</b>\n" +
-            $"燃烧TRX获得带宽：<b>{lastWeekNetBurn}</b>  |  免费带宽：<b>{lastWeekNetUsage}</b>\n\n" +
+            $"燃烧 <b>{burnNetCost * lastWeekNetBurn}TRX </b>获得带宽：<b>{lastWeekNetBurn}</b>  |  免费带宽：<b>{lastWeekNetUsage}</b>\n\n" +
             $"近30天带宽消耗：总<b> {lastMonthNetUsageTotal}</b>\n" +
-            $"燃烧TRX获得带宽：<b>{lastMonthNetBurn}</b>  |  免费带宽：<b>{lastMonthNetUsage}</b>\n\n" +
+            $"燃烧 <b>{burnNetCost * lastMonthNetBurn}TRX </b>获得带宽：<b>{lastMonthNetBurn}</b>  |  免费带宽：<b>{lastMonthNetUsage}</b>\n\n" +
             $"查询时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}";
 
             // 发送统计完的消息
