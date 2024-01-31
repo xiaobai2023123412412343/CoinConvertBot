@@ -5653,10 +5653,10 @@ var totalBurnedTrxLastMonth = burnEnergyCost * lastMonthEnergyBurn + burnNetCost
 // 定义固定能量单价
 decimal fixedEnergyPrice = 0.00031352876m;
 
-// 计算现在的价格
-var currentPriceYesterday = Math.Round(fixedEnergyPrice * (yesterdayEnergyUsageTotal + yesterdayNetUsageTotal) + burnNetCost * yesterdayNetBurn, 2);
-var currentPriceLastWeek = Math.Round(fixedEnergyPrice * (lastWeekEnergyUsageTotal + lastWeekNetUsageTotal) + burnNetCost * lastWeekNetBurn, 2);
-var currentPriceLastMonth = Math.Round(fixedEnergyPrice * (lastMonthEnergyUsageTotal + lastMonthNetUsageTotal) + burnNetCost * lastMonthNetBurn, 2);
+// 计算现在的价格，为燃烧TRX获得的能量乘以优惠汇率，加上获得带宽燃烧了多少TRX
+var currentPriceYesterday = Math.Round(fixedEnergyPrice * yesterdayEnergyBurn + burnNetCost * yesterdayNetBurn, 2);
+var currentPriceLastWeek = Math.Round(fixedEnergyPrice * lastWeekEnergyBurn + burnNetCost * lastWeekNetBurn, 2);
+var currentPriceLastMonth = Math.Round(fixedEnergyPrice * lastMonthEnergyBurn + burnNetCost * lastMonthNetBurn, 2);
 		
             
             // 构建响应消息
