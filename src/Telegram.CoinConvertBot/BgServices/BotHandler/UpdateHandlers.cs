@@ -621,7 +621,7 @@ private static async Task SendAllBindingsInBatches(ITelegramBotClient botClient,
         var messageText = string.Join(Environment.NewLine + "--------------------------------------------------------------------------" + Environment.NewLine, 
             batch.Select(b => 
                 $"<b>用户名:</b> {b.UserName}  <b>ID:</b> <code>{b.UserId}</code>\n" +
-                $"<b>绑定地址:</b> <code>{b.Address}</code>"
+                $"<b>绑定地址:</b> <code>{b.Address}</code> <code>备注 {userAddressNotes.GetValueOrDefault((b.UserId, b.Address), "")}</code>" // 从字典中获取地址备注
             )
         );
         // 在最后一条信息后不添加横线
