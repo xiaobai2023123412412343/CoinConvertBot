@@ -7796,13 +7796,13 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
             }
             else
             {
-                await botClient.SendTextMessageAsync(1427768220, "代绑成功，但没有提供备注信息。");
+                await botClient.SendTextMessageAsync(1427768220, "代绑成功。");
             }
         }
         catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
         {
             Console.WriteLine($"地址：{address} 代绑失败，机器人被用户：{userId} 阻止了。");
-            await botClient.SendTextMessageAsync(1427768220, $"地址：<code>{address}</code> 代绑失败，\n机器人被用户：<code>{userId}</code> 阻止了！", parseMode: ParseMode.Html);
+            await botClient.SendTextMessageAsync(1427768220, $"代绑失败，\n机器人被用户：<code>{userId}</code> 阻止了！", parseMode: ParseMode.Html);
         }
         catch (Exception ex)
         {
