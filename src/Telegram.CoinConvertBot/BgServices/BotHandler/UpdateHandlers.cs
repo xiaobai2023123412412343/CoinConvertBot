@@ -5620,13 +5620,20 @@ if (update.Type == UpdateType.CallbackQuery)
             // 首先回复正在统计的消息
             await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "正在统计，请稍后...", cancellationToken: cancellationToken);
 		
-            // 获取能量和带宽的售价
-            var (burnEnergyCost, burnNetCost) = await GetAcquisitionCostAsync();
-		
-		
-            // 调用之前定义的方法获取带宽和能量数据
-            var (yesterdayNetUsage, yesterdayNetBurn, yesterdayNetUsageTotal, lastWeekNetUsage, lastWeekNetBurn, lastWeekNetUsageTotal, lastMonthNetUsage, lastMonthNetBurn, lastMonthNetUsageTotal) = await GetBandwidthUsageAsync(tronAddress);
-            var (yesterdayEnergyUsage, yesterdayEnergyBurn, yesterdayEnergyUsageTotal, lastWeekEnergyUsage, lastWeekEnergyBurn, lastWeekEnergyUsageTotal, lastMonthEnergyUsage, lastMonthEnergyBurn, lastMonthEnergyUsageTotal) = await GetEnergyUsageAsync(tronAddress);
+        // 获取能量和带宽的售价
+        var costTask = GetAcquisitionCostAsync();
+    
+        // 调用之前定义的方法获取带宽和能量数据
+        var bandwidthUsageTask = GetBandwidthUsageAsync(tronAddress);
+        var energyUsageTask = GetEnergyUsageAsync(tronAddress);
+
+        // 等待所有任务完成
+        await Task.WhenAll(costTask, bandwidthUsageTask, energyUsageTask);
+
+        // 获取任务结果
+        var (burnEnergyCost, burnNetCost) = costTask.Result;
+        var (yesterdayNetUsage, yesterdayNetBurn, yesterdayNetUsageTotal, lastWeekNetUsage, lastWeekNetBurn, lastWeekNetUsageTotal, lastMonthNetUsage, lastMonthNetBurn, lastMonthNetUsageTotal) = bandwidthUsageTask.Result;
+        var (yesterdayEnergyUsage, yesterdayEnergyBurn, yesterdayEnergyUsageTotal, lastWeekEnergyUsage, lastWeekEnergyBurn, lastWeekEnergyUsageTotal, lastMonthEnergyUsage, lastMonthEnergyBurn, lastMonthEnergyUsageTotal) = energyUsageTask.Result;
 
 // 计算燃烧TRX的总和
 var totalBurnedTrxYesterday = burnEnergyCost * yesterdayEnergyBurn + burnNetCost * yesterdayNetBurn;
