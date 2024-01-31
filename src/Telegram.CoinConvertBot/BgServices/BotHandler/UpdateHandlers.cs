@@ -8792,7 +8792,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 <b>您的优惠汇率：</b>                
 <b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>            
 ————————————————————<code>
-  10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX  ≈ {(5m * 2) * usdtPrice}   CNY
+  10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}  TRX ≈ {(5m * 2) * usdtPrice}   CNY
   20 USDT = {(5m * 4).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX ≈ {(5m * 4) * usdtPrice}  CNY
   50 USDT = {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX ≈ {(5m * 10) * usdtPrice}  CNY
  100 USDT = {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX ≈ {(5m * 20) * usdtPrice}  CNY
