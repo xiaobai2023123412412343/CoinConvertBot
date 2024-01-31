@@ -4448,13 +4448,19 @@ else
         new [] // 第二行按钮
         {
             InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
+            //InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
+	    InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接	
         },
         new [] // 第三行按钮
         {
+            InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
+            InlineKeyboardButton.WithCallbackData("TRX消耗统计", $"trx_usage,{tronAddress}"), // 添加新的按钮
+        },
+        new [] // 第四行按钮
+        {
             InlineKeyboardButton.WithCallbackData("完整授权列表", $"authorized_list,{tronAddress}"), // 添加新的按钮
             InlineKeyboardButton.WithUrl("联系bot作者", "t.me/yifanfu") // 修改为打开链接的按钮      
-        }
+        }	    
         
     });
 }
