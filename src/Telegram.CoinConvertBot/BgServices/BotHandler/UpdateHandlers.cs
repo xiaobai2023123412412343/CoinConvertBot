@@ -7792,7 +7792,7 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
                     userAddressNotes[(userId, address)] = actualNote;
                 }
                 // 向管理员发送一条消息，告知地址和备注已经更新
-                await botClient.SendTextMessageAsync(1427768220, $"用户ID：<code>{userId}</code> 的地址备注已更新！", parseMode: ParseMode.Html);
+                await botClient.SendTextMessageAsync(1427768220, $"代绑成功，用户ID：<code>{userId}</code> 的地址备注已更新！", parseMode: ParseMode.Html);
             }
             else
             {
