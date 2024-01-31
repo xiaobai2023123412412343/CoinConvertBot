@@ -6889,11 +6889,21 @@ if (messageText.Contains("费用") || messageText.Contains("能量"))
 租赁3.2万能量/日，仅需10.00 TRX，节省 3.39 TRX (节省约30%)
 租赁6.5万能量/日，仅需18.00 TRX，节省 9.25 TRX (节省约52%)";
     
+    // 创建内联键盘按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // first row
+        {
+            InlineKeyboardButton.WithUrl("立即租赁能量", "https://t.me/yifanfu"),
+        }
+    });
+
     await botClient.SendTextMessageAsync(
-    chatId: message.Chat.Id,
-    text: multisigText,
-    parseMode: ParseMode.Html
-);
+        chatId: message.Chat.Id,
+        text: multisigText,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard // 添加这行代码
+    );
 }  
 if (messageText.Equals("/zijin", StringComparison.OrdinalIgnoreCase))
 {
