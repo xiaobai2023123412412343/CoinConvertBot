@@ -7759,11 +7759,29 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
     if (parts.Length >= 3)
     {
         var userId = long.Parse(parts[1]);
-        var username = parts.Length > 3 ? parts[2] : null;
-        var addressIndex = username != null ? 3 : 2;
-        var address = parts[addressIndex];
-        var note = parts.Length > addressIndex + 1 ? string.Join(" ", parts.Skip(addressIndex + 1)) : null; // 提取备注信息
+        string username = null;
+        var addressIndex = 2; // 默认地址索引为2
+        string address;
+        string note = null;
 
+        // 检查第三个部分是否符合地址格式，如果不符合，则认为是用户名
+        if (!(parts[2].StartsWith("T") && parts[2].Length == 34))
+        {
+            // 第三部分不是地址，认为是用户名
+            username = parts[2];
+            addressIndex = 3; // 调整地址索引为3
+        }
+
+        // 根据调整后的索引获取地址
+        address = parts[addressIndex];
+
+        // 如果存在备注信息，提取备注
+        if (parts.Length > addressIndex + 1)
+        {
+            note = string.Join(" ", parts.Skip(addressIndex + 1));
+        }
+
+        // 构造伪造的绑定命令文本
         var fakeMessageText = $"绑定 {address}" + (note != null ? $" 备注 {note}" : "");
         var fakeMessage = new Message
         {
