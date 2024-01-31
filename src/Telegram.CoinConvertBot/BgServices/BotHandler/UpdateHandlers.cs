@@ -613,6 +613,11 @@ private static List<GroupChat> GroupChats = new List<GroupChat>();
 private static async Task SendAllBindingsInBatches(ITelegramBotClient botClient, long chatId, IBaseRepository<TokenBind> bindRepository, int batchSize = 50)
 {
     var allBindings = bindRepository.Where(x => true).ToList(); // 使用 Where(x => true) 来获取所有记录
+    if (!allBindings.Any()) // 如果没有找到任何绑定的地址
+    {
+        await botClient.SendTextMessageAsync(chatId, "暂无用户在此绑定地址！", parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+        return; // 直接返回，不执行后面的代码
+    }	
     int totalBatches = (allBindings.Count + batchSize - 1) / batchSize; // 计算需要发送的批次总数
 
     for (int batchNumber = 0; batchNumber < totalBatches; batchNumber++)
