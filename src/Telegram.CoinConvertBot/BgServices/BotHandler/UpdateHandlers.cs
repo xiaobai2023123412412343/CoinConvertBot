@@ -8393,9 +8393,9 @@ USDT余额： <b>{USDT}</b>
 带宽质押比：<b>100 TRX = {resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100:0.000}  带宽</b>
 能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>       
  
-质押{requiredTRXForBandwidth} TRX = 345 带宽   
-质押{requiredTRX1} TRX = 31895 能量
-质押{requiredTRX2} TRX = 64895 能量     
+质押 {requiredTRXForBandwidth} TRX = 345 带宽   
+质押 {requiredTRX1} TRX = 31895 能量
+质押 {requiredTRX2} TRX = 64895 能量     
 ——————————————————————    
 今日承兑：<b>{todayIncome} USDT  | {todayTRXOut} TRX</b>
 本月承兑：<b>{monthlyIncome} USDT</b>
