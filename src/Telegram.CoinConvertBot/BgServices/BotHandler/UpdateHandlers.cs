@@ -5900,8 +5900,24 @@ if (update.Type == UpdateType.CallbackQuery)
    // }
     else if (callbackData[0] == "query_eye")
     {
-        await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "查询波场地址授权记录为群聊查询特供，请在任意群组使用此功能！");
-    }   
+        string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+        string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+        string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
+
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // 第一行按钮
+            {
+                InlineKeyboardButton.WithUrl("点击拉我进群使用！", shareLink) // 添加机器人到群组的链接
+            },
+        });
+
+        await botClient.SendTextMessageAsync(
+            chatId: callbackQuery.Message.Chat.Id,
+            text: "查询波场地址授权记录为群聊查询特供，请在任意群组使用此功能！",
+            replyMarkup: inlineKeyboard
+        );
+    } 
 }
 if (update.Type == UpdateType.CallbackQuery)
 {
