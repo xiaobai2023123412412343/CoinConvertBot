@@ -6440,7 +6440,8 @@ else if(update.CallbackQuery.Data == "memberEmojis")
 {
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
-        text: @"热门会员emoji表情包，点击链接可添加：
+        text: @"热门会员emoji表情包，点击链接即可添加：
+	
 1：https://t.me/addemoji/yifanfu
 2：https://t.me/addemoji/YifanfuTGvip"
     );
