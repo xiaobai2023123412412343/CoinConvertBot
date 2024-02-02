@@ -6448,9 +6448,33 @@ else if(update.CallbackQuery.Data == "memberEmojis")
 }
 else if(update.CallbackQuery.Data == "contactAdmin")
 {
+    var contactKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 新增的按钮行
+        {
+            InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu"),
+            InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest")
+        }
+    });
+
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
-        text: "管理员ID：@yifanfu\n如果您是双向用户，可以直接跟机器人兑换，我看到了会第一时间回复您！"
+        text: "双向用户可以直接对话机器人，我会第一时间回复您！",
+        replyMarkup: contactKeyboard
+    );
+}
+else if(update.CallbackQuery.Data == "authorContactRequest")
+{
+    // 在群聊中发送请求信息
+    await botClient.SendTextMessageAsync(
+        chatId: -894216057, // 群聊ID
+        text: $"@yifanfu 有人需要帮助，用户名： @{update.CallbackQuery.From.Username} 用户ID：{update.CallbackQuery.From.Id}"
+    );
+
+    // 回复用户确认信息
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: "收到请求，作者将很快联系您！"
     );
 }
     }
