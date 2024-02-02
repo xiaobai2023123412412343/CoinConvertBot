@@ -8088,9 +8088,19 @@ if (messageText.Contains("多签") || messageText.Contains("多重签名"))
 
 TRX（波场币）多重签名（Multisig）是一种安全机制，允许多个签名者共同控制一个地址。在多重签名地址中，执行交易需要一定数量的签名者的私钥签名才能完成。这种方法可以提高资产安全性，防止因单个私钥被盗用而导致资产损失。
 
+简单的说就是由一个或多个地址来控制你要多签的地址，原多签地址秘钥失效，无法再进行转账等功能，从而提高安全性！
+
 如果需要开通多签功能，可联系管理员协助开通！";
-    await botClient.SendTextMessageAsync(message.Chat.Id, multisigText);
-}        
+
+    var contactButton = InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin");
+    var inlineKeyboard = new InlineKeyboardMarkup(new[] { contactButton });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: multisigText,
+        replyMarkup: inlineKeyboard
+    );
+}
 // 检查是否接收到了 /cny 消息或 "合约助手"，收到就在当前聊天中发送广告
 else if (messageText.StartsWith("/cny") || messageText.StartsWith("\U0001F947合约助手"))
 {
