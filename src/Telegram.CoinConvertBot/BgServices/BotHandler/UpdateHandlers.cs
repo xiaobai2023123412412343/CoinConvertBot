@@ -6530,6 +6530,17 @@ if (message.Type == MessageType.ChatMembersAdded)
                 // 自动将群组ID添加到兑换通知黑名单
                 GroupManager.BlacklistedGroupIds.Add(chat.Id);
                 await botClient.SendTextMessageAsync(chat.Id, "兑换通知已关闭。如需开启发送指令： 开启兑换通知");
+		
+            // 发送带有链接的文本消息
+            string adminLink = "t.me/yifanfu"; // 管理员的Telegram链接
+            string messageWithLink = "已开启汇率列表展示，每10分钟更新一次！如需关闭请" + $"<a href=\"https://{adminLink}\">联系作者</a>！";
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: messageWithLink,
+		disableWebPagePreview: true,    
+                parseMode: ParseMode.Html // 确保解析模式设置为HTML以解析链接
+            );
+
             return;
         }
     }
