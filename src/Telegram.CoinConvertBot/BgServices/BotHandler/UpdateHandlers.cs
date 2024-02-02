@@ -6492,7 +6492,10 @@ else if(update.CallbackQuery.Data == "fancyNumbers")
 33000U  10位豹子【数字1.2.3.4.5】  
 56000U  10位豹子【数字6.7.8.9】
 88000U  10位顺子【步步高升号】
-【顺子o-9】（波场没有数字0，o代替0）"
+【顺子o-9】（波场没有数字0，o代替0）
+	    
+ 购买之后，可联系管理协助变更地址权限，对地址进行多签！  
+     "
     );
 }
 else if(update.CallbackQuery.Data == "memberEmojis")
