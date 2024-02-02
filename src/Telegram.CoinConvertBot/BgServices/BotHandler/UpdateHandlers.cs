@@ -6530,7 +6530,7 @@ else if(update.CallbackQuery.Data == "contactAdmin")
 
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
-        text: "双向用户可以直接对话机器人，作者会第一时间回复您！",
+        text: "双向用户可以直接私聊机器人，作者会第一时间回复您！",
         replyMarkup: contactKeyboard
     );
 }
