@@ -6426,10 +6426,15 @@ else if(update.CallbackQuery.Data == "back")
             InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
             InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
         },
-        new [] // 新增的第二行按钮
+        new [] // 第二行按钮
         {
             InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),
             InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")
+        },
+        new [] // 新增的第三行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
+            InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers")
         }
     });
 
@@ -6438,6 +6443,55 @@ else if(update.CallbackQuery.Data == "back")
         messageId: update.CallbackQuery.Message.MessageId,
         text: "欢迎使用本机器人,请选择下方按钮操作：",
         replyMarkup: inlineKeyboard
+    );
+}
+else if(update.CallbackQuery.Data == "smsVerification")
+{
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: @"支持国外一切软件注册短信接码，可选国家！
+支持国内部分软件注册短信接码，可选国家！
+同时支持租赁/购买电报虚拟号码 +888号段！
+如有需要，请点击下方按钮联系管理！",
+        replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin"))
+    );
+}
+else if(update.CallbackQuery.Data == "fancyNumbers")
+{
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: @"出售TRX靓号生成器： 本地生成 不保存秘钥 支持断网生成
+同时支持直接购买 ：   尾号4连-5连-6连-7连-8连-9连-10连
+
+【6连靓号】
+所有号码50U一个
+
+【7连靓号】
+所有号码100U一个
+
+【8连靓号】
+200U    8位豹子【英文小写】
+300U   8位豹子【英文大写】
+500U   8位豹子【数字1.2.3.4.5】
+666U   8位豹子【数字6.7.8.9】  
+888U   8位顺子【步步高升号】
+【顺子1-8 2-9】
+
+【9连靓号】
+3000U    9位豹子【英文小写】
+4000U   9位豹子【英文大写】
+6000U   9位豹子【数字1.2.3.4.5】  
+8000U   9位豹子【数字6.7.8.9】
+12000U   9位顺子【步步高升号】
+【顺子1-9】
+
+【10连靓号】
+12000U   10位豹子【英文小写】
+16000U  10位豹子【英文大写】
+33000U  10位豹子【数字1.2.3.4.5】  
+56000U  10位豹子【数字6.7.8.9】
+88000U  10位顺子【步步高升号】
+【顺子o-9】（波场没有数字0，o代替0）"
     );
 }
 else if(update.CallbackQuery.Data == "memberEmojis")
@@ -8407,6 +8461,11 @@ if (UserId != AdminUserId)
         {
             InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),
             InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")
+        },
+        new [] // 新增的第三行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
+            InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers")
         }
     });
 
