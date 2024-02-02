@@ -5698,7 +5698,7 @@ var currentPriceLastMonth = Math.Round(fixedEnergyPrice * lastMonthEnergyBurn + 
             new [] // first row
             {
                 InlineKeyboardButton.WithCallbackData("能量介绍", "energy_intro"),
-                InlineKeyboardButton.WithUrl("能量租赁", "https://t.me/yifanfu"),
+                InlineKeyboardButton.WithCallbackData("能量租赁", "contactAdmin"),
             }
         });
             // 发送统计完的消息
@@ -7059,7 +7059,7 @@ if (messageText.Contains("费用") || messageText.Contains("能量"))
     {
         new [] // first row
         {
-            InlineKeyboardButton.WithUrl("立即租赁能量", "https://t.me/yifanfu"),
+            InlineKeyboardButton.WithCallbackData("立即租赁能量", "contactAdmin"),
         }
     });
 
