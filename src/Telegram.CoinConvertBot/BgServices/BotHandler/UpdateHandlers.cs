@@ -6446,8 +6446,14 @@ else if(update.CallbackQuery.Data == "memberEmojis")
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: @"热门会员emoji表情包，点击链接即可添加：
 	
-1：https://t.me/addemoji/yifanfu
-2：https://t.me/addemoji/YifanfuTGvip"
+1：合集：https://t.me/addemoji/yifanfu
+2：合集：https://t.me/addemoji/YifanfuTGvip
+3：熊猫：https://t.me/addemoji/Yifanfupanda
+4：米老鼠：https://t.me/addemoji/Yifanfumilaoshu
+5：龙年特辑：https://t.me/addemoji/Yifanfu2024
+6：币圈专用：https://t.me/addemoji/Yifanfubtc
+7：qq经典表情：https://t.me/addemoji/Yifanfuqq
+"
     );
 }
 else if(update.CallbackQuery.Data == "contactAdmin")
