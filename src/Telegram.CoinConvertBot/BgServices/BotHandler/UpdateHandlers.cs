@@ -6458,9 +6458,10 @@ else if(update.CallbackQuery.Data == "smsVerification")
 }
 else if(update.CallbackQuery.Data == "fancyNumbers")
 {
-    await botClient.SendTextMessageAsync(
+    await botClient.SendPhotoAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
-        text: @"出售TRX靓号生成器： 本地生成 不保存秘钥 支持断网生成
+        photo: "https://i.postimg.cc/rpg41NWV/photo-2023-05-03-14-15-51.jpg",
+        caption: @"出售TRX靓号生成器： 本地生成 不保存秘钥 支持断网生成
 同时支持直接购买 ：   尾号4连-5连-6连-7连-8连-9连-10连
 
 【6连靓号】
