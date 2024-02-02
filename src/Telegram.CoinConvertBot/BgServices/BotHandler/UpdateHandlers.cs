@@ -6463,7 +6463,7 @@ else if(update.CallbackQuery.Data == "contactAdmin")
 
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
-        text: "双向用户可以直接对话机器人，我会第一时间回复您！",
+        text: "双向用户可以直接对话机器人，作者会第一时间回复您！",
         replyMarkup: contactKeyboard
     );
 }
@@ -6471,8 +6471,8 @@ else if(update.CallbackQuery.Data == "authorContactRequest")
 {
     // 在群聊中发送请求信息
     await botClient.SendTextMessageAsync(
-        chatId: -894216057, // 群聊ID
-        text: $"@yifanfu 有人需要帮助，用户名： @{update.CallbackQuery.From.Username} 用户ID：{update.CallbackQuery.From.Id}"
+        chatId: 1427768220, // 私聊ID
+        text: $"有人需要帮助，用户名： @{update.CallbackQuery.From.Username} 用户ID：{update.CallbackQuery.From.Id}"
     );
 
     // 回复用户确认信息
