@@ -5787,7 +5787,16 @@ if (update.Type == UpdateType.CallbackQuery)
                 From = callbackQuery.From
             };
             await BotOnMessageReceived(botClient, fakeMessage);
-            break; 		    
+            break; 	
+case "understandMultiSig": // 处理了解多签按钮的回调
+    fakeMessage = new Message
+    {
+        Text = "多签",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
+    break;		    
             
         // 处理其他回调...
     }
@@ -6458,6 +6467,15 @@ else if(update.CallbackQuery.Data == "smsVerification")
 }
 else if(update.CallbackQuery.Data == "fancyNumbers")
 {
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 新增的按钮行
+        {
+            InlineKeyboardButton.WithCallbackData("了解多签", "understandMultiSig"),
+            InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")
+        }
+    });
+
     await botClient.SendPhotoAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         photo: "https://i.postimg.cc/rpg41NWV/photo-2023-05-03-14-15-51.jpg",
@@ -6493,9 +6511,9 @@ else if(update.CallbackQuery.Data == "fancyNumbers")
 56000U  10位豹子【数字6.7.8.9】
 88000U  10位顺子【步步高升号】
 【顺子o-9】（波场没有数字0，o代替0）
-	    
- 购买之后，可联系管理协助变更地址权限，对地址进行多签！  
-     "
+
+购买之后，可联系管理协助变更地址权限，对地址进行多签！",
+        replyMarkup: inlineKeyboard
     );
 }
 else if(update.CallbackQuery.Data == "memberEmojis")
