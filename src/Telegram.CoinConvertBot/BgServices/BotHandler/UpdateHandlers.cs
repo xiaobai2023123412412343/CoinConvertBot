@@ -7164,13 +7164,14 @@ try
     {
         Console.WriteLine($"收到添加群聊指令，管理员ID：{message.From.Id}");
         // 解析消息文本以获取群聊信息
-        var messageParts = message.Text.Split(new[] { "群名字：", "群ID：", "群链接：" }, StringSplitOptions.RemoveEmptyEntries);
+        var messageParts = message.Text.Split(new[] { "群名字：", "群ID：", "群链接：", "指令：" }, StringSplitOptions.RemoveEmptyEntries);
         if (messageParts.Length >= 2)
         {
             string groupName = messageParts[1].Trim();
             if (long.TryParse(messageParts[2].Trim(), out long groupId))
             {
                 string groupLink = messageParts.Length > 3 ? messageParts[3].Trim() : null;
+		string command = messageParts.Length > 4 ? messageParts[4].Trim().ToLower() : null;    
                 // 检查是否已存在该群聊信息
                 var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == groupId);
                 if (existingGroupChat != null)
@@ -7186,6 +7187,17 @@ try
                     GroupChats.Add(new GroupChat { Id = groupId, Title = groupName, InviteLink = groupLink });
                     Console.WriteLine($"保存新的群聊信息，群ID：{groupId}");
                 }
+                // 根据指令处理兑换通知黑名单
+                if (command == "开启")
+                {
+                    GroupManager.BlacklistedGroupIds.Remove(groupId);
+                    Console.WriteLine($"群ID：{groupId} 已从兑换通知黑名单中移除");
+                }
+                else if (command == "关闭")
+                {
+                    GroupManager.BlacklistedGroupIds.Add(groupId);
+                    Console.WriteLine($"群ID：{groupId} 已添加到兑换通知黑名单");
+                }		    
                 // 将群ID添加到GroupManager中
                 GroupManager.AddGroupId(groupId);
                 Console.WriteLine($"群ID：{groupId} 已添加到广告群组列表");
