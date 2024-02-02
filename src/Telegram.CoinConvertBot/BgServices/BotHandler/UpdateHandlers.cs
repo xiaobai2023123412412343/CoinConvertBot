@@ -6533,7 +6533,7 @@ if (message.Type == MessageType.ChatMembersAdded)
 		
             // 发送带有链接的文本消息
             string adminLink = "t.me/yifanfu"; // 管理员的Telegram链接
-            string messageWithLink = "已开启汇率列表展示，每10分钟更新一次！如需关闭请" + $"<a href=\"https://{adminLink}\">联系作者</a>！";
+            string messageWithLink = "汇率表每10分钟更新发送一次！如需关闭请" + $"<a href=\"https://{adminLink}\">联系作者</a>！";
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: messageWithLink,
