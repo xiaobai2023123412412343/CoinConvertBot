@@ -4439,7 +4439,7 @@ if (message.Chat.Type == ChatType.Private)
         new [] // 第三行按钮
         {
             InlineKeyboardButton.WithCallbackData("TRX消耗统计", $"trx_usage,{tronAddress}"), // 添加新的按钮
-	    InlineKeyboardButton.WithUrl("联系bot作者", "t.me/yifanfu") // 修改为打开链接的按钮      	
+	    InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin") // 修改为打开链接的按钮      	
         }	    
     });
 }
@@ -4469,7 +4469,7 @@ else
         new [] // 第四行按钮
         {
             InlineKeyboardButton.WithCallbackData("完整授权列表", $"authorized_list,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithUrl("联系bot作者", "t.me/yifanfu") // 修改为打开链接的按钮      
+            InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin") // 修改为打开链接的按钮      
         }	    
         
     });
