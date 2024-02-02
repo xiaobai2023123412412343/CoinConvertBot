@@ -7114,7 +7114,7 @@ if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt")| messageText
                 new [] // 第一行按钮
                 {
                     InlineKeyboardButton.WithCallbackData("再查一次", "zaicha"), // 修改这里
-                    InlineKeyboardButton.WithUrl("白资兑换", "https://t.me/yifanfu")
+                    InlineKeyboardButton.WithCallbackData("白资兑换", "contactAdmin")
                 }
             });
 
