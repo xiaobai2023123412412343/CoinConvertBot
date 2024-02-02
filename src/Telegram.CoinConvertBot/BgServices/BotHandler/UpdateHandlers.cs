@@ -6412,27 +6412,46 @@ if(update.CallbackQuery != null)
                 replyMarkup: membershipKeyboard
             );
         }
-        else if(update.CallbackQuery.Data == "back")
+else if(update.CallbackQuery.Data == "back")
+{
+    // 返回上一级菜单
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
         {
-            // 返回上一级菜单
-            var inlineKeyboard = new InlineKeyboardMarkup(new[]
-            {
-                new [] // 第一行按钮
-                {
-                    //InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
-                    InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions"),
-                   // InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1")
-                    InlineKeyboardButton.WithCallbackData("\U0001F50D 使用帮助", "send_help")
-                }
-            });
-
-            await botClient.EditMessageTextAsync(
-                chatId: update.CallbackQuery.Message.Chat.Id,
-                messageId: update.CallbackQuery.Message.MessageId,
-                text: "欢迎使用本机器人,请选择下方按钮操作：",
-                replyMarkup: inlineKeyboard
-            );
+            InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
+            InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
+        },
+        new [] // 新增的第二行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),
+            InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")
         }
+    });
+
+    await botClient.EditMessageTextAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        messageId: update.CallbackQuery.Message.MessageId,
+        text: "欢迎使用本机器人,请选择下方按钮操作：",
+        replyMarkup: inlineKeyboard
+    );
+}
+else if(update.CallbackQuery.Data == "memberEmojis")
+{
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: @"热门会员emoji表情包，点击链接可添加：
+1：https://t.me/addemoji/yifanfu
+2：https://t.me/addemoji/YifanfuTGvip"
+    );
+}
+else if(update.CallbackQuery.Data == "contactAdmin")
+{
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: "管理员ID：@yifanfu\n如果您是双向用户，可以直接跟机器人兑换，我看到了会第一时间回复您！"
+    );
+}
     }
     catch (Exception ex)
     {
@@ -8346,10 +8365,13 @@ if (UserId != AdminUserId)
     {
         new [] // 第一行按钮
         {
-            //InlineKeyboardButton.WithUrl("管理员", "https://t.me/Yifanfu"),
-            InlineKeyboardButton.WithCallbackData("\u2B50 会员代开", "membershipOptions"),
-            //InlineKeyboardButton.WithUrl("\U0001F449 进群交流", "https://t.me/+b4NunT6Vwf0wZWI1")
-            InlineKeyboardButton.WithCallbackData("\U0001F50D 使用帮助", "send_help")
+            InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
+            InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
+        },
+        new [] // 新增的第二行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),
+            InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")
         }
     });
 
