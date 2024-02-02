@@ -6527,7 +6527,9 @@ if (message.Type == MessageType.ChatMembersAdded)
                     GroupChats.Add(new GroupChat { Id = chat.Id, Title = chat.Title, InviteLink = chat.InviteLink });
                 }
             }
-
+                // 自动将群组ID添加到兑换通知黑名单
+                GroupManager.BlacklistedGroupIds.Add(chat.Id);
+                await botClient.SendTextMessageAsync(chat.Id, "兑换通知已关闭。如需开启发送指令：开启兑换通知");
             return;
         }
     }
