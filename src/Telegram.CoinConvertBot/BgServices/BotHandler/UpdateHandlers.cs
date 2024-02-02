@@ -5796,6 +5796,15 @@ case "understandMultiSig": // 处理了解多签按钮的回调
         From = callbackQuery.From
     };
     await BotOnMessageReceived(botClient, fakeMessage);
+    break;	
+case "send_chinese": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "中文",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
     break;		    
             
         // 处理其他回调...
@@ -8483,6 +8492,11 @@ if (UserId != AdminUserId)
         {
             InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
             InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers")
+        },
+        new [] // 新增的第四行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
+            InlineKeyboardButton.WithCallbackData("未完待续")
         }
     });
 
