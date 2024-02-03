@@ -4696,28 +4696,36 @@ private static async Task<string> GetExchangeRatesAsync(decimal amount, string b
             {
                 decimal amountInCny = amount * cnyRate;
                 decimal amountInUsdt = amountInCny / usdtToCnyRate;
-                result.AppendLine($"{amountInUsdt.ToString("N2")} 泰达币(USDT)");
+                result.AppendLine($"{amountInUsdt.ToString("N2")} 泰达币(USDT)\n————————————");
             }
 
-    int count = 0;
-    foreach (var currencyCode in CurrencyOrder)
-    {
-        if (currencyCode == baseCurrency) // 跳过查询的货币本身
-        {
-            continue;
-        }
+            int count = 0;
+            int totalRates = exchangeData.Rates.Count(r => CurrencyOrder.Contains(r.Key) && r.Key != baseCurrency);
+            int ratesToShow = fullList ? totalRates : Math.Min(10, totalRates);
 
-        if (exchangeData.Rates.TryGetValue(currencyCode, out var rate))
-        {
-            decimal convertedAmount = amount * rate;
-            if (CurrencyMappings.TryGetValue(currencyCode, out var currencyInfo))
+            foreach (var currencyCode in CurrencyOrder)
             {
-                result.AppendLine($"{convertedAmount.ToString("N2")}  {currencyInfo.Name} ({currencyCode})");
-                count++;
-                if (!fullList && count >= 10) break; // 如果不是请求完整列表且已添加10条数据，则停止添加
+                if (currencyCode == baseCurrency || !exchangeData.Rates.TryGetValue(currencyCode, out var rate)) // 跳过查询的货币本身和未找到汇率的货币
+                {
+                    continue;
+                }
+
+                decimal convertedAmount = amount * rate;
+                if (CurrencyMappings.TryGetValue(currencyCode, out var currencyInfo))
+                {
+                    count++;
+                    result.Append($"{convertedAmount.ToString("N2")}  {currencyInfo.Name} ({currencyCode})");
+                    if (count < ratesToShow) // 如果当前条目不是最后一个，则添加横线
+                    {
+                        result.AppendLine("\n————————————");
+                    }
+                    else
+                    {
+                        result.AppendLine(); // 最后一个条目后不添加横线，只换行
+                    }
+                    if (!fullList && count >= 10) break; // 如果不是请求完整列表且已添加10条数据，则停止添加
+                }
             }
-        }
-    }
 
             return result.ToString();
         }
