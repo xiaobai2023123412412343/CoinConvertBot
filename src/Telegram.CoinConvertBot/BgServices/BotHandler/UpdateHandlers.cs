@@ -7984,27 +7984,28 @@ if (messageText.StartsWith("/yccl"))
     );
 }   
 // 数字加货币代码查询汇率信息 
-// 将CurrencyMappings的键值对调，以便可以通过中文名称查找货币代码
+// 合并CurrencyMappings和CurrencyAliases，同时确保货币代码也被识别
 var nameToCodeMappings = CurrencyMappings
-    .ToDictionary(kvp => kvp.Value.Name, kvp => kvp.Key);
+    .ToDictionary(kvp => kvp.Value.Name, kvp => kvp.Key) // 正式名称到代码
+    .Concat(CurrencyAliases) // 别称到代码
+    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-// 添加别称到nameToCodeMappings字典中
-foreach (var alias in CurrencyAliases)
+// 确保货币代码本身也被识别
+foreach (var code in CurrencyMappings.Keys)
 {
-    // 如果别称已经存在于nameToCodeMappings中，则不添加，以避免覆盖
-    if (!nameToCodeMappings.ContainsKey(alias.Key))
+    if (!nameToCodeMappings.ContainsKey(code))
     {
-        nameToCodeMappings.Add(alias.Key, alias.Value);
+        nameToCodeMappings[code] = code;
     }
 }
 
-// 尝试匹配输入中的金额和中文货币名称或别称
+// 尝试匹配输入中的金额和中文货币名称、别称或货币代码
 var matchedCurrency = nameToCodeMappings.Keys
-    .FirstOrDefault(name => messageText.Contains(name));
+    .FirstOrDefault(name => messageText.ToUpper().Contains(name.ToUpper()));
 
 if (matchedCurrency != null)
 {
-    var amountString = messageText.Replace(matchedCurrency, "").Trim();
+    var amountString = messageText.Replace(matchedCurrency, "", StringComparison.OrdinalIgnoreCase).Trim();
     if (decimal.TryParse(amountString, out var amount))
     {
         var currencyCode = nameToCodeMappings[matchedCurrency];
