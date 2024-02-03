@@ -4666,39 +4666,48 @@ public class ExchangeRateData
 }
 private static async Task<string> GetExchangeRatesAsync(decimal amount)
 {
-    using (var httpClient = new HttpClient())
+    try
     {
-        string apiUrl = "https://api.exchangerate-api.com/v4/latest/CNY";
-        var response = await httpClient.GetAsync(apiUrl);
-        string content = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
+        using (var httpClient = new HttpClient())
         {
-            throw new HttpRequestException($"获取汇率失败: {content}");
-        }
+            string apiUrl = "https://api.exchangerate-api.com/v4/latest/CNY";
+            var response = await httpClient.GetAsync(apiUrl);
+            string content = await response.Content.ReadAsStringAsync();
 
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        var exchangeData = JsonSerializer.Deserialize<ExchangeRateData>(content, options);
-
-        if (exchangeData == null || exchangeData.Rates == null)
-        {
-            return "无法获取汇率数据。";
-        }
-
-        StringBuilder result = new StringBuilder($"{amount}元人民币兑换汇率≈\n\n");
-        foreach (var currencyCode in CurrencyOrder)
-        {
-            if (exchangeData.Rates.TryGetValue(currencyCode, out var rate))
+            if (!response.IsSuccessStatusCode)
             {
-                decimal convertedAmount = amount * rate;
-                if (CurrencyMappings.TryGetValue(currencyCode, out var currencyInfo))
+                return $"获取汇率失败，状态码：{response.StatusCode}";
+            }
+
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var exchangeData = JsonSerializer.Deserialize<ExchangeRateData>(content, options);
+
+            if (exchangeData == null || exchangeData.Rates == null)
+            {
+                return "无法获取汇率数据。";
+            }
+
+            StringBuilder result = new StringBuilder($"{amount}元人民币兑换汇率≈\n\n");
+            foreach (var currencyCode in CurrencyOrder)
+            {
+                if (exchangeData.Rates.TryGetValue(currencyCode, out var rate))
                 {
-                    result.AppendLine($"{convertedAmount.ToString("N2")}  {currencyInfo.Name} ({currencyCode})");
+                    decimal convertedAmount = amount * rate;
+                    if (CurrencyMappings.TryGetValue(currencyCode, out var currencyInfo))
+                    {
+                        result.AppendLine($"{convertedAmount.ToString("N2")}  {currencyInfo.Name} ({currencyCode})");
+                    }
                 }
             }
-        }
 
-        return result.ToString();
+            return result.ToString();
+        }
+    }
+    catch (Exception ex)
+    {
+        // 在这里处理异常，例如记录日志等
+        // 为了简化，这里只返回一个错误消息
+        return $"在获取汇率时发生错误：{ex.Message}";
     }
 }
 private static readonly Dictionary<string, (string Name, string Symbol)> CurrencyMappings = new Dictionary<string, (string, string)>
@@ -6367,7 +6376,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|人民币|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
