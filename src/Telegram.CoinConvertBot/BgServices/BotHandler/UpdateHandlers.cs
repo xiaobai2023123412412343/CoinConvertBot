@@ -7999,15 +7999,29 @@ foreach (var code in CurrencyMappings.Keys)
 }
 
 // 尝试匹配输入中的金额和中文货币名称、别称或货币代码
-var matchedCurrency = nameToCodeMappings.Keys
-    .FirstOrDefault(name => messageText.ToUpper().Contains(name.ToUpper()));
-
-if (matchedCurrency != null)
+var regex = new Regex(@"^((\d+|[零一二两三四五六七八九十百千万亿]+)+)\s*(([a-zA-Z]{3}|[\u4e00-\u9fa5]+)\s*)+$");
+var currencyMatch = regex.Match(messageText); // 将变量名从 match 改为 currencyMatch
+if (currencyMatch.Success)
 {
-    var amountString = messageText.Replace(matchedCurrency, "", StringComparison.OrdinalIgnoreCase).Trim();
-    if (decimal.TryParse(amountString, out var amount))
+    string inputAmountStr = currencyMatch.Groups[1].Value;
+    decimal amount;
+
+    // 检查输入值是否为中文数字，并进行转换
+    if (inputAmountStr.Any(c => c >= 0x4e00 && c <= 0x9fa5))
     {
-        var currencyCode = nameToCodeMappings[matchedCurrency];
+        int convertedAmount = ChineseToArabic(inputAmountStr);
+        amount = convertedAmount;
+    }
+    else
+    {
+        amount = decimal.Parse(inputAmountStr);
+    }
+
+    string inputCurrency = currencyMatch.Groups[3].Value.Trim(); // 使用新的变量名 currencyMatch
+    string currencyCode = nameToCodeMappings.FirstOrDefault(kvp => inputCurrency.ToUpper().Contains(kvp.Key.ToUpper())).Value;
+
+    if (!string.IsNullOrEmpty(currencyCode))
+    {
         var exchangeRates = await GetExchangeRatesAsync(amount, currencyCode);
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
