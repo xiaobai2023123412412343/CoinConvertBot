@@ -4666,6 +4666,8 @@ public class ExchangeRateData
 }
 private static async Task<string> GetExchangeRatesAsync(decimal amount, string baseCurrency)
 {
+    decimal usdtToCnyRate = await GetOkxPriceAsync("usdt", "cny", "sell");
+
     try
     {
         using (var httpClient = new HttpClient())
@@ -4687,8 +4689,16 @@ private static async Task<string> GetExchangeRatesAsync(decimal amount, string b
                 return "无法获取汇率数据。";
             }
 
-            // 加粗基础货币的汇率行
             StringBuilder result = new StringBuilder($"<b>{amount} {CurrencyMappings[baseCurrency].Name}兑换汇率 ≈</b>\n\n");
+
+            // 计算并添加USDT汇率
+            if (exchangeData.Rates.TryGetValue("CNY", out var cnyRate))
+            {
+                decimal amountInCny = amount * cnyRate;
+                decimal amountInUsdt = amountInCny / usdtToCnyRate;
+                result.AppendLine($"{amountInUsdt.ToString("N2")} 泰达币(USDT)");
+            }
+
             foreach (var currencyCode in CurrencyOrder)
             {
                 if (currencyCode == baseCurrency) // 跳过查询的货币本身
