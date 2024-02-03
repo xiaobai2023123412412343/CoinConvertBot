@@ -6386,6 +6386,9 @@ if (containsUsername)
             // 检查输入文本是否为 Tron 地址
             var isTronAddress = Regex.IsMatch(inputText, @"^(T[A-Za-z0-9]{33})$");
 
+            // 检查输入文本是否为币种
+	    var currencyNamesRegex = new Regex(@"(美元|港币|台币|日元|英镑|欧元|澳元|韩元|泰铢|越南盾|老挝币|缅甸币|印度卢比|瑞士法郎|新西兰元|新加坡新元|柬埔寨瑞尔|菲律宾披索|墨西哥比索|迪拜迪拉姆|俄罗斯卢布|加拿大加元|马来西亚币|科威特第纳尔)");
+		
             // 检查输入文本是否仅包含表情符号
             var isOnlyEmoji = EmojiHelper.IsOnlyEmoji(inputText);
             
@@ -6397,6 +6400,14 @@ if (containsUsername)
 
             if (!containsKeywordsOrCommandsOrNumbersOrAtSign && !isTronAddress && !isOnlyEmoji && !isNumberCurrency && !isChineseTextWithSpaces)
             {
+// 检查输入文本是否包含货币的中文名称
+var containsCurrencyName = currencyNamesRegex.IsMatch(inputText);
+
+// 如果输入文本包含货币的中文名称，则不执行翻译
+if (containsCurrencyName)
+{
+    return;
+}		    
                 // 检查输入文本是否包含任何非中文字符
                 var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
                 // 添加新的正则表达式以检查输入文本是否只包含符号
