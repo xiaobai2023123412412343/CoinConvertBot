@@ -7961,7 +7961,7 @@ if (messageText.StartsWith("/yccl"))
         text: "全局异常处理已启动！"
     );
 }   
-// 假设这是在你的消息处理方法中
+// 数字加货币代码查询汇率信息 7964-7985
 // 将CurrencyMappings的键值对调，以便可以通过中文名称查找货币代码
 var nameToCodeMappings = CurrencyMappings
     .ToDictionary(kvp => kvp.Value.Name, kvp => kvp.Key);
