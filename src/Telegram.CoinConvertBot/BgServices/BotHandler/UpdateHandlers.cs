@@ -4714,6 +4714,22 @@ private static async Task<string> GetExchangeRatesAsync(decimal amount, string b
         return $"在获取汇率时发生错误：{ex.Message}";
     }
 }
+private static readonly Dictionary<string, string> CurrencyAliases = new Dictionary<string, string>
+{
+    {"元", "CNY"},
+    {"块", "CNY"},
+    {"美金", "USD"},	
+    {"法郎", "CHF"},	
+    {"新币", "SGD"},
+    {"瑞尔", "KHR"},	
+    {"迪拉姆", "AED"},	
+    {"卢布", "RUB"},	
+    {"披索", "PHP"},
+    {"比索", "MXN"},    
+    {"马币", "MYR"},	
+    {"第纳尔", "KWD"},	
+    {"卢比", "INR"}	
+};
 private static readonly Dictionary<string, (string Name, string Symbol)> CurrencyMappings = new Dictionary<string, (string, string)>
 {
     {"CNY", ("人民币", "¥")},
@@ -7972,7 +7988,17 @@ if (messageText.StartsWith("/yccl"))
 var nameToCodeMappings = CurrencyMappings
     .ToDictionary(kvp => kvp.Value.Name, kvp => kvp.Key);
 
-// 尝试匹配输入中的金额和中文货币名称
+// 添加别称到nameToCodeMappings字典中
+foreach (var alias in CurrencyAliases)
+{
+    // 如果别称已经存在于nameToCodeMappings中，则不添加，以避免覆盖
+    if (!nameToCodeMappings.ContainsKey(alias.Key))
+    {
+        nameToCodeMappings.Add(alias.Key, alias.Value);
+    }
+}
+
+// 尝试匹配输入中的金额和中文货币名称或别称
 var matchedCurrency = nameToCodeMappings.Keys
     .FirstOrDefault(name => messageText.Contains(name));
 
@@ -7986,7 +8012,7 @@ if (matchedCurrency != null)
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: exchangeRates,
-	    parseMode: ParseMode.Html // 启用 HTML 解析模式
+            parseMode: ParseMode.Html // 确保启用 HTML 解析模式
         );
     }
 }
