@@ -4653,8 +4653,81 @@ public static async Task<(decimal UsdtTotal, int TransferCount, bool IsError)> G
         return (0, 0, true);
     }
 }
+private static readonly List<string> CurrencyOrder = new List<string>
+{
+    "USD", "HKD", "TWD", "JPY", "GBP", "EUR", "AUD", "KRW", "THB", "VND",
+    "LAK", "MMK", "INR", "CHF", "NZD", "SGD", "KHR", "PHP", "MXN", "AED",
+    "RUB", "CAD", "MYR", "KWD"
+};
+public class ExchangeRateData
+{
+    public string Base { get; set; }
+    public Dictionary<string, decimal> Rates { get; set; }
+}
+private static async Task<string> GetExchangeRatesAsync(decimal amount)
+{
+    using (var httpClient = new HttpClient())
+    {
+        string apiUrl = "https://api.exchangerate-api.com/v4/latest/CNY";
+        var response = await httpClient.GetAsync(apiUrl);
+        string content = await response.Content.ReadAsStringAsync();
 
-    
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"获取汇率失败: {content}");
+        }
+
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var exchangeData = JsonSerializer.Deserialize<ExchangeRateData>(content, options);
+
+        if (exchangeData == null || exchangeData.Rates == null)
+        {
+            return "无法获取汇率数据。";
+        }
+
+        StringBuilder result = new StringBuilder($"{amount}元人民币兑换汇率≈\n\n");
+        foreach (var currencyCode in CurrencyOrder)
+        {
+            if (exchangeData.Rates.TryGetValue(currencyCode, out var rate))
+            {
+                decimal convertedAmount = amount * rate;
+                if (CurrencyMappings.TryGetValue(currencyCode, out var currencyInfo))
+                {
+                    result.AppendLine($"{convertedAmount.ToString("N2")}  {currencyInfo.Name} ({currencyCode})");
+                }
+            }
+        }
+
+        return result.ToString();
+    }
+}
+private static readonly Dictionary<string, (string Name, string Symbol)> CurrencyMappings = new Dictionary<string, (string, string)>
+{
+    {"USD", ("美元", "$")},
+    {"HKD", ("港币", "HK$")},
+    {"TWD", ("台币", "NT$")},
+    {"JPY", ("日元", "¥")},
+    {"GBP", ("英镑", "£")},
+    {"EUR", ("欧元", "€")},
+    {"AUD", ("澳元", "A$")},
+    {"KRW", ("韩元", "₩")},
+    {"THB", ("泰铢", "฿")},
+    {"VND", ("越南盾", "₫")},
+    {"LAK", ("老挝币", "₭")},
+    {"MMK", ("缅甸币", "K")},
+    {"INR", ("印度卢比", "₹")},
+    {"CHF", ("瑞士法郎", "Fr")},
+    {"NZD", ("新西兰元", "NZ$")},
+    {"SGD", ("新加坡新元", "S$")},
+    {"KHR", ("柬埔寨瑞尔", "៛")},
+    {"PHP", ("菲律宾披索", "₱")},
+    {"MXN", ("墨西哥比索", "$")},
+    {"AED", ("迪拜迪拉姆", "د.إ")},
+    {"RUB", ("俄罗斯卢布", "₽")},
+    {"CAD", ("加拿大加元", "C$")},
+    {"MYR", ("马来西亚币", "RM")},
+    {"KWD", ("科威特第纳尔", "KD")}
+};    
 private static readonly Dictionary<string, string> CurrencyFullNames = new Dictionary<string, string>
 {
     { "USD", "美元" },
@@ -7868,7 +7941,20 @@ if (messageText.StartsWith("/yccl"))
         chatId: message.Chat.Id,
         text: "全局异常处理已启动！"
     );
-}        
+}   
+// 假设这是在你的消息处理方法中
+if (messageText.Contains("人民币"))
+{
+    var amountString = messageText.Split(new[] { "人民币" }, StringSplitOptions.None)[0].Trim();
+    if (decimal.TryParse(amountString, out var amount))
+    {
+        var exchangeRates = await GetExchangeRatesAsync(amount);
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: exchangeRates
+        );
+    }
+}
 if (Regex.IsMatch(message.Text, @"用户名：|ID："))
 {
     await HandleStoreCommandAsync(botClient, message);
