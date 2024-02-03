@@ -4696,7 +4696,7 @@ private static async Task<string> GetExchangeRatesAsync(decimal amount, string b
             {
                 decimal amountInCny = amount * cnyRate;
                 decimal amountInUsdt = amountInCny / usdtToCnyRate;
-                result.AppendLine($"{amountInUsdt.ToString("N2")} 泰达币(USDT)\n————————————");
+                result.AppendLine($"<code>{amountInUsdt.ToString("N2")} 泰达币(USDT)</code>\n————————————");
             }
 
             int count = 0;
@@ -4714,7 +4714,7 @@ private static async Task<string> GetExchangeRatesAsync(decimal amount, string b
                 if (CurrencyMappings.TryGetValue(currencyCode, out var currencyInfo))
                 {
                     count++;
-                    result.Append($"{convertedAmount.ToString("N2")}  {currencyInfo.Name} ({currencyCode})");
+                    result.Append($"<code>{convertedAmount.ToString("N2")} {currencyInfo.Name} ({currencyCode})</code>");
                     if (count < ratesToShow) // 如果当前条目不是最后一个，则添加横线
                     {
                         result.AppendLine("\n————————————");
