@@ -4687,9 +4687,15 @@ private static async Task<string> GetExchangeRatesAsync(decimal amount, string b
                 return "无法获取汇率数据。";
             }
 
-            StringBuilder result = new StringBuilder($"{amount} {CurrencyMappings[baseCurrency].Name}兑换汇率 ≈\n\n");
+            // 加粗基础货币的汇率行
+            StringBuilder result = new StringBuilder($"<b>{amount} {CurrencyMappings[baseCurrency].Name}兑换汇率 ≈</b>\n\n");
             foreach (var currencyCode in CurrencyOrder)
             {
+                if (currencyCode == baseCurrency) // 跳过查询的货币本身
+                {
+                    continue;
+                }
+
                 if (exchangeData.Rates.TryGetValue(currencyCode, out var rate))
                 {
                     decimal convertedAmount = amount * rate;
@@ -7961,7 +7967,7 @@ if (messageText.StartsWith("/yccl"))
         text: "全局异常处理已启动！"
     );
 }   
-// 数字加货币代码查询汇率信息 7964-7985
+// 数字加货币代码查询汇率信息 
 // 将CurrencyMappings的键值对调，以便可以通过中文名称查找货币代码
 var nameToCodeMappings = CurrencyMappings
     .ToDictionary(kvp => kvp.Value.Name, kvp => kvp.Key);
@@ -7979,7 +7985,8 @@ if (matchedCurrency != null)
         var exchangeRates = await GetExchangeRatesAsync(amount, currencyCode);
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: exchangeRates
+            text: exchangeRates,
+	    parseMode: ParseMode.Html // 启用 HTML 解析模式
         );
     }
 }
