@@ -4655,7 +4655,7 @@ public static async Task<(decimal UsdtTotal, int TransferCount, bool IsError)> G
 }
 private static readonly List<string> CurrencyOrder = new List<string>
 {
-    "USD", "HKD", "TWD", "JPY", "GBP", "EUR", "AUD", "KRW", "THB", "VND",
+    "CNY","USD", "HKD", "TWD", "JPY", "GBP", "EUR", "AUD", "KRW", "THB", "VND",
     "LAK", "MMK", "INR", "CHF", "NZD", "SGD", "KHR", "PHP", "MXN", "AED",
     "RUB", "CAD", "MYR", "KWD"
 };
@@ -4664,13 +4664,13 @@ public class ExchangeRateData
     public string Base { get; set; }
     public Dictionary<string, decimal> Rates { get; set; }
 }
-private static async Task<string> GetExchangeRatesAsync(decimal amount)
+private static async Task<string> GetExchangeRatesAsync(decimal amount, string baseCurrency)
 {
     try
     {
         using (var httpClient = new HttpClient())
         {
-            string apiUrl = "https://api.exchangerate-api.com/v4/latest/CNY";
+            string apiUrl = $"https://api.exchangerate-api.com/v4/latest/{baseCurrency}";
             var response = await httpClient.GetAsync(apiUrl);
             string content = await response.Content.ReadAsStringAsync();
 
@@ -4687,7 +4687,7 @@ private static async Task<string> GetExchangeRatesAsync(decimal amount)
                 return "无法获取汇率数据。";
             }
 
-            StringBuilder result = new StringBuilder($"{amount}元人民币兑换汇率≈\n\n");
+            StringBuilder result = new StringBuilder($"{amount} {CurrencyMappings[baseCurrency].Name}兑换汇率 ≈\n\n");
             foreach (var currencyCode in CurrencyOrder)
             {
                 if (exchangeData.Rates.TryGetValue(currencyCode, out var rate))
@@ -4705,13 +4705,12 @@ private static async Task<string> GetExchangeRatesAsync(decimal amount)
     }
     catch (Exception ex)
     {
-        // 在这里处理异常，例如记录日志等
-        // 为了简化，这里只返回一个错误消息
         return $"在获取汇率时发生错误：{ex.Message}";
     }
 }
 private static readonly Dictionary<string, (string Name, string Symbol)> CurrencyMappings = new Dictionary<string, (string, string)>
 {
+    {"CNY", ("人民币", "¥")},
     {"USD", ("美元", "$")},
     {"HKD", ("港币", "HK$")},
     {"TWD", ("台币", "NT$")},
@@ -7952,12 +7951,21 @@ if (messageText.StartsWith("/yccl"))
     );
 }   
 // 假设这是在你的消息处理方法中
-if (messageText.Contains("人民币"))
+// 将CurrencyMappings的键值对调，以便可以通过中文名称查找货币代码
+var nameToCodeMappings = CurrencyMappings
+    .ToDictionary(kvp => kvp.Value.Name, kvp => kvp.Key);
+
+// 尝试匹配输入中的金额和中文货币名称
+var matchedCurrency = nameToCodeMappings.Keys
+    .FirstOrDefault(name => messageText.Contains(name));
+
+if (matchedCurrency != null)
 {
-    var amountString = messageText.Split(new[] { "人民币" }, StringSplitOptions.None)[0].Trim();
+    var amountString = messageText.Replace(matchedCurrency, "").Trim();
     if (decimal.TryParse(amountString, out var amount))
     {
-        var exchangeRates = await GetExchangeRatesAsync(amount);
+        var currencyCode = nameToCodeMappings[matchedCurrency];
+        var exchangeRates = await GetExchangeRatesAsync(amount, currencyCode);
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: exchangeRates
