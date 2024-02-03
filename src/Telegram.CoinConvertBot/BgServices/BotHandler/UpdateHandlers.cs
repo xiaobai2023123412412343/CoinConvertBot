@@ -6545,16 +6545,29 @@ else if(update.CallbackQuery.Data == "contactAdmin")
 }
 else if(update.CallbackQuery.Data == "authorContactRequest")
 {
-    // 在群聊中发送请求信息
+    string responseText;
+
+    // 无论用户是否设置了用户名，都向管理员发送提示信息
+    string adminMessage = $"有人需要帮助，用户名： @{update.CallbackQuery.From.Username ?? "未设置"} 用户ID：{update.CallbackQuery.From.Id}";
     await botClient.SendTextMessageAsync(
         chatId: 1427768220, // 私聊ID
-        text: $"有人需要帮助，用户名： @{update.CallbackQuery.From.Username} 用户ID：{update.CallbackQuery.From.Id}"
+        text: adminMessage
     );
 
-    // 回复用户确认信息
+    // 检查用户是否有用户名
+    if (string.IsNullOrEmpty(update.CallbackQuery.From.Username))
+    {
+        responseText = "操作失败，你还未设置用户名，请设置用户名后使用此功能！";
+    }
+    else
+    {
+        responseText = "收到请求，作者将很快联系您！";
+    }
+
+    // 回复用户
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
-        text: "收到请求，作者将很快联系您！"
+        text: responseText
     );
 }
     }
