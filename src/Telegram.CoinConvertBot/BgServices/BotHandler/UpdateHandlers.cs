@@ -8309,6 +8309,8 @@ if (message.Text == "外汇助手" || message.Text == "/usd") // 添加 /usd 条
 
 else
 {
+    // 注释掉以下代码以禁用数字加货币代码的处理功能
+    /*
     var regex = new Regex(@"^((\d+|[零一二两三四五六七八九十百千万亿]+)+)\s*(([a-zA-Z]{3}|[\u4e00-\u9fa5]+)\s*)+$"); // 修改这里: 添加中文数字匹配
     var match = regex.Match(message.Text);
     if (match.Success)
@@ -8349,6 +8351,7 @@ else
                                                  parseMode: ParseMode.Html);
         }
     }
+    */
 }
         messageText = messageText.Replace($"@{BotUserName}", "");
         var action = messageText.Split(' ')[0] switch
