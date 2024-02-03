@@ -7687,7 +7687,7 @@ if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText
         parseMode: ParseMode.Html
     );
 }
-else if (Regex.IsMatch(messageText, @"^[a-zA-Z]+$")) // 检查消息是否只包含英文字母
+else if (Regex.IsMatch(messageText, @"^[a-zA-Z0-9]+$")) // 检查消息是否包含字母和数字的组合
 {
     var symbol = messageText.ToUpper(); // 将消息转换为大写
     var url = $"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol}USDT"; // 构造API URL
