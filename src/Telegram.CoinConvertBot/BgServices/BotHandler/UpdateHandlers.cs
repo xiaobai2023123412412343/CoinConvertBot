@@ -6141,11 +6141,15 @@ if (update.Type == UpdateType.CallbackQuery)
 
         var exchangeRates = await GetExchangeRatesAsync(amount, currencyCode, true); // 请求完整的汇率表
 
+        // 创建内联键盘按钮
+        var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin"));
+
         await botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
             text: exchangeRates,
-            parseMode: ParseMode.Html
+            parseMode: ParseMode.Html,
+            replyMarkup: keyboard // 添加这一行来设置键盘
         );
     }
     else
