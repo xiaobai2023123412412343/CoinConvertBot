@@ -7982,7 +7982,7 @@ if (messageText.StartsWith("/yccl"))
         text: "全局异常处理已启动！"
     );
 }   
-// 数字加货币代码查询汇率信息 
+// 数字加货币代码查询汇率信息 ！！
 // 合并CurrencyMappings和CurrencyAliases，同时确保货币代码也被识别
 var nameToCodeMappings = CurrencyMappings
     .ToDictionary(kvp => kvp.Value.Name, kvp => kvp.Key) // 正式名称到代码
