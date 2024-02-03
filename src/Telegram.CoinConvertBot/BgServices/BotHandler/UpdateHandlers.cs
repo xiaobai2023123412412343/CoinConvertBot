@@ -4664,7 +4664,7 @@ public class ExchangeRateData
     public string Base { get; set; }
     public Dictionary<string, decimal> Rates { get; set; }
 }
-private static async Task<string> GetExchangeRatesAsync(decimal amount, string baseCurrency)
+private static async Task<string> GetExchangeRatesAsync(decimal amount, string baseCurrency, bool fullList = false)
 {
     decimal usdtToCnyRate = await GetOkxPriceAsync("usdt", "cny", "sell");
 
@@ -4699,22 +4699,25 @@ private static async Task<string> GetExchangeRatesAsync(decimal amount, string b
                 result.AppendLine($"{amountInUsdt.ToString("N2")} 泰达币(USDT)");
             }
 
-            foreach (var currencyCode in CurrencyOrder)
-            {
-                if (currencyCode == baseCurrency) // 跳过查询的货币本身
-                {
-                    continue;
-                }
+    int count = 0;
+    foreach (var currencyCode in CurrencyOrder)
+    {
+        if (currencyCode == baseCurrency) // 跳过查询的货币本身
+        {
+            continue;
+        }
 
-                if (exchangeData.Rates.TryGetValue(currencyCode, out var rate))
-                {
-                    decimal convertedAmount = amount * rate;
-                    if (CurrencyMappings.TryGetValue(currencyCode, out var currencyInfo))
-                    {
-                        result.AppendLine($"{convertedAmount.ToString("N2")}  {currencyInfo.Name} ({currencyCode})");
-                    }
-                }
+        if (exchangeData.Rates.TryGetValue(currencyCode, out var rate))
+        {
+            decimal convertedAmount = amount * rate;
+            if (CurrencyMappings.TryGetValue(currencyCode, out var currencyInfo))
+            {
+                result.AppendLine($"{convertedAmount.ToString("N2")}  {currencyInfo.Name} ({currencyCode})");
+                count++;
+                if (!fullList && count >= 10) break; // 如果不是请求完整列表且已添加10条数据，则停止添加
             }
+        }
+    }
 
             return result.ToString();
         }
@@ -6119,6 +6122,29 @@ if (update.Type == UpdateType.CallbackQuery)
         await BotOnCallbackQueryReceived(botClient, callbackQuery);
     }
 }
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data.Split(',');
+    if (callbackData[0] == "full_ratess")
+    {
+        var amount = decimal.Parse(callbackData[1]);
+        var currencyCode = callbackData[2];
+
+        var exchangeRates = await GetExchangeRatesAsync(amount, currencyCode, true); // 请求完整的汇率表
+
+        await botClient.EditMessageTextAsync(
+            chatId: callbackQuery.Message.Chat.Id,
+            messageId: callbackQuery.Message.MessageId,
+            text: exchangeRates,
+            parseMode: ParseMode.Html
+        );
+    }
+    else
+    {
+        // 处理其他回调
+    }
+}	    
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
@@ -8033,10 +8059,19 @@ if (currencyMatch.Success)
     if (!string.IsNullOrEmpty(currencyCode))
     {
         var exchangeRates = await GetExchangeRatesAsync(amount, currencyCode);
+        string currencyDisplayName = CurrencyMappings.ContainsKey(currencyCode) ? CurrencyMappings[currencyCode].Name : currencyCode;
+        string buttonText = $"完整的 {amount} {currencyDisplayName} 兑换汇率表";
+
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            InlineKeyboardButton.WithCallbackData(buttonText, $"full_ratess,{amount},{currencyCode}")
+        });
+
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: exchangeRates,
-            parseMode: ParseMode.Html // 确保启用 HTML 解析模式
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard // 添加内联键盘
         );
     }
 }
