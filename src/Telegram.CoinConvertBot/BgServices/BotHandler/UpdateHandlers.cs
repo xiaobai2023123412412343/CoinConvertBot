@@ -7464,14 +7464,8 @@ if (userMessageText.StartsWith(ratePrefix))
     }
     else
     {
-        // 如果用户发送的汇率不是有效数字，发送提示消息
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "请发送有效的汇率数字，例如：汇率 14",
-            parseMode: ParseMode.Html,
-            disableWebPagePreview: true,
-            replyToMessageId: message.MessageId
-        );
+        // 如果用户发送的文本不符合“汇率+数字”的格式，则不执行任何操作
+        // 这里可以留空或添加其他逻辑
     }
 }	    
 if (messageText.Equals("ID", StringComparison.OrdinalIgnoreCase) || messageText.Equals("id", StringComparison.OrdinalIgnoreCase))
