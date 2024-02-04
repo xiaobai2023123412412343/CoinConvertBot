@@ -109,9 +109,11 @@ public static class MusicFetcher // 网易云音乐
         {
             using (var client = new HttpClient())
             {
+                // 设置HttpClient的超时时间为3秒
+                client.Timeout = TimeSpan.FromSeconds(3);
+
                 try
                 {
-                    // 使用传入的url参数替代硬编码的URL
                     var response = await client.GetAsync(url);
                     if (!response.IsSuccessStatusCode)
                     {
@@ -124,7 +126,6 @@ public static class MusicFetcher // 网易云音乐
                     var json = JObject.Parse(jsonString);
 
                     var musicUrl = json["info"]["mp3url"].ToString();
-                    // 检查是否返回了有效的音乐文件链接
                     if (string.IsNullOrWhiteSpace(musicUrl) || musicUrl.Contains("music.163.com/404"))
                     {
                         Console.WriteLine($"尝试 {attempt + 1}: 无效的音乐文件链接 - {musicUrl}");
@@ -135,11 +136,18 @@ public static class MusicFetcher // 网易云音乐
                     var title = $"歌手：{json["info"]["auther"]}   歌曲名：{json["info"]["name"]}";
                     return (true, musicUrl, title);
                 }
+                catch (TaskCanceledException)
+                {
+                    // 请求超时会抛出TaskCanceledException异常
+                    Console.WriteLine($"尝试 {attempt + 1}: 请求超时，3秒内未响应。");
+                    // 不需要显式地增加attempt，因为即将执行下一次循环
+                }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"尝试 {attempt + 1}: 捕获到异常 - {ex.Message}");
-                    attempt++;
+                    // 对于除了请求超时之外的其他异常，仍然增加尝试次数
                 }
+                attempt++;
             }
         }
         // 如果尝试了10次仍未成功，则返回失败
@@ -8966,7 +8974,7 @@ if (UserId != AdminUserId)
         new [] // 新增的第四行按钮
         {
             InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
-            InlineKeyboardButton.WithCallbackData("音乐欣赏", "listenToMusic") // 新增按钮	    
+            InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusic") // 新增按钮	    
         }
     });
 
