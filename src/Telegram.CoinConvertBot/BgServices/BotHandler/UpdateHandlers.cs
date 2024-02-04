@@ -6736,10 +6736,10 @@ else if (update.CallbackQuery.Data.StartsWith("listenToMusic"))
         {
             new [] // 新增的内联按钮行
             {
-                InlineKeyboardButton.WithCallbackData("随机热歌", "listenToMusic_热歌榜"),
-                InlineKeyboardButton.WithCallbackData("随机新歌", "listenToMusic_新歌榜"),
-                InlineKeyboardButton.WithCallbackData("随机飙升", "listenToMusic_飙升榜"),
-                InlineKeyboardButton.WithCallbackData("随机原创", "listenToMusic_原创")
+                InlineKeyboardButton.WithCallbackData("热歌", "listenToMusic_热歌榜"),
+                InlineKeyboardButton.WithCallbackData("新歌", "listenToMusic_新歌榜"),
+                InlineKeyboardButton.WithCallbackData("飙升", "listenToMusic_飙升榜"),
+                InlineKeyboardButton.WithCallbackData("原创", "listenToMusic_原创")
             }
         });
 
