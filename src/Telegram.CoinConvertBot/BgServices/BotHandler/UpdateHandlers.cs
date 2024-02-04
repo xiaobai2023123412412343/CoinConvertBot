@@ -115,6 +115,7 @@ public static class MusicFetcher // 网易云音乐
                     var response = await client.GetAsync(url);
                     if (!response.IsSuccessStatusCode)
                     {
+                        Console.WriteLine($"尝试 {attempt + 1}: 响应状态码不成功 - {response.StatusCode}");
                         attempt++;
                         continue;
                     }
@@ -126,6 +127,7 @@ public static class MusicFetcher // 网易云音乐
                     // 检查是否返回了有效的音乐文件链接
                     if (string.IsNullOrWhiteSpace(musicUrl) || musicUrl.Contains("music.163.com/404"))
                     {
+                        Console.WriteLine($"尝试 {attempt + 1}: 无效的音乐文件链接 - {musicUrl}");
                         attempt++;
                         continue;
                     }
@@ -133,8 +135,9 @@ public static class MusicFetcher // 网易云音乐
                     var title = $"歌手：{json["info"]["auther"]}   歌曲名：{json["info"]["name"]}";
                     return (true, musicUrl, title);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"尝试 {attempt + 1}: 捕获到异常 - {ex.Message}");
                     attempt++;
                 }
             }
