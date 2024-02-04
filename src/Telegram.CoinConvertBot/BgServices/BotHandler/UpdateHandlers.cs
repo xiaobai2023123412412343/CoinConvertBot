@@ -2539,7 +2539,7 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
             chatId: chatId,
             text: responseText,
             parseMode: ParseMode.Html,
-            replyToMessageId: message.Chat.Type != ChatType.Private ? message.MessageId : 0 // 在群聊中回复给触发的消息
+            replyToMessageId: message.MessageId // 使用触发命令的消息ID
         );
     }
     catch (ApiRequestException ex)
