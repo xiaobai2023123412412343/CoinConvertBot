@@ -6499,7 +6499,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|music|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|人民币|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|music|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|人民币|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|举牌|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -7873,6 +7873,58 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
         }
     }
 }
+// 检查是否接收到了以 "举牌" 开头的消息
+if (messageText.StartsWith("举牌"))
+{
+    // 提取 "举牌" 后面的内容作为API的查询参数
+    string content = messageText.Substring(2).Trim(); // 假设消息格式为 "举牌 你好" 或 "举牌你好"
+    if (string.IsNullOrEmpty(content))
+    {
+        // 如果没有提供内容，向用户发送提示消息
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "请提供要举牌的内容。例如：举牌 你好"
+        );
+        return;
+    }
+
+    // 构建API请求URL
+    string requestUrl = $"https://api.vvhan.com/api/handWord?text={Uri.EscapeDataString(content)}";
+
+    try
+    {
+        // 使用HttpClient检查图片URL是否有效
+        using (var httpClient = new HttpClient())
+        {
+            var response = await httpClient.GetAsync(requestUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                // 直接将图片URL发送给用户
+                await botClient.SendPhotoAsync(
+                    chatId: message.Chat.Id,
+                    photo: requestUrl
+                );
+            }
+            else
+            {
+                // 如果API请求失败，向用户发送错误消息
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "获取举牌图片失败，请稍后再试。"
+                );
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        // 处理请求过程中的异常
+        Console.WriteLine($"请求举牌API时发生错误: {ex.Message}");
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "处理您的请求时发生错误，请稍后再试。"
+        );
+    }
+}	    
 if (messageText.StartsWith("/jkbtc"))
 {
     if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
