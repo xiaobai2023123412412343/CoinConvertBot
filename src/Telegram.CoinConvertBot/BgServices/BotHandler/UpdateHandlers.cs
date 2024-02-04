@@ -2517,26 +2517,30 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
     {
         var userId = message.From.Id;
         var chatId = message.Chat.Id;
+        var userName = message.From.Username != null ? "@" + message.From.Username : "未设置";
+        var firstName = message.From.FirstName;
+        var lastName = message.From.LastName ?? ""; // 如果没有姓氏，使用空字符串
+        var language = message.From.LanguageCode;
+        var fullName = $"{firstName} {lastName}".Trim();
+        var chatName = message.Chat.Title; // 群聊名称
+
+        var responseText = "";
 
         if (message.Chat.Type == ChatType.Private)
         {
-            await botClient.SendTextMessageAsync(
-                chatId: chatId,
-                text: $"您的用户ID是：<code>{userId}</code>",
-                parseMode: ParseMode.Html
-            );
+            responseText = $"用户ID：<code>{userId}</code>\n用户名：{userName}\n姓名：{fullName}\n语言：{language}";
         }
         else if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
         {
-            var replyToMessageId = message.MessageId;
-
-            await botClient.SendTextMessageAsync(
-                chatId: chatId,
-                text: $"您的用户ID是：<code>{userId}</code>\n当前群聊ID是：<code>{chatId}</code>",
-                parseMode: ParseMode.Html,
-                replyToMessageId: replyToMessageId
-            );
+            responseText = $"群组ID：<code>{chatId}</code>\n群组名：{chatName}\n\n用户ID：<code>{userId}</code>\n用户名：{userName}\n姓名：{fullName}\n语言：{language}";
         }
+
+        await botClient.SendTextMessageAsync(
+            chatId: chatId,
+            text: responseText,
+            parseMode: ParseMode.Html,
+            replyToMessageId: message.Chat.Type != ChatType.Private ? message.MessageId : 0 // 在群聊中回复给触发的消息
+        );
     }
     catch (ApiRequestException ex)
     {
