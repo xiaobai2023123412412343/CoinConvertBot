@@ -6667,6 +6667,29 @@ else if(update.CallbackQuery.Data == "back")
     //     text: "已返回主菜单。"
     // );
 }
+else if(update.CallbackQuery.Data == "commandList")
+{
+    var commandListMessage = @"指令备忘录，帮助菜单里面有说明的不再重复！
+
+发送：<code>汇率+数字</code>（查手续费专用）
+自动查询该汇率对应的手续费是多少，u价为实时价格。
+例如发送：<code>汇率14</code>  自动计算返回：当汇率14时，手续费为 48.79%
+
+在群里发送：<code>开启兑换通知</code>/<code>关闭兑换通知</code>
+自动在本群开启或关闭机器人兑换账单播报
+
+在群里发送：<code>关闭键盘</code>
+自动把机器人键盘收回去。
+
+在群里发：<code>关闭翻译</code>/<code>开启翻译</code>（默认开启）
+自动在本群停止翻译，发送外语不再自动翻译成中文！";
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: commandListMessage,
+        parseMode: ParseMode.Html
+    );
+}	    
 else if(update.CallbackQuery.Data == "smsVerification")
 {
     await botClient.SendTextMessageAsync(
@@ -9053,12 +9076,13 @@ if (UserId != AdminUserId)
         {
             InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
             InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers"),
-            InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")		    
+            InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusicc") 		    
         },
         new [] // 新增的第四行按钮
         {
             InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
-            InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusicc") // 新增按钮	    
+            InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),  
+            InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")	    
         }
     });
 
