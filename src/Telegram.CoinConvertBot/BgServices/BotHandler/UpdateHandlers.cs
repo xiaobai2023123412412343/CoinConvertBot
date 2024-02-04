@@ -7873,58 +7873,6 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
         }
     }
 }
-// 检查是否接收到了以 "举牌" 开头的消息
-if (messageText.StartsWith("举牌"))
-{
-    // 提取 "举牌" 后面的内容作为API的查询参数
-    string content = messageText.Substring(2).Trim(); // 假设消息格式为 "举牌 你好" 或 "举牌你好"
-    if (string.IsNullOrEmpty(content))
-    {
-        // 如果没有提供内容，向用户发送提示消息
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "请提供要举牌的内容。例如：举牌 你好"
-        );
-        return;
-    }
-
-    // 构建API请求URL
-    string requestUrl = $"https://api.vvhan.com/api/handWord?text={Uri.EscapeDataString(content)}";
-
-    try
-    {
-        // 使用HttpClient检查图片URL是否有效
-        using (var httpClient = new HttpClient())
-        {
-            var response = await httpClient.GetAsync(requestUrl);
-            if (response.IsSuccessStatusCode)
-            {
-                // 直接将图片URL发送给用户
-                await botClient.SendPhotoAsync(
-                    chatId: message.Chat.Id,
-                    photo: requestUrl
-                );
-            }
-            else
-            {
-                // 如果API请求失败，向用户发送错误消息
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: "获取举牌图片失败，请稍后再试。"
-                );
-            }
-        }
-    }
-    catch (Exception ex)
-    {
-        // 处理请求过程中的异常
-        Console.WriteLine($"请求举牌API时发生错误: {ex.Message}");
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "处理您的请求时发生错误，请稍后再试。"
-        );
-    }
-}	    
 if (messageText.StartsWith("/jkbtc"))
 {
     if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
