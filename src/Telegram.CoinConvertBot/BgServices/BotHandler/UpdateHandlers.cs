@@ -100,9 +100,9 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-public static class MusicFetcher // 请根据需要替换类名
+public static class MusicFetcher // 网易云音乐
 {
-    public static async Task<(bool success, string musicUrl, string title)> FetchMusicInfoAsync()
+    public static async Task<(bool success, string musicUrl, string title)> FetchMusicInfoAsync(string url)
     {
         int attempt = 0;
         while (attempt < 10)
@@ -111,7 +111,8 @@ public static class MusicFetcher // 请根据需要替换类名
             {
                 try
                 {
-                    var response = await client.GetAsync("https://api.vvhan.com/api/rand.music?type=json&sort=热歌榜");
+                    // 使用传入的url参数替代硬编码的URL
+                    var response = await client.GetAsync(url);
                     if (!response.IsSuccessStatusCode)
                     {
                         attempt++;
@@ -129,7 +130,7 @@ public static class MusicFetcher // 请根据需要替换类名
                         continue;
                     }
 
-                    var title = $"歌手：{json["info"]["auther"]}  歌曲：{json["info"]["name"]}";
+                    var title = $"歌手：{json["info"]["auther"]}   歌曲名：{json["info"]["name"]}";
                     return (true, musicUrl, title);
                 }
                 catch
@@ -6713,17 +6714,41 @@ else if(update.CallbackQuery.Data == "fancyNumbers")
         replyMarkup: inlineKeyboard
     );
 }
-else if(update.CallbackQuery.Data == "listenToMusic")
+else if (update.CallbackQuery.Data.StartsWith("listenToMusic"))
 {
-    var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(); // 尝试获取音乐链接和标题
+    // 从回调数据中提取榜单类型
+    var sortType = update.CallbackQuery.Data.Split('_').LastOrDefault();
+    var sortUrl = sortType switch
+    {
+        "热歌榜" => "https://api.vvhan.com/api/rand.music?type=json&sort=热歌榜",
+        "新歌榜" => "https://api.vvhan.com/api/rand.music?type=json&sort=新歌榜",
+        "飙升榜" => "https://api.vvhan.com/api/rand.music?type=json&sort=飙升榜",
+        "原创" => "https://api.vvhan.com/api/rand.music?type=json&sort=原创",
+        _ => "https://api.vvhan.com/api/rand.music?type=json&sort=热歌榜" // 默认为热歌榜
+    };
+
+    var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(sortUrl); // 尝试获取音乐链接和标题，传递榜单URL
 
     if (success)
     {
-        // 发送MP3格式的音乐文件
+        // 定义内联键盘
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // 新增的内联按钮行
+            {
+                InlineKeyboardButton.WithCallbackData("随机热歌", "listenToMusic_热歌榜"),
+                InlineKeyboardButton.WithCallbackData("随机新歌", "listenToMusic_新歌榜"),
+                InlineKeyboardButton.WithCallbackData("随机飙升", "listenToMusic_飙升榜"),
+                InlineKeyboardButton.WithCallbackData("随机原创", "listenToMusic_原创")
+            }
+        });
+
+        // 发送MP3格式的音乐文件，并附加内联键盘
         await botClient.SendAudioAsync(
             chatId: update.CallbackQuery.Message.Chat.Id,
             audio: musicUrl, // 使用获取到的音乐链接
-            caption: title // 使用获取到的标题作为描述
+            caption: title, // 使用获取到的标题作为描述
+            replyMarkup: inlineKeyboard // 添加内联键盘
         );
     }
     else
@@ -6734,7 +6759,7 @@ else if(update.CallbackQuery.Data == "listenToMusic")
             text: "操作繁忙，请稍等重试！"
         );
     }
-}	    
+}
 else if(update.CallbackQuery.Data == "memberEmojis")
 {
     await botClient.SendTextMessageAsync(
