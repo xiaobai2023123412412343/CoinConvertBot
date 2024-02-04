@@ -100,6 +100,48 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class MusicFetcher // 请根据需要替换类名
+{
+    public static async Task<(bool success, string musicUrl, string title)> FetchMusicInfoAsync()
+    {
+        int attempt = 0;
+        while (attempt < 10)
+        {
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    var response = await client.GetAsync("https://api.vvhan.com/api/rand.music?type=json&sort=热歌榜");
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        attempt++;
+                        continue;
+                    }
+
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var json = JObject.Parse(jsonString);
+
+                    var musicUrl = json["info"]["mp3url"].ToString();
+                    // 检查是否返回了有效的音乐文件链接
+                    if (string.IsNullOrWhiteSpace(musicUrl) || musicUrl.Contains("music.163.com/404"))
+                    {
+                        attempt++;
+                        continue;
+                    }
+
+                    var title = $"歌手：{json["info"]["auther"]}  歌曲：{json["info"]["name"]}";
+                    return (true, musicUrl, title);
+                }
+                catch
+                {
+                    attempt++;
+                }
+            }
+        }
+        // 如果尝试了10次仍未成功，则返回失败
+        return (false, null, null);
+    }
+}
 //USDT交易监控代码    
 // 存储用户ID、波场地址和最后一次交易时间戳的字典
 private static Dictionary<(long UserId, string TronAddress), (string TronAddress, long LastTransactionTimestamp)> userTronTransactions = new Dictionary<(long, string), (string, long)>();
@@ -6671,6 +6713,28 @@ else if(update.CallbackQuery.Data == "fancyNumbers")
         replyMarkup: inlineKeyboard
     );
 }
+else if(update.CallbackQuery.Data == "listenToMusic")
+{
+    var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(); // 尝试获取音乐链接和标题
+
+    if (success)
+    {
+        // 发送MP3格式的音乐文件
+        await botClient.SendAudioAsync(
+            chatId: update.CallbackQuery.Message.Chat.Id,
+            audio: musicUrl, // 使用获取到的音乐链接
+            caption: title // 使用获取到的标题作为描述
+        );
+    }
+    else
+    {
+        // 如果尝试10次后仍未成功获取音乐链接，回复用户操作繁忙信息
+        await botClient.SendTextMessageAsync(
+            chatId: update.CallbackQuery.Message.Chat.Id,
+            text: "操作繁忙，请稍等重试！"
+        );
+    }
+}	    
 else if(update.CallbackQuery.Data == "memberEmojis")
 {
     await botClient.SendTextMessageAsync(
@@ -8726,7 +8790,8 @@ if (UserId != AdminUserId)
         },
         new [] // 新增的第四行按钮
         {
-            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese")
+            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
+            InlineKeyboardButton.WithCallbackData("音乐欣赏", "listenToMusic") // 新增按钮	    
         }
     });
 
