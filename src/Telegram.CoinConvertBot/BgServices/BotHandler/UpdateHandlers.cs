@@ -7227,8 +7227,11 @@ var timestamp = message.Date != default(DateTime)
         }
     }
 } 
-// 检查是否接收到了 /music 消息，网易云音乐
-if (messageText.StartsWith("/music"))
+// 定义可以触发功能的命令列表
+string[] commands = new[] { "/music", "点歌", "歌曲", "音乐", "网易云", "听歌" };
+
+// 检查消息文本是否以数组中的任何命令开头
+if (commands.Any(cmd => messageText.StartsWith(cmd)))
 {
     // 定义内联键盘
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
