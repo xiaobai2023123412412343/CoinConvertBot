@@ -6499,7 +6499,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|music|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|人民币|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|举牌|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|music|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|人民币|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -7399,6 +7399,54 @@ if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClien
         }
     }
 }
+// 检查消息是否以“汇率”开头，并跟随一个数字
+var userMessageText = message.Text;
+var ratePrefix = "汇率";
+if (userMessageText.StartsWith(ratePrefix))
+{
+    var userRateText = userMessageText.Substring(ratePrefix.Length).Trim();
+    if (decimal.TryParse(userRateText, out decimal userRate) && userRate > 0)
+    {
+        // 启动查询USDT价格的方法
+        _ = GetOkxPriceAsync("usdt", "cny", "anyMethod") // 假设您查询的是USDT对CNY的汇率，method参数根据需要调整
+            .ContinueWith(async task =>
+            {
+                string responseText;
+                if (task.IsFaulted || task.Result == default)
+                {
+                    // 如果发生异常或返回默认值，向用户发送错误消息
+                    responseText = "API异常，请稍后重试！";
+                }
+                else
+                {
+                    // 使用查询到的USDT价格信息计算手续费
+                    var realRate = task.Result;
+                    var feePercentage = (1 - realRate / userRate) * 100;
+                    responseText = $"当汇率{userRate}时，手续费为 {feePercentage:N2}%";
+                }
+
+                // 向用户发送查询到的手续费信息或错误消息
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: responseText,
+                    parseMode: ParseMode.Html,
+                    disableWebPagePreview: true,
+                    replyToMessageId: message.MessageId
+                );
+            });
+    }
+    else
+    {
+        // 如果用户发送的汇率不是有效数字，发送提示消息
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "请发送有效的汇率数字，例如：汇率 14",
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true,
+            replyToMessageId: message.MessageId
+        );
+    }
+}	    
 if (messageText.Equals("ID", StringComparison.OrdinalIgnoreCase) || messageText.Equals("id", StringComparison.OrdinalIgnoreCase))
 {
     await HandleIdCommandAsync(botClient, message);
