@@ -6725,6 +6725,35 @@ else if(update.CallbackQuery.Data == "fancyNumbers")
         replyMarkup: inlineKeyboard
     );
 }
+else if (update.CallbackQuery.Data == "listenToMusicc")
+{
+    // 定义内联键盘，与 /music 命令相同的布局
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("热歌", "listenToMusic_热歌榜"),
+            InlineKeyboardButton.WithCallbackData("新歌", "listenToMusic_新歌榜"),
+            InlineKeyboardButton.WithCallbackData("飙升", "listenToMusic_飙升榜"),
+            InlineKeyboardButton.WithCallbackData("原创", "listenToMusic_原创")
+        },
+        new [] // 第二行按钮，用于随机歌曲
+        {
+            InlineKeyboardButton.WithCallbackData("随机5首歌曲", "random5Songs"),
+            InlineKeyboardButton.WithCallbackData("随机10首歌曲", "random10Songs")
+        }
+    });
+
+    // 图片链接
+    string imageUrl = "https://i.postimg.cc/tTLqXVjT/f727b28633ba6d063e0dee837cba705f.png";
+
+    // 发送图片给用户，附带内联键盘
+    await botClient.SendPhotoAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        photo: imageUrl,
+        replyMarkup: inlineKeyboard
+    );
+}	    
 else if (update.CallbackQuery.Data == "random10Songs")
 {
     var categories = new[] { "热歌榜", "新歌榜", "飙升榜", "原创" };
@@ -8974,7 +9003,7 @@ if (UserId != AdminUserId)
         new [] // 新增的第四行按钮
         {
             InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
-            InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusic") // 新增按钮	    
+            InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusicc") // 新增按钮	    
         }
     });
 
