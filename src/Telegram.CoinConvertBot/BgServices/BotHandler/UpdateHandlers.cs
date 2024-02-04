@@ -6714,6 +6714,61 @@ else if(update.CallbackQuery.Data == "fancyNumbers")
         replyMarkup: inlineKeyboard
     );
 }
+else if (update.CallbackQuery.Data == "random10Songs")
+{
+    var categories = new[] { "热歌榜", "新歌榜", "飙升榜", "原创" };
+    var random = new Random();
+    
+    // 准备内联键盘
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 新增的内联按钮行
+        {
+            InlineKeyboardButton.WithCallbackData("热歌", "listenToMusic_热歌榜"),
+            InlineKeyboardButton.WithCallbackData("新歌", "listenToMusic_新歌榜"),
+            InlineKeyboardButton.WithCallbackData("飙升", "listenToMusic_飙升榜"),
+            InlineKeyboardButton.WithCallbackData("原创", "listenToMusic_原创")
+        },
+        new [] // 新增的第二行按钮，用于随机10首歌曲
+        {
+            InlineKeyboardButton.WithCallbackData("随机10首歌曲", "random10Songs")
+        }
+    });
+
+    for (int i = 0; i < 10; i++)
+    {
+        // 随机选择一个榜单
+        var category = categories[random.Next(categories.Length)];
+        var sortUrl = $"https://api.vvhan.com/api/rand.music?type=json&sort={category}";
+
+        var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(sortUrl);
+        if (success)
+        {
+            // 判断是否为最后一首歌曲，如果是，则附加内联键盘
+            var replyMarkup = (i == 9) ? inlineKeyboard : null;
+
+            // 发送MP3格式的音乐文件
+            await botClient.SendAudioAsync(
+                chatId: update.CallbackQuery.Message.Chat.Id,
+                audio: musicUrl,
+                caption: title,
+                replyMarkup: replyMarkup
+            );
+        }
+        else
+        {
+            // 如果获取音乐链接失败，发送一条消息并退出循环
+            await botClient.SendTextMessageAsync(
+                chatId: update.CallbackQuery.Message.Chat.Id,
+                text: "获取音乐链接失败，请稍后再试。"
+            );
+            break;
+        }
+        
+        // 为了避免API限制，可以在这里添加短暂的延迟
+        await Task.Delay(500); // 500毫秒的延迟
+    }
+} 
 else if (update.CallbackQuery.Data.StartsWith("listenToMusic"))
 {
     // 从回调数据中提取榜单类型
@@ -6740,7 +6795,11 @@ else if (update.CallbackQuery.Data.StartsWith("listenToMusic"))
                 InlineKeyboardButton.WithCallbackData("新歌", "listenToMusic_新歌榜"),
                 InlineKeyboardButton.WithCallbackData("飙升", "listenToMusic_飙升榜"),
                 InlineKeyboardButton.WithCallbackData("原创", "listenToMusic_原创")
-            }
+            },	
+            new [] // 新增的内联按钮行
+            {
+                InlineKeyboardButton.WithCallbackData("随机10首歌曲", "random10Songs")
+            }		
         });
 
         // 发送MP3格式的音乐文件，并附加内联键盘
