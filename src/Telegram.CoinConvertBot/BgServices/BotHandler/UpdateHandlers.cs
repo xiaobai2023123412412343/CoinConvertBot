@@ -7440,8 +7440,8 @@ if (messageText.Contains("费用") || messageText.Contains("能量"))
 
 通过提前租赁能量，可以避免燃烧TRX来获取能量，为您的转账节省大量TRX：
 
-租赁3.2万能量/日，仅需10.00 TRX，节省 3.39 TRX (节省约30%)
-租赁6.5万能量/日，仅需18.00 TRX，节省 9.25 TRX (节省约52%)";
+租赁3.2万能量/日，仅需7.00 TRX，节省 6.39 TRX (节省约48%)
+租赁6.5万能量/日，仅需13.00 TRX，节省 14.25 TRX (节省约53%)";
     
     // 创建内联键盘按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
@@ -9436,8 +9436,8 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 对方地址无u：27.2559 TRX - 27.6009 TRX 
 
 {adminText} 租赁能量更划算：
-对方地址有u：仅需10.00 TRX，节省 3.39 TRX (节省约30%)
-对方地址无u：仅需18.00 TRX，节省 9.25 TRX (节省约52%)            
+对方地址有u：仅需7.00 TRX，节省 6.39 TRX (节省约48%)
+对方地址无u：仅需13.00 TRX，节省 14.25 TRX (节省约53%)            
 
 
 ";
