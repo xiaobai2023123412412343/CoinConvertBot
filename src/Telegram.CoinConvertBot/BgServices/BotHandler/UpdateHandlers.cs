@@ -8607,10 +8607,16 @@ if (messageText.StartsWith("代解") && message.From.Id == 1427768220)
             Console.WriteLine($"地址：{address}\n代解失败，机器人被用户：{userId} 阻止了。"); // 添加调试输出
             await botClient.SendTextMessageAsync(1427768220, $"地址：<code>{address}</code>\n代解失败，机器人被用户：<code>{userId}</code> 阻止了！", parseMode: ParseMode.Html);
         }
+	catch (ApiRequestException ex) when (ex.Message.Contains("chat not found"))
+        {
+              Console.WriteLine($"代绑失败，因为找不到用户：{userId} 的聊天。可能是因为用户没有开始与机器人的对话。");
+              await botClient.SendTextMessageAsync(1427768220, $"代绑失败，找不到用户：<code>{userId}</code> 的聊天。请确保用户已经开始与机器人的对话。", parseMode: ParseMode.Html);
+        }		
         catch (Exception ex)
         {
-            Console.WriteLine($"代解失败，发生异常：{ex.Message}"); // 添加调试输出
-            // 这里可以添加更多的异常处理逻辑
+            Console.WriteLine($"代绑失败，发生异常：{ex.Message}");
+	    // 如果因为其他任何原因发送失败，则取消操作，并通知管理员	
+	    await botClient.SendTextMessageAsync(1427768220, $"代绑失败，尝试向用户：<code>{userId}</code> 发送消息时发生错误。", parseMode: ParseMode.Html);	
         }
     }
     else
