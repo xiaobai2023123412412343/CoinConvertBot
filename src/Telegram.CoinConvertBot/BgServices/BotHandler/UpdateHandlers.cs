@@ -1708,7 +1708,7 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
             }
             catch (ApiRequestException ex)
             {
-                if (ex.Message == "Forbidden: bot was blocked by the user" || ex.Message.Contains("user is deactivated"))
+                if (ex.Message == "Forbidden: bot was blocked by the user" || ex.Message.Contains("user is deactivated") || ex.Message.Contains("Bad Request: chat not found"))
                 {
                     // 用户阻止了机器人，或者用户注销了机器人，取消定时器任务
                     timer.Dispose();
@@ -9302,6 +9302,8 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
         var (usdtBalance, trxBalance, _) = await GetBalancesAsync(address);
         var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(address); // 交易笔数             
 
+try
+{
     // 在发送绑定成功消息之前检查是否是代绑操作
     if (!isProxyBinding)
     {
@@ -9314,37 +9316,42 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
 
     // 等待0.5秒
     await Task.Delay(500);
-//if (!isProxyBinding) // 添加这个检查
-//{    
-// 根据余额和交易笔数判断发送哪条文本消息
-if (usdtBalance > 10000000m || transactions > 300000)
-{
-    // 如果超过阈值，先发送TRX余额监控启动的消息
-    if (!skipTRXMonitoring)
+
+    // 根据余额和交易笔数判断发送哪条文本消息
+    if (usdtBalance > 10000000m || transactions > 300000)
     {
-        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
+        // 如果超过阈值，先发送TRX余额监控启动的消息
+        if (!skipTRXMonitoring)
+        {
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
+        }
+        // 等待0.5秒
+        await Task.Delay(500);
+        // 然后发送疑似交易所地址的警告消息
+        string warningMessage = $"疑似交易所地址：\n" +
+                                $"余额：<b>{usdtBalance.ToString("#,##0.##")} USDT，" +
+                                $"{transactions}次交易</b>\n暂不支持监听交易所地址！";
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: warningMessage, parseMode: ParseMode.Html);
     }
-    // 等待0.5秒
-    await Task.Delay(500);
-    // 然后发送疑似交易所地址的警告消息
-    string warningMessage = $"疑似交易所地址：\n" +
-                            $"余额：<b>{usdtBalance.ToString("#,##0.##")} USDT，" +
-                            $"{transactions}次交易</b>\n暂不支持监听交易所地址！";
-    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: warningMessage, parseMode: ParseMode.Html);
-}
-else
-{
-    // 如果没有超过阈值，发送USDT交易监听启动的消息
-    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "USDT交易监听已启动...", parseMode: ParseMode.Html);
-    // 等待0.5秒
-    await Task.Delay(500);
-    // 然后发送TRX余额监控启动的消息，如果没有跳过TRX监控
-    if (!skipTRXMonitoring)
+    else
     {
-        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
+        // 如果没有超过阈值，发送USDT交易监听启动的消息
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "USDT交易监听已启动...", parseMode: ParseMode.Html);
+        // 等待0.5秒
+        await Task.Delay(500);
+        // 然后发送TRX余额监控启动的消息，如果没有跳过TRX监控
+        if (!skipTRXMonitoring)
+        {
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "TRX余额监控已启动...", parseMode: ParseMode.Html);
+        }
     }
 }
-//}
+catch (Telegram.Bot.Exceptions.ApiRequestException ex)
+{
+    Console.WriteLine($"发送消息失败，可能的原因：{ex.Message}");
+    // 这里可以添加更多的错误处理逻辑，比如记录日志等
+    return null; // 发生异常时退出方法，不再继续尝试发送其他消息
+}
     // 这里返回一个消息对象或者null
     return await Task.FromResult<Message>(null);
             }
