@@ -9066,13 +9066,13 @@ if (UserId != AdminUserId)
             InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),		
             InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")		    
         },
-        new [] // 新增的第三行按钮
+        new [] // 新增的第二行按钮
         {
             InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
             InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers"),
             InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusicc") 		    
         },
-        new [] // 新增的第四行按钮
+        new [] // 新增的第三行按钮
         {
             InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
             InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),  
