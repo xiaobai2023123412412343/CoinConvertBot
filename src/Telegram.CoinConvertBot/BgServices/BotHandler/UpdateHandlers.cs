@@ -8572,9 +8572,16 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
             Console.WriteLine($"地址：{address} 代绑失败，机器人被用户：{userId} 阻止了。");
             await botClient.SendTextMessageAsync(1427768220, $"代绑失败，\n机器人被用户：<code>{userId}</code> 阻止了！", parseMode: ParseMode.Html);
         }
+	catch (ApiRequestException ex) when (ex.Message.Contains("chat not found"))
+        {
+              Console.WriteLine($"代绑失败，因为找不到用户：{userId} 的聊天。可能是因为用户没有开始与机器人的对话。");
+              await botClient.SendTextMessageAsync(1427768220, $"代绑失败，找不到用户：<code>{userId}</code> 的聊天。请确保用户已经开始与机器人的对话。", parseMode: ParseMode.Html);
+        }		
         catch (Exception ex)
         {
             Console.WriteLine($"代绑失败，发生异常：{ex.Message}");
+	    // 如果因为其他任何原因发送失败，则取消操作，并通知管理员	
+	    await botClient.SendTextMessageAsync(1427768220, $"代绑失败，尝试向用户：<code>{userId}</code> 发送消息时发生错误。", parseMode: ParseMode.Html);	
         }
     }
     else
@@ -8609,14 +8616,14 @@ if (messageText.StartsWith("代解") && message.From.Id == 1427768220)
         }
 	catch (ApiRequestException ex) when (ex.Message.Contains("chat not found"))
         {
-              Console.WriteLine($"代绑失败，因为找不到用户：{userId} 的聊天。可能是因为用户没有开始与机器人的对话。");
-              await botClient.SendTextMessageAsync(1427768220, $"代绑失败，找不到用户：<code>{userId}</code> 的聊天。请确保用户已经开始与机器人的对话。", parseMode: ParseMode.Html);
+              Console.WriteLine($"代解失败，因为找不到用户：{userId} 的聊天。可能是因为用户没有开始与机器人的对话。");
+              await botClient.SendTextMessageAsync(1427768220, $"代解失败，找不到用户：<code>{userId}</code> 的聊天。请确保用户已经开始与机器人的对话。", parseMode: ParseMode.Html);
         }		
         catch (Exception ex)
         {
             Console.WriteLine($"代绑失败，发生异常：{ex.Message}");
 	    // 如果因为其他任何原因发送失败，则取消操作，并通知管理员	
-	    await botClient.SendTextMessageAsync(1427768220, $"代绑失败，尝试向用户：<code>{userId}</code> 发送消息时发生错误。", parseMode: ParseMode.Html);	
+	    await botClient.SendTextMessageAsync(1427768220, $"代解失败，尝试向用户：<code>{userId}</code> 发送消息时发生错误。", parseMode: ParseMode.Html);	
         }
     }
     else
