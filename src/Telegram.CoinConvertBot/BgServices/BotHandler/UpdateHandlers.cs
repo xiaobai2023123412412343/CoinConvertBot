@@ -6669,7 +6669,7 @@ else if(update.CallbackQuery.Data == "back")
 }
 else if(update.CallbackQuery.Data == "commandList")
 {
-    var commandListMessage = @"指令备忘录，帮助菜单里面有说明的不再重复！
+    var commandListMessage = @"指令备忘录，帮助菜单里面有介绍的不再重复！
 
 发送：<code>汇率+数字</code>（查手续费专用）
 自动查询该汇率对应的手续费是多少，u价为实时价格。
