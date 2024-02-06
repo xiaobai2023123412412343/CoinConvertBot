@@ -5222,7 +5222,7 @@ for (int i = startIndex; i < endIndex; i++)
                 {
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
-                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("更多功能"),
                     new KeyboardButton("地址监听"),
                 }
         });
@@ -6503,7 +6503,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|music|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|会员代开|人民币|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|music|usd|vip|usdt|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|更多功能|人民币|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -7146,7 +7146,7 @@ const string BOT_USERNAME = "yifanfubot";//机器人用户名
 const int ADMIN_ID = 1427768220;//指定管理员ID不转发
 
 // 存储机器人的所有命令
-string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/vip","/music", "/cny", "/trc", "/usdt", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "会员代开", "汇率换算", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "币圈行情", "外汇助手", "监控" };    
+string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/vip","/music", "/cny", "/trc", "/usdt", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "更多功能", "汇率换算", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "币圈行情", "外汇助手", "监控" };    
 
 if (message.Type == MessageType.Text)
 {
@@ -8797,7 +8797,7 @@ else
             "/fan" => PriceTRX(botClient, message),
             "绑定" => BindAddress(botClient, message),
             "解绑" => UnBindAddress(botClient, message),
-            "会员代开" => QueryAccount(botClient, message),
+            "更多功能" => QueryAccount(botClient, message),
             "/vip" => QueryAccount(botClient, message), // 添加这一行
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
@@ -9197,7 +9197,7 @@ USDT余额： <b>{USDT}</b>
                 {
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
-                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("更多功能"),
                     new KeyboardButton("地址监听"),
                 }
         });
@@ -9299,7 +9299,7 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
                 {
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
-                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("更多功能"),
                     new KeyboardButton("地址监听"),
                 }
         });
@@ -9378,7 +9378,7 @@ catch (Telegram.Bot.Exceptions.ApiRequestException ex)
                 {
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
-                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("更多功能"),
                     new KeyboardButton("地址监听"),
                 }
         });
@@ -9438,7 +9438,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
             {
                 new KeyboardButton("币圈行情"),
                 new KeyboardButton("外汇助手"),
-                new KeyboardButton("会员代开"),
+                new KeyboardButton("更多功能"),
                 new KeyboardButton("地址监听"),
             }
     });
@@ -9523,7 +9523,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
                 {
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
-                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("更多功能"),
                     new KeyboardButton("地址监听"),
                 }
         });
@@ -9619,7 +9619,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
                 {
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
-                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("更多功能"),
                     new KeyboardButton("地址监听"),
                 }
         });
@@ -9715,7 +9715,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         {
             new KeyboardButton("币圈行情"),
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("会员代开"),
+            new KeyboardButton("更多功能"),
             new KeyboardButton("地址监听"),
         }
     })
@@ -9778,7 +9778,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
                 {
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
-                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("更多功能"),
                     new KeyboardButton("地址监听"),
                 }
         });
@@ -9889,7 +9889,7 @@ static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, 
                 {
                     new KeyboardButton("币圈行情"),
                     new KeyboardButton("外汇助手"),
-                    new KeyboardButton("会员代开"),
+                    new KeyboardButton("更多功能"),
                     new KeyboardButton("地址监听"),
                 }
         });
