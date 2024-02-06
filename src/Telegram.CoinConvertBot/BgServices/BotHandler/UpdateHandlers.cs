@@ -4801,6 +4801,7 @@ private static readonly Dictionary<string, string> CurrencyAliases = new Diction
     {"法郎", "CHF"},	
     {"新币", "SGD"},
     {"瑞尔", "KHR"},	
+    {"柬币", "KHR"},    
     {"迪拉姆", "AED"},	
     {"卢布", "RUB"},	
     {"披索", "PHP"},
@@ -6515,7 +6516,7 @@ if (containsUsername)
             var isTronAddress = Regex.IsMatch(inputText, @"^(T[A-Za-z0-9]{33})$");
 
             // 检查输入文本是否为币种
-            var currencyNamesRegex = new Regex(@"(美元|港币|台币|日元|英镑|欧元|澳元|韩元|泰铢|越南盾|老挝币|缅甸币|印度卢比|瑞士法郎|新西兰元|新加坡新元|柬埔寨瑞尔|菲律宾披索|墨西哥比索|迪拜迪拉姆|俄罗斯卢布|加拿大加元|马来西亚币|科威特第纳尔|元|块|美金|法郎|新币|瑞尔|迪拉姆|卢布|披索|比索|马币|第纳尔|卢比|CNY|USD|HKD|TWD|JPY|GBP|EUR|AUD|KRW|THB|VND|LAK|MMK|INR|CHF|NZD|SGD|KHR|PHP|MXN|AED|RUB|CAD|MYR|KWD)", RegexOptions.IgnoreCase);		
+            var currencyNamesRegex = new Regex(@"(美元|港币|台币|日元|英镑|欧元|澳元|韩元|柬币|泰铢|越南盾|老挝币|缅甸币|印度卢比|瑞士法郎|新西兰元|新加坡新元|柬埔寨瑞尔|菲律宾披索|墨西哥比索|迪拜迪拉姆|俄罗斯卢布|加拿大加元|马来西亚币|科威特第纳尔|元|块|美金|法郎|新币|瑞尔|迪拉姆|卢布|披索|比索|马币|第纳尔|卢比|CNY|USD|HKD|TWD|JPY|GBP|EUR|AUD|KRW|THB|VND|LAK|MMK|INR|CHF|NZD|SGD|KHR|PHP|MXN|AED|RUB|CAD|MYR|KWD)", RegexOptions.IgnoreCase);		
             // 检查输入文本是否仅包含表情符号
             var isOnlyEmoji = EmojiHelper.IsOnlyEmoji(inputText);
             
