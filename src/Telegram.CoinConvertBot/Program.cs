@@ -108,7 +108,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
         new BotCommand(){Command="fu",Description="汇率换算"},
         new BotCommand(){Command="btc",Description="币圈行情"},
         new BotCommand(){Command="usd",Description="外汇助手"},
-        new BotCommand(){Command="vip",Description="会员代开"},
+        new BotCommand(){Command="vip",Description="更多功能"},
         new BotCommand(){Command="cny",Description="合约助手"},
         new BotCommand(){Command="trc",Description="查询余额"},  
         new BotCommand(){Command="usdt",Description="实时u价"},   
