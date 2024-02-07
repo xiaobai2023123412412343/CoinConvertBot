@@ -5223,7 +5223,7 @@ for (int i = startIndex; i < endIndex; i++)
                 new KeyboardButton("U兑TRX"),
                 new KeyboardButton("实时汇率"),
                 new KeyboardButton("查询余额"),
-                new KeyboardButton("能量租赁"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
@@ -7499,37 +7499,37 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
 }  
 if (messageText.Equals("地址监听", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
 {
-   // if (message.From.Id == AdminUserId)
-   // {
-   //     // 如果用户是管理员，执行 "/faxian" 的方法
-   //     var topRise = riseList.OrderByDescending(x => x.Days).Take(5);
-   //     var topFall = fallList.OrderByDescending(x => x.Days).Take(5);
+    if (message.From.Id == AdminUserId)
+    {
+        // 如果用户是管理员，执行 "/faxian" 的方法
+        var topRise = riseList.OrderByDescending(x => x.Days).Take(5);
+        var topFall = fallList.OrderByDescending(x => x.Days).Take(5);
 
-  //      var reply = "<b>币安连续上涨TOP5：</b>\n";
-   //     foreach (var coin in topRise)
-  //      {
-  //          var symbol = coin.Symbol.Replace("USDT", "");
-   //         reply += $"<code>{symbol}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
-  //      }
+        var reply = "<b>币安连续上涨TOP5：</b>\n";
+        foreach (var coin in topRise)
+        {
+            var symbol = coin.Symbol.Replace("USDT", "");
+            reply += $"<code>{symbol}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+        }
 
-   //     reply += "\n<b>币安连续下跌TOP5：</b>\n";
-   //     foreach (var coin in topFall)
-   //     {
-   //         var symbol = coin.Symbol.Replace("USDT", "");
-   //         reply += $"<code>{symbol}</code>/USDT 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
-   //     }
+        reply += "\n<b>币安连续下跌TOP5：</b>\n";
+        foreach (var coin in topFall)
+        {
+            var symbol = coin.Symbol.Replace("USDT", "");
+            reply += $"<code>{symbol}</code>/USDT 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+        }
 
-  //      await botClient.SendTextMessageAsync(
-  //          chatId: message.Chat.Id,
-  //          text: reply,
-  //          parseMode: ParseMode.Html
-  //      );
-  //  }
- //   else
-  //  {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: reply,
+            parseMode: ParseMode.Html
+        );
+    }
+    else
+    {
         // 如果用户不是管理员，执行你现在的方法
         await HandlePersonalCenterCommandAsync(botClient, message, provider);
- //   }
+    }
     return;
 }
 // 检查是否是/jiankong命令
@@ -7693,20 +7693,20 @@ if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt")| messageText
 // 检查是否是"查询余额"命令或 "/trc"
 if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
-   // if (message.From.Id == AdminUserId)
-    //{
+    if (message.From.Id == AdminUserId)
+    {
         // 如果用户是管理员，执行 HandleGetFollowersCommandAsync 方法
-    //    await HandleGetFollowersCommandAsync(botClient, message);
-   // }
-   // else
-  //  {
+        await HandleGetFollowersCommandAsync(botClient, message);
+    }
+    else
+    {
         // 如果用户不是管理员，执行你现在的方法
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id, 
             text: "请发送您要查询的<b>TRC-20(波场)地址：</b> ", 
             parseMode: ParseMode.Html
         );
-   // }
+    }
 }
 if (messageText.Equals("/chaxun", StringComparison.OrdinalIgnoreCase))
 {
@@ -8532,37 +8532,6 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
         await botClient.DeleteMessageAsync(groupId, message.MessageId); // 尝试撤回开启翻译命令
     }
 }
-// 检查是否接收到了 "更多功能" 消息，收到就展示内联键盘
-if (messageText == "更多功能")
-{
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
-    {
-        new [] // 第一行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
-            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),		
-            InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")		    
-        },
-        new [] // 新增的第二行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
-            InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers"),
-            InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusicc") 		    
-        },
-        new [] // 新增的第三行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
-            InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),  
-            InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")	    
-        }
-    });
-
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: "欢迎使用本机器人，请选择下方按钮操作：",
-        replyMarkup: inlineKeyboard
-    );
-}	    
 if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
 {
     var parts = messageText.Split(' ');
@@ -8852,12 +8821,12 @@ else
             "/fu" => Valuation(botClient, message),
             "U兑TRX" => ConvertCoinTRX(botClient, message), // 添加这一行
             "实时汇率" => PriceTRX(botClient, message), // 添加这一行
-            "能量租赁" => zulin(botClient, message), // 添加这一行
+            "汇率换算" => Valuation(botClient, message), // 添加这一行
             "/yi" => ConvertCoinTRX(botClient, message),
             "/fan" => PriceTRX(botClient, message),
             "绑定" => BindAddress(botClient, message),
             "解绑" => UnBindAddress(botClient, message),
-            "地址余额" => QueryAccount(botClient, message),
+            "更多功能" => QueryAccount(botClient, message),
             "/vip" => QueryAccount(botClient, message), // 添加这一行
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
@@ -9260,7 +9229,7 @@ USDT余额： <b>{USDT}</b>
                 new KeyboardButton("U兑TRX"),
                 new KeyboardButton("实时汇率"),
                 new KeyboardButton("查询余额"),
-                new KeyboardButton("能量租赁"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
@@ -9362,7 +9331,7 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
                 new KeyboardButton("U兑TRX"),
                 new KeyboardButton("实时汇率"),
                 new KeyboardButton("查询余额"),
-                new KeyboardButton("能量租赁"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
@@ -9441,7 +9410,7 @@ catch (Telegram.Bot.Exceptions.ApiRequestException ex)
                 new KeyboardButton("U兑TRX"),
                 new KeyboardButton("实时汇率"),
                 new KeyboardButton("查询余额"),
-                new KeyboardButton("能量租赁"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
@@ -9501,7 +9470,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
             new KeyboardButton("U兑TRX"),
             new KeyboardButton("实时汇率"),
             new KeyboardButton("查询余额"),
-            new KeyboardButton("能量租赁"),
+            new KeyboardButton("汇率换算"),
         },   
             new [] // 第二行
             {
@@ -9586,7 +9555,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
                 new KeyboardButton("U兑TRX"),
                 new KeyboardButton("实时汇率"),
                 new KeyboardButton("查询余额"),
-                new KeyboardButton("能量租赁"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
@@ -9621,28 +9590,28 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     var addressArray = configuration.GetSection("Address:USDT-TRC20").Get<string[]>();
     var ReciveAddress = addressArray.Length == 0 ? "未配置" : addressArray[UserId % addressArray.Length];
 
-  //  if (message.Chat.Id == AdminUserId) //管理直接返回资金费率  取消的话注释 5687-5708以及5764
-  //  {
-   //     try
-   //     {
-   //         var fundingRates = await BinanceFundingRates.GetFundingRates();
-    //        await botClient.SendTextMessageAsync(
-   //             chatId: message.Chat.Id,
-   //             text: fundingRates,
-   //             parseMode: ParseMode.Html
-   //         );
-   //     }
-   //     catch (Exception ex)
-   //     {
-   //         await botClient.SendTextMessageAsync(
-   //             chatId: message.Chat.Id,
-   //             text: $"获取资金费率时发生错误：{ex.Message}"
-    //        );
-   //     }
-   //     return await Task.FromResult<Message>(null);
-  //  }
-   // else
-    //{
+    if (message.Chat.Id == AdminUserId) //管理直接返回资金费率  取消的话注释 5687-5708以及5764
+    {
+        try
+        {
+            var fundingRates = await BinanceFundingRates.GetFundingRates();
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: fundingRates,
+                parseMode: ParseMode.Html
+            );
+        }
+        catch (Exception ex)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"获取资金费率时发生错误：{ex.Message}"
+            );
+        }
+        return await Task.FromResult<Message>(null);
+    }
+    else
+    {
         var msg = @$"<b>实时汇率表：</b>
 <b><del>100 USDT = {95m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</del></b>   
             
@@ -9682,7 +9651,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
                 new KeyboardButton("U兑TRX"),
                 new KeyboardButton("实时汇率"),
                 new KeyboardButton("查询余额"),
-                new KeyboardButton("能量租赁"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
@@ -9723,7 +9692,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
         text: "转账手续费与转账金额无关，主要看对方地址是否有USDT！",
         replyMarkup: inlineKeyboard
     );
-    //}
+    }
 
     // 在这里添加一个返回空消息的语句
     return await Task.FromResult<Message>(null);
@@ -9778,7 +9747,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
             new KeyboardButton("U兑TRX"),
             new KeyboardButton("实时汇率"),
             new KeyboardButton("查询余额"),
-            new KeyboardButton("能量租赁"),
+            new KeyboardButton("汇率换算"),
         },   
         new [] // 第二行
         {
@@ -9827,12 +9796,12 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
 
 ";
 
-    //if (message.Chat.Id == AdminUserId)
-    //{
-    //    return await ExecuteZjdhMethodAsync(botClient, message);
-   // }
-   // else
-   // {
+    if (message.Chat.Id == AdminUserId)
+    {
+        return await ExecuteZjdhMethodAsync(botClient, message);
+    }
+    else
+    {
         // 创建包含两行，每行两个按钮的虚拟键盘
         var keyboard = new ReplyKeyboardMarkup(new[]
         {
@@ -9841,7 +9810,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
                 new KeyboardButton("U兑TRX"),
                 new KeyboardButton("实时汇率"),
                 new KeyboardButton("查询余额"),
-                new KeyboardButton("能量租赁"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
@@ -9859,7 +9828,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
                                                     text: usage,
                                                     parseMode: ParseMode.Html,
                                                     replyMarkup: keyboard);
-   // }
+    }
 }
 
 static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, Message message)
@@ -9894,39 +9863,6 @@ static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, 
                                                         parseMode: ParseMode.Html,
                                                         replyMarkup: new ReplyKeyboardRemove());
         }
-//能量租赁
-static async Task<Message> zulin(ITelegramBotClient botClient, Message message)
-{
-    // 如果你不想发送任何提示文本，可以使用空字符串，或者提供一段简短的文本
-    string promptText = " ";
-
-    var keyboard = new ReplyKeyboardMarkup(new[]
-    {
-        new [] // 第一行
-        {
-            new KeyboardButton("U兑TRX"),
-            new KeyboardButton("实时汇率"),
-            new KeyboardButton("查询余额"),
-            new KeyboardButton("能量租赁"),
-        },   
-        new [] // 第二行
-        {
-            new KeyboardButton("币圈行情"),
-            new KeyboardButton("外汇助手"),
-            new KeyboardButton("更多功能"),
-            new KeyboardButton("地址监听"),
-        }
-    })
-    {
-        ResizeKeyboard = true, // 将键盘高度设置为最低
-        OneTimeKeyboard = false // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
-    };
-
-    return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                text: promptText,
-                                                parseMode: ParseMode.Html,
-                                                replyMarkup: keyboard);
-}
         //通用回复
         static async Task<Message> Usage(ITelegramBotClient botClient, Message message)
         {
@@ -9985,7 +9921,7 @@ static async Task<Message> zulin(ITelegramBotClient botClient, Message message)
                 new KeyboardButton("U兑TRX"),
                 new KeyboardButton("实时汇率"),
                 new KeyboardButton("查询余额"),
-                new KeyboardButton("能量租赁"),
+                new KeyboardButton("汇率换算"),
             },   
                 new [] // 第二行
                 {
