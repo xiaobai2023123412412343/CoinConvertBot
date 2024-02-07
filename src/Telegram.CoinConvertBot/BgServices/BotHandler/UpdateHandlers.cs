@@ -7499,37 +7499,37 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
 }  
 if (messageText.Equals("地址监听", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
 {
-    if (message.From.Id == AdminUserId)
-    {
-        // 如果用户是管理员，执行 "/faxian" 的方法
-        var topRise = riseList.OrderByDescending(x => x.Days).Take(5);
-        var topFall = fallList.OrderByDescending(x => x.Days).Take(5);
+   // if (message.From.Id == AdminUserId)
+   // {
+   //     // 如果用户是管理员，执行 "/faxian" 的方法
+   //     var topRise = riseList.OrderByDescending(x => x.Days).Take(5);
+   //     var topFall = fallList.OrderByDescending(x => x.Days).Take(5);
 
-        var reply = "<b>币安连续上涨TOP5：</b>\n";
-        foreach (var coin in topRise)
-        {
-            var symbol = coin.Symbol.Replace("USDT", "");
-            reply += $"<code>{symbol}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
-        }
+  //      var reply = "<b>币安连续上涨TOP5：</b>\n";
+   //     foreach (var coin in topRise)
+  //      {
+  //          var symbol = coin.Symbol.Replace("USDT", "");
+   //         reply += $"<code>{symbol}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+  //      }
 
-        reply += "\n<b>币安连续下跌TOP5：</b>\n";
-        foreach (var coin in topFall)
-        {
-            var symbol = coin.Symbol.Replace("USDT", "");
-            reply += $"<code>{symbol}</code>/USDT 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
-        }
+   //     reply += "\n<b>币安连续下跌TOP5：</b>\n";
+   //     foreach (var coin in topFall)
+   //     {
+   //         var symbol = coin.Symbol.Replace("USDT", "");
+   //         reply += $"<code>{symbol}</code>/USDT 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+   //     }
 
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: reply,
-            parseMode: ParseMode.Html
-        );
-    }
-    else
-    {
+  //      await botClient.SendTextMessageAsync(
+  //          chatId: message.Chat.Id,
+  //          text: reply,
+  //          parseMode: ParseMode.Html
+  //      );
+  //  }
+ //   else
+  //  {
         // 如果用户不是管理员，执行你现在的方法
         await HandlePersonalCenterCommandAsync(botClient, message, provider);
-    }
+ //   }
     return;
 }
 // 检查是否是/jiankong命令
