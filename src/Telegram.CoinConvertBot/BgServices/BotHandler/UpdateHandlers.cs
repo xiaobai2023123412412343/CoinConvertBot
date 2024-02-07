@@ -8532,6 +8532,37 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
         await botClient.DeleteMessageAsync(groupId, message.MessageId); // 尝试撤回开启翻译命令
     }
 }
+// 检查是否接收到了 "更多功能" 消息，收到就展示内联键盘
+if (messageText == "更多功能")
+{
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
+            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),		
+            InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")		    
+        },
+        new [] // 新增的第二行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
+            InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers"),
+            InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusicc") 		    
+        },
+        new [] // 新增的第三行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
+            InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),  
+            InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")	    
+        }
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "欢迎使用本机器人，请选择下方按钮操作：",
+        replyMarkup: inlineKeyboard
+    );
+}	    
 if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
 {
     var parts = messageText.Split(' ');
@@ -8826,7 +8857,7 @@ else
             "/fan" => PriceTRX(botClient, message),
             "绑定" => BindAddress(botClient, message),
             "解绑" => UnBindAddress(botClient, message),
-            "更多功能" => QueryAccount(botClient, message),
+            "地址余额" => QueryAccount(botClient, message),
             "/vip" => QueryAccount(botClient, message), // 添加这一行
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
