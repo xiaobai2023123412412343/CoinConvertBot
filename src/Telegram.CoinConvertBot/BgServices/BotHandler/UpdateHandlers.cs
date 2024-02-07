@@ -7573,21 +7573,14 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
-if (messageText == "能量租赁") // 检查消息文本是否完全匹配
+if (messageText.Contains("能量租赁") && message.From.Id == AdminUserId)
 {
-    if (message.From.Id == AdminUserId) // 检查消息发送者是否为管理员
-    {
-        // 执行管理员专用方法
-        await ExecuteZjdhMethodAsync(botClient, message);
-    }
-    else
-    {
-        // 如果不是管理员，可以在这里处理或不做任何事
-    }
+    // 如果消息文本为“能量租赁”且发送者是管理员，则执行管理员专用方法
+    await ExecuteZjdhMethodAsync(botClient, message);
 }
-else if (messageText.Contains("费用") || messageText.Contains("能量") || messageText.Contains("/tron") || messageText.Contains("手续费"))
+else if (messageText.Contains("费用") || messageText.Contains("能量") || messageText.Contains("/tron") || messageText.Contains("手续费") || messageText.Contains("能量租赁"))
 {
-    // 向用户发送能量介绍
+    // 否则，如果消息文本包含任一关键词，向用户发送能量介绍
     string multisigText = @"波场手续费说明（⚠️务必仔细阅读⚠️）
 
 波场具有独特的资源模型，分为【带宽】和【能量】，每个账户初始具有 600 带宽 和 0 能量。
@@ -7617,7 +7610,7 @@ else if (messageText.Contains("费用") || messageText.Contains("能量") || mes
         chatId: message.Chat.Id,
         text: multisigText,
         parseMode: ParseMode.Html,
-        replyMarkup: inlineKeyboard // 添加这行代码
+        replyMarkup: inlineKeyboard
     );
 }
 if (messageText.Contains("作者") || messageText.Contains("管理") || messageText.Contains("你好") || messageText.Contains("在吗"))
