@@ -7693,20 +7693,20 @@ if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt")| messageText
 // 检查是否是"查询余额"命令或 "/trc"
 if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
-    if (message.From.Id == AdminUserId)
-    {
+   // if (message.From.Id == AdminUserId)
+    //{
         // 如果用户是管理员，执行 HandleGetFollowersCommandAsync 方法
-        await HandleGetFollowersCommandAsync(botClient, message);
-    }
-    else
-    {
+    //    await HandleGetFollowersCommandAsync(botClient, message);
+   // }
+   // else
+  //  {
         // 如果用户不是管理员，执行你现在的方法
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id, 
             text: "请发送您要查询的<b>TRC-20(波场)地址：</b> ", 
             parseMode: ParseMode.Html
         );
-    }
+   // }
 }
 if (messageText.Equals("/chaxun", StringComparison.OrdinalIgnoreCase))
 {
