@@ -7573,7 +7573,7 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
-if (messageText.Contains("费用") || messageText.Contains("能量")|| messageText.Contains("/tron")|| messageText.Contains("手续费"))
+if (messageText == "能量租赁") // 检查消息文本是否完全匹配
 {
     if (message.From.Id == AdminUserId) // 检查消息发送者是否为管理员
     {
@@ -7582,8 +7582,13 @@ if (messageText.Contains("费用") || messageText.Contains("能量")|| messageTe
     }
     else
     {
-        // 向用户发送能量介绍
-        string multisigText = @"波场手续费说明（⚠️务必仔细阅读⚠️）
+        // 如果不是管理员，可以在这里处理或不做任何事
+    }
+}
+else if (messageText.Contains("费用") || messageText.Contains("能量") || messageText.Contains("/tron") || messageText.Contains("手续费"))
+{
+    // 向用户发送能量介绍
+    string multisigText = @"波场手续费说明（⚠️务必仔细阅读⚠️）
 
 波场具有独特的资源模型，分为【带宽】和【能量】，每个账户初始具有 600 带宽 和 0 能量。
 转账USDT主要消耗能量，当账户可用能量不足时，燃烧TRX获取能量，燃烧的TRX就是我们常说的转账手续费。
@@ -7598,23 +7603,22 @@ if (messageText.Contains("费用") || messageText.Contains("能量")|| messageTe
 
 租赁3.2万能量/日，仅需  7.00 TRX，节省   6.39 TRX (节省约48%)
 租赁6.5万能量/日，仅需13.00 TRX，节省 14.25 TRX (节省约53%)";
-        
-        // 创建内联键盘按钮
-        var inlineKeyboard = new InlineKeyboardMarkup(new[]
-        {
-            new [] // first row
-            {
-                InlineKeyboardButton.WithCallbackData("立即租赁能量", "contactAdmin"),
-            }
-        });
 
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: multisigText,
-            parseMode: ParseMode.Html,
-            replyMarkup: inlineKeyboard // 添加这行代码
-        );
-    }
+    // 创建内联键盘按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // first row
+        {
+            InlineKeyboardButton.WithCallbackData("立即租赁能量", "contactAdmin"),
+        }
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: multisigText,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard // 添加这行代码
+    );
 }
 if (messageText.Contains("作者") || messageText.Contains("管理") || messageText.Contains("你好") || messageText.Contains("在吗"))
 {
