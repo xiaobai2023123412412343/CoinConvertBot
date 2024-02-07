@@ -9191,10 +9191,19 @@ decimal requiredBandwidth = 345;
 decimal bandwidthPer100TRX = resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100;
 decimal requiredTRXForBandwidth = Math.Floor(requiredBandwidth / (bandwidthPer100TRX / 100)) + 1;
 decimal todayTRXOut = Math.Round(todayTRXOutTask.Result, 2);            
-            
+
+// 从_rateRepository获取USDT到TRX的汇率
+var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+// 计算手续费后的兑换汇率
+decimal usdtToTrxRateAfterFees = 1m.USDT_To_TRX(rate, FeeRate, 0);
+
+// 使用获取到的汇率计算TRX余额等价于多少USDT，这里需要逆向计算
+decimal TRXInUSDT = TRX / usdtToTrxRateAfterFees;
+		
 var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
-TRX余额： <b>{TRX}</b>
+TRX余额： <b>{TRX}</b> | 可兑：<b>{TRXInUSDT:0.00} USDT</b>
 USDT余额： <b>{USDT}</b>
 免费带宽： <b>{resource.FreeNetLimit - resource.FreeNetUsed}/{resource.FreeNetLimit}</b>
 质押带宽： <b>{resource.NetLimit - resource.NetUsed}/{resource.NetLimit}</b>
