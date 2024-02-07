@@ -9680,23 +9680,23 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     );
 
     // 等待 0.01 秒
-    await Task.Delay(1);
+    //await Task.Delay(1);
 
     // 创建内联键盘
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
-    {
-        new [] // 第一行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("更多关于波场地址转账手续费介绍", "energy_intro") // 新增的按钮
-        }
-    });
+   // var inlineKeyboard = new InlineKeyboardMarkup(new[]
+   // {
+   //     new [] // 第一行按钮
+   //     {
+   //         InlineKeyboardButton.WithCallbackData("更多关于波场地址转账手续费介绍", "energy_intro") // 新增的按钮
+   //     }
+   // });
 
     // 发送带有内联键盘的消息
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: "转账手续费与转账金额无关，主要看对方地址是否有USDT！",
-        replyMarkup: inlineKeyboard
-    );
+   // await botClient.SendTextMessageAsync(
+  //      chatId: message.Chat.Id,
+   //     text: "转账手续费与转账金额无关，主要看对方地址是否有USDT！",
+  //      replyMarkup: inlineKeyboard
+  //  );
     }
 
     // 在这里添加一个返回空消息的语句
