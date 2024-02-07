@@ -9196,7 +9196,7 @@ decimal todayTRXOut = Math.Round(todayTRXOutTask.Result, 2);
 var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
 var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
 // 计算手续费后的兑换汇率
-decimal usdtToTrxRateAfterFees = 1m.USDT_To_TRX(rate, FeeRate, 0);
+decimal usdtToTrxRateAfterFees = rate * (1 - FeeRate);
 
 // 使用获取到的汇率计算TRX余额等价于多少USDT，这里需要逆向计算
 decimal TRXInUSDT = TRX / usdtToTrxRateAfterFees;
