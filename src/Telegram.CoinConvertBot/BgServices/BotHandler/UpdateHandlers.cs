@@ -7608,6 +7608,28 @@ if (messageText.Contains("费用") || messageText.Contains("能量")|| messageTe
         replyMarkup: inlineKeyboard // 添加这行代码
     );
 }  
+if (messageText.Contains("作者") || messageText.Contains("管理") || messageText.Contains("你好") || messageText.Contains("在吗"))
+{
+    // 向用户发送作者联系信息
+    string contactText = @"双向用户可以直接私聊机器人，作者会第一时间回复您！";
+    
+    // 创建内联键盘按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // first row
+        {
+            InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu"),
+            InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest")
+        }
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: contactText,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard // 添加这行代码
+    );
+}	    
 if (messageText.Equals("/zijin", StringComparison.OrdinalIgnoreCase))
 {
     try
