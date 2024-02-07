@@ -7573,7 +7573,7 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
-if (messageText.Contains("费用") || messageText.Contains("能量")|| messageText.Contains("/tron"))
+if (messageText.Contains("费用") || messageText.Contains("能量")|| messageText.Contains("/tron")|| messageText.Contains("手续费"))
 {
     // 向用户发送能量介绍
     string multisigText = @"波场手续费说明（⚠️务必仔细阅读⚠️）
