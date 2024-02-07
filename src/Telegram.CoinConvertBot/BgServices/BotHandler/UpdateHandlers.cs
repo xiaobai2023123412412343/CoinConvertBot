@@ -345,7 +345,8 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"------------------------------------------------------------------------\n" +
                               $"对方地址： <code>{(isOutgoing ? transaction.To : transaction.From)}</code>\n" +
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n\n" +                  
-                              $"交易费用：<b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n"; // 根据交易方向调整文本
+                              $"交易费用：<b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
+			      $"<a href=\"https://t.me/yifanfubot\">省钱妙招：\n提前租赁能量，交易费用最低降至 7.00 TRX！</a>\n"; // 新增的一行文字 
                 var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
@@ -362,13 +363,17 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                         //InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}")
 			InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}"),    
                         InlineKeyboardButton.WithUrl("交易详情", transactionUrl)				
-                    }                   
+                    },   
+                    new [] // first row
+                    {
+                        InlineKeyboardButton.WithCallbackData("波场能量介绍", "energy_intro") // 新增的按钮		
+                    } 			
                 });                
 
         try
         {
             // 发送通知
-            await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
+            await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
             // 如果发送成功，重置失败计数器
             userNotificationFailures[(userId, tronAddress)] = 0;
         }
@@ -403,7 +408,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
             var retryAfterSeconds = int.Parse(match.Groups[1].Value);
             Console.WriteLine($"发送通知失败：{ex.Message}. 将在{retryAfterSeconds}秒后重试。");
             await Task.Delay(retryAfterSeconds * 1000);
-            await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
+            await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
         }
     }              
         catch (Exception ex)
