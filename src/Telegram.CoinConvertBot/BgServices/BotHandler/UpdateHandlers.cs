@@ -100,6 +100,160 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class NewLotteryFetcher//新澳门六合彩
+{
+    private static readonly HttpClient client = new HttpClient();
+
+    public static async Task<string> FetchLotteryResultAsync()
+    {
+        try
+        {
+            var response = await client.GetAsync("https://api.macaumarksix.com/api/macaujc2.com");
+            if (!response.IsSuccessStatusCode)
+            {
+                return "获取开奖信息失败，请稍后再试。";
+            }
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var jsonArray = JArray.Parse(jsonString);
+            var latestResult = jsonArray[0];
+
+            var expect = latestResult["expect"].ToString();
+            var openCode = latestResult["openCode"].ToString().Split(',');
+            var zodiac = latestResult["zodiac"].ToString().Split(',');
+            var wave = latestResult["wave"].ToString().Split(',').Select(w => w.Replace("red", "\uD83D\uDD34").Replace("green", "\uD83D\uDFE2").Replace("blue", "\uD83D\uDD35")).ToArray();
+            var openTime = DateTime.Parse(latestResult["openTime"].ToString());
+            var now = DateTime.Now;
+            var nextOpenTime = openTime.AddDays(1);
+            var timeSpan = nextOpenTime - now;
+
+            var formattedOpenCode = string.Join("  ", openCode.Take(openCode.Length - 1)) + "， " + openCode.Last();
+            var formattedZodiac = string.Join("  ", zodiac.Take(zodiac.Length - 1)) + "，  " + zodiac.Last();
+            var formattedWave = string.Join("  ", wave);
+
+            var result = $"新澳门六合彩\n\n" +
+                         $"距离下期：{timeSpan.Hours} 时 {timeSpan.Minutes} 分 {timeSpan.Seconds} 秒\n" +
+                         $"期数：{expect}\n" +
+                         $"开奖日期：{openTime:yyyy-MM-dd HH:mm:ss}\n" +
+                         $"号码：{formattedOpenCode}\n" +
+                         $"生肖：{formattedZodiac}\n" +
+                         $"波色：{formattedWave}";
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return $"获取开奖信息时发生错误：{ex.Message}";
+        }
+    }
+
+    public static async Task<List<string>> FetchLotteryHistoryAsync(int year, int count = 50)
+    {
+        var historyResults = new List<string>();
+        try
+        {
+            while (historyResults.Count < count)
+            {
+                string url = $"https://api.macaumarksix.com/history/macaujc2/y/{year}";
+                var response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var jsonObject = JObject.Parse(jsonString);
+                    var results = jsonObject["data"].ToObject<List<JObject>>();
+
+                    foreach (var result in results)
+                    {
+                        var expect = result["expect"].ToString();
+                        var openCode = result["openCode"].ToString();
+                        historyResults.Add($"期数：{expect}  号码：{openCode.Replace(",", ", ")}");
+                        if (historyResults.Count == count) break;
+                    }
+                }
+                year--; // 如果当前年份数据不足，尝试获取前一年的数据
+            }
+        }
+        catch (Exception ex)
+        {
+            return new List<string> { $"获取历史开奖信息时发生错误：{ex.Message}" };
+        }
+        return historyResults.Take(count).ToList();
+    }
+public static async Task<List<string>> FetchLotteryWaveHistoryAsync(int year, int count = 50)
+{
+    var waveResults = new List<string>();
+    try
+    {
+        while (waveResults.Count < count)
+        {
+            string url = $"https://api.macaumarksix.com/history/macaujc2/y/{year}";
+            using (var client = new HttpClient())
+            {
+                var response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var jsonObject = JObject.Parse(jsonString);
+                    var results = jsonObject["data"].ToObject<List<JObject>>();
+
+                    foreach (var result in results)
+                    {
+                        var expect = result["expect"].ToString();
+                        var wave = result["wave"].ToString().Split(',').Select(w => w.Replace("red", "\uD83D\uDD34").Replace("green", "\uD83D\uDFE2").Replace("blue", "\uD83D\uDD35")).ToArray();
+                        var formattedWave = string.Join("  ", wave);
+                        waveResults.Add($"期数：{expect}   波色：{formattedWave}");
+                        if (waveResults.Count == count) break;
+                    }
+                }
+            }
+            year--; // 如果当前年份数据不足，尝试获取前一年的数据
+        }
+    }
+    catch (Exception ex)
+    {
+        // 返回一个包含错误信息的列表，以便调用者可以处理这个错误
+        return new List<string> { $"获取历史开奖波色信息时发生错误：{ex.Message}" };
+    }
+    return waveResults.Take(count).ToList(); // 确保不超过50条数据
+}
+
+public static async Task<List<string>> FetchLotteryZodiacHistoryAsync(int year, int count = 50)
+{
+    var zodiacResults = new List<string>();
+    try
+    {
+        while (zodiacResults.Count < count)
+        {
+            string url = $"https://api.macaumarksix.com/history/macaujc2/y/{year}";
+            using (var client = new HttpClient())
+            {
+                var response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var jsonObject = JObject.Parse(jsonString);
+                    var results = jsonObject["data"].ToObject<List<JObject>>();
+
+                    foreach (var result in results)
+                    {
+                        var expect = result["expect"].ToString();
+                        var zodiac = result["zodiac"].ToString();
+                        zodiacResults.Add($"期数：{expect}  生肖：{zodiac}");
+                        if (zodiacResults.Count == count) break;
+                    }
+                }
+            }
+            year--; // 如果当前年份数据不足，尝试获取前一年的数据
+        }
+    }
+    catch (Exception ex)
+    {
+        // 返回一个包含错误信息的列表，以便调用者可以处理这个错误
+        return new List<string> { $"获取历史开奖生肖信息时发生错误：{ex.Message}" };
+    }
+    return zodiacResults.Take(count).ToList(); // 确保不超过50条数据
+}	
+}	
 public static class LotteryFetcher // 老澳门六合彩
 {
     public static async Task<string> FetchLotteryResultAsync()
@@ -7887,6 +8041,29 @@ if (messageText.StartsWith("/laoaomen"))
         replyMarkup: inlineKeyboard // 包含内联键盘
     );
 }
+// 检查是否接收到了 /xinaomen 消息，收到就查询新澳门六合彩开奖结果
+if (messageText.StartsWith("/xinaomen"))
+{
+    var lotteryResult = await NewLotteryFetcher.FetchLotteryResultAsync();
+
+    // 定义内联键盘
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("机选一注", "randomSelection"),
+            InlineKeyboardButton.WithCallbackData("历史开奖", "newHistory")
+        }
+    });
+
+    // 发送文本和内联键盘作为一个消息
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: lotteryResult, // 将开奖结果作为文本发送
+        parseMode: ParseMode.Html, // 使用HTML解析模式以支持文本加粗
+        replyMarkup: inlineKeyboard // 包含内联键盘
+    );
+}	    
 // 检查消息是否以“汇率”开头，并跟随一个数字
 var userMessageText = message.Text;
 var ratePrefix = "汇率";
