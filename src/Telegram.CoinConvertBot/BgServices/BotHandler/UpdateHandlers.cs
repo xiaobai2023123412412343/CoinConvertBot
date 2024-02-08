@@ -7637,7 +7637,7 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
     // 如果发送者是管理员且消息文本为“能量租赁”，则额外发送管理员菜单
     if (message.From.Id == AdminUserId && messageText.Contains("能量租赁"))
     {
-        string adminMenuText = "机器人管理员菜单:";
+        string adminMenuText = "兑换TRX机器人 管理员菜单:";
         var adminInlineKeyboard = new InlineKeyboardMarkup(new[]
         {
             new [] // first row
@@ -7647,7 +7647,13 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
             },
             new [] // second row
             {
-                InlineKeyboardButton.WithCallbackData("使用人数统计", "shiyong"),
+                InlineKeyboardButton.WithCallbackData("关注列表", "shiyong"),
+		InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_recordds")    
+            },
+            new [] // second row
+            {
+                InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info"),
+		InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info")    
             }
 		
         });
