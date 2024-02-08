@@ -7080,7 +7080,106 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
         text: commandsText,
         parseMode: ParseMode.Html
     );
-}	    
+}
+else if(update.CallbackQuery.Data == "shoucang")
+{
+    string favoriteLinks = @"<b>币圈：</b>
+paxful：https://paxful.com/zh  （无需实名 otc交易）
+remitano：https://remitano.com/r/cn
+合约数据：https://www.coinglass.com/zh 
+合约帝国际版：https://bitfrog.io/zh-CN/
+波场手续费预估：https://tool.cha636.com/Home/Index3
+混币器：https://fixedfloat.com/cn/
+啄木鸟合约：https://thekingfisher.io/04hj
+虚拟信用卡：https://card.onekey.so/
+虚拟信用卡：https://dupay.one/zh-cn/index.html
+货币交易/虚拟信用卡：https://www.chippay.com/
+查币：https://www.dextools.io/app/cn/ether/pairs
+tron：https://www.trongrid.io/
+链上工具：https://cointool.app/approve/trx
+查币工具：https://www.geckoterminal.com/eth/uniswap_v2/pools
+波场地址转换：https://tron-converter.com/
+btc-20：https://test.coinank.com/zh/ordinals/brc20
+租能量：https://feee.io/
+租能量官网：https://app.justlend.org/homeNew?lang=zh-TC
+蚁穴工具：https://antcave.club/#term-149
+
+<b>新闻：</b>
+bbc：https://www.bbc.com/zhongwen/simp
+纽约时报：https://cn.nytimes.com/
+法广：https://www.rfi.fr/cn/
+看中国：https://www.secretchina.com/
+禁文网：https://www.bannedbook.org/
+新品葱：https://pincong.rocks/
+狮城：https://www.shichengbbs.com/
+中国数字时代：https://chinadigitaltimes.net/chinese/404-articles-archive
+
+<b>电影/音乐：</b>
+洛雪：https://lxmusic.toside.cn/download
+清风：https://www.vvvdj.com/
+欧乐电影：https://www.olevod.com/
+天天视频：https://www.ttsp.tv/
+茶杯：https://cupfox.love/
+泥视频：https://www.nivod4.tv/index.html
+电视直播软件：https://www.ahhhhfs.com/36457/
+
+<b>短信：</b>
+接码：https://sms-activate.org/cn
+接码：https://5sim.net/zh
+接码：https://tiger-sms.com/cabinet/sms
+接码网：https://www.w3h5.com/post/619.html
+电子邮件生成：https://email-helper.vercel.app/
+临时邮箱：https://linshiyouxiang.net/
+临时邮箱：https://www.linshi-email.com/
+地址生成：https://www.fakepersongenerator.com/
+地址生成：https://www.meiguodizhi.com/
+
+<b>工具：</b>
+波场api文档：https://docs.tronscan.org/getting-started/api-keys
+TRX api文档：https://developers.tron.network/reference/select-network
+电报 api文档：https://core.telegram.org/bots/api#inline-mode
+安卓苹果：https://www.krpano.tech/
+视频转换：https://www.adobe.com/cn/
+视频下载：https://www.freemake.com/cn/free_video_downloader/
+diy表情：https://www.diydoutu.com/diy/doutu/340
+翻转GIF：https://flipgif.imageonline.co/index-cn.php
+视频加文字：https://www.67tool.com/video/edit/addText
+剪映：https://www.capcut.cn/editor
+文件处理：https://www.iloveimg.com/zh-cn
+文件转换：https://ezgif.com/optimize?err=expired
+GIF压缩：https://www.mnggiflab.com/product/gif-compress-v2
+文件转换：https://convertio.co/zh/
+vpn：https://vilavpn.com/?language=chinese
+在线文字识别：https://ocr.wdku.net/
+工具分享：https://www.ahhhhfs.com/
+去水印：https://watermark.liumingye.cn/
+推特视频下载：https://twitter.iiilab.com/
+在线转换webm：https://www.video2edit.com/zh/convert-to-webm
+tgs转GIF：https://www.emojibest.com/tgs-to-gif
+文件转换：https://www.aconvert.com/video/gif-to-webm/
+视频合并：https://cdkm.com/cn/merge-video
+webm裁剪：https://online-video-cutter.com/cn/crop-video/webm
+工具箱：https://tools.liumingye.cn/
+poe gpt：https://poe.com/login
+服务器：https://my.nextcli.com/index.php?rp=/store/hk-vps-linux
+服务器：https://www.bwgyhw.cn/
+服务器：https://manage.edisglobal.com/cart.php?gid=192&language=chinese
+服务器：https://oneprovider.com/fr/configure/dediconf/2592
+图片托管：https://postimg.cc/NLPvXFQ0/f01732c3  （机器人图片储存在此）
+代码转换：http://www.esjson.com/utf8Encode.html
+图片修改：https://www.gaitubao.com/
+api大全：https://www.apispace.com/#/api/detail/?productID=89
+韩小韩接口：https://api.vvhan.com/
+大象工具：https://www.sunzhongwei.com/go/tools
+机器人代码地址：https://github.com/xiaobai2023123412412343/CoinConvertBot/blob/master/wiki/manual_RUN.md";
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: favoriteLinks,
+        parseMode: ParseMode.Html,
+        disableWebPagePreview: true // 这里关闭链接预览
+    );
+}
 else if(update.CallbackQuery.Data == "authorContactRequest")
 {
     string responseText;
@@ -7729,6 +7828,7 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
             new [] // second row
             {
                 InlineKeyboardButton.WithCallbackData("操作指令", "mingling"),
+                InlineKeyboardButton.WithCallbackData("网址收藏", "shoucang")		    
             }
 		
         });
