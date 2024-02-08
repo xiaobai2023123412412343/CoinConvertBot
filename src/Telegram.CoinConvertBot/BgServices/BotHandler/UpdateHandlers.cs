@@ -147,6 +147,35 @@ public static class LotteryFetcher // 老澳门六合彩
             }
         }
     }
+    // 新增方法获取历史开奖数据
+    public static async Task<List<string>> FetchLotteryHistoryAsync(int year, int count = 50)
+    {
+        var historyResults = new List<string>();
+        while (historyResults.Count < count)
+        {
+            string url = $"https://api.macaumarksix.com/history/macaujc/y/{year}";
+            using (var client = new HttpClient())
+            {
+                var response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var jsonObject = JObject.Parse(jsonString);
+                    var results = jsonObject["data"].ToObject<List<JObject>>();
+
+                    foreach (var result in results)
+                    {
+                        var expect = result["expect"].ToString();
+                        var openCode = result["openCode"].ToString();
+                        historyResults.Add($"期数：{expect}  {openCode.Replace(",", ", ")}");
+                        if (historyResults.Count == count) break;
+                    }
+                }
+            }
+            year--; // 如果当前年份数据不足，尝试获取前一年的数据
+        }
+        return historyResults.Take(count).ToList(); // 确保不超过50条数据
+    }	
 }
 public static class MusicFetcher // 网易云音乐
 {
@@ -6795,6 +6824,19 @@ else if (update.CallbackQuery.Data == "randomSelection")
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: messageText
+    );
+}
+else if (update.CallbackQuery.Data == "history")
+{
+    int currentYear = DateTime.Now.Year;
+    var historyResults = await LotteryFetcher.FetchLotteryHistoryAsync(currentYear);
+
+    var messageText = string.Join("\n", historyResults);
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: messageText,
+        parseMode: ParseMode.Html
     );
 }
 else if(update.CallbackQuery.Data == "fancyNumbers")
