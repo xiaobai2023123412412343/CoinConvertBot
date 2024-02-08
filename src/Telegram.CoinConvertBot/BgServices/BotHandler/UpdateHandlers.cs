@@ -9645,28 +9645,28 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     var addressArray = configuration.GetSection("Address:USDT-TRC20").Get<string[]>();
     var ReciveAddress = addressArray.Length == 0 ? "未配置" : addressArray[UserId % addressArray.Length];
 
-    if (message.Chat.Id == AdminUserId) //管理直接返回资金费率  取消的话注释 5687-5708以及5764
-    {
-        try
-        {
-            var fundingRates = await BinanceFundingRates.GetFundingRates();
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: fundingRates,
-                parseMode: ParseMode.Html
-            );
-        }
-        catch (Exception ex)
-        {
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: $"获取资金费率时发生错误：{ex.Message}"
-            );
-        }
-        return await Task.FromResult<Message>(null);
-    }
-    else
-    {
+   // if (message.Chat.Id == AdminUserId) //管理直接返回资金费率  取消的话注释 5687-5708以及5764
+   // {
+   //     try
+   //     {
+  //          var fundingRates = await BinanceFundingRates.GetFundingRates();
+     //       await botClient.SendTextMessageAsync(
+    //            chatId: message.Chat.Id,
+    //            text: fundingRates,
+    //            parseMode: ParseMode.Html
+   //         );
+   //     }
+      //  catch (Exception ex)
+      //  {
+      //      await botClient.SendTextMessageAsync(
+      //          chatId: message.Chat.Id,
+     //           text: $"获取资金费率时发生错误：{ex.Message}"
+     //       );
+    //    }
+    //    return await Task.FromResult<Message>(null);
+   // }
+   // else
+   // {
         var msg = @$"<b>实时汇率表：</b>
 <b><del>100 USDT = {95m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</del></b>   
             
@@ -9747,7 +9747,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
    //     text: "转账手续费与转账金额无关，主要看对方地址是否有USDT！",
   //      replyMarkup: inlineKeyboard
   //  );
-    }
+   // }
 
     // 在这里添加一个返回空消息的语句
     return await Task.FromResult<Message>(null);
