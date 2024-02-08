@@ -6783,6 +6783,20 @@ else if(update.CallbackQuery.Data == "smsVerification")
         replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin"))
     );
 }
+else if (update.CallbackQuery.Data == "randomSelection")
+{
+    // 生成随机号码
+    var numbers = Enumerable.Range(1, 49).OrderBy(x => Guid.NewGuid()).Take(7).ToList();
+    var regularNumbers = numbers.Take(6).OrderBy(n => n); // 平码，排序
+    var specialNumber = numbers.Last(); // 特码
+
+    var messageText = $"机选号码：{string.Join("  ", regularNumbers)}， {specialNumber}";
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: messageText
+    );
+}
 else if(update.CallbackQuery.Data == "fancyNumbers")
 {
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
@@ -7681,10 +7695,24 @@ if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClien
 if (messageText.StartsWith("/laoaomen"))
 {
     var lotteryResult = await LotteryFetcher.FetchLotteryResultAsync();
-    _ = botClient.SendTextMessageAsync(
+
+    // 定义内联键盘
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("机选一注", "randomSelection"),
+            InlineKeyboardButton.WithCallbackData("历史开奖", "history"),
+            InlineKeyboardButton.WithCallbackData("开奖规律", "pattern")
+        }
+    });
+
+    // 发送文本和内联键盘作为一个消息
+    await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: lotteryResult,
-        parseMode: ParseMode.Html // 使用HTML解析模式以支持文本加粗
+        text: lotteryResult, // 将开奖结果作为文本发送
+        parseMode: ParseMode.Html, // 使用HTML解析模式以支持文本加粗
+        replyMarkup: inlineKeyboard // 包含内联键盘
     );
 }
 // 检查消息是否以“汇率”开头，并跟随一个数字
