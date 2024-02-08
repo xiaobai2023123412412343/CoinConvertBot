@@ -220,6 +220,42 @@ public static async Task<List<string>> FetchLotteryWaveHistoryAsync(int year, in
         return new List<string> { $"获取历史开奖波色信息时发生错误：{ex.Message}" };
     }
     return waveResults.Take(count).ToList(); // 确保不超过50条数据
+}
+public static async Task<List<string>> FetchLotteryZodiacHistoryAsync(int year, int count = 50)
+{
+    var zodiacResults = new List<string>();
+    try
+    {
+        while (zodiacResults.Count < count)
+        {
+            string url = $"https://api.macaumarksix.com/history/macaujc/y/{year}";
+            using (var client = new HttpClient())
+            {
+                var response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var jsonObject = JObject.Parse(jsonString);
+                    var results = jsonObject["data"].ToObject<List<JObject>>();
+
+                    foreach (var result in results)
+                    {
+                        var expect = result["expect"].ToString();
+                        var zodiac = result["zodiac"].ToString();
+                        zodiacResults.Add($"期数：{expect}  生肖：{zodiac}");
+                        if (zodiacResults.Count == count) break;
+                    }
+                }
+            }
+            year--; // 如果当前年份数据不足，尝试获取前一年的数据
+        }
+    }
+    catch (Exception ex)
+    {
+        // 返回一个包含错误信息的列表，以便调用者可以处理这个错误
+        return new List<string> { $"获取历史开奖生肖信息时发生错误：{ex.Message}" };
+    }
+    return zodiacResults.Take(count).ToList(); // 确保不超过50条数据
 }	
 }
 public static class MusicFetcher // 网易云音乐
@@ -6871,6 +6907,19 @@ else if (update.CallbackQuery.Data == "randomSelection")
         text: messageText
     );
 }
+else if (update.CallbackQuery.Data == "queryByZodiac")
+{
+    int currentYear = DateTime.Now.Year;
+    var zodiacResults = await LotteryFetcher.FetchLotteryZodiacHistoryAsync(currentYear);
+
+    var messageText = string.Join("\n", zodiacResults);
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: messageText,
+        parseMode: ParseMode.Html
+    );
+}	    
 else if (update.CallbackQuery.Data == "history")
 {
     int currentYear = DateTime.Now.Year;
@@ -6878,11 +6927,12 @@ else if (update.CallbackQuery.Data == "history")
 
     var messageText = string.Join("\n", historyResults);
 
-    // 定义内联按钮
+    // 定义内联按钮，包括新的“按生肖查询”按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         InlineKeyboardButton.WithCallbackData("返回", "back"),
-        InlineKeyboardButton.WithCallbackData("按波色查询", "queryByWave")
+        InlineKeyboardButton.WithCallbackData("按波色查询", "queryByWave"),
+        InlineKeyboardButton.WithCallbackData("按生肖查询", "queryByZodiac") // 新增按钮
     });
 
     await botClient.SendTextMessageAsync(
