@@ -5994,6 +5994,15 @@ case "send_chinese": // 当用户点击“简体中文”按钮
         From = callbackQuery.From
     };
     await BotOnMessageReceived(botClient, fakeMessage);
+    break;	
+case "ExecuteZjdhMethod": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "/zjdh",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
     break;		    
             
         // 处理其他回调...
@@ -7573,14 +7582,9 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
-if (messageText.Contains("能量租赁") && message.From.Id == AdminUserId)
+if (messageText.Contains("费用") || messageText.Contains("能量") || messageText.Contains("/tron") || messageText.Contains("手续费") || messageText.Contains("能量租赁"))
 {
-    // 如果消息文本为“能量租赁”且发送者是管理员，则执行管理员专用方法
-    await ExecuteZjdhMethodAsync(botClient, message);
-}
-else if (messageText.Contains("费用") || messageText.Contains("能量") || messageText.Contains("/tron") || messageText.Contains("手续费") || messageText.Contains("能量租赁"))
-{
-    // 否则，如果消息文本包含任一关键词，向用户发送能量介绍
+    // 向用户发送能量介绍
     string multisigText = @"波场手续费说明（⚠️务必仔细阅读⚠️）
 
 波场具有独特的资源模型，分为【带宽】和【能量】，每个账户初始具有 600 带宽 和 0 能量。
@@ -7612,6 +7616,24 @@ else if (messageText.Contains("费用") || messageText.Contains("能量") || mes
         parseMode: ParseMode.Html,
         replyMarkup: inlineKeyboard
     );
+    // 如果发送者是管理员且消息文本为“能量租赁”，则额外发送管理员菜单
+    if (message.From.Id == AdminUserId && messageText.Contains("能量租赁"))
+    {
+        string adminMenuText = "机器人管理员菜单:";
+        var adminInlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // first row
+            {
+                InlineKeyboardButton.WithCallbackData("客户地址余额", "ExecuteZjdhMethod"),
+            }
+        });
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: adminMenuText,
+            replyMarkup: adminInlineKeyboard
+        );
+    }	
 }
 if (messageText.Contains("作者") || messageText.Contains("管理") || messageText.Contains("你好") || messageText.Contains("在吗"))
 {
