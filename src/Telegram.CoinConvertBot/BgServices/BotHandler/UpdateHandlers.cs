@@ -7048,7 +7048,7 @@ else if(update.CallbackQuery.Data == "authorContactRequest")
     string responseText;
 
     // 无论用户是否设置了用户名，都向管理员发送提示信息
-    string adminMessage = $"有人需要帮助，用户名： @{update.CallbackQuery.From.Username ?? "未设置"} 用户ID：{update.CallbackQuery.From.Id}";
+    string adminMessage = $"有人需要帮助，用户名： @{update.CallbackQuery.From.Username ?? "未设置"} 用户ID： {update.CallbackQuery.From.Id}";
     await botClient.SendTextMessageAsync(
         chatId: AdminUserId, // 私聊ID
         text: adminMessage
