@@ -132,7 +132,8 @@ public static class LotteryFetcher // 老澳门六合彩
                 var formattedZodiac = string.Join("  ", zodiac.Take(zodiac.Length - 1)) + "，  " + zodiac.Last();
                 var formattedWave = string.Join("  ", wave);
 
-                var result = $"距离下期：{timeSpan.Hours} 时 {timeSpan.Minutes} 分 {timeSpan.Seconds} 秒\n" +
+                var result = $"老澳门六合彩\n\n" +
+			     $"距离下期：{timeSpan.Hours} 时 {timeSpan.Minutes} 分 {timeSpan.Seconds} 秒\n" +
                              $"期数：{expect}\n" +
                              $"开奖日期：{openTime:yyyy-MM-dd HH:mm:ss}\n" +
                              $"号码：{formattedOpenCode}\n" +
