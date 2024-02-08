@@ -9866,7 +9866,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
     string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
 
 使用方法：
-   点击菜单 选择U兑TRX
+   点击菜单 选择 <b>U兑TRX</b>
    转账USDT到指定地址，即可秒回TRX！
    如需了解机器人功能介绍，直接发送：<code>帮助</code> 
    
