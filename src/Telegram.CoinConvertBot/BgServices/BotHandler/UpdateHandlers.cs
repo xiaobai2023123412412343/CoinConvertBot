@@ -7812,23 +7812,24 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
         {
             new [] // first row
             {
-                InlineKeyboardButton.WithCallbackData("客户地址余额", "ExecuteZjdhMethod"),
-		InlineKeyboardButton.WithCallbackData("承兑账单详情", "chengdui"),    
+                InlineKeyboardButton.WithCallbackData("网址收藏", "shoucang"), 	
+		InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_recordds"),   		
             },
             new [] // second row
             {
-                InlineKeyboardButton.WithCallbackData("关注列表", "shiyong"),
-		InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_recordds")    
+                InlineKeyboardButton.WithCallbackData("操作指令", "mingling"),	
+		InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info"), 		    
             },
             new [] // second row
             {
+		    
                 InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info"),
-		InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info")    
+                InlineKeyboardButton.WithCallbackData("关注列表", "shiyong"),		    
             },
             new [] // second row
             {
-                InlineKeyboardButton.WithCallbackData("操作指令", "mingling"),
-                InlineKeyboardButton.WithCallbackData("网址收藏", "shoucang")		    
+                InlineKeyboardButton.WithCallbackData("客户地址余额", "ExecuteZjdhMethod"),
+		InlineKeyboardButton.WithCallbackData("承兑账单详情", "chengdui"),  		    	    
             }
 		
         });
