@@ -6016,7 +6016,7 @@ case "chengdui": // 当用户点击“简体中文”按钮
 case "shiyong": // 当用户点击“简体中文”按钮
     fakeMessage = new Message
     {
-        Text = "/trc",
+        Text = "/erc",
         Chat = callbackQuery.Message.Chat,
         From = callbackQuery.From
     };
@@ -7750,20 +7750,18 @@ if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt")| messageText
 // 检查是否是"查询余额"命令或 "/trc"
 if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
-    if (message.From.Id == AdminUserId)
-    {
-        // 如果用户是管理员，执行 HandleGetFollowersCommandAsync 方法
-        await HandleGetFollowersCommandAsync(botClient, message);
-    }
-    else
-    {
-        // 如果用户不是管理员，执行你现在的方法
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id, 
-            text: "请发送您要查询的<b>TRC-20(波场)地址：</b> ", 
-            parseMode: ParseMode.Html
-        );
-    }
+    // 无论用户是否是管理员，都执行以下方法
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id, 
+        text: "请发送您要查询的<b>TRC-20(波场)地址：</b> ", 
+        parseMode: ParseMode.Html
+    );
+}
+// 新增检查是否是"/erc"命令且发送者是指定管理员
+if (message.Type == MessageType.Text && message.Text.StartsWith("/erc") && message.From.Id == AdminUserId)
+{
+    // 如果用户是管理员，执行 HandleGetFollowersCommandAsync 方法
+    await HandleGetFollowersCommandAsync(botClient, message);
 }
 if (messageText.Equals("/chaxun", StringComparison.OrdinalIgnoreCase))
 {
