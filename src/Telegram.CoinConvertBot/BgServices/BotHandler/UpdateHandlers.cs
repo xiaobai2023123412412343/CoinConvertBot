@@ -7728,7 +7728,7 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
             },
             new [] // second row
             {
-                InlineKeyboardButton.WithCallbackData("管理命令", "mingling"),
+                InlineKeyboardButton.WithCallbackData("操作指令", "mingling"),
             }
 		
         });
