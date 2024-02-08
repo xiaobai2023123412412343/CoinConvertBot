@@ -6996,7 +6996,7 @@ else if(update.CallbackQuery.Data == "memberEmojis")
 }
 else if(update.CallbackQuery.Data == "energyComparison")
 {
-    string comparisonText = @"<b>TRX/能量消耗对比</b>
+    string comparisonText = @"<b>TRX/能量 消耗对比</b>
 <code>
 日转账10笔：
 直接燃烧：10*13.39=133.9 TRX消耗；
