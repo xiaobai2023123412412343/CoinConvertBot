@@ -6914,10 +6914,17 @@ else if (update.CallbackQuery.Data == "queryByZodiac")
 
     var messageText = string.Join("\n", zodiacResults);
 
+    // 定义内联按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("返回", "back")
+    });
+
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: messageText,
-        parseMode: ParseMode.Html
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
     );
 }	    
 else if (update.CallbackQuery.Data == "history")
@@ -6949,10 +6956,17 @@ else if (update.CallbackQuery.Data == "queryByWave")
 
     var messageText = string.Join("\n", waveResults);
 
+    // 定义内联按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("返回", "back")
+    });
+
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: messageText,
-        parseMode: ParseMode.Html
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
     );
 }	    
 else if(update.CallbackQuery.Data == "fancyNumbers")
