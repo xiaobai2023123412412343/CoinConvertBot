@@ -147,35 +147,43 @@ public static class LotteryFetcher // 老澳门六合彩
             }
         }
     }
-    // 新增方法获取历史开奖数据
+    // 修改后的FetchLotteryHistoryAsync方法，增加了错误处理
     public static async Task<List<string>> FetchLotteryHistoryAsync(int year, int count = 50)
     {
         var historyResults = new List<string>();
-        while (historyResults.Count < count)
+        try
         {
-            string url = $"https://api.macaumarksix.com/history/macaujc/y/{year}";
-            using (var client = new HttpClient())
+            while (historyResults.Count < count)
             {
-                var response = await client.GetAsync(url);
-                if (response.IsSuccessStatusCode)
+                string url = $"https://api.macaumarksix.com/history/macaujc/y/{year}";
+                using (var client = new HttpClient())
                 {
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    var jsonObject = JObject.Parse(jsonString);
-                    var results = jsonObject["data"].ToObject<List<JObject>>();
-
-                    foreach (var result in results)
+                    var response = await client.GetAsync(url);
+                    if (response.IsSuccessStatusCode)
                     {
-                        var expect = result["expect"].ToString();
-                        var openCode = result["openCode"].ToString();
-                        historyResults.Add($"期数：{expect}  {openCode.Replace(",", ", ")}");
-                        if (historyResults.Count == count) break;
+                        var jsonString = await response.Content.ReadAsStringAsync();
+                        var jsonObject = JObject.Parse(jsonString);
+                        var results = jsonObject["data"].ToObject<List<JObject>>();
+
+                        foreach (var result in results)
+                        {
+                            var expect = result["expect"].ToString();
+                            var openCode = result["openCode"].ToString();
+                            historyResults.Add($"期数：{expect}  {openCode.Replace(",", ", ")}");
+                            if (historyResults.Count == count) break;
+                        }
                     }
                 }
+                year--; // 如果当前年份数据不足，尝试获取前一年的数据
             }
-            year--; // 如果当前年份数据不足，尝试获取前一年的数据
+        }
+        catch (Exception ex)
+        {
+            // 返回一个包含错误信息的列表，以便调用者可以处理这个错误
+            return new List<string> { $"获取历史开奖信息时发生错误：{ex.Message}" };
         }
         return historyResults.Take(count).ToList(); // 确保不超过50条数据
-    }	
+    }  
 }
 public static class MusicFetcher // 网易云音乐
 {
