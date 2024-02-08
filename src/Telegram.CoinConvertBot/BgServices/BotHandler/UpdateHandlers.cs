@@ -184,6 +184,43 @@ public static class LotteryFetcher // 老澳门六合彩
         }
         return historyResults.Take(count).ToList(); // 确保不超过50条数据
     }  
+public static async Task<List<string>> FetchLotteryWaveHistoryAsync(int year, int count = 50)
+{
+    var waveResults = new List<string>();
+    try
+    {
+        while (waveResults.Count < count)
+        {
+            string url = $"https://api.macaumarksix.com/history/macaujc/y/{year}";
+            using (var client = new HttpClient())
+            {
+                var response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var jsonObject = JObject.Parse(jsonString);
+                    var results = jsonObject["data"].ToObject<List<JObject>>();
+
+                    foreach (var result in results)
+                    {
+                        var expect = result["expect"].ToString();
+                        var wave = result["wave"].ToString().Split(',').Select(w => w.Replace("red", "\uD83D\uDD34").Replace("green", "\uD83D\uDFE2").Replace("blue", "\uD83D\uDD35")).ToArray();
+                        var formattedWave = string.Join("  ", wave);
+                        waveResults.Add($"期数：{expect}   波色：{formattedWave}");
+                        if (waveResults.Count == count) break;
+                    }
+                }
+            }
+            year--; // 如果当前年份数据不足，尝试获取前一年的数据
+        }
+    }
+    catch (Exception ex)
+    {
+        // 返回一个包含错误信息的列表，以便调用者可以处理这个错误
+        return new List<string> { $"获取历史开奖波色信息时发生错误：{ex.Message}" };
+    }
+    return waveResults.Take(count).ToList(); // 确保不超过50条数据
+}	
 }
 public static class MusicFetcher // 网易云音乐
 {
@@ -6841,12 +6878,33 @@ else if (update.CallbackQuery.Data == "history")
 
     var messageText = string.Join("\n", historyResults);
 
+    // 定义内联按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("返回", "back"),
+        InlineKeyboardButton.WithCallbackData("按波色查询", "queryByWave")
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: messageText,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}
+else if (update.CallbackQuery.Data == "queryByWave")
+{
+    int currentYear = DateTime.Now.Year;
+    var waveResults = await LotteryFetcher.FetchLotteryWaveHistoryAsync(currentYear);
+
+    var messageText = string.Join("\n", waveResults);
+
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: messageText,
         parseMode: ParseMode.Html
     );
-}
+}	    
 else if(update.CallbackQuery.Data == "fancyNumbers")
 {
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
