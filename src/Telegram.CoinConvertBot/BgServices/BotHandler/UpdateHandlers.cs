@@ -7774,11 +7774,22 @@ if (messageText.Equals("/chaxun", StringComparison.OrdinalIgnoreCase))
 }
 else if (messageText.Equals("/faxian", StringComparison.OrdinalIgnoreCase))
 {
-    // 过滤出不包含TRX的上涨列表
-    var topRise = riseList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
+    IEnumerable<CoinInfo> topRise;
+    IEnumerable<CoinInfo> topFall;
 
-    // 过滤出不包含TRX的下跌列表
-    var topFall = fallList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
+    // 如果是指定管理员，不过滤TRX
+    if (message.From.Id == AdminUserId)
+    {
+        topRise = riseList.OrderByDescending(x => x.Days).Take(5);
+        topFall = fallList.OrderByDescending(x => x.Days).Take(5);
+    }
+    else
+    {
+        // 过滤出不包含TRX的上涨列表
+        topRise = riseList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
+        // 过滤出不包含TRX的下跌列表
+        topFall = fallList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
+    }
 
     var reply = "<b>币安连续上涨TOP5：</b>\n";
     foreach (var coin in topRise)
@@ -7797,7 +7808,7 @@ else if (messageText.Equals("/faxian", StringComparison.OrdinalIgnoreCase))
         text: reply,
         parseMode: ParseMode.Html
     );
-}    
+}
 // 获取涨跌天数统计
 if (messageText.Equals("/jihui", StringComparison.OrdinalIgnoreCase))
 {
