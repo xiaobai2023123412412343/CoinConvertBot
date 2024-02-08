@@ -169,7 +169,7 @@ public static class LotteryFetcher // 老澳门六合彩
                         {
                             var expect = result["expect"].ToString();
                             var openCode = result["openCode"].ToString();
-                            historyResults.Add($"期数：{expect}  {openCode.Replace(",", ", ")}");
+                            historyResults.Add($"期数：{expect}  号码：{openCode.Replace(",", ", ")}");
                             if (historyResults.Count == count) break;
                         }
                     }
