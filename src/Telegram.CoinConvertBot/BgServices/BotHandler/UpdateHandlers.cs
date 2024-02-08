@@ -2638,18 +2638,18 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
         new [] // 第二行按钮
         {
             InlineKeyboardButton.WithCallbackData("完整列表", "show_full_list")
-        },        
-        new [] // 第三行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_recordds")
-        },
-        new [] // 第四行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info")
-        },   
-        new [] // 第5行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info")
+       // },        
+       // new [] // 第三行按钮
+      //  {
+       //     InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_recordds")
+      //  },
+      //  new [] // 第四行按钮
+      //  {
+     //       InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info")
+     //    },   
+      //  new [] // 第5行按钮
+     //   {
+      //      InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info")
         }           
     });
 
