@@ -6994,6 +6994,44 @@ else if(update.CallbackQuery.Data == "memberEmojis")
 "
     );
 }
+else if(update.CallbackQuery.Data == "energyComparison")
+{
+    string comparisonText = @"<b>TRX/能量消耗对比</b>
+<code>
+日转账10笔：
+直接燃烧：10*13.39=133.9 TRX消耗；
+租赁能量：10*7=70 TRX消耗，立省63.9TRX！
+
+日转账20笔：
+直接燃烧：20*13.39=267.8 TRX消耗；
+租赁能量：20*7=140 TRX消耗，立省127.8TRX！
+
+日转账50笔：
+直接燃烧：50*13.39=669.5 TRX消耗；
+租赁能量：50*7=350 TRX消耗，立省319.5TRX！
+
+日转账100笔：
+直接燃烧：100*13.39=1339 TRX消耗；
+租赁能量：100*7=700 TRX消耗，立省639TRX！
+</code>
+<b>通过对比可以看出，每日转账次数越多，提前租赁能量就更划算！</b>
+	    ";
+
+    var comparisonKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 新增的按钮行
+        {
+            InlineKeyboardButton.WithCallbackData("立即租赁能量", "contactAdmin"),
+        }
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: comparisonText,
+        parseMode: ParseMode.Html, // 确保解析模式设置为HTML
+        replyMarkup: comparisonKeyboard
+    );
+}
 else if(update.CallbackQuery.Data == "contactAdmin")
 {
     var contactKeyboard = new InlineKeyboardMarkup(new[]
@@ -7656,6 +7694,7 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
     {
         new [] // first row
         {
+	    InlineKeyboardButton.WithCallbackData("能量消耗对比", "energyComparison"),
             InlineKeyboardButton.WithCallbackData("立即租赁能量", "contactAdmin"),
         }
     });
