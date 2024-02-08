@@ -7011,6 +7011,38 @@ else if(update.CallbackQuery.Data == "contactAdmin")
         replyMarkup: contactKeyboard
     );
 }
+else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id == AdminUserId)
+{
+    string commandsText = @"拉黑 ID 或者 拉白 ID 可以将用户拉入黑名单或移出；
+群发 内容 机器人可以一键群发内容；
+<code>开启广告</code> <code>关闭广告</code> 指定管理员才可以执行；
+<code>开启兑换通知</code> <code>关闭兑换通知</code> 群内兑换通知开启关闭；
+<code>开启翻译</code> <code>关闭翻译</code> 群内开启或关闭翻译功能；
+添加群聊：群名字： 群ID： 群链接： 指令：开启/关闭 
+储存群聊资料到仓库，指令为开启或关闭兑换通知；
+代绑 ID 用户名（不用 @） 地址 备注  帮助用户绑定地址；
+代解 ID 地址 帮助用户解除地址；
+绑定地址后面加 TRX 不监控TRX余额
+
+启动机器人先：先开启保存群聊资料：<code>/baocunqunliao</code>
+储存之前的用户资料 代绑地址
+<code>/qdgg</code> 启动广告
+<code>关闭翻译</code> <code>/xuni</code>
+<code>监控 btc </code>可选
+<code>监控 eth </code>可选
+
+<code>绑定 TJ4c6esQYEM7jn5s8DD5zk2DBYJTLHnFR3 TRX 备注 安卓比特派</code>
+<code>绑定 TWs6YaFusBbL6UYPjfK9XxpffNGCDu1ApF TRX 备注 安卓抹茶</code>
+<code>绑定 TLowmih1pMgmeUGTAg3Z7Fdk1CZ5KP5ZgB TRX 备注 iOS抹茶</code>
+
+";
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: commandsText,
+        parseMode: ParseMode.Html
+    );
+}	    
 else if(update.CallbackQuery.Data == "authorContactRequest")
 {
     string responseText;
@@ -7654,6 +7686,10 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
             {
                 InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info"),
 		InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info")    
+            },
+            new [] // second row
+            {
+                InlineKeyboardButton.WithCallbackData("管理命令", "mingling"),
             }
 		
         });
