@@ -6537,7 +6537,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|music|usd|vip|usdt|tron|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|更多功能|人民币|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|music|usd|more|usdt|tron|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|更多功能|人民币|汇率换算|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -7180,7 +7180,7 @@ const string BOT_USERNAME = "yifanfubot";//机器人用户名
 const int ADMIN_ID = 1427768220;//指定管理员ID不转发
 
 // 存储机器人的所有命令
-string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/vip","/music", "/cny", "/trc", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "更多功能", "汇率换算", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "币圈行情", "外汇助手", "监控" };    
+string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/more","/music", "/cny", "/trc", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "更多功能", "汇率换算", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "币圈行情", "外汇助手", "监控" };    
 
 if (message.Type == MessageType.Text)
 {
@@ -7757,6 +7757,39 @@ if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", Str
         parseMode: ParseMode.Html
     );
 }
+// 检查是否接收到了 /more 消息或者文本是“更多功能”
+if (messageText.Equals("/more", StringComparison.OrdinalIgnoreCase) || messageText.Equals("更多功能", StringComparison.OrdinalIgnoreCase))
+{
+    // 创建内联键盘
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] // 第一行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
+            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),
+            InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")
+        },
+        new [] // 第二行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
+            InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers"),
+            InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusicc")
+        },
+        new [] // 第三行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
+            InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),
+            InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
+        }
+    });
+
+    // 向用户发送一条消息，告知他们可以选择下方按钮操作
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "欢迎使用本机器人，请选择下方按钮操作：",
+        replyMarkup: inlineKeyboard
+    );
+}	    
 // 新增检查是否是"/erc"命令且发送者是指定管理员
 if (message.Type == MessageType.Text && message.Text.StartsWith("/erc") && message.From.Id == AdminUserId)
 {
@@ -8892,7 +8925,7 @@ else
             "/fan" => PriceTRX(botClient, message),
             "绑定" => BindAddress(botClient, message),
             "解绑" => UnBindAddress(botClient, message),
-            "更多功能" => QueryAccount(botClient, message),
+            //"更多功能" => QueryAccount(botClient, message),
             "/vip" => QueryAccount(botClient, message), // 添加这一行
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
