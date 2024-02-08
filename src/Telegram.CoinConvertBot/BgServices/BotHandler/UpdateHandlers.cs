@@ -7123,6 +7123,71 @@ else if (update.CallbackQuery.Data == "queryByWave")
         parseMode: ParseMode.Html,
         replyMarkup: inlineKeyboard
     );
+}
+else if (update.CallbackQuery.Data == "newQueryByZodiac")
+{
+    // 处理按生肖查询的回调，使用新澳门六合彩的数据
+    int currentYear = DateTime.Now.Year;
+    var zodiacResults = await NewLotteryFetcher.FetchLotteryZodiacHistoryAsync(currentYear);
+
+    var messageText = string.Join("\n", zodiacResults);
+
+    // 定义内联按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("返回", "back")
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: messageText,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}
+else if (update.CallbackQuery.Data == "newHistory")
+{
+    // 处理新澳门六合彩的历史开奖查询
+    int currentYear = DateTime.Now.Year;
+    var historyResults = await NewLotteryFetcher.FetchLotteryHistoryAsync(currentYear);
+
+    var messageText = string.Join("\n", historyResults);
+
+    // 定义内联按钮，包括新的“按生肖查询”和“按波色查询”按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("返回", "back"),
+        InlineKeyboardButton.WithCallbackData("按波色查询", "newQueryByWave"),
+        InlineKeyboardButton.WithCallbackData("按生肖查询", "newQueryByZodiac")
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: messageText,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}
+else if (update.CallbackQuery.Data == "newQueryByWave")
+{
+    // 处理按波色查询的回调，使用新澳门六合彩的数据
+    int currentYear = DateTime.Now.Year;
+    var waveResults = await NewLotteryFetcher.FetchLotteryWaveHistoryAsync(currentYear);
+
+    var messageText = string.Join("\n", waveResults);
+
+    // 定义内联按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("返回", "back")
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: messageText,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
 }	    
 else if(update.CallbackQuery.Data == "fancyNumbers")
 {
