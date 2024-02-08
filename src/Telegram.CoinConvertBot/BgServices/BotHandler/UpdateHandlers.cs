@@ -6012,6 +6012,15 @@ case "chengdui": // 当用户点击“简体中文”按钮
         From = callbackQuery.From
     };
     await BotOnMessageReceived(botClient, fakeMessage);
+    break;	
+case "shiyong": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "/trc",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
     break;		    
             
         // 处理其他回调...
@@ -7634,11 +7643,13 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
             new [] // first row
             {
                 InlineKeyboardButton.WithCallbackData("客户地址余额", "ExecuteZjdhMethod"),
+		InlineKeyboardButton.WithCallbackData("承兑账单详情", "chengdui"),    
             },
             new [] // second row
             {
-                InlineKeyboardButton.WithCallbackData("承兑账单详情", "chengdui"),
+                InlineKeyboardButton.WithCallbackData("使用人数统计", "shiyong"),
             }
+		
         });
 
         await botClient.SendTextMessageAsync(
