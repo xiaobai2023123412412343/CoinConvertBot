@@ -6464,7 +6464,7 @@ if (update.Type == UpdateType.CallbackQuery)
 var message = update.Message;
 if (message?.Text != null)
 {
-if (message.Text.StartsWith("/gzgzgz") && message.From.Id == 1427768220)
+if (message.Text.StartsWith("/gzgzgz") && message.From.Id == AdminUserId)
 {
     await HandleGetFollowersCommandAsync(botClient, message);
 }
