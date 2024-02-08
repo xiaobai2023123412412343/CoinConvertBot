@@ -7752,8 +7752,7 @@ if (messageText.StartsWith("/laoaomen"))
         new [] // 第一行按钮
         {
             InlineKeyboardButton.WithCallbackData("机选一注", "randomSelection"),
-            InlineKeyboardButton.WithCallbackData("历史开奖", "history"),
-            InlineKeyboardButton.WithCallbackData("开奖规律", "pattern")
+            InlineKeyboardButton.WithCallbackData("历史开奖", "history")
         }
     });
 
