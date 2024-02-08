@@ -110,7 +110,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
         new BotCommand(){Command="tron",Description="能量租赁"},            
         new BotCommand(){Command="btc",Description="币圈行情"},
         new BotCommand(){Command="usd",Description="外汇助手"},
-        new BotCommand(){Command="vip",Description="更多功能"},
+        new BotCommand(){Command="more",Description="更多功能"},
         new BotCommand(){Command="home",Description="地址监听"}, 
         new BotCommand(){Command="cny",Description="合约助手"},
         new BotCommand(){Command="usdt",Description="实时u价"},                 
