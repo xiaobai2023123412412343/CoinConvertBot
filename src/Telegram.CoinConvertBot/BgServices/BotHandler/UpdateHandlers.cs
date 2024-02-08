@@ -100,6 +100,54 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class LotteryFetcher // 老澳门六合彩
+{
+    public static async Task<string> FetchLotteryResultAsync()
+    {
+        using (var client = new HttpClient())
+        {
+            try
+            {
+                var response = await client.GetAsync("https://api.macaumarksix.com/api/macaujc.com");
+                if (!response.IsSuccessStatusCode)
+                {
+                    return "获取开奖信息失败，请稍后再试。";
+                }
+
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var jsonArray = JArray.Parse(jsonString);
+                var latestResult = jsonArray[0];
+
+                var expect = latestResult["expect"].ToString();
+                var openCode = latestResult["openCode"].ToString().Split(',');
+                var zodiac = latestResult["zodiac"].ToString().Split(',');
+                var wave = latestResult["wave"].ToString().Split(',').Select(w => w.Replace("red", "\uD83D\uDD34").Replace("green", "\uD83D\uDFE2").Replace("blue", "\uD83D\uDD35")).ToArray();
+                var openTime = DateTime.Parse(latestResult["openTime"].ToString());
+                var now = DateTime.Now;
+                var nextOpenTime = openTime.AddDays(1);
+                var timeSpan = nextOpenTime - now;
+
+                // 格式化号码、生肖和波色
+                var formattedOpenCode = string.Join("  ", openCode.Take(openCode.Length - 1)) + "， " + openCode.Last();
+                var formattedZodiac = string.Join("  ", zodiac.Take(zodiac.Length - 1)) + "，  " + zodiac.Last();
+                var formattedWave = string.Join("  ", wave);
+
+                var result = $"距离下期：{timeSpan.Hours} 时 {timeSpan.Minutes} 分 {timeSpan.Seconds} 秒\n" +
+                             $"期数：{expect}\n" +
+                             $"开奖日期：{openTime:yyyy-MM-dd HH:mm:ss}\n" +
+                             $"号码：{formattedOpenCode}\n" +
+                             $"生肖：{formattedZodiac}\n" +
+                             $"波色：{formattedWave}";
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return $"获取开奖信息时发生错误：{ex.Message}";
+            }
+        }
+    }
+}
 public static class MusicFetcher // 网易云音乐
 {
     public static async Task<(bool success, string musicUrl, string title)> FetchMusicInfoAsync(string url)
@@ -7628,6 +7676,16 @@ if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClien
             );
         }
     }
+}
+// 检查是否接收到了 /laoaomen 消息，收到就查询老澳门六合彩开奖结果
+if (messageText.StartsWith("/laoaomen"))
+{
+    var lotteryResult = await LotteryFetcher.FetchLotteryResultAsync();
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: lotteryResult,
+        parseMode: ParseMode.Html // 使用HTML解析模式以支持文本加粗
+    );
 }
 // 检查消息是否以“汇率”开头，并跟随一个数字
 var userMessageText = message.Text;
