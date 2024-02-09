@@ -100,9 +100,15 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-public static class LotteryFetcherr//香港六合彩
+public static class LotteryFetcherr // 香港六合彩
 {
     private static readonly HttpClient client = new HttpClient();
+    private static readonly Dictionary<int, string> numberToColor = new Dictionary<int, string>
+    {
+        {1, "\uD83D\uDD34"}, {2, "\uD83D\uDD34"}, {7, "\uD83D\uDD34"}, {8, "\uD83D\uDD34"}, {12, "\uD83D\uDD34"}, {13, "\uD83D\uDD34"}, {18, "\uD83D\uDD34"}, {19, "\uD83D\uDD34"}, {23, "\uD83D\uDD34"}, {24, "\uD83D\uDD34"}, {29, "\uD83D\uDD34"}, {30, "\uD83D\uDD34"}, {34, "\uD83D\uDD34"}, {35, "\uD83D\uDD34"}, {40, "\uD83D\uDD34"}, {45, "\uD83D\uDD34"}, {46, "\uD83D\uDD34"},
+        {3, "\uD83D\uDD35"}, {4, "\uD83D\uDD35"}, {9, "\uD83D\uDD35"}, {10, "\uD83D\uDD35"}, {14, "\uD83D\uDD35"}, {15, "\uD83D\uDD35"}, {20, "\uD83D\uDD35"}, {25, "\uD83D\uDD35"}, {26, "\uD83D\uDD35"}, {31, "\uD83D\uDD35"}, {36, "\uD83D\uDD35"}, {37, "\uD83D\uDD35"}, {41, "\uD83D\uDD35"}, {42, "\uD83D\uDD35"}, {47, "\uD83D\uDD35"}, {48, "\uD83D\uDD35"},
+        {5, "\uD83D\uDFE2"}, {6, "\uD83D\uDFE2"}, {11, "\uD83D\uDFE2"}, {16, "\uD83D\uDFE2"}, {17, "\uD83D\uDFE2"}, {21, "\uD83D\uDFE2"}, {22, "\uD83D\uDFE2"}, {27, "\uD83D\uDFE2"}, {28, "\uD83D\uDFE2"}, {32, "\uD83D\uDFE2"}, {33, "\uD83D\uDFE2"}, {38, "\uD83D\uDFE2"}, {39, "\uD83D\uDFE2"}, {43, "\uD83D\uDFE2"}, {44, "\uD83D\uDFE2"}, {49, "\uD83D\uDFE2"}
+    };
 
     public static async Task<string> FetchHongKongLotteryResultAsync()
     {
@@ -123,11 +129,14 @@ public static class LotteryFetcherr//香港六合彩
             var drawTime = DateTime.Parse(latestResult["drawTime"].ToString());
 
             var formattedDrawResult = string.Join("  ", drawResult.Take(drawResult.Length - 1)) + "， " + drawResult.Last();
+            var colors = drawResult.Select(number => numberToColor[int.Parse(number)]).ToArray();
+            var formattedColors = string.Join("  ", colors);
 
             var result = $"香港六合彩\n\n" +
                          $"期数：{issue}\n" +
                          $"开奖日期：{drawTime:yyyy-MM-dd HH:mm:ss}\n" +
-                         $"开奖号码：{formattedDrawResult}";
+                         $"开奖号码：{formattedDrawResult}\n" +
+                         $"波色：{formattedColors}";
 
             return result;
         }
@@ -136,7 +145,7 @@ public static class LotteryFetcherr//香港六合彩
             return $"获取香港六合彩开奖信息时发生错误：{ex.Message}";
         }
     }
-}	
+}
 public static class NewLotteryFetcher//新澳门六合彩
 {
     private static readonly HttpClient client = new HttpClient();
