@@ -100,6 +100,37 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static async Task<string> FetchLotteryHistoryByColorAsync(HttpClient client)
+{
+    try
+    {
+        var response = await client.GetAsync("https://kclm.site/api/trial/drawResult?code=hk6&format=json&rows=50");
+        if (!response.IsSuccessStatusCode)
+        {
+            return "获取历史开奖信息失败，请稍后再试。";
+        }
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var jsonObject = JObject.Parse(jsonString);
+        var historyData = jsonObject["data"];
+
+        var formattedHistory = new StringBuilder();
+        foreach (var item in historyData)
+        {
+            var issue = item["issue"].ToString();
+            var drawResults = item["drawResult"].ToString().Split(',');
+            var colorResults = drawResults.Select(number => LotteryFetcherr.numberToColor[int.Parse(number)]).ToArray();
+            var formattedColorResults = string.Join("  ", colorResults);
+            formattedHistory.AppendLine($"{issue}   {formattedColorResults}");
+        }
+
+        return formattedHistory.ToString();
+    }
+    catch (Exception ex)
+    {
+        return $"获取历史开奖信息时发生错误：{ex.Message}";
+    }
+}	
 public static class HttpClientHelper
 {
     public static readonly HttpClient Client = new HttpClient();
@@ -136,7 +167,7 @@ public static async Task<string> FetchLotteryHistoryAsyncc(HttpClient client)
 public static class LotteryFetcherr // 香港六合彩
 {
     private static readonly HttpClient client = new HttpClient();
-    private static readonly Dictionary<int, string> numberToColor = new Dictionary<int, string>
+    public static readonly Dictionary<int, string> numberToColor = new Dictionary<int, string>
     {
         {1, "\uD83D\uDD34"}, {2, "\uD83D\uDD34"}, {7, "\uD83D\uDD34"}, {8, "\uD83D\uDD34"}, {12, "\uD83D\uDD34"}, {13, "\uD83D\uDD34"}, {18, "\uD83D\uDD34"}, {19, "\uD83D\uDD34"}, {23, "\uD83D\uDD34"}, {24, "\uD83D\uDD34"}, {29, "\uD83D\uDD34"}, {30, "\uD83D\uDD34"}, {34, "\uD83D\uDD34"}, {35, "\uD83D\uDD34"}, {40, "\uD83D\uDD34"}, {45, "\uD83D\uDD34"}, {46, "\uD83D\uDD34"},
         {3, "\uD83D\uDD35"}, {4, "\uD83D\uDD35"}, {9, "\uD83D\uDD35"}, {10, "\uD83D\uDD35"}, {14, "\uD83D\uDD35"}, {15, "\uD83D\uDD35"}, {20, "\uD83D\uDD35"}, {25, "\uD83D\uDD35"}, {26, "\uD83D\uDD35"}, {31, "\uD83D\uDD35"}, {36, "\uD83D\uDD35"}, {37, "\uD83D\uDD35"}, {41, "\uD83D\uDD35"}, {42, "\uD83D\uDD35"}, {47, "\uD83D\uDD35"}, {48, "\uD83D\uDD35"},
@@ -7178,15 +7209,41 @@ else if(update.CallbackQuery.Data == "smsVerification")
         replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin"))
     );
 }
+else if (update.CallbackQuery.Data == "queryByColor")
+{
+    var colorResult = await FetchLotteryHistoryByColorAsync(HttpClientHelper.Client);
+
+    // 创建内联键盘，添加“返回”按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("返回", "back")
+    });
+
+    await botClient.EditMessageTextAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        messageId: update.CallbackQuery.Message.MessageId,
+        text: colorResult,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard // 将内联键盘作为参数传递
+    );
+}	    
 else if (update.CallbackQuery.Data == "historyy")
 {
     var historyResult = await FetchLotteryHistoryAsyncc(HttpClientHelper.Client);
+
+    // 创建内联键盘，添加“按波色查询”按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+	InlineKeyboardButton.WithCallbackData("返回", "back"),    
+        InlineKeyboardButton.WithCallbackData("按波色查询", "queryByColor")
+    });
 
     await botClient.EditMessageTextAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         messageId: update.CallbackQuery.Message.MessageId,
         text: historyResult,
-        parseMode: ParseMode.Html
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard // 将内联键盘作为参数传递
     );
 }	    
 else if (update.CallbackQuery.Data == "randomSelection")
