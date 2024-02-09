@@ -657,8 +657,8 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"地址余额：<b>{userUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{userTrxBalance.ToString("#,##0.##")} TRX</b>\n" +
                               $"------------------------------------------------------------------------\n" +
                               $"对方地址： <code>{(isOutgoing ? transaction.To : transaction.From)}</code>\n" +
-                              $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n" +    
-			      $"------------------------------------------------------------------------\n" +
+                              $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n\n" +    
+			      //$"------------------------------------------------------------------------\n" +
                               $"交易费用：<b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
 			      $"<a href=\"https://t.me/yifanfubot\">省钱妙招：\n提前租赁能量，交易费用最低降至 7.00 TRX！</a>\n"; // 新增的一行文字 
                 var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";
