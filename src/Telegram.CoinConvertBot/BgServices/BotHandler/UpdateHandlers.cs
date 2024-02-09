@@ -109,42 +109,82 @@ public static class LotteryFetcherr // 香港六合彩
         {3, "\uD83D\uDD35"}, {4, "\uD83D\uDD35"}, {9, "\uD83D\uDD35"}, {10, "\uD83D\uDD35"}, {14, "\uD83D\uDD35"}, {15, "\uD83D\uDD35"}, {20, "\uD83D\uDD35"}, {25, "\uD83D\uDD35"}, {26, "\uD83D\uDD35"}, {31, "\uD83D\uDD35"}, {36, "\uD83D\uDD35"}, {37, "\uD83D\uDD35"}, {41, "\uD83D\uDD35"}, {42, "\uD83D\uDD35"}, {47, "\uD83D\uDD35"}, {48, "\uD83D\uDD35"},
         {5, "\uD83D\uDFE2"}, {6, "\uD83D\uDFE2"}, {11, "\uD83D\uDFE2"}, {16, "\uD83D\uDFE2"}, {17, "\uD83D\uDFE2"}, {21, "\uD83D\uDFE2"}, {22, "\uD83D\uDFE2"}, {27, "\uD83D\uDFE2"}, {28, "\uD83D\uDFE2"}, {32, "\uD83D\uDFE2"}, {33, "\uD83D\uDFE2"}, {38, "\uD83D\uDFE2"}, {39, "\uD83D\uDFE2"}, {43, "\uD83D\uDFE2"}, {44, "\uD83D\uDFE2"}, {49, "\uD83D\uDFE2"}
     };
-
-    public static async Task<string> FetchHongKongLotteryResultAsync()
+    private static Dictionary<int, string> GetZodiacDictionary(int year)
     {
-        try
+        var baseYear = 2024;
+        var shift = (year - baseYear) % 12;
+        var zodiacsBase = new Dictionary<string, List<int>>
         {
-            var response = await client.GetAsync("https://kclm.site/api/trial/drawResult?code=hk6&format=json&rows=50");
-            if (!response.IsSuccessStatusCode)
+            {"鼠", new List<int> {5, 17, 29, 41}},
+            {"牛", new List<int> {4, 16, 28, 40}},
+            {"虎", new List<int> {3, 15, 27, 39}},
+            {"兔", new List<int> {2, 14, 26, 38}},
+            {"龙", new List<int> {1, 13, 25, 37, 49}},
+            {"蛇", new List<int> {12, 24, 36, 48}},
+            {"马", new List<int> {11, 23, 35, 47}},
+            {"羊", new List<int> {10, 22, 34, 46}},
+            {"猴", new List<int> {9, 21, 33, 45}},
+            {"鸡", new List<int> {8, 20, 32, 44}},
+            {"狗", new List<int> {7, 19, 31, 43}},
+            {"猪", new List<int> {6, 18, 30, 42}},
+        };
+
+        var zodiacsShifted = zodiacsBase.Skip(shift).Concat(zodiacsBase.Take(shift)).ToDictionary(pair => pair.Key, pair => pair.Value);
+
+        var zodiacDictionary = new Dictionary<int, string>();
+        foreach (var zodiac in zodiacsShifted)
+        {
+            foreach (var number in zodiac.Value)
             {
-                return "获取香港六合彩开奖信息失败，请稍后再试。";
+                zodiacDictionary[number] = zodiac.Key;
             }
-
-            var jsonString = await response.Content.ReadAsStringAsync();
-            var jsonObject = JObject.Parse(jsonString);
-            var latestResult = jsonObject["data"][0];
-
-            var issue = latestResult["issue"].ToString();
-            var drawResult = latestResult["drawResult"].ToString().Split(',');
-            var drawTime = DateTime.Parse(latestResult["drawTime"].ToString());
-
-            var formattedDrawResult = string.Join("  ", drawResult.Take(drawResult.Length - 1)) + "， " + drawResult.Last();
-            var colors = drawResult.Select(number => numberToColor[int.Parse(number)]).ToArray();
-            var formattedColors = string.Join("  ", colors);
-
-            var result = $"香港六合彩\n\n" +
-                         $"期数：{issue}\n" +
-                         $"开奖日期：{drawTime:yyyy-MM-dd HH:mm:ss}\n" +
-                         $"开奖号码：{formattedDrawResult}\n" +
-                         $"波色：{formattedColors}";
-
-            return result;
         }
-        catch (Exception ex)
-        {
-            return $"获取香港六合彩开奖信息时发生错误：{ex.Message}";
-        }
+
+        return zodiacDictionary;
     }
+public static async Task<string> FetchHongKongLotteryResultAsync()
+{
+    try
+    {
+        var response = await client.GetAsync("https://kclm.site/api/trial/drawResult?code=hk6&format=json&rows=50");
+        if (!response.IsSuccessStatusCode)
+        {
+            return "获取香港六合彩开奖信息失败，请稍后再试。";
+        }
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var jsonObject = JObject.Parse(jsonString);
+        var latestResult = jsonObject["data"][0];
+
+        var issue = latestResult["issue"].ToString();
+        var drawResult = latestResult["drawResult"].ToString().Split(',');
+        var drawTime = DateTime.Parse(latestResult["drawTime"].ToString());
+
+        var formattedDrawResult = string.Join("  ", drawResult.Take(drawResult.Length - 1)) + "， " + drawResult.Last();
+
+        var currentYear = DateTime.Now.Year;
+        var zodiacDictionary = GetZodiacDictionary(currentYear);
+        var zodiacs = drawResult.Select(number => zodiacDictionary[int.Parse(number)]).ToArray();
+        var formattedZodiacs = string.Join("  ", zodiacs);
+
+        // 添加波色的格式化逻辑
+        var colors = drawResult.Select(number => numberToColor[int.Parse(number)]).ToArray();
+        var formattedColors = string.Join("  ", colors);
+
+        var result = $"香港六合彩\n\n" +
+                     $"期数：{issue}\n" +
+                     $"开奖日期：{drawTime:yyyy-MM-dd HH:mm:ss}\n" +
+                     $"开奖号码：{formattedDrawResult}\n" +
+                     $"生肖：{formattedZodiacs}\n" +
+                     $"波色：{formattedColors}";
+
+        return result;
+    }
+    catch (Exception ex)
+    {
+        return $"获取香港六合彩开奖信息时发生错误：{ex.Message}";
+    }
+}
 }
 public static class NewLotteryFetcher//新澳门六合彩
 {
