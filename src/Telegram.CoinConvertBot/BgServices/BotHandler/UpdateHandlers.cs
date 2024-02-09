@@ -7219,9 +7219,8 @@ else if (update.CallbackQuery.Data == "queryByColor")
         InlineKeyboardButton.WithCallbackData("返回", "back")
     });
 
-    await botClient.EditMessageTextAsync(
-        chatId: update.CallbackQuery.Message.Chat.Id,
-        messageId: update.CallbackQuery.Message.MessageId,
+await botClient.SendTextMessageAsync(
+    chatId: update.CallbackQuery.Message.Chat.Id,
         text: colorResult,
         parseMode: ParseMode.Html,
         replyMarkup: inlineKeyboard // 将内联键盘作为参数传递
@@ -7238,13 +7237,12 @@ else if (update.CallbackQuery.Data == "historyy")
         InlineKeyboardButton.WithCallbackData("按波色查询", "queryByColor")
     });
 
-    await botClient.EditMessageTextAsync(
-        chatId: update.CallbackQuery.Message.Chat.Id,
-        messageId: update.CallbackQuery.Message.MessageId,
-        text: historyResult,
-        parseMode: ParseMode.Html,
-        replyMarkup: inlineKeyboard // 将内联键盘作为参数传递
-    );
+await botClient.SendTextMessageAsync(
+    chatId: update.CallbackQuery.Message.Chat.Id,
+    text: historyResult,
+    parseMode: ParseMode.Html,
+    replyMarkup: inlineKeyboard // 将内联键盘作为参数传递
+);
 }	    
 else if (update.CallbackQuery.Data == "randomSelection")
 {
