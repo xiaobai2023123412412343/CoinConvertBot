@@ -100,6 +100,39 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class HttpClientHelper
+{
+    public static readonly HttpClient Client = new HttpClient();
+}	
+public static async Task<string> FetchLotteryHistoryAsyncc(HttpClient client)
+{
+    try
+    {
+        var response = await client.GetAsync("https://kclm.site/api/trial/drawResult?code=hk6&format=json&rows=50");
+        if (!response.IsSuccessStatusCode)
+        {
+            return "获取历史开奖信息失败，请稍后再试。";
+        }
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var jsonObject = JObject.Parse(jsonString);
+        var historyData = jsonObject["data"];
+
+        var formattedHistory = new StringBuilder();
+        foreach (var item in historyData)
+        {
+            var issue = item["issue"].ToString();
+            var drawResult = item["drawResult"].ToString();
+            formattedHistory.AppendLine($"{issue}   {drawResult}");
+        }
+
+        return formattedHistory.ToString();
+    }
+    catch (Exception ex)
+    {
+        return $"获取历史开奖信息时发生错误：{ex.Message}";
+    }
+}	
 public static class LotteryFetcherr // 香港六合彩
 {
     private static readonly HttpClient client = new HttpClient();
@@ -7145,6 +7178,17 @@ else if(update.CallbackQuery.Data == "smsVerification")
         replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin"))
     );
 }
+else if (update.CallbackQuery.Data == "historyy")
+{
+    var historyResult = await FetchLotteryHistoryAsyncc(HttpClientHelper.Client);
+
+    await botClient.EditMessageTextAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        messageId: update.CallbackQuery.Message.MessageId,
+        text: historyResult,
+        parseMode: ParseMode.Html
+    );
+}	    
 else if (update.CallbackQuery.Data == "randomSelection")
 {
     // 生成随机号码
@@ -8235,13 +8279,20 @@ if (messageText.StartsWith("/xianggang"))
 {
     var lotteryResult = await LotteryFetcherr.FetchHongKongLotteryResultAsync();
 
-    // 发送文本作为一个消息
+    // 定义内联键盘，添加历史记录按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("历史记录", "historyy")
+    });
+
+    // 发送文本和内联键盘作为一个消息
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: lotteryResult, // 将开奖结果作为文本发送
-        parseMode: ParseMode.Html // 使用HTML解析模式以支持文本加粗
+        parseMode: ParseMode.Html, // 使用HTML解析模式以支持文本加粗
+        replyMarkup: inlineKeyboard // 包含内联键盘
     );
-}	    
+}    
 // 检查消息是否以“汇率”开头，并跟随一个数字
 var userMessageText = message.Text;
 var ratePrefix = "汇率";
