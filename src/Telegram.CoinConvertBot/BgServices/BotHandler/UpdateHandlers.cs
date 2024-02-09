@@ -100,6 +100,39 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static async Task<string> FetchLotteryHistoryByZodiacAsync(HttpClient client)
+{
+    try
+    {
+        var response = await client.GetAsync("https://kclm.site/api/trial/drawResult?code=hk6&format=json&rows=50");
+        if (!response.IsSuccessStatusCode)
+        {
+            return "获取历史开奖信息失败，请稍后再试。";
+        }
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var jsonObject = JObject.Parse(jsonString);
+        var historyData = jsonObject["data"];
+
+        var formattedHistory = new StringBuilder();
+        foreach (var item in historyData)
+        {
+            var issue = item["issue"].ToString();
+            var drawResults = item["drawResult"].ToString().Split(',');
+            var drawTime = DateTime.Parse(item["drawTime"].ToString());
+            var zodiacDictionary = LotteryFetcherr.GetZodiacDictionary(drawTime);
+            var zodiacResults = drawResults.Select(number => zodiacDictionary[int.Parse(number)]).ToArray();
+            var formattedZodiacResults = string.Join(", ", zodiacResults);
+            formattedHistory.AppendLine($"{issue}   {formattedZodiacResults}");
+        }
+
+        return formattedHistory.ToString();
+    }
+    catch (Exception ex)
+    {
+        return $"获取历史开奖信息时发生错误：{ex.Message}";
+    }
+}	
 public static async Task<string> FetchLotteryHistoryByColorAsync(HttpClient client)
 {
     try
@@ -175,7 +208,7 @@ public static class LotteryFetcherr // 香港六合彩
     };
     private static readonly ChineseLunisolarCalendar chineseCalendar = new ChineseLunisolarCalendar();
 
-    private static Dictionary<int, string> GetZodiacDictionary(DateTime drawDate)
+    public static Dictionary<int, string> GetZodiacDictionary(DateTime drawDate)
     {
         int chineseYear = chineseCalendar.GetYear(drawDate);
         int leapMonth = chineseCalendar.GetLeapMonth(chineseYear);
@@ -7225,6 +7258,18 @@ await botClient.SendTextMessageAsync(
         parseMode: ParseMode.Html,
         replyMarkup: inlineKeyboard // 将内联键盘作为参数传递
     );
+}
+else if (update.CallbackQuery.Data == "queryByZodiacc")
+{
+    var zodiacResult = await FetchLotteryHistoryByZodiacAsync(HttpClientHelper.Client);
+
+    // 发送生肖查询结果
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: zodiacResult,
+        parseMode: ParseMode.Html
+        // 这里可以选择是否再次提供内联键盘，取决于你的需求
+    );
 }	    
 else if (update.CallbackQuery.Data == "historyy")
 {
@@ -7234,6 +7279,7 @@ else if (update.CallbackQuery.Data == "historyy")
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
 	InlineKeyboardButton.WithCallbackData("返回", "back"),    
+	InlineKeyboardButton.WithCallbackData("生肖查询", "queryByZodiacc")  ,  
         InlineKeyboardButton.WithCallbackData("按波色查询", "queryByColor")
     });
 
