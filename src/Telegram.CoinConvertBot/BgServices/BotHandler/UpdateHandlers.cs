@@ -166,7 +166,7 @@ public static class NewLotteryFetcher//新澳门六合彩
                     {
                         var expect = result["expect"].ToString();
                         var openCode = result["openCode"].ToString();
-                        historyResults.Add($"{expect}  号码：{openCode.Replace(",", ", ")}");
+                        historyResults.Add($"{expect}   {openCode.Replace(",", ", ")}");
                         if (historyResults.Count == count) break;
                     }
                 }
@@ -201,7 +201,7 @@ public static async Task<List<string>> FetchLotteryWaveHistoryAsync(int year, in
                         var expect = result["expect"].ToString();
                         var wave = result["wave"].ToString().Split(',').Select(w => w.Replace("red", "\uD83D\uDD34").Replace("green", "\uD83D\uDFE2").Replace("blue", "\uD83D\uDD35")).ToArray();
                         var formattedWave = string.Join("  ", wave);
-                        waveResults.Add($"{expect}   波色：{formattedWave}");
+                        waveResults.Add($"{expect}   {formattedWave}");
                         if (waveResults.Count == count) break;
                     }
                 }
@@ -238,7 +238,7 @@ public static async Task<List<string>> FetchLotteryZodiacHistoryAsync(int year, 
                     {
                         var expect = result["expect"].ToString();
                         var zodiac = result["zodiac"].ToString();
-                        zodiacResults.Add($"{expect}  生肖：{zodiac}");
+                        zodiacResults.Add($"{expect}   {zodiac}");
                         if (zodiacResults.Count == count) break;
                     }
                 }
