@@ -7135,7 +7135,8 @@ else if (update.CallbackQuery.Data == "newQueryByZodiac")
     // 定义内联按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        InlineKeyboardButton.WithCallbackData("返回", "back")
+        InlineKeyboardButton.WithCallbackData("返回", "back"),
+	InlineKeyboardButton.WithCallbackData("按波色查询", "newQueryByWave")	
     });
 
     await botClient.SendTextMessageAsync(
@@ -7179,7 +7180,8 @@ else if (update.CallbackQuery.Data == "newQueryByWave")
     // 定义内联按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        InlineKeyboardButton.WithCallbackData("返回", "back")
+        InlineKeyboardButton.WithCallbackData("返回", "back"),
+	InlineKeyboardButton.WithCallbackData("按生肖查询", "newQueryByZodiac")	
     });
 
     await botClient.SendTextMessageAsync(
@@ -8116,7 +8118,7 @@ if (messageText.StartsWith("/xinaomen"))
     {
         new [] // 第一行按钮
         {
-            InlineKeyboardButton.WithCallbackData("机选一注", "randomSelection"),
+            //InlineKeyboardButton.WithCallbackData("机选一注", "randomSelection"),
             InlineKeyboardButton.WithCallbackData("历史开奖", "newHistory")
         }
     });
