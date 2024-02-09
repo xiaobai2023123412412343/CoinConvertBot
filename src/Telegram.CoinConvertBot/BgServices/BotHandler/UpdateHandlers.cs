@@ -100,6 +100,43 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class LotteryFetcherr//香港六合彩
+{
+    private static readonly HttpClient client = new HttpClient();
+
+    public static async Task<string> FetchHongKongLotteryResultAsync()
+    {
+        try
+        {
+            var response = await client.GetAsync("https://kclm.site/api/trial/drawResult?code=hk6&format=json&rows=50");
+            if (!response.IsSuccessStatusCode)
+            {
+                return "获取香港六合彩开奖信息失败，请稍后再试。";
+            }
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var jsonObject = JObject.Parse(jsonString);
+            var latestResult = jsonObject["data"][0];
+
+            var issue = latestResult["issue"].ToString();
+            var drawResult = latestResult["drawResult"].ToString().Split(',');
+            var drawTime = DateTime.Parse(latestResult["drawTime"].ToString());
+
+            var formattedDrawResult = string.Join("  ", drawResult.Take(drawResult.Length - 1)) + "， " + drawResult.Last();
+
+            var result = $"香港六合彩\n\n" +
+                         $"期数：{issue}\n" +
+                         $"开奖日期：{drawTime:yyyy-MM-dd HH:mm:ss}\n" +
+                         $"开奖号码：{formattedDrawResult}";
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return $"获取香港六合彩开奖信息时发生错误：{ex.Message}";
+        }
+    }
+}	
 public static class NewLotteryFetcher//新澳门六合彩
 {
     private static readonly HttpClient client = new HttpClient();
@@ -8131,6 +8168,18 @@ if (messageText.StartsWith("/xinaomen"))
         text: lotteryResult, // 将开奖结果作为文本发送
         parseMode: ParseMode.Html, // 使用HTML解析模式以支持文本加粗
         replyMarkup: inlineKeyboard // 包含内联键盘
+    );
+}
+// 检查是否接收到了 /xianggang 消息，收到就查询香港六合彩开奖结果
+if (messageText.StartsWith("/xianggang"))
+{
+    var lotteryResult = await LotteryFetcherr.FetchHongKongLotteryResultAsync();
+
+    // 发送文本作为一个消息
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: lotteryResult, // 将开奖结果作为文本发送
+        parseMode: ParseMode.Html // 使用HTML解析模式以支持文本加粗
     );
 }	    
 // 检查消息是否以“汇率”开头，并跟随一个数字
