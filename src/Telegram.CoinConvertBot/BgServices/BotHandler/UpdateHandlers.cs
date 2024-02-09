@@ -7249,7 +7249,8 @@ else if (update.CallbackQuery.Data == "queryByColor")
     // 创建内联键盘，添加“返回”按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        InlineKeyboardButton.WithCallbackData("返回", "back")
+        InlineKeyboardButton.WithCallbackData("返回", "back"), 
+	InlineKeyboardButton.WithCallbackData("按生肖查询", "queryByZodiacc")	
     });
 
 await botClient.SendTextMessageAsync(
@@ -7263,12 +7264,19 @@ else if (update.CallbackQuery.Data == "queryByZodiacc")
 {
     var zodiacResult = await FetchLotteryHistoryByZodiacAsync(HttpClientHelper.Client);
 
-    // 发送生肖查询结果
+    // 创建内联键盘，添加“返回”和“按波色查询”按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("返回", "back"),
+        InlineKeyboardButton.WithCallbackData("按波色查询", "queryByColor")
+    });
+
+    // 发送生肖查询结果，并附带内联键盘
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: zodiacResult,
-        parseMode: ParseMode.Html
-        // 这里可以选择是否再次提供内联键盘，取决于你的需求
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard // 将内联键盘作为参数传递
     );
 }	    
 else if (update.CallbackQuery.Data == "historyy")
@@ -7279,7 +7287,7 @@ else if (update.CallbackQuery.Data == "historyy")
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
 	InlineKeyboardButton.WithCallbackData("返回", "back"),    
-	InlineKeyboardButton.WithCallbackData("生肖查询", "queryByZodiacc")  ,  
+	InlineKeyboardButton.WithCallbackData("按生肖查询", "queryByZodiacc")  ,  
         InlineKeyboardButton.WithCallbackData("按波色查询", "queryByColor")
     });
 
