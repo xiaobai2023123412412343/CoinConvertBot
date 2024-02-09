@@ -100,7 +100,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-public static async Task<string> FetchLotteryHistoryByZodiacAsync(HttpClient client)
+public static async Task<string> FetchLotteryHistoryByZodiacAsync(HttpClient client)// 香港六合彩
 {
     try
     {
@@ -197,7 +197,7 @@ public static async Task<string> FetchLotteryHistoryAsyncc(HttpClient client)
         return $"获取历史开奖信息时发生错误：{ex.Message}";
     }
 }	
-public static class LotteryFetcherr // 香港六合彩
+public static class LotteryFetcherr 
 {
     private static readonly HttpClient client = new HttpClient();
     public static readonly Dictionary<int, string> numberToColor = new Dictionary<int, string>
