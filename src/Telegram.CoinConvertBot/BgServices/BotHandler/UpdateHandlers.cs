@@ -8282,7 +8282,7 @@ if (messageText.StartsWith("/xianggang"))
     // 定义内联键盘，添加历史记录按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        InlineKeyboardButton.WithCallbackData("历史记录", "historyy")
+        InlineKeyboardButton.WithCallbackData("历史开奖", "historyy")
     });
 
     // 发送文本和内联键盘作为一个消息
