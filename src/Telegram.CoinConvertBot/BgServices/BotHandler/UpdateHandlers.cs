@@ -107,59 +107,62 @@ public static class IndexDataFetcher//指数行情
     private static readonly string[] indexCodes = { "sh000001", "sz399001", "sh000300" };
     private static readonly string[] indexNames = { "上证指数", "深证指数", "沪深  300" };
 
-    public static async Task<string> FetchIndexDataAsync()
+public static async Task<string> FetchIndexDataAsync()
+{
+    string resultText = "";
+    foreach (var (indexCode, indexName) in indexCodes.Zip(indexNames))
     {
-        string resultText = "";
-        foreach (var (indexCode, indexName) in indexCodes.Zip(indexNames))
+        var licence = licences.OrderBy(x => Guid.NewGuid()).First(); // 随机选择一个密钥
+        string url = $"http://api.mairui.club/zs/sssj/{indexCode}/{licence}";
+        HttpResponseMessage response = await client.GetAsync(url);
+
+        // 如果第一次请求失败，尝试使用其他密钥
+        if (!response.IsSuccessStatusCode)
         {
-            var licence = licences.OrderBy(x => Guid.NewGuid()).First(); // 随机选择一个密钥
-            string url = $"http://api.mairui.club/zs/sssj/{indexCode}/{licence}";
-            HttpResponseMessage response = await client.GetAsync(url);
-
-            // 如果第一次请求失败，尝试使用其他密钥
-            if (!response.IsSuccessStatusCode)
+            foreach (var altLicence in licences.Where(x => x != licence))
             {
-                foreach (var altLicence in licences.Where(x => x != licence))
-                {
-                    url = $"http://api.mairui.club/zs/sssj/{indexCode}/{altLicence}";
-                    response = await client.GetAsync(url);
-                    if (response.IsSuccessStatusCode) break; // 如果成功，跳出循环
-                }
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                resultText += $"{indexName}: 数据获取失败\n";
-                continue;
-            }
-
-            var jsonString = await response.Content.ReadAsStringAsync();
-            try
-            {
-                using var jsonDoc = JsonDocument.Parse(jsonString);
-                var root = jsonDoc.RootElement;
-                var currentPriceStr = root.GetProperty("p").GetString();
-                var yesterdayCloseStr = root.GetProperty("yc").GetString();
-
-                if (decimal.TryParse(currentPriceStr, out decimal currentPrice) && decimal.TryParse(yesterdayCloseStr, out decimal yesterdayClose))
-                {
-                    var changePercent = ((currentPrice - yesterdayClose) / yesterdayClose) * 100;
-                    string changeSymbol = changePercent >= 0 ? "↑" : "↓";
-                    resultText += $"{indexName}：{currentPrice:F2}   {changeSymbol} {Math.Abs(changePercent):F2}%\n";
-                }
-                else
-                {
-                    resultText += $"{indexName}: 数值解析失败\n";
-                }
-            }
-            catch (Exception ex)
-            {
-                resultText += $"{indexName}: 数据获取异常 - {ex.Message}\n";
+                url = $"http://api.mairui.club/zs/sssj/{indexCode}/{altLicence}";
+                response = await client.GetAsync(url);
+                if (response.IsSuccessStatusCode) break; // 如果成功，跳出循环
             }
         }
 
-        return resultText.Trim();
+        if (!response.IsSuccessStatusCode)
+        {
+            resultText += $"{indexName}: 数据获取失败\n\n";
+            continue;
+        }
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        try
+        {
+            using var jsonDoc = JsonDocument.Parse(jsonString);
+            var root = jsonDoc.RootElement;
+            var currentPriceStr = root.GetProperty("p").GetString();
+            var yesterdayCloseStr = root.GetProperty("yc").GetString();
+            var turnoverStr = root.GetProperty("cje").GetString(); // 获取成交额
+
+            if (decimal.TryParse(currentPriceStr, out decimal currentPrice) && decimal.TryParse(yesterdayCloseStr, out decimal yesterdayClose) && decimal.TryParse(turnoverStr, out decimal turnover))
+            {
+                var changePercent = ((currentPrice - yesterdayClose) / yesterdayClose) * 100;
+                string changeSymbol = changePercent >= 0 ? "↑" : "↓";
+                // 格式化成交额为亿单位，并四舍五入到小数点后两位
+                var turnoverInBillion = Math.Round(turnover / 100_000_000, 2);
+                resultText += $"{indexName}：{currentPrice:F2}   {changeSymbol} {Math.Abs(changePercent):F2}%  \n成交额：{turnover:N2} （约{turnoverInBillion}亿）\n\n";
+            }
+            else
+            {
+                resultText += $"{indexName}: 数值解析失败\n\n";
+            }
+        }
+        catch (Exception ex)
+        {
+            resultText += $"{indexName}: 数据获取异常 - {ex.Message}\n\n";
+        }
     }
+
+    return resultText.TrimEnd('-').Trim(); // 移除最后一行的分隔符并去除尾部空格
+}
 }
 public static async Task<string> FetchLotteryHistoryByZodiacAsync(HttpClient client)// 香港六合彩
 {
