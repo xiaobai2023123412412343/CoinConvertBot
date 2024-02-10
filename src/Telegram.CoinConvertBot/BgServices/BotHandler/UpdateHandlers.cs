@@ -163,6 +163,43 @@ public static async Task<string> FetchIndexDataAsync()
 
     return resultText.TrimEnd('-').Trim(); // 移除最后一行的分隔符并去除尾部空格
 }
+public static async Task<string> FetchMarketOverviewAsync()
+{
+    string resultText = "沪深两市上涨下跌数概览\n\n";
+    var licence = licences.OrderBy(x => Guid.NewGuid()).First(); // 随机选择一个密钥
+    string[] urls = {
+        $"http://api.mairui.club/zs/lsgl/{licence}",
+        $"http://api1.mairui.club/zs/lsgl/{licence}"
+    };
+
+    HttpResponseMessage response = null;
+    foreach (var url in urls)
+    {
+        response = await client.GetAsync(url);
+        if (response.IsSuccessStatusCode) break; // 如果成功，跳出循环
+    }
+
+    if (response == null || !response.IsSuccessStatusCode)
+    {
+        return resultText + "数据获取失败";
+    }
+
+    var jsonString = await response.Content.ReadAsStringAsync();
+    try
+    {
+        using var jsonDoc = JsonDocument.Parse(jsonString);
+        var root = jsonDoc.RootElement;
+        // 调整文本格式，使涨停总数和跌停总数在同一行，上涨总数和下跌总数在同一行
+        resultText += $"涨停总数：{root.GetProperty("zt")}     跌停总数：{root.GetProperty("dt")}\n";
+        resultText += $"上涨总数：{root.GetProperty("totalUp")}   下跌总数：{root.GetProperty("totalDown")}\n";
+    }
+    catch (Exception ex)
+    {
+        resultText += $"数据解析异常 - {ex.Message}";
+    }
+
+    return resultText;
+}
 }
 public static async Task<string> FetchLotteryHistoryByZodiacAsync(HttpClient client)// 香港六合彩
 {
@@ -8509,15 +8546,21 @@ if (messageText.StartsWith("/xianggang"))
         replyMarkup: inlineKeyboard // 包含内联键盘
     );
 }  
-// 检查是否接收到了 /zhishu 消息，收到就查询指数数据
+// 检查是否接收到了 /zhishu 消息，收到就查询指数数据和沪深两市上涨下跌数概览
 if (messageText.StartsWith("/zhishu"))
 {
+    // 查询指数数据
     var indexData = await IndexDataFetcher.FetchIndexDataAsync();
+    // 查询沪深两市上涨下跌数概览
+    var marketOverview = await IndexDataFetcher.FetchMarketOverviewAsync();
 
-    // 向用户发送指数数据
+    // 将指数数据和市场概览整合到一条消息中
+    var messageContent = $"{indexData}\n————————————————————\n{marketOverview}";
+
+    // 向用户发送整合后的数据
     _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: indexData
+        text: messageContent
     );
 }	    
 // 检查消息是否以“汇率”开头，并跟随一个数字
