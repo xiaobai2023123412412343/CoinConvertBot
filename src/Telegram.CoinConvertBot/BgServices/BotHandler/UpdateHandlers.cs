@@ -103,7 +103,7 @@ public static class UpdateHandlers
 public static class IndexDataFetcher
 {
     private static readonly HttpClient client = new HttpClient();
-    private static readonly string licence = "504ddb535666d9312d";
+    private static readonly List<string> licences = new List<string> { "504ddb535666d9312d", "64345c8caebdd5133d", "94181401476c458453" };
     private static readonly string[] indexCodes = { "sh000001", "sz399001", "sh000300" };
     private static readonly string[] indexNames = { "上证指数", "深证指数", "沪深  300" };
 
@@ -112,24 +112,30 @@ public static class IndexDataFetcher
         string resultText = "";
         foreach (var (indexCode, indexName) in indexCodes.Zip(indexNames))
         {
+            var licence = licences.OrderBy(x => Guid.NewGuid()).First(); // 随机选择一个密钥
             string url = $"http://api.mairui.club/zs/sssj/{indexCode}/{licence}";
+            HttpResponseMessage response = await client.GetAsync(url);
+
+            // 如果第一次请求失败，尝试使用其他密钥
+            if (!response.IsSuccessStatusCode)
+            {
+                foreach (var altLicence in licences.Where(x => x != licence))
+                {
+                    url = $"http://api.mairui.club/zs/sssj/{indexCode}/{altLicence}";
+                    response = await client.GetAsync(url);
+                    if (response.IsSuccessStatusCode) break; // 如果成功，跳出循环
+                }
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                resultText += $"{indexName}: 数据获取失败\n";
+                continue;
+            }
+
+            var jsonString = await response.Content.ReadAsStringAsync();
             try
             {
-                var response = await client.GetAsync(url);
-                if (!response.IsSuccessStatusCode)
-                {
-                    // 尝试备用接口
-                    url = $"http://api1.mairui.club/zs/sssj/{indexCode}/{licence}";
-                    response = await client.GetAsync(url);
-                }
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    resultText += $"{indexName}: 数据获取失败\n";
-                    continue;
-                }
-
-                var jsonString = await response.Content.ReadAsStringAsync();
                 using var jsonDoc = JsonDocument.Parse(jsonString);
                 var root = jsonDoc.RootElement;
                 var currentPriceStr = root.GetProperty("p").GetString();
@@ -138,7 +144,7 @@ public static class IndexDataFetcher
                 if (decimal.TryParse(currentPriceStr, out decimal currentPrice) && decimal.TryParse(yesterdayCloseStr, out decimal yesterdayClose))
                 {
                     var changePercent = ((currentPrice - yesterdayClose) / yesterdayClose) * 100;
-                    string changeSymbol = changePercent >= 0 ? "↑" : "↓"; 
+                    string changeSymbol = changePercent >= 0 ? "↑" : "↓";
                     resultText += $"{indexName}：{currentPrice:F2}   {changeSymbol} {Math.Abs(changePercent):F2}%\n";
                 }
                 else
