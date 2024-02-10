@@ -112,18 +112,17 @@ public static async Task<string> FetchIndexDataAsync()
     string resultText = "";
     foreach (var (indexCode, indexName) in indexCodes.Zip(indexNames))
     {
-        var licence = licences.OrderBy(x => Guid.NewGuid()).First(); // 随机选择一个密钥
+        var licence = licences.OrderBy(x => Guid.NewGuid()).First();
         string url = $"http://api.mairui.club/zs/sssj/{indexCode}/{licence}";
         HttpResponseMessage response = await client.GetAsync(url);
 
-        // 如果第一次请求失败，尝试使用其他密钥
         if (!response.IsSuccessStatusCode)
         {
             foreach (var altLicence in licences.Where(x => x != licence))
             {
                 url = $"http://api.mairui.club/zs/sssj/{indexCode}/{altLicence}";
                 response = await client.GetAsync(url);
-                if (response.IsSuccessStatusCode) break; // 如果成功，跳出循环
+                if (response.IsSuccessStatusCode) break;
             }
         }
 
@@ -140,15 +139,14 @@ public static async Task<string> FetchIndexDataAsync()
             var root = jsonDoc.RootElement;
             var currentPriceStr = root.GetProperty("p").GetString();
             var yesterdayCloseStr = root.GetProperty("yc").GetString();
-            var turnoverStr = root.GetProperty("cje").GetString(); // 获取成交额
+            var turnoverStr = root.GetProperty("cje").GetString();
 
             if (decimal.TryParse(currentPriceStr, out decimal currentPrice) && decimal.TryParse(yesterdayCloseStr, out decimal yesterdayClose) && decimal.TryParse(turnoverStr, out decimal turnover))
             {
                 var changePercent = ((currentPrice - yesterdayClose) / yesterdayClose) * 100;
                 string changeSymbol = changePercent >= 0 ? "↑" : "↓";
-                // 格式化成交额为亿单位，并四舍五入到小数点后两位
                 var turnoverInBillion = Math.Round(turnover / 100_000_000, 2);
-                resultText += $"{indexName}：{currentPrice:F2}   {changeSymbol} {Math.Abs(changePercent):F2}%  \n成交额：{turnover:N2} （约{turnoverInBillion}亿）\n\n";
+                resultText += $"{indexName}：<b>{currentPrice:F2}</b>   {changeSymbol} <b>{Math.Abs(changePercent):F2}%</b>  \n成交额：<b>{turnover:N2}</b> （约<b>{turnoverInBillion}</b>亿）\n\n";
             }
             else
             {
@@ -161,12 +159,13 @@ public static async Task<string> FetchIndexDataAsync()
         }
     }
 
-    return resultText.TrimEnd('-').Trim(); // 移除最后一行的分隔符并去除尾部空格
+    return resultText.TrimEnd('-').Trim();
 }
+
 public static async Task<string> FetchMarketOverviewAsync()
 {
     string resultText = "沪深两市上涨下跌数概览\n\n";
-    var licence = licences.OrderBy(x => Guid.NewGuid()).First(); // 随机选择一个密钥
+    var licence = licences.OrderBy(x => Guid.NewGuid()).First();
     string[] urls = {
         $"http://api.mairui.club/zs/lsgl/{licence}",
         $"http://api1.mairui.club/zs/lsgl/{licence}"
@@ -176,7 +175,7 @@ public static async Task<string> FetchMarketOverviewAsync()
     foreach (var url in urls)
     {
         response = await client.GetAsync(url);
-        if (response.IsSuccessStatusCode) break; // 如果成功，跳出循环
+        if (response.IsSuccessStatusCode) break;
     }
 
     if (response == null || !response.IsSuccessStatusCode)
@@ -189,9 +188,8 @@ public static async Task<string> FetchMarketOverviewAsync()
     {
         using var jsonDoc = JsonDocument.Parse(jsonString);
         var root = jsonDoc.RootElement;
-        // 调整文本格式，使涨停总数和跌停总数在同一行，上涨总数和下跌总数在同一行
-        resultText += $"涨停总数：{root.GetProperty("zt")}     跌停总数：{root.GetProperty("dt")}\n";
-        resultText += $"上涨总数：{root.GetProperty("totalUp")}   下跌总数：{root.GetProperty("totalDown")}\n";
+        resultText += $"涨停总数：<b>{root.GetProperty("zt")}</b>     跌停总数：<b>{root.GetProperty("dt")}</b>\n";
+        resultText += $"上涨总数：<b>{root.GetProperty("totalUp")}</b>   下跌总数：<b>{root.GetProperty("totalDown")}</b>\n";
     }
     catch (Exception ex)
     {
@@ -8557,12 +8555,13 @@ if (messageText.StartsWith("/zhishu"))
     // 将指数数据和市场概览整合到一条消息中
     var messageContent = $"{indexData}\n————————————————————\n{marketOverview}";
 
-    // 向用户发送整合后的数据
+    // 向用户发送整合后的数据，确保使用ParseMode.Html以正确解析HTML标签
     _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: messageContent
+        text: messageContent,
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
     );
-}	    
+}
 // 检查消息是否以“汇率”开头，并跟随一个数字
 var userMessageText = message.Text;
 var ratePrefix = "汇率";
