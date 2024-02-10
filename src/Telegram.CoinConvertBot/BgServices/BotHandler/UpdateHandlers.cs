@@ -6589,8 +6589,18 @@ case "shiyong": // 当用户点击“简体中文”按钮
         From = callbackQuery.From
     };
     await BotOnMessageReceived(botClient, fakeMessage);
+    break;	
+		    
+case "indexMarket": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "/zhishu",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
     break;		    
-            
+                   
         // 处理其他回调...
     }
 }
@@ -7303,6 +7313,39 @@ else if(update.CallbackQuery.Data == "smsVerification")
         replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin"))
     );
 }
+else if (update.CallbackQuery.Data == "onlineAudio")
+{
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: @"欧乐网：https://www.olevod.com/
+天天视频：https://www.ttsp.tv/index.html
+泥视频：https://www.nivod4.tv/
+fofo影院：https://www.fofoyy.com/
+努努影院：https://nnyy.in/
+爱看：https://www.ikan4k.com/
+cn影院：https://cnys.tv/
+茶杯狐电视电影推荐：https://cupfox.love/
+
+在线音乐推荐使用洛雪播放器：https://lxmusic.toside.cn/download",
+        disableWebPagePreview: true // 关闭链接预览
+    );
+}
+else if (update.CallbackQuery.Data == "onlineReading")
+{
+    await botClient.SendTextMessageAsync(
+        chatId: update.CallbackQuery.Message.Chat.Id,
+        text: @"新闻类：
+bbc：https://www.bbc.com/zhongwen/simp
+纽约时报：https://cn.nytimes.com/
+法广：https://www.rfi.fr/cn/
+推特：https://twitter.com/home  
+小说类：
+笔趣阁：http://www.biquxs.com/
+笔趣阁：http://www.biqu520.net/
+笔趣阁：https://www.beqege.cc/",
+        disableWebPagePreview: true // 关闭链接预览
+    );
+}	    
 else if (update.CallbackQuery.Data == "queryByColor")
 {
     var colorResult = await FetchLotteryHistoryByColorAsync(HttpClientHelper.Client);
@@ -8801,6 +8844,12 @@ if (messageText.Equals("/more", StringComparison.OrdinalIgnoreCase) || messageTe
             InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
             InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),
             InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
+        },
+        new [] // 新增第四行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("指数行情", "indexMarket"),
+            InlineKeyboardButton.WithCallbackData("在线音频", "onlineAudio"),
+            InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading")
         }
     });
 
