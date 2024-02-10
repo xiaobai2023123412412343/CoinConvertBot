@@ -8630,7 +8630,20 @@ if (userMessageText.StartsWith(ratePrefix))
         // 如果用户发送的文本不符合“汇率+数字”的格式，则不执行任何操作
         // 这里可以留空或添加其他逻辑
     }
-}	    
+}
+// 如果用户发送的文本包含"红色"、"绿色"、"蓝色"、"红波"、"绿波"或"蓝波"
+if (messageText.Contains("红色") || messageText.Contains("绿色") || messageText.Contains("蓝色") || messageText.Contains("红波") || messageText.Contains("绿波") || messageText.Contains("蓝波"))
+{
+    // 回复用户波色信息
+string waveText = "红波\uD83D\uDD34：01、02、07、08、12、13、18、19、23、24、29、30、34、35、40、45、46\n" +
+                  "蓝波\uD83D\uDD35：03、04、09、10、14、15、20、25、26、31、36、37、41、42、47、48\n" +
+                  "绿波\uD83D\uDFE2：05、06、11、16、17、21、22、27、28、32、33、38、39、43、44、49";
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: waveText
+    );
+}
 if (messageText.Equals("ID", StringComparison.OrdinalIgnoreCase) || messageText.Equals("id", StringComparison.OrdinalIgnoreCase))
 {
     await HandleIdCommandAsync(botClient, message);
