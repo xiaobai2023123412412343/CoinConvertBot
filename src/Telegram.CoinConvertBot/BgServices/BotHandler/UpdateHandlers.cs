@@ -6638,7 +6638,34 @@ case "indexMarket": // 当用户点击“简体中文”按钮
     };
     await BotOnMessageReceived(botClient, fakeMessage);
     break;		    
-                   
+case "laoaomen": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "/laoaomen",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
+    break;		    
+case "xinaomen": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "/xinaomen",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
+    break;		    
+case "xianggang": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "/xianggang",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
+    break;		    
+                               
         // 处理其他回调...
     }
 }
@@ -8895,6 +8922,12 @@ if (messageText.Equals("/more", StringComparison.OrdinalIgnoreCase) || messageTe
             InlineKeyboardButton.WithCallbackData("指数行情", "indexMarket"),
             InlineKeyboardButton.WithCallbackData("在线音频", "onlineAudio"),
             InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading")
+        },
+        new [] // 新增第四行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("老澳门彩", "laoaomen"),
+            InlineKeyboardButton.WithCallbackData("新澳门彩", "xinaomen"),
+            InlineKeyboardButton.WithCallbackData("香港六合", "xianggang")
         }
     });
 
