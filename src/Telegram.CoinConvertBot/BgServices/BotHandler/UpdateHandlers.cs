@@ -100,6 +100,61 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class IndexDataFetcher
+{
+    private static readonly HttpClient client = new HttpClient();
+    private static readonly string licence = "504ddb535666d9312d";
+    private static readonly string[] indexCodes = { "sh000001", "sz399001", "sh000300" };
+    private static readonly string[] indexNames = { "上证指数", "深证指数", "沪深  300" };
+
+    public static async Task<string> FetchIndexDataAsync()
+    {
+        string resultText = "";
+        foreach (var (indexCode, indexName) in indexCodes.Zip(indexNames))
+        {
+            string url = $"http://api.mairui.club/zs/sssj/{indexCode}/{licence}";
+            try
+            {
+                var response = await client.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                {
+                    // 尝试备用接口
+                    url = $"http://api1.mairui.club/zs/sssj/{indexCode}/{licence}";
+                    response = await client.GetAsync(url);
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    resultText += $"{indexName}: 数据获取失败\n";
+                    continue;
+                }
+
+                var jsonString = await response.Content.ReadAsStringAsync();
+                using var jsonDoc = JsonDocument.Parse(jsonString);
+                var root = jsonDoc.RootElement;
+                var currentPriceStr = root.GetProperty("p").GetString();
+                var yesterdayCloseStr = root.GetProperty("yc").GetString();
+
+                if (decimal.TryParse(currentPriceStr, out decimal currentPrice) && decimal.TryParse(yesterdayCloseStr, out decimal yesterdayClose))
+                {
+                    var changePercent = ((currentPrice - yesterdayClose) / yesterdayClose) * 100;
+                    string changeSymbol = changePercent >= 0 ? "↑" : "↓"; 
+                    resultText += $"{indexName}：{currentPrice:F2}   {changeSymbol} {Math.Abs(changePercent):F2}%\n";
+                }
+                else
+                {
+                    resultText += $"{indexName}: 数值解析失败\n";
+                }
+            }
+            catch (Exception ex)
+            {
+                resultText += $"{indexName}: 数据获取异常 - {ex.Message}\n";
+            }
+        }
+
+        return resultText.Trim();
+    }
+}
 public static async Task<string> FetchLotteryHistoryByZodiacAsync(HttpClient client)// 香港六合彩
 {
     try
@@ -8401,7 +8456,18 @@ if (messageText.StartsWith("/xianggang"))
         parseMode: ParseMode.Html, // 使用HTML解析模式以支持文本加粗
         replyMarkup: inlineKeyboard // 包含内联键盘
     );
-}    
+}  
+// 检查是否接收到了 /zhishu 消息，收到就查询指数数据
+if (messageText.StartsWith("/zhishu"))
+{
+    var indexData = await IndexDataFetcher.FetchIndexDataAsync();
+
+    // 向用户发送指数数据
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: indexData
+    );
+}	    
 // 检查消息是否以“汇率”开头，并跟随一个数字
 var userMessageText = message.Text;
 var ratePrefix = "汇率";
