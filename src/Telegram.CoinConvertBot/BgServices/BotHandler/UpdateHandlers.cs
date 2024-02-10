@@ -100,7 +100,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-public static class IndexDataFetcher
+public static class IndexDataFetcher//指数行情
 {
     private static readonly HttpClient client = new HttpClient();
     private static readonly List<string> licences = new List<string> { "504ddb535666d9312d", "64345c8caebdd5133d", "94181401476c458453" };
