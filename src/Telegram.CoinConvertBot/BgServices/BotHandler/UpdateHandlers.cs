@@ -8814,7 +8814,7 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
         );
     }	
 }
-if (messageText.Contains("作者") || messageText.Contains("管理") || messageText.Contains("你好") || messageText.Contains("在吗"))
+if (messageText.Contains("作者") || messageText.Contains("管理") || messageText.Contains("你好") || messageText.Contains("在吗")|| messageText.Contains("？")|| messageText.Contains("如何")|| messageText.Contains("怎么")|| messageText.Contains("?"))
 {
     // 向用户发送作者联系信息
     string contactText = @"双向用户可以直接私聊机器人，作者会第一时间回复您！";
