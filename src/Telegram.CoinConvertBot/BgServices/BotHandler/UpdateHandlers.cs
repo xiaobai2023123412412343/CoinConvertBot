@@ -81,6 +81,8 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //                "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
 //                "f49353bd-db65-4719-a56c-064b2eb231bf",
 //                "92854974-68da-4fd8-9e50-3948c1e6fa7e"     ok链api     https://www.oklink.com/cn/account/my-api  注册
+// 指数秘钥  private static readonly List<string> licences = new List<string> { "504ddb535666d9312d", "64345c8caebdd5133d", "94181401476c458453" };  string url = $"http://api.mairui.club/zs/sssj/{indexCode}/{licence}";
+
 
 public static class UpdateHandlers
 {
