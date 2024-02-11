@@ -8584,7 +8584,7 @@ if (messageText.StartsWith("/zhishu"))
 
     // 添加额外的链接文本
     var additionalText = @"
-<a href='https://www.google.com/finance/quote/.IXIC:INDEXNASDAQ'>谷歌财经</a>  <a href='https://stock.finance.sina.com.cn/usstock/quotes/.IXIC.html'>新浪财经 </a> <a href='https://www.jin10.com/'>金十数据 </a> <a href='https://rili.jin10.com/'>金十日历 </a>";
+<a href='https://www.google.com/finance/quote/.IXIC:INDEXNASDAQ'>谷歌财经</a>  <a href='https://m.cn.investing.com/markets/'>英为财情</a>  <a href='https://www.jin10.com/'>金十数据 </a> <a href='https://rili.jin10.com/'>金十日历 </a>";
 
     // 将additionalText添加到messageContent
     messageContent += $"\n{additionalText}";
