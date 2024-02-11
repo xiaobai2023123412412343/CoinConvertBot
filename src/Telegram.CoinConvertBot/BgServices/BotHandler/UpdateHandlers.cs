@@ -8579,14 +8579,22 @@ if (messageText.StartsWith("/zhishu"))
     // 查询沪深两市上涨下跌数概览
     var marketOverview = await IndexDataFetcher.FetchMarketOverviewAsync();
 
-    // 将指数数据和市场概览整合到一条消息中
+    // 初始化messageContent变量，并将指数数据和市场概览整合到一条消息中
     var messageContent = $"{indexData}\n————————————————————\n{marketOverview}";
 
-    // 向用户发送整合后的数据，确保使用ParseMode.Html以正确解析HTML标签
-    _ = botClient.SendTextMessageAsync(
+    // 添加额外的链接文本
+    var additionalText = @"
+<a href='https://www.google.com/finance/quote/.IXIC:INDEXNASDAQ'>谷歌财经</a>  <a href='https://stock.finance.sina.com.cn/usstock/quotes/.IXIC.html'>新浪财经 </a> <a href='https://www.jin10.com/'>金十数据 </a> <a href='https://rili.jin10.com/'>金十日历 </a>";
+
+    // 将additionalText添加到messageContent
+    messageContent += $"\n{additionalText}";
+
+    // 向用户发送整合后的数据，确保使用ParseMode.Html以正确解析HTML标签，并关闭链接预览
+    await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: messageContent,
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        disableWebPagePreview: true // 关闭链接预览
     );
 }
 // 检查消息是否以“汇率”开头，并跟随一个数字
