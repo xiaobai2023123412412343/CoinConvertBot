@@ -8600,7 +8600,7 @@ if (messageText.StartsWith("/zhishu"))
 <a href='https://www.google.com/finance/quote/.IXIC:INDEXNASDAQ'>谷歌财经</a>  <a href='https://m.cn.investing.com/markets/'>英为财情</a>  <a href='https://www.jin10.com/'>金十数据 </a> <a href='https://rili.jin10.com/'>金十日历 </a>";
 
     // 将additionalText添加到messageContent
-    messageContent += $"\n{additionalText}";
+    messageContent += $"{additionalText}";
 
     // 向用户发送整合后的数据，确保使用ParseMode.Html以正确解析HTML标签，并关闭链接预览
     await botClient.SendTextMessageAsync(
