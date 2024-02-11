@@ -7418,6 +7418,8 @@ bbc：https://www.bbc.com/zhongwen/simp
 缅华网：http://mhwmm.com/
 菲华网：https://www.phhua.com/
 迪拜通：https://www.dubaichina.com/
+泰国通：https://hua.in.th/portal.php
+华人网：https://usa.huarenca.com/
 	    ",
         disableWebPagePreview: true // 关闭链接预览
     );
