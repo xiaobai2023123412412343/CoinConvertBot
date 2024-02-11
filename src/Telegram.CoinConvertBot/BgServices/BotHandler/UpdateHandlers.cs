@@ -7404,10 +7404,21 @@ bbc：https://www.bbc.com/zhongwen/simp
 纽约时报：https://cn.nytimes.com/
 法广：https://www.rfi.fr/cn/
 推特：https://twitter.com/home  
+
 小说类：
 笔趣阁：http://www.biquxs.com/
 笔趣阁：http://www.biqu520.net/
-笔趣阁：https://www.beqege.cc/",
+笔趣阁：https://www.beqege.cc/
+
+论坛类：
+狮城bbs：https://www.shichengbbs.com/
+柬埔寨通：http://www.jpztong.com/
+柬单网：https://www.58cam.com/
+老挝通：http://www.laowotong.com/
+缅华网：http://mhwmm.com/
+菲华网：https://www.phhua.com/
+迪拜通：https://www.dubaichina.com/
+	    ",
         disableWebPagePreview: true // 关闭链接预览
     );
 }	    
