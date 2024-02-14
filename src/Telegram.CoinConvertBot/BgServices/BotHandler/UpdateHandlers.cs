@@ -102,6 +102,73 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 创建一个字典来映射内联按钮的回调数据到中文描述
+private static Dictionary<string, string> callbackDataToChinese = new Dictionary<string, string>
+{
+    {"set_note", "点击: 地址备注"},
+    {"query_self", "点击: 查自己"},
+    {"query_other", "点击: 查对方"},
+    {"energy_intro", "点击: 波场能量介绍"},
+    {"query", "点击: 查询"},
+    {"bind", "点击: 绑定"},
+    {"prev_page", "点击: 上一页"},
+    {"next_page", "点击: 下一页"},
+    {"show_full_list", "点击: 完整列表"},
+    {"show_address", "点击: 收入支出全公开，请放心兑换！"},
+    {"query_again", "点击: 再查一次"},
+    {"query_eye", "点击: 查授权记录"},
+    {"trx_usage", "点击: TRX消耗统计"},
+    {"contactAdmin", "点击: 联系bot作者"},
+    {"authorized_list", "点击: 完整授权列表"},
+    {"3months", "点击: 3个月会员 24.99 u"},
+    {"6months", "点击: 6个月会员 39.99 u"},
+    {"1year", "点击: 一年会员 70.99 u"},
+    {"back", "点击: 返回"},
+    {"cancelPayment", "点击: 重新选择"},
+    {"queryByZodiac", "点击: 按生肖查询"},
+    {"queryByColor", "点击: 按波色查询"},
+    {"queryByWave", "点击: 按波色查询"},
+    {"newQueryByWave", "点击: 按波色查询"},
+    {"newQueryByZodiac", "点击: 按生肖查询"},
+    {"understandMultiSig", "点击: 了解多签"},
+    {"listenToMusic_热歌榜", "点击: 热歌"},
+    {"listenToMusic_新歌榜", "点击: 新歌"},
+    {"listenToMusic_飙升榜", "点击: 飙升"},
+    {"listenToMusic_原创", "点击: 原创"},
+    {"random5Songs", "点击: 随机5首歌曲"},
+    {"random10Songs", "点击: 随机10首歌曲"},
+    {"history", "点击: 历史开奖"},
+    {"newHistory", "点击: 历史开奖"},
+    {"historyy", "点击: 历史开奖"},
+    {"energyComparison", "点击: 能量消耗对比"},
+    {"shoucang", "点击: 网址收藏"},
+    {"show_transaction_recordds", "点击: 兑换记录"},
+    {"mingling", "点击: 操作指令"},
+    {"show_group_info", "点击: 群聊资料"},
+    {"show_user_info", "点击: 用户地址"},
+    {"shiyong", "点击: 关注列表"},
+    {"ExecuteZjdhMethod", "点击: 客户地址余额"},
+    {"chengdui", "点击: 承兑账单详情"},
+    {"authorContactRequest", "点击: 由作者联系您"},
+    {"zaicha", "点击: 再查一次"},
+    {"memberEmojis", "点击: 会员表情"},
+    {"smsVerification", "点击: 短信接码"},
+    {"fancyNumbers", "点击: 靓号地址"},
+    {"listenToMusicc", "点击: 网易音乐"},
+    {"send_chinese", "点击: 简体中文"},
+    {"commandList", "点击: 指令大全"},
+    {"send_help", "点击: 使用帮助"},
+    {"indexMarket", "点击: 指数行情"},
+    {"onlineAudio", "点击: 在线音频"},
+    {"onlineReading", "点击: 在线阅读"},
+    {"laoaomen", "点击: 老澳门彩"},
+    {"xinaomen", "点击: 新澳门彩"},
+    {"xianggang", "点击: 香港六合"},
+    {"BTC", "点击: 比特币"},
+    {"ETH", "点击: 以太坊"},
+    {"full_ratess", "点击: 一键复查"},
+    {"membershipOptions", "点击: 会员代开"}
+};	
 public static class IndexDataFetcher//指数行情
 {
     private static readonly HttpClient client = new HttpClient();
@@ -8245,6 +8312,18 @@ string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc
 
 if (message.Type == MessageType.Text)
 {
+    // 声明并初始化 text 变量
+    string text = message.Text; // 使用 message.Text 初始化
+
+    // 检查消息内容是否在字典中
+    if (callbackDataToChinese.ContainsKey(messageText))
+    {
+        // 如果存在，使用字典中的中文描述替换原始的回调数据
+        messageText = callbackDataToChinese[messageText];
+        // 更新 text 变量以反映可能的更改
+        text = messageText; // 现在这里是正确的，因为我们已经在上面声明了 text
+    }
+	
 if (messageText.Contains("中文") || messageText.Contains("简体") || messageText.Contains("语言") || messageText.Contains("language"))
 {
     string languagePackMessage = @"Telegram 简体中文语言包
@@ -8309,7 +8388,7 @@ var timestamp = message.Date != default(DateTime)
     var userFullName = $"{message.From.FirstName} {message.From.LastName}".Trim();
     var username = message.From.Username;
     var userId = message.From.Id;
-    var text = message.Text;
+    //var text = message.Text;
     var chatType = message.Chat.Type;
     var isMentioned = message.Entities?.Any(e => e.Type == MessageEntityType.Mention) ?? false;
     var containsCommand = botCommands.Any(cmd => text.StartsWith($"{cmd}@{BOT_USERNAME}") || text.StartsWith(cmd));
