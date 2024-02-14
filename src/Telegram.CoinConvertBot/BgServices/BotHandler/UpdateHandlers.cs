@@ -8861,7 +8861,9 @@ if (messageText.Contains("作者") || messageText.Contains("管理") || messageT
         replyMarkup: inlineKeyboard // 添加这行代码
     );
 }	    
-if (messageText.Equals("/zijin", StringComparison.OrdinalIgnoreCase))
+// 使用正则表达式来匹配 /zijin 命令，允许命令后面跟随 "@机器人用户名"
+var zijinCommandRegex = new Regex(@"^/zijin(@\w+)?$", RegexOptions.IgnoreCase);
+if (zijinCommandRegex.IsMatch(message.Text))
 {
     try
     {
