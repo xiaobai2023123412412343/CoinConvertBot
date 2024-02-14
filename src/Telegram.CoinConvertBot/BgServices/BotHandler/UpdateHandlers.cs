@@ -8929,8 +8929,9 @@ if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", Str
         parseMode: ParseMode.Html
     );
 }
-// 检查是否接收到了 /more 消息或者文本是“更多功能”
-if (messageText.Equals("/more", StringComparison.OrdinalIgnoreCase) || messageText.Equals("更多功能", StringComparison.OrdinalIgnoreCase))
+// 使用正则表达式来匹配命令，允许命令后面跟随 "@机器人用户名"
+var moreCommandRegex = new Regex(@"^/more(@\w+)?$", RegexOptions.IgnoreCase);
+if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能", StringComparison.OrdinalIgnoreCase))
 {
     // 创建内联键盘
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
