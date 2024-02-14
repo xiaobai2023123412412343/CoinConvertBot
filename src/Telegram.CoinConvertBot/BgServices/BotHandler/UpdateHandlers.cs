@@ -10489,8 +10489,17 @@ var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.Con
 // 计算手续费后的兑换汇率
 decimal usdtToTrxRateAfterFees = rate * (1 - FeeRate);
 
-// 使用获取到的汇率计算TRX余额等价于多少USDT，这里需要逆向计算
-decimal TRXInUSDT = TRX / usdtToTrxRateAfterFees;
+decimal TRXInUSDT;
+if (usdtToTrxRateAfterFees != 0)
+{
+    TRXInUSDT = TRX / usdtToTrxRateAfterFees;
+}
+else
+{
+    // 根据你的需求处理这种情况，例如设置为0，或者抛出一个异常
+    TRXInUSDT = 0; // 或者其他逻辑处理
+    // throw new InvalidOperationException("usdtToTrxRateAfterFees cannot be zero.");
+}
 		
 var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
