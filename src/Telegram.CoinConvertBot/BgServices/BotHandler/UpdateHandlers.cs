@@ -8994,7 +8994,9 @@ if (messageText.Equals("/chaxun", StringComparison.OrdinalIgnoreCase))
         parseMode: ParseMode.Html
     );
 }
-else if (messageText.Equals("/faxian", StringComparison.OrdinalIgnoreCase))
+// 使用正则表达式来匹配 /faxian 命令，允许命令后面跟随 "@机器人用户名"
+var faxianCommandRegex = new Regex(@"^/faxian(@\w+)?$", RegexOptions.IgnoreCase);
+if (faxianCommandRegex.IsMatch(message.Text))
 {
     IEnumerable<CoinInfo> topRise;
     IEnumerable<CoinInfo> topFall;
