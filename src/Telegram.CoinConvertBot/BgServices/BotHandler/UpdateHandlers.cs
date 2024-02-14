@@ -10046,11 +10046,12 @@ else
         );
     }
 }
-if (message.Text == "外汇助手" || message.Text == "/usd") // 添加 /usd 条件
+// 使用正则表达式来匹配命令，允许命令后面跟随 "@机器人用户名"
+var commandRegex = new Regex(@"^/usd(@\w+)?$", RegexOptions.IgnoreCase);
+if (commandRegex.IsMatch(message.Text) || message.Text == "外汇助手")
 {
     await HandleCurrencyRatesCommandAsync(botClient, message, 1);
 }
-
 else
 {
     // 注释掉以下代码以禁用数字加货币代码的处理功能
