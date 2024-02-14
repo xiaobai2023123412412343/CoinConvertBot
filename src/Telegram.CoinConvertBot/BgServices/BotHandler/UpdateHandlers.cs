@@ -8689,7 +8689,9 @@ if (messageText.StartsWith("/gk") || messageText.Contains("兑换记录"))
         );
     }
 }  
-if (messageText.Equals("地址监听", StringComparison.OrdinalIgnoreCase) || messageText.Equals("/home", StringComparison.OrdinalIgnoreCase))
+// 使用正则表达式来匹配 /home 命令，允许命令后面跟随 "@机器人用户名"
+var homeCommandRegex = new Regex(@"^/home(@\w+)?$", RegexOptions.IgnoreCase);
+if (homeCommandRegex.IsMatch(message.Text) || message.Text.Equals("地址监听", StringComparison.OrdinalIgnoreCase))
 {
     //if (message.From.Id == AdminUserId)
    // {
