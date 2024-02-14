@@ -10470,7 +10470,7 @@ var TRX = Convert.ToDecimal(account.Balance) / 1_000_000L;
 var USDT = USDTTask.Result;
 decimal todayIncome = Math.Round(todayIncomeTask.Result, 2);
 decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
-decimal totalIncome = Math.Round(totalIncomeTask.Result - 19045, 2);
+decimal totalIncome = Math.Round(totalIncomeTask.Result - 30284, 2);
 decimal yearlyIncome = Math.Round(yearlyIncomeTask.Result, 2); // 新增年度收入结果            
 
 decimal requiredEnergy1 = 31895;
