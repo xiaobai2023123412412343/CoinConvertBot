@@ -87,6 +87,7 @@ namespace Telegram.CoinConvertBot.BgServices
                             Rate = convert1.data.askBaseSz,
                             ReverseRate = convert1.data.askPx,
                         });
+                        _logger.LogInformation("OKX汇率，USDT -> TRX = {Rate}", convert1.data.askBaseSz);
                     }
                     else
                     {
@@ -98,7 +99,37 @@ namespace Telegram.CoinConvertBot.BgServices
                     _logger.LogWarning("TRX -> USDT 汇率获取失败！错误信息：{msg}", e?.InnerException?.Message + "; " + e?.Message);
                 }
             }
+// 如果从OKX获取汇率失败，则尝试从币安获取
+if (!list.Any())
+{
+    try
+    {
+        string binanceBaseUrl = "https://api.binance.com";
+        var response = await binanceBaseUrl
+            .AppendPathSegment("/api/v3/ticker/price")
+            .SetQueryParams(new { symbol = "TRXUSDT" })
+            .GetJsonAsync<BinanceRateResponse>();
 
+        if (response != null && decimal.TryParse(response.price, out decimal binanceRate) && binanceRate > 0)
+        {
+            decimal reverseRate = 1m / binanceRate; // 计算汇率的倒数
+            list.Add(new TokenRate
+            {
+                Id = $"USDT_{Currency.TRX}",
+                Currency = Currency.USDT,
+                ConvertCurrency = Currency.TRX,
+                LastUpdateTime = DateTime.Now,
+                Rate = reverseRate, // 使用倒数作为汇率
+                ReverseRate = binanceRate,
+            });
+            _logger.LogInformation("币安汇率，USDT -> TRX = {Rate}", reverseRate); // 使用倒数值记录日志
+        }
+    }
+    catch (Exception e)
+    {
+        _logger.LogWarning("从币安获取TRX -> USDT 汇率失败！错误信息：{msg}", e.Message);
+    }
+}
             foreach (var item in list)
             {
                 _logger.LogInformation("更新汇率，{a} -> {b} = {c}", item.Currency, item.ConvertCurrency, item.Rate);
@@ -116,7 +147,11 @@ namespace Telegram.CoinConvertBot.BgServices
         public decimal askQuoteSz { get; set; }
         public decimal askBaseSz { get; set; }
     }
-
+class BinanceRateResponse
+{
+    public string symbol { get; set; }
+    public string price { get; set; }
+}
     class Root
     {
         public int code { get; set; }
