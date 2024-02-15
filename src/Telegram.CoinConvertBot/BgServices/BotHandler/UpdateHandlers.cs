@@ -3766,7 +3766,7 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
         while (outcomeTransactions.Count < 8 && maxAttempts > 0)
         {
             outcomeUrl = $"https://apilist.tronscanapi.com/api/transfer/trx?address={outcomeAddress}&start={start}&limit=20&direction=0&reverse=true&fee=true&db_version=1&start_timestamp=&end_timestamp=";
-            Console.WriteLine($"正在访问URL: {outcomeUrl}");
+            //Console.WriteLine($"正在访问URL: {outcomeUrl}");
             var outcomeResponse = await httpClient.GetStringAsync(outcomeUrl);
             var transactions = ParseTransactions(outcomeResponse, "TRX")
                 .OrderByDescending(t => t.timestamp)
@@ -3784,7 +3784,7 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
             maxAttempts--;
         }
 // 获取USDT交易记录
-Console.WriteLine($"正在访问URL: {usdtUrl}");
+//Console.WriteLine($"正在访问URL: {usdtUrl}");
 var usdtResponse = await httpClient.GetStringAsync(usdtUrl);
 var usdtTransactionsTemp = ParseTransactions(usdtResponse, "USDT")
     .OrderByDescending(t => t.timestamp)
@@ -3886,22 +3886,27 @@ if (token == "TRX")
 private static string FormatTransactionRecords(List<(DateTime timestamp, string token, decimal amount)> transactions)
 {
     var sb = new StringBuilder();
-    var incomeTransactions = transactions.Where(t => t.token == "USDT").OrderByDescending(t => t.timestamp).ToList(); // 取所有大于1USDT的收入记录
-    var outcomeTransactions = transactions.Where(t => t.token == "TRX").OrderByDescending(t => t.timestamp).ToList(); // 取所有大于10TRX的支出记录
+    var incomeTransactions = transactions.Where(t => t.token == "USDT").OrderByDescending(t => t.timestamp).ToList();
+    var outcomeTransactions = transactions.Where(t => t.token == "TRX").OrderByDescending(t => t.timestamp).ToList();
 
-    for (int i = 0; i < 8; i++)
+    int totalRecords = Math.Min(incomeTransactions.Count, outcomeTransactions.Count);
+    for (int i = 0; i < totalRecords; i++)
     {
         if (i < incomeTransactions.Count)
         {
-            sb.AppendLine($"{incomeTransactions[i].timestamp:yyyy-MM-dd HH:mm:ss}  收入{incomeTransactions[i].token} {incomeTransactions[i].amount}");
+            sb.AppendLine($"{incomeTransactions[i].timestamp:yyyy-MM-dd HH:mm:ss}  收入 {incomeTransactions[i].amount} {incomeTransactions[i].token}");
         }
 
         if (i < outcomeTransactions.Count)
         {
-            sb.AppendLine($"{outcomeTransactions[i].timestamp:yyyy-MM-dd HH:mm:ss}  支出{outcomeTransactions[i].token}  {outcomeTransactions[i].amount}");
+            sb.AppendLine($"{outcomeTransactions[i].timestamp:yyyy-MM-dd HH:mm:ss}  支出 {outcomeTransactions[i].amount} {outcomeTransactions[i].token}");
         }
 
-        sb.AppendLine("—————————————————————");
+        // 只有在不是最后一条记录时才添加横线
+        if (i < totalRecords - 1)
+        {
+            sb.AppendLine("—————————————————————");
+        }
     }
 
     return sb.ToString();
