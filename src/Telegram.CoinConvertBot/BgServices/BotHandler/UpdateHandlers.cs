@@ -309,49 +309,69 @@ public static class LotteryFetcherr
     };
     private static readonly ChineseLunisolarCalendar chineseCalendar = new ChineseLunisolarCalendar();
 
-    public static Dictionary<int, string> GetZodiacDictionary(DateTime drawDate)
+public static Dictionary<int, string> GetZodiacDictionary(DateTime drawDate)
+{
+    int chineseYear = chineseCalendar.GetYear(drawDate);
+    Dictionary<int, DateTime> springFestivalDates = new Dictionary<int, DateTime>
     {
-        int chineseYear = chineseCalendar.GetYear(drawDate);
-        int leapMonth = chineseCalendar.GetLeapMonth(chineseYear);
-        // 如果开奖日期在闰月之前或没有闰月，农历年份应减1
-        if (chineseCalendar.GetMonth(drawDate) < leapMonth || leapMonth == 0)
-        {
-            chineseYear--;
-        }
+        {2023, new DateTime(2023, 1, 22)}, // 2023年春节的日期
+        {2024, new DateTime(2024, 2, 10)}, // 2024年春节的日期
+        {2025, new DateTime(2025, 1, 28)}, // 2025年春节的日期	  
+        {2026, new DateTime(2026, 2, 16)}, // 2026年春节的日期
+        {2027, new DateTime(2027, 2, 05)}, // 2027年春节的日期
+        {2028, new DateTime(2028, 1, 25)}, // 2028年春节的日期	 
+        {2029, new DateTime(2029, 2, 12)}, // 2029年春节的日期
+        {2030, new DateTime(2030, 2, 02)}, // 2030年春节的日期
+        // 根据需要添加更多年份
+    };
 
-        // 以2023年为基准年，因为2023年是农历的兔年
-        var baseYear = 2023;
-        var shift = (chineseYear - baseYear) % 12;
-        var zodiacsBase = new Dictionary<string, List<int>>
-        {
-            // 2023年的生肖对照表
-            {"猪", new List<int> {5, 17, 29, 41}},
-            {"鼠", new List<int> {4, 16, 28, 40}},
-            {"牛", new List<int> {3, 15, 27, 39}},
-            {"虎", new List<int> {2, 14, 26, 38}},
-            {"兔", new List<int> {1, 13, 25, 37, 49}},
-            {"龙", new List<int> {12, 24, 36, 48}},
-            {"蛇", new List<int> {11, 23, 35, 47}},
-            {"马", new List<int> {10, 22, 34, 46}},
-            {"羊", new List<int> {9, 21, 33, 45}},
-            {"猴", new List<int> {8, 20, 32, 44}},
-            {"鸡", new List<int> {7, 19, 31, 43}},
-            {"狗", new List<int> {6, 18, 30, 42}},
-        };
-
-        var zodiacsShifted = zodiacsBase.Skip(shift).Concat(zodiacsBase.Take(shift)).ToDictionary(pair => pair.Key, pair => pair.Value);
-
-        var zodiacDictionary = new Dictionary<int, string>();
-        foreach (var zodiac in zodiacsShifted)
-        {
-            foreach (var number in zodiac.Value)
-            {
-                zodiacDictionary[number] = zodiac.Key;
-            }
-        }
-
-        return zodiacDictionary;
+    if (drawDate < springFestivalDates[chineseYear])
+    {
+        chineseYear--;
     }
+
+    //Console.WriteLine($"开奖日期：{drawDate:yyyy-MM-dd HH:mm:ss}，农历年份：{chineseYear}");
+
+    var baseYear = 2023;
+    // 由于我们需要向后移动，所以我们改变shift的计算方式
+    var shift = (12 - (chineseYear - baseYear) % 12) % 12;
+
+    var zodiacsBase = new Dictionary<int, string>
+    {
+        // 2023年的生肖对照表
+        {1, "兔"}, {13, "兔"}, {25, "兔"}, {37, "兔"}, {49, "兔"},
+        {2, "虎"}, {14, "虎"}, {26, "虎"}, {38, "虎"},
+        {3, "牛"}, {15, "牛"}, {27, "牛"}, {39, "牛"},
+        {4, "鼠"}, {16, "鼠"}, {28, "鼠"}, {40, "鼠"},
+        {5, "猪"}, {17, "猪"}, {29, "猪"}, {41, "猪"},
+        {6, "狗"}, {18, "狗"}, {30, "狗"}, {42, "狗"},
+        {7, "鸡"}, {19, "鸡"}, {31, "鸡"}, {43, "鸡"},
+        {8, "猴"}, {20, "猴"}, {32, "猴"}, {44, "猴"},
+        {9, "羊"}, {21, "羊"}, {33, "羊"}, {45, "羊"},
+        {10, "马"}, {22, "马"}, {34, "马"}, {46, "马"},
+        {11, "蛇"}, {23, "蛇"}, {35, "蛇"}, {47, "蛇"},
+        {12, "龙"}, {24, "龙"}, {36, "龙"}, {48, "龙"},
+    };
+
+    var zodiacOrder = new List<string> { "兔", "虎", "牛", "鼠", "猪", "狗", "鸡", "猴", "羊", "马", "蛇", "龙" };
+
+    var zodiacDictionary = new Dictionary<int, string>();
+    foreach (var pair in zodiacsBase)
+    {
+        var baseZodiacIndex = zodiacOrder.IndexOf(zodiacsBase[pair.Key]);
+        var newZodiacIndex = (baseZodiacIndex + shift) % 12;
+        var newZodiac = zodiacOrder[newZodiacIndex];
+        zodiacDictionary[pair.Key] = newZodiac;
+    }
+
+    // 输出日志以验证
+    foreach (var item in zodiacDictionary)
+    {
+        //Console.WriteLine($"号码：{item.Key}, 生肖：{item.Value}");
+    }
+
+    return zodiacDictionary;
+}
 public static async Task<string> FetchHongKongLotteryResultAsync()
 {
     try
