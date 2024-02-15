@@ -1985,7 +1985,7 @@ private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, 
                 Followers.Add(user);
             }
 
-            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"用户 {name} (@{username}, ID: {id}) 已经被添加到关注者列表中。");
+            // 原本的代码逻辑中，这里会发送一条消息确认用户被添加，现在我们移除这个逻辑，改为在最后统一发送
         }
         catch (Exception ex)
         {
@@ -2001,7 +2001,6 @@ private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, 
         string username = message.Text.Substring("存 用户名：".Length).Trim();
         var user = new User { Username = username, FollowTime = DateTime.UtcNow.AddHours(8) };
         Followers.Add(user);
-        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"用户 @{username} 已经被添加到关注者列表中。");
     }
     else if (message.Text.StartsWith("存 ID："))
     {
@@ -2010,13 +2009,11 @@ private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, 
         {
             var user = new User { Id = id, FollowTime = DateTime.UtcNow.AddHours(8) };
             Followers.Add(user);
-            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"用户 ID: {id} 已经被添加到关注者列表中。");
-        }
-        else
-        {
-            await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"无法解析ID: {idText}。请确保你输入的是一个有效的数字。");
         }
     }
+
+    // 在处理完所有用户信息后发送一条消息
+    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "已储存用户资料！");
 }
 //计算数字+数字货币的各地货币价值    
 private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient botClient, Message message)
