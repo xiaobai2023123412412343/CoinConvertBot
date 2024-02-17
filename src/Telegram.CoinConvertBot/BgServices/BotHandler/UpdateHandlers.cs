@@ -201,8 +201,9 @@ public static async Task<string> FetchMarketOverviewAsync()
     return resultText;
 }
 }
+//香港六合彩特码统计
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userQueries = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
-public static class LotteryStatisticsHelper//香港六合彩特码统计
+public static class LotteryStatisticsHelper
 {
     public static async Task<string> FetchSpecialNumberStatisticsAsync(HttpClient client)
     {
