@@ -8954,29 +8954,40 @@ if (messageText.StartsWith("/xamzhishu"))
     var userId = message.From.Id;
     var today = DateTime.UtcNow.AddHours(8).Date; // 转换为北京时间并获取日期部分
 
+    bool allowQuery = true; // 默认允许查询
+
     // 检查用户是否已经查询过
     if (newMacauUserQueries.ContainsKey(userId))
     {
         var (count, lastQueryDate) = newMacauUserQueries[userId]; // 取出元组
         if (lastQueryDate == today && count >= 1)
         {
-            var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
-            if (member.Status == ChatMemberStatus.Left || member.Status == ChatMemberStatus.Kicked)
+            try
             {
-                // 用户不在群组中
-                var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
+                if (member.Status == ChatMemberStatus.Left || member.Status == ChatMemberStatus.Kicked)
                 {
-                    InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
-                });
+                    // 用户不在群组中
+                    var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                    {
+                        InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+                    });
 
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可不限制查询！",
-                    replyMarkup: keyboard
-                );
-                return;
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可不限制查询！",
+                        replyMarkup: keyboard
+                    );
+                    return;
+                }
+                // 如果用户在群组中，不需要更新查询次数，直接进行查询
+                allowQuery = true;
             }
-            // 如果用户在群组中，不需要更新查询次数，直接进行查询
+            catch (Exception ex)
+            {
+                // 如果检查群组成员时出现异常（例如机器人不在群组中），允许查询
+                allowQuery = true;
+            }
         }
         else if (lastQueryDate != today)
         {
@@ -8995,22 +9006,25 @@ if (messageText.StartsWith("/xamzhishu"))
         newMacauUserQueries[userId] = (1, today);
     }
 
-    // 执行查询逻辑
-    var messageToEdit = await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: "正在统计，请稍后...",
-        parseMode: ParseMode.Html
-    );
+    if (allowQuery)
+    {
+        // 执行查询逻辑
+        var messageToEdit = await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "正在统计，请稍后...",
+            parseMode: ParseMode.Html
+        );
 
-    var statisticsResult = await NewMacauLotteryStatisticsHelper.FetchNewMacauSpecialNumberStatisticsAsync(NewLotteryFetcher.client);
+        var statisticsResult = await NewMacauLotteryStatisticsHelper.FetchNewMacauSpecialNumberStatisticsAsync(NewLotteryFetcher.client);
 
-    await botClient.EditMessageTextAsync(
-        chatId: message.Chat.Id,
-        messageId: messageToEdit.MessageId,
-        text: statisticsResult,
-        parseMode: ParseMode.Html
-    );
-}	    
+        await botClient.EditMessageTextAsync(
+            chatId: message.Chat.Id,
+            messageId: messageToEdit.MessageId,
+            text: statisticsResult,
+            parseMode: ParseMode.Html
+        );
+    }
+}
 // 检查是否接收到了 /xianggang 消息，收到就查询香港六合彩开奖结果
 if (messageText.StartsWith("/xianggang"))
 {
@@ -9037,29 +9051,40 @@ if (messageText.StartsWith("/xgzhishu"))
     var userId = message.From.Id;
     var today = DateTime.UtcNow.AddHours(8).Date; // 转换为北京时间并获取日期部分
 
+    bool allowQuery = true; // 默认允许查询
+
     // 检查用户是否已经查询过
     if (userQueries.ContainsKey(userId))
     {
         var (count, lastQueryDate) = userQueries[userId]; // 取出元组
         if (lastQueryDate == today && count >= 1)
         {
-            var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
-            if (member.Status == ChatMemberStatus.Left || member.Status == ChatMemberStatus.Kicked)
+            try
             {
-                // 用户不在群组中
-                var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
+                if (member.Status == ChatMemberStatus.Left || member.Status == ChatMemberStatus.Kicked)
                 {
-                    InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
-                });
+                    // 用户不在群组中
+                    var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                    {
+                        InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+                    });
 
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可不限制查询！",
-                    replyMarkup: keyboard
-                );
-                return;
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可不限制查询！",
+                        replyMarkup: keyboard
+                    );
+                    return;
+                }
+                // 如果用户在群组中，不需要更新查询次数，直接进行查询
+                allowQuery = true;
             }
-            // 如果用户在群组中，不需要更新查询次数，直接进行查询
+            catch
+            {
+                // 发生异常，可能是因为机器人不在群组中或群组ID错误，允许查询
+                allowQuery = true;
+            }
         }
         else if (lastQueryDate != today)
         {
@@ -9078,21 +9103,24 @@ if (messageText.StartsWith("/xgzhishu"))
         userQueries[userId] = (1, today);
     }
 
-    // 执行查询逻辑
-    var messageToEdit = await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: "正在统计，请稍后...",
-        parseMode: ParseMode.Html
-    );
+    if (allowQuery)
+    {
+        // 执行查询逻辑
+        var messageToEdit = await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "正在统计，请稍后...",
+            parseMode: ParseMode.Html
+        );
 
-    var statisticsResult = await LotteryStatisticsHelper.FetchSpecialNumberStatisticsAsync(LotteryFetcherr.client);
+        var statisticsResult = await LotteryStatisticsHelper.FetchSpecialNumberStatisticsAsync(LotteryFetcherr.client);
 
-    await botClient.EditMessageTextAsync(
-        chatId: message.Chat.Id,
-        messageId: messageToEdit.MessageId,
-        text: statisticsResult,
-        parseMode: ParseMode.Html
-    );
+        await botClient.EditMessageTextAsync(
+            chatId: message.Chat.Id,
+            messageId: messageToEdit.MessageId,
+            text: statisticsResult,
+            parseMode: ParseMode.Html
+        );
+    }
 }
 
 // 检查是否接收到了 /zhishu 消息，收到就查询指数数据和沪深两市上涨下跌数概览
