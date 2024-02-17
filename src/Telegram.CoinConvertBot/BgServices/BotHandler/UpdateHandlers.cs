@@ -494,9 +494,88 @@ public static async Task<string> FetchHongKongLotteryResultAsync()
     }
 }
 }
+// 新澳门六合彩特码统计
+public static class NewMacauLotteryStatisticsHelper
+{
+    public static async Task<string> FetchNewMacauSpecialNumberStatisticsAsync(HttpClient client)
+    {
+        try
+        {
+            var historyResults = await NewLotteryFetcher.FetchLotteryHistoryAsync(DateTime.Now.Year, 50);
+            var zodiacResults = await NewLotteryFetcher.FetchLotteryZodiacHistoryAsync(DateTime.Now.Year, 50);
+            var waveResults = await NewLotteryFetcher.FetchLotteryWaveHistoryAsync(DateTime.Now.Year, 50);
+
+            if (historyResults.Count == 0 || historyResults[0].StartsWith("获取历史开奖信息时发生错误"))
+            {
+                return "获取历史开奖信息失败，请稍后再试。";
+            }
+
+            int bigCount = 0, smallCount = 0, oddCount = 0, evenCount = 0;
+            var numberFrequency = new Dictionary<int, int>();
+            var zodiacFrequency = new Dictionary<string, int>();
+            var colorFrequency = new Dictionary<string, int>();
+
+            // 号码、生肖、波色统计
+            for (int i = 0; i < historyResults.Count; i++)
+            {
+                var parts = historyResults[i].Split(new[] { "   " }, StringSplitOptions.None);
+                var openCode = parts[1].Split(", ").Select(int.Parse).ToArray();
+                var specialNumber = openCode.Last();
+
+                // 大小、单双统计
+                if (specialNumber >= 26) bigCount++;
+                else smallCount++;
+                if (specialNumber % 2 == 0) evenCount++;
+                else oddCount++;
+
+                // 号码频率统计
+                if (!numberFrequency.ContainsKey(specialNumber)) numberFrequency[specialNumber] = 0;
+                numberFrequency[specialNumber]++;
+
+                // 生肖频率统计 - 只统计特码对应的最后一个生肖
+                var zodiacs = zodiacResults[i].Split(new[] { "   " }, StringSplitOptions.None)[1].Split(',');
+                var lastZodiac = zodiacs.Last();
+                if (!zodiacFrequency.ContainsKey(lastZodiac)) zodiacFrequency[lastZodiac] = 0;
+                zodiacFrequency[lastZodiac]++;
+
+                // 波色频率统计 - 只统计特码对应的最后一个波色
+                var waves = waveResults[i].Split(new[] { "   " }, StringSplitOptions.None)[1].Split(' ');
+                var lastWave = waves.Last();
+                if (!colorFrequency.ContainsKey(lastWave)) colorFrequency[lastWave] = 0;
+                colorFrequency[lastWave]++;
+            }
+
+            // 数据分析 - 修改为前三名
+            var topThreeFrequentNumbers = numberFrequency.OrderByDescending(kvp => kvp.Value).Take(3).ToList();
+            var topThreeLeastFrequentNumbers = numberFrequency.OrderBy(kvp => kvp.Value).Take(3).ToList();
+            var topThreeFrequentZodiacs = zodiacFrequency.OrderByDescending(kvp => kvp.Value).Take(3).ToList();
+            var topThreeLeastFrequentZodiacs = zodiacFrequency.OrderBy(kvp => kvp.Value).Take(3).ToList();
+            var topThreeFrequentColors = colorFrequency.OrderByDescending(kvp => kvp.Value).Take(3).ToList();
+            var topThreeLeastFrequentColors = colorFrequency.OrderBy(kvp => kvp.Value).Take(3).ToList();
+
+            // 构建结果字符串
+            var result = $"新澳门六合彩近50期特码：\n\n" +
+                         $"大：{bigCount} 期\n" +
+                         $"小：{smallCount} 期\n" +
+                         $"单：{oddCount} 期\n" +
+                         $"双：{evenCount} 期\n\n" +
+                    $"最常出现的号码是：\n" + string.Join(" | ", topThreeFrequentNumbers.Select(kvp => $"{kvp.Key}—{kvp.Value} 期")) + "\n\n" +
+                    $"最少出现的号码是：\n" + string.Join(" | ", topThreeLeastFrequentNumbers.Select(kvp => $"{kvp.Key}—{kvp.Value} 期")) + "\n\n" +
+                    $"最常出现的生肖是：\n" + string.Join(" | ", topThreeFrequentZodiacs.Select(kvp => $"{kvp.Key}—{kvp.Value} 期")) + "\n\n" +
+                    $"最少出现的生肖是：\n" + string.Join(" | ", topThreeLeastFrequentZodiacs.Select(kvp => $"{kvp.Key}—{kvp.Value} 期")) + "\n\n" +
+                    $"波色统计：\n" + string.Join(" | ", topThreeFrequentColors.Select(kvp => $"{kvp.Key} {kvp.Value} 期"));
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return $"获取历史开奖信息时发生错误：{ex.Message}";
+        }
+    }
+}
 public static class NewLotteryFetcher//新澳门六合彩
 {
-    private static readonly HttpClient client = new HttpClient();
+    public static readonly HttpClient client = new HttpClient();
 
     public static async Task<string> FetchLotteryResultAsync()
     {
@@ -8687,6 +8766,18 @@ if (messageText.StartsWith("/xinaomen"))
         replyMarkup: inlineKeyboard // 包含内联键盘
     );
 }
+// 检查是否接收到了 /xamzhishu 消息，收到就查询新澳门六合彩特码统计
+if (messageText.StartsWith("/xamzhishu"))
+{
+    var statisticsResult = await NewMacauLotteryStatisticsHelper.FetchNewMacauSpecialNumberStatisticsAsync(NewLotteryFetcher.client);
+
+    // 发送文本消息
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: statisticsResult, // 将统计结果作为文本发送
+        parseMode: ParseMode.Html
+    );
+}	    
 // 检查是否接收到了 /xianggang 消息，收到就查询香港六合彩开奖结果
 if (messageText.StartsWith("/xianggang"))
 {
@@ -8707,7 +8798,7 @@ if (messageText.StartsWith("/xianggang"))
     );
 }  
 // 检查是否接收到了 /xgzhushou 消息，收到就查询香港六合彩特码统计
-if (messageText.StartsWith("/xgzhushou"))
+if (messageText.StartsWith("/xgzhushu"))
 {
     var statisticsResult = await LotteryStatisticsHelper.FetchSpecialNumberStatisticsAsync(LotteryFetcherr.client);
 
