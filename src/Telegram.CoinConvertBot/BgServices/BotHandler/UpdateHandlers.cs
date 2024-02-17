@@ -497,6 +497,7 @@ public static async Task<string> FetchHongKongLotteryResultAsync()
 }
 }
 // 新澳门六合彩特码统计
+private static Dictionary<long, (int count, DateTime lastQueryDate)> newMacauUserQueries = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
 public static class NewMacauLotteryStatisticsHelper
 {
     public static async Task<string> FetchNewMacauSpecialNumberStatisticsAsync(HttpClient client)
@@ -8865,6 +8866,51 @@ if (messageText.StartsWith("/xinaomen"))
 // 检查是否接收到了 /xamzhishu 消息，收到就查询新澳门六合彩特码统计
 if (messageText.StartsWith("/xamzhishu"))
 {
+    var userId = message.From.Id;
+    var today = DateTime.UtcNow.AddHours(8).Date; // 转换为北京时间并获取日期部分
+
+    // 检查用户是否已经查询过
+    if (newMacauUserQueries.ContainsKey(userId))
+    {
+        var (count, lastQueryDate) = newMacauUserQueries[userId]; // 取出元组
+        if (lastQueryDate == today && count >= 1)
+        {
+            var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
+            if (member.Status == ChatMemberStatus.Left || member.Status == ChatMemberStatus.Kicked)
+            {
+                // 用户不在群组中
+                var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                {
+                    InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+                });
+
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可不限制查询！",
+                    replyMarkup: keyboard
+                );
+                return;
+            }
+            // 如果用户在群组中，不需要更新查询次数，直接进行查询
+        }
+        else if (lastQueryDate != today)
+        {
+            // 如果今天是用户第一次查询，重置查询次数和日期
+            newMacauUserQueries[userId] = (1, today);
+        }
+        else
+        {
+            // 如果用户今天的查询次数还没有用完，增加查询次数
+            newMacauUserQueries[userId] = (count + 1, today);
+        }
+    }
+    else
+    {
+        // 如果用户之前没有查询过，添加新的记录
+        newMacauUserQueries[userId] = (1, today);
+    }
+
+    // 执行查询逻辑
     var messageToEdit = await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: "正在统计，请稍后...",
