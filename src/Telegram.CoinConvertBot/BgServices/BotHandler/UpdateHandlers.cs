@@ -8855,6 +8855,7 @@ if (messageText.StartsWith("/lamzhishu"))
 {
     var userId = message.From.Id;
     var today = DateTime.UtcNow.AddHours(8).Date; // 转换为北京时间并获取日期部分
+    bool allowQuery = true; // 默认允许查询
 
     // 检查用户是否已经查询过
     if (oldMacauUserQueries.ContainsKey(userId))
@@ -8862,23 +8863,31 @@ if (messageText.StartsWith("/lamzhishu"))
         var (count, lastQueryDate) = oldMacauUserQueries[userId]; // 取出元组
         if (lastQueryDate == today && count >= 1)
         {
-            var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
-            if (member.Status == ChatMemberStatus.Left || member.Status == ChatMemberStatus.Kicked)
+            try
             {
-                // 用户不在群组中
-                var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
+                if (member.Status == ChatMemberStatus.Left || member.Status == ChatMemberStatus.Kicked)
                 {
-                    InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
-                });
+                    // 用户不在群组中
+                    var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                    {
+                        InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+                    });
 
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可不限制查询！",
-                    replyMarkup: keyboard
-                );
-                return;
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可不限制查询！",
+                        replyMarkup: keyboard
+                    );
+                    return;
+                }
+                // 如果用户在群组中，不需要更新查询次数，直接进行查询
             }
-            // 如果用户在群组中，不需要更新查询次数，直接进行查询
+            catch (Exception)
+            {
+                // 发生异常，可能是因为机器人不在群组中或群组ID错误，允许查询
+                allowQuery = true;
+            }
         }
         else if (lastQueryDate != today)
         {
@@ -8897,22 +8906,25 @@ if (messageText.StartsWith("/lamzhishu"))
         oldMacauUserQueries[userId] = (1, today);
     }
 
-    // 执行查询逻辑
-    var messageToEdit = await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: "正在统计，请稍后...",
-        parseMode: ParseMode.Html
-    );
+    if (allowQuery)
+    {
+        // 执行查询逻辑
+        var messageToEdit = await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "正在统计，请稍后...",
+            parseMode: ParseMode.Html
+        );
 
-    var statisticsResult = await OldMacauLotteryStatisticsHelper.FetchOldMacauSpecialNumberStatisticsAsync();
+        var statisticsResult = await OldMacauLotteryStatisticsHelper.FetchOldMacauSpecialNumberStatisticsAsync();
 
-    await botClient.EditMessageTextAsync(
-        chatId: message.Chat.Id,
-        messageId: messageToEdit.MessageId,
-        text: statisticsResult,
-        parseMode: ParseMode.Html
-    );
-}	    
+        await botClient.EditMessageTextAsync(
+            chatId: message.Chat.Id,
+            messageId: messageToEdit.MessageId,
+            text: statisticsResult,
+            parseMode: ParseMode.Html
+        );
+    }
+}
 // 检查是否接收到了 /xinaomen 消息，收到就查询新澳门六合彩开奖结果
 if (messageText.StartsWith("/xinaomen"))
 {
