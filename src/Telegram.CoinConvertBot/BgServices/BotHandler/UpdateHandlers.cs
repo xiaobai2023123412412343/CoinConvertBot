@@ -9239,6 +9239,42 @@ catch (Exception ex)
 {
     Console.WriteLine($"处理添加群聊指令时发生异常：{ex.Message}");
 }
+// 检查是否接收到了 /gongtongqunzu 消息，收到就启动查询
+if (messageText.StartsWith("/gongtongqunzu"))
+{
+    var chatId = message.Chat.Id;
+    var userId = message.From.Id;
+    var targetGroupId = -1001862069013; // 指定的群组ID
+
+    try
+    {
+        var member = await botClient.GetChatMemberAsync(targetGroupId, userId);
+        // 检查用户的状态，如果状态不是 left 或 kicked，表示用户在群组中
+        if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: "存在共同群！"
+            );
+        }
+        else
+        {
+            // 用户不在群组中
+            await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: "暂无共同群！"
+            );
+        }
+    }
+    catch (Exception ex)
+    {
+        // 如果出现异常，可能是因为机器人没有足够的权限或其他原因
+        await botClient.SendTextMessageAsync(
+            chatId: chatId,
+            text: "无法检查您的群组状态，请确保机器人具有查看群组成员信息的权限。"
+        );
+    }
+}   
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
