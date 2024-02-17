@@ -7457,7 +7457,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|music|usd|more|usdt|tron|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|music|usd|more|usdt|tron|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -8516,7 +8516,7 @@ const string BOT_USERNAME = "yifanfubot";//机器人用户名
 const int ADMIN_ID = 1427768220;//指定管理员ID不转发
 
 // 存储机器人的所有命令
-string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/more","/music", "/cny", "/trc", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "更多功能", "能量租赁", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "币圈行情", "外汇助手", "监控" };    
+string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/more","/music", "/cny","/lamzhishu","/xgzhishu","/xamzhishu", "/trc", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "更多功能", "能量租赁", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "币圈行情", "外汇助手", "监控" };    
 
 if (message.Type == MessageType.Text)
 {	
@@ -8822,12 +8822,18 @@ if (messageText.StartsWith("/laoaomen"))
 // 检查是否接收到了 /lamzhishu 消息，收到就查询老澳门六合彩特码统计
 if (messageText.StartsWith("/lamzhishu"))
 {
+    var messageToEdit = await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "正在统计，请稍后...",
+        parseMode: ParseMode.Html
+    );
+
     var statisticsResult = await OldMacauLotteryStatisticsHelper.FetchOldMacauSpecialNumberStatisticsAsync();
 
-    // 发送文本消息
-    await botClient.SendTextMessageAsync(
+    await botClient.EditMessageTextAsync(
         chatId: message.Chat.Id,
-        text: statisticsResult, // 将统计结果作为文本发送
+        messageId: messageToEdit.MessageId,
+        text: statisticsResult,
         parseMode: ParseMode.Html
     );
 }	    
@@ -8857,12 +8863,18 @@ if (messageText.StartsWith("/xinaomen"))
 // 检查是否接收到了 /xamzhishu 消息，收到就查询新澳门六合彩特码统计
 if (messageText.StartsWith("/xamzhishu"))
 {
+    var messageToEdit = await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "正在统计，请稍后...",
+        parseMode: ParseMode.Html
+    );
+
     var statisticsResult = await NewMacauLotteryStatisticsHelper.FetchNewMacauSpecialNumberStatisticsAsync(NewLotteryFetcher.client);
 
-    // 发送文本消息
-    await botClient.SendTextMessageAsync(
+    await botClient.EditMessageTextAsync(
         chatId: message.Chat.Id,
-        text: statisticsResult, // 将统计结果作为文本发送
+        messageId: messageToEdit.MessageId,
+        text: statisticsResult,
         parseMode: ParseMode.Html
     );
 }	    
@@ -8885,15 +8897,21 @@ if (messageText.StartsWith("/xianggang"))
         replyMarkup: inlineKeyboard // 包含内联键盘
     );
 }  
-// 检查是否接收到了 /xgzhushou 消息，收到就查询香港六合彩特码统计
-if (messageText.StartsWith("/xgzhushu"))
+// 检查是否接收到了 /xgzhishu 消息，收到就查询香港六合彩特码统计
+if (messageText.StartsWith("/xgzhishu"))
 {
+    var messageToEdit = await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "正在统计，请稍后...",
+        parseMode: ParseMode.Html
+    );
+
     var statisticsResult = await LotteryStatisticsHelper.FetchSpecialNumberStatisticsAsync(LotteryFetcherr.client);
 
-    // 发送文本消息
-    await botClient.SendTextMessageAsync(
+    await botClient.EditMessageTextAsync(
         chatId: message.Chat.Id,
-        text: statisticsResult, // 将统计结果作为文本发送
+        messageId: messageToEdit.MessageId,
+        text: statisticsResult,
         parseMode: ParseMode.Html
     );
 }
