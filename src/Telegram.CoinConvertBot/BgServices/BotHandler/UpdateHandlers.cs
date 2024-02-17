@@ -2028,6 +2028,7 @@ public class FundingRate
     public string lastFundingRate { get; set; }
 }
 private static Dictionary<long, (int count, DateTime lastQueryDate)> zijinUserQueries = new Dictionary<long, (int count, DateTime lastQueryDate)>();//查询资金费次数字典
+private static Dictionary<long, (int count, DateTime lastQueryDate)> faxianUserQueries = new Dictionary<long, (int count, DateTime lastQueryDate)>();//查询涨跌次数字典						 
 public static class BinanceFundingRates
 {
     private static readonly HttpClient httpClient = new HttpClient();
@@ -9588,10 +9589,60 @@ if (messageText.Equals("/chaxun", StringComparison.OrdinalIgnoreCase))
         parseMode: ParseMode.Html
     );
 }
-// 使用正则表达式来匹配 /faxian 命令，允许命令后面跟随 "@机器人用户名"
+///faxian指令查询涨跌榜单
 var faxianCommandRegex = new Regex(@"^/faxian(@\w+)?$", RegexOptions.IgnoreCase);
 if (faxianCommandRegex.IsMatch(message.Text))
 {
+    var userId = message.From.Id;
+    var today = DateTime.UtcNow.AddHours(8).Date; // 转换为北京时间并获取日期部分
+    bool allowQuery = true;
+
+    if (faxianUserQueries.ContainsKey(userId))
+    {
+        var (count, lastQueryDate) = faxianUserQueries[userId];
+        if (lastQueryDate == today && count >= 3)
+        {
+            try
+            {
+                var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
+                if (member.Status == ChatMemberStatus.Left || member.Status == ChatMemberStatus.Kicked)
+                {
+                    // 用户不在群组中
+                    var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                    {
+                        InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+                    });
+
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可不限制查询！",
+                        replyMarkup: keyboard
+                    );
+                    return;
+                }
+            }
+            catch
+            {
+                // 发生异常，可能是因为机器人不在群组中或群组ID错误，允许查询
+                allowQuery = true;
+            }
+        }
+        else if (lastQueryDate != today)
+        {
+            faxianUserQueries[userId] = (1, today);
+        }
+        else
+        {
+            faxianUserQueries[userId] = (count + 1, today);
+        }
+    }
+    else
+    {
+        faxianUserQueries[userId] = (1, today);
+    }
+
+    if (allowQuery)
+    {
     IEnumerable<CoinInfo> topRise;
     IEnumerable<CoinInfo> topFall;
 
@@ -9626,6 +9677,7 @@ if (faxianCommandRegex.IsMatch(message.Text))
         text: reply,
         parseMode: ParseMode.Html
     );
+    }
 }
 // 获取涨跌天数统计
 if (messageText.Equals("/jihui", StringComparison.OrdinalIgnoreCase))
