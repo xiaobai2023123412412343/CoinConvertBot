@@ -6946,8 +6946,34 @@ case "xianggang": // 当用户点击“简体中文”按钮
         From = callbackQuery.From
     };
     await BotOnMessageReceived(botClient, fakeMessage);
-    break;		    
-                               
+    break;
+case "lamzhishu": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "/lamzhishu",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
+    break;			    
+case "xamzhishu": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "/xamzhishu",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
+    break;	
+case "xgzhishu": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "/xgzhishu",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
+    break;			    
         // 处理其他回调...
     }
 }
@@ -8811,7 +8837,7 @@ if (messageText.StartsWith("/laoaomen"))
     {
         new [] // 第一行按钮
         {
-            //InlineKeyboardButton.WithCallbackData("机选一注", "randomSelection"),
+            InlineKeyboardButton.WithCallbackData("开奖规律", "lamzhishu"),
             InlineKeyboardButton.WithCallbackData("历史开奖", "history")
         }
     });
@@ -8897,7 +8923,7 @@ if (messageText.StartsWith("/xinaomen"))
     {
         new [] // 第一行按钮
         {
-            //InlineKeyboardButton.WithCallbackData("机选一注", "randomSelection"),
+            InlineKeyboardButton.WithCallbackData("开奖规律", "xamzhishu"),
             InlineKeyboardButton.WithCallbackData("历史开奖", "newHistory")
         }
     });
@@ -8981,6 +9007,7 @@ if (messageText.StartsWith("/xianggang"))
     // 定义内联键盘，添加历史记录按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
+        InlineKeyboardButton.WithCallbackData("开奖规律", "xgzhishu"),	    
         InlineKeyboardButton.WithCallbackData("历史开奖", "historyy")
     });
 
