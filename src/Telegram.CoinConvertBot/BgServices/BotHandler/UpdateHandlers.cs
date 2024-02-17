@@ -201,7 +201,7 @@ public static async Task<string> FetchMarketOverviewAsync()
     return resultText;
 }
 }
-public static class LotteryStatisticsHelper
+public static class LotteryStatisticsHelper//香港六合彩特码统计
 {
     public static async Task<string> FetchSpecialNumberStatisticsAsync(HttpClient client)
     {
