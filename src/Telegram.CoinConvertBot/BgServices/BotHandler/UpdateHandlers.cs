@@ -201,6 +201,85 @@ public static async Task<string> FetchMarketOverviewAsync()
     return resultText;
 }
 }
+public static class LotteryStatisticsHelper
+{
+    public static async Task<string> FetchSpecialNumberStatisticsAsync(HttpClient client)
+    {
+        try
+        {
+            var response = await client.GetAsync("https://kclm.site/api/trial/drawResult?code=hk6&format=json&rows=50");
+            if (!response.IsSuccessStatusCode)
+            {
+                return "获取历史开奖信息失败，请稍后再试。";
+            }
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var jsonObject = JObject.Parse(jsonString);
+            var historyData = jsonObject["data"];
+
+            int bigCount = 0, smallCount = 0, oddCount = 0, evenCount = 0;
+            var numberFrequency = new Dictionary<int, int>();
+            var zodiacFrequency = new Dictionary<string, int>();
+            var colorFrequency = new Dictionary<string, int>();
+
+            foreach (var item in historyData)
+            {
+                var drawResults = item["drawResult"].ToString().Split(',');
+                var specialNumber = int.Parse(drawResults.Last());
+                var drawTime = DateTime.Parse(item["drawTime"].ToString());
+
+                // 大小统计
+                if (specialNumber >= 26) bigCount++;
+                else smallCount++;
+
+                // 单双统计
+                if (specialNumber % 2 == 0) evenCount++;
+                else oddCount++;
+
+                // 号码频率统计
+                if (!numberFrequency.ContainsKey(specialNumber)) numberFrequency[specialNumber] = 0;
+                numberFrequency[specialNumber]++;
+
+                // 生肖频率统计
+                var zodiacDictionary = LotteryFetcherr.GetZodiacDictionary(drawTime);
+                var specialNumberZodiac = zodiacDictionary[specialNumber];
+                if (!zodiacFrequency.ContainsKey(specialNumberZodiac)) zodiacFrequency[specialNumberZodiac] = 0;
+                zodiacFrequency[specialNumberZodiac]++;
+
+                // 波色频率统计
+                var specialNumberColor = LotteryFetcherr.numberToColor[specialNumber];
+                if (!colorFrequency.ContainsKey(specialNumberColor)) colorFrequency[specialNumberColor] = 0;
+                colorFrequency[specialNumberColor]++;
+            }
+
+// 数据分析 - 修改为前三名
+var topThreeFrequentNumbers = numberFrequency.OrderByDescending(kvp => kvp.Value).Take(3).ToList();
+var topThreeLeastFrequentNumbers = numberFrequency.OrderBy(kvp => kvp.Value).Take(3).ToList();
+var topThreeFrequentZodiacs = zodiacFrequency.OrderByDescending(kvp => kvp.Value).Take(3).ToList();
+var topThreeLeastFrequentZodiacs = zodiacFrequency.OrderBy(kvp => kvp.Value).Take(3).ToList();
+var topThreeFrequentColors = colorFrequency.OrderByDescending(kvp => kvp.Value).Take(3).ToList();
+var topThreeLeastFrequentColors = colorFrequency.OrderBy(kvp => kvp.Value).Take(3).ToList();
+
+// 构建结果字符串，包括前三名和次数，格式调整为使用“—”分隔号码/生肖和次数
+var result = $"香港六合彩近50期特码：\n\n" +
+             $"大：{bigCount} 期\n" +
+             $"小：{smallCount} 期\n" +
+             $"单：{oddCount} 期\n" +
+             $"双：{evenCount} 期\n\n" +
+             $"最常出现的号码是：\n" + string.Join(" | ", topThreeFrequentNumbers.Select(kvp => $"{kvp.Key}—{kvp.Value} 期")) + "\n\n" +
+             $"最少出现的号码是：\n" + string.Join(" | ", topThreeLeastFrequentNumbers.Select(kvp => $"{kvp.Key}—{kvp.Value} 期")) + "\n\n" +
+             $"最常出现的生肖是：\n" + string.Join(" | ", topThreeFrequentZodiacs.Select(kvp => $"{kvp.Key}—{kvp.Value} 期")) + "\n\n" +
+             $"最少出现的生肖是：\n" + string.Join(" | ", topThreeLeastFrequentZodiacs.Select(kvp => $"{kvp.Key}—{kvp.Value} 期")) + "\n\n" +
+             $"波色统计：\n" + string.Join(" | ", topThreeFrequentColors.Select(kvp => $"{kvp.Key}  {kvp.Value} 期"));
+
+return result;
+        }
+        catch (Exception ex)
+        {
+            return $"获取历史开奖信息时发生错误：{ex.Message}";
+        }
+    }
+}	
 public static async Task<string> FetchLotteryHistoryByZodiacAsync(HttpClient client)// 香港六合彩
 {
     try
@@ -300,7 +379,7 @@ public static async Task<string> FetchLotteryHistoryAsyncc(HttpClient client)
 }	
 public static class LotteryFetcherr 
 {
-    private static readonly HttpClient client = new HttpClient();
+    public static readonly HttpClient client = new HttpClient();
     public static readonly Dictionary<int, string> numberToColor = new Dictionary<int, string>
     {
         {1, "\uD83D\uDD34"}, {2, "\uD83D\uDD34"}, {7, "\uD83D\uDD34"}, {8, "\uD83D\uDD34"}, {12, "\uD83D\uDD34"}, {13, "\uD83D\uDD34"}, {18, "\uD83D\uDD34"}, {19, "\uD83D\uDD34"}, {23, "\uD83D\uDD34"}, {24, "\uD83D\uDD34"}, {29, "\uD83D\uDD34"}, {30, "\uD83D\uDD34"}, {34, "\uD83D\uDD34"}, {35, "\uD83D\uDD34"}, {40, "\uD83D\uDD34"}, {45, "\uD83D\uDD34"}, {46, "\uD83D\uDD34"},
@@ -8627,6 +8706,19 @@ if (messageText.StartsWith("/xianggang"))
         replyMarkup: inlineKeyboard // 包含内联键盘
     );
 }  
+// 检查是否接收到了 /xgzhushou 消息，收到就查询香港六合彩特码统计
+if (messageText.StartsWith("/xgzhushou"))
+{
+    var statisticsResult = await LotteryStatisticsHelper.FetchSpecialNumberStatisticsAsync(LotteryFetcherr.client);
+
+    // 发送文本消息
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: statisticsResult, // 将统计结果作为文本发送
+        parseMode: ParseMode.Html
+    );
+}
+
 // 检查是否接收到了 /zhishu 消息，收到就查询指数数据和沪深两市上涨下跌数概览
 if (messageText.StartsWith("/zhishu"))
 {
