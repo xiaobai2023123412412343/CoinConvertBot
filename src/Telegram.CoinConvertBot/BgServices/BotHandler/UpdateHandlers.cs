@@ -1548,7 +1548,15 @@ private static async Task SendAllBindingsInBatches(ITelegramBotClient botClient,
     {
         await botClient.SendTextMessageAsync(chatId, "暂无用户在此绑定地址！", parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
         return; // 直接返回，不执行后面的代码
-    }	
+    }
+
+    // 计算用户和地址的数量
+    int uniqueUserCount = allBindings.Select(b => b.UserId).Distinct().Count();
+    int addressCount = allBindings.Count;
+
+    // 构建统计信息文本，并加粗数字
+    string statsMessage = $"共 <b>{uniqueUserCount}</b> 个用户绑定了 <b>{addressCount}</b> 个地址：\n";
+
     int totalBatches = (allBindings.Count + batchSize - 1) / batchSize; // 计算需要发送的批次总数
 
     for (int batchNumber = 0; batchNumber < totalBatches; batchNumber++)
@@ -1560,13 +1568,19 @@ private static async Task SendAllBindingsInBatches(ITelegramBotClient botClient,
                 $"<b>绑定地址:</b> <code>{b.Address}</code> <code>备注 {userAddressNotes.GetValueOrDefault((b.UserId, b.Address), "")}</code>" // 从字典中获取地址备注
             )
         );
+
+        // 将统计信息添加到第一批消息的开头
+        if (batchNumber == 0) {
+            messageText = statsMessage + Environment.NewLine + messageText;
+        }
+
         // 在最后一条信息后不添加横线
         if (batchNumber < totalBatches - 1) {
             messageText += Environment.NewLine + "----------------------------------------------------------";
         }
         await botClient.SendTextMessageAsync(chatId, messageText, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
     }
-}   
+}
 //币安永续合约    
 public class FuturesPrice
 {
