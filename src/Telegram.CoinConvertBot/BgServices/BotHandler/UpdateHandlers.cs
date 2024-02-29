@@ -8513,7 +8513,12 @@ if (message.Type == MessageType.ChatMembersAdded)
 		disableWebPagePreview: true,    
                 parseMode: ParseMode.Html // 确保解析模式设置为HTML以解析链接
             );
-
+            // 向管理员发送群聊信息
+            string adminMessage = $"机器人被拉到新群聊！\n\n群名：{chat.Title}\n群ID：{chat.Id}";
+            await botClient.SendTextMessageAsync(
+                chatId: AdminUserId, // 确保你已经设置了AdminUserId变量
+                text: adminMessage
+            );
             return;
         }
     }
