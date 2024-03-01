@@ -10729,7 +10729,7 @@ if (message.From.Id == 1427768220)
                 string failureReason = ex.Message.Contains("chat not found") ? "找不到聊天窗口" :
                                        ex.Message.Contains("bot was blocked by the user") ? "机器人被用户阻止" :
                                        ex.Message;
-                await botClient.SendTextMessageAsync(1427768220, $"{address} 代绑失败，已解绑！失败原因：{failureReason}");
+                await botClient.SendTextMessageAsync(1427768220, $"用户名：@{username}  用户ID： {userId}\n{address} 代绑失败，已解绑！\n失败原因：{failureReason}");
                 continue; // 继续处理下一个地址
             }
 
@@ -10750,7 +10750,7 @@ if (message.From.Id == 1427768220)
         {
             Console.WriteLine($"代绑失败，用户ID：{userId} 地址：{address}。错误：{ex.Message}");
             // 处理其他类型的绑定失败情况
-            await botClient.SendTextMessageAsync(1427768220, $"{address} 代绑失败。失败原因：{ex.Message}");
+            await botClient.SendTextMessageAsync(1427768220, $"用户名：@{username}  用户ID： {userId}\n{address} 代绑失败。\n失败原因：{ex.Message}");
         }
     }
 }
