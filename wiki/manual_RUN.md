@@ -62,6 +62,10 @@ nano appsettings.json
 ```
 cd ~/CoinConvertBot/src
 docker build -t coin-convert-bot:latest .
+
+docker run -itd -e TZ=Asia/Shanghai --name coin-convert-bot coin-convert-bot:latest
+
+docker logs coin-convert-bot -f
 ```
 
 快速：
