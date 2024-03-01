@@ -10670,6 +10670,57 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
         Console.WriteLine($"代绑请求格式错误，接收到的消息：{messageText}");
     }
 }
+// 批量代绑地址
+if (message.From.Id == 1427768220)
+{
+    var qregex = new Regex(@"用户名: @?(?<username>\S*)\s+ID: (?<id>\d+)\s+绑定地址: (?<address>T\w+)\s+备注\s*(?<note>[^\-]*)", RegexOptions.Singleline);
+    var matches = qregex.Matches(messageText);
+
+    foreach (Match match in matches)
+    {
+        var userId = long.Parse(match.Groups["id"].Value);
+        var username = match.Groups["username"].Value.Trim();
+        var address = match.Groups["address"].Value.Trim();
+        var note = match.Groups["note"].Value.Trim();
+
+        // 构造伪造的绑定命令文本
+        var fakeMessageText = $"绑定 {address}" + (!string.IsNullOrEmpty(note) ? $" 备注 {note}" : "");
+        var fakeMessage = new Message
+        {
+            Chat = new Chat { Id = userId },
+            From = new Telegram.Bot.Types.User { Id = userId, Username = username },
+            Text = fakeMessageText
+        };
+
+        try
+        {
+            // 执行绑定操作
+            await BindAddress(botClient, fakeMessage, isProxyBinding: true);
+            // 向管理员发送成功消息
+            await botClient.SendTextMessageAsync(1427768220, $"{address} 代绑成功！");
+        }
+        catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user") || ex.Message.Contains("chat not found"))
+        {
+            Console.WriteLine($"代绑失败，用户ID：{userId} 地址：{address}。原因：{ex.Message}");
+            // 遇到特定错误时自动执行代解操作
+            var fakeUnbindMessage = new Message
+            {
+                Chat = new Chat { Id = userId },
+                From = new Telegram.Bot.Types.User { Id = userId, Username = username },
+                Text = $"解绑 {address}"
+            };
+            await UnBindAddress(botClient, fakeUnbindMessage); // 使用您已有的UnBindAddress方法
+            // 向管理员发送失败消息
+            await botClient.SendTextMessageAsync(1427768220, $"{address} 代绑失败，已解绑！");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"代绑失败，用户ID：{userId} 地址：{address}。错误：{ex.Message}");
+            // 处理其他类型的绑定失败情况
+            await botClient.SendTextMessageAsync(1427768220, $"{address} 代绑失败。");
+        }
+    }
+}	    
 if (messageText.StartsWith("代解") && message.From.Id == 1427768220)
 {
     var parts = messageText.Split(' ');
