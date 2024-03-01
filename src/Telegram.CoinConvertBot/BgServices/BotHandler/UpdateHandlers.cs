@@ -10703,8 +10703,8 @@ if (message.From.Id == 1427768220)
             {
                 // 尝试向用户发送绑定成功的消息
                 var sentBindSuccessMessage = await botClient.SendTextMessageAsync(userId, "7*24小时监控中...");
-                // 等待1秒后尝试撤回消息
-                await Task.Delay(5);
+                // 等待千分之1秒后尝试撤回消息
+                await Task.Delay(1);
                 await botClient.DeleteMessageAsync(userId, sentBindSuccessMessage.MessageId);
             }
             catch (ApiRequestException ex)
