@@ -10102,7 +10102,8 @@ else
 {
     reply = $"<b> <code>{symbol}</code>/USDT 数据     </b>\n\n";
 }
-// 获取市值和流通量
+// 获取市值、流通量和图片URL
+string imageUrl = null;
 try
 {
     var marketCapUrl = $"https://min-api.cryptocompare.com/data/pricemultifull?fsyms={symbol}&tsyms=USD";
@@ -10129,13 +10130,19 @@ try
 
     reply += $"<b>\U0001F4B0总市值：</b>{formattedMarketCap}\n";
     reply += $"<b>\U0001F4B0流通量：</b>{formattedCirculatingSupply}\n"; // 添加流通量信息
+
+    // 获取图片URL
+    imageUrl = marketCapJson["DISPLAY"][symbol]["USD"]["IMAGEURL"]?.ToString();
+    if (!string.IsNullOrEmpty(imageUrl))
+    {
+        imageUrl = $"https://www.cryptocompare.com{imageUrl}";
+    }
 }
 catch (Exception ex)
 {
     // 记录错误信息
-    Console.WriteLine($"Error when getting market cap and circulating supply: {ex.Message}");
+    Console.WriteLine($"Error when getting market cap, circulating supply, and image URL: {ex.Message}");
 }
-
 // 获取永续合约价格
 string futuresPrice = "该币种未上线永续合约";
 try
@@ -10281,13 +10288,28 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     }    
 });
 
-// 发送消息给用户
-await botClient.SendTextMessageAsync(
-    chatId: message.Chat.Id,
-    text: reply,
-    parseMode: ParseMode.Html,
-    replyMarkup: inlineKeyboard
-);
+// 根据是否获取到图片URL决定发送消息的方式
+if (!string.IsNullOrEmpty(imageUrl))
+{
+    // 如果有图片URL，则发送图片和币种信息作为图片的说明
+    await botClient.SendPhotoAsync(
+        chatId: message.Chat.Id,
+        photo: imageUrl,
+        caption: reply,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}
+else
+{
+    // 如果没有图片URL，只发送文本消息
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: reply,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}
                 }
             }
         }
