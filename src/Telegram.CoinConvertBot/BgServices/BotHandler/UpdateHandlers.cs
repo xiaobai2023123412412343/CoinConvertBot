@@ -1543,8 +1543,10 @@ private static List<GroupChat> GroupChats = new List<GroupChat>();
 //绑定地址
 private static async Task SendAllBindingsInBatches(ITelegramBotClient botClient, long chatId, IBaseRepository<TokenBind> bindRepository, int batchSize = 50)
 {
-    var allBindings = bindRepository.Where(x => true).ToList(); // 使用 Where(x => true) 来获取所有记录
-    if (!allBindings.Any()) // 如果没有找到任何绑定的地址
+    // 获取所有记录，但排除管理员ID为1427768220的记录
+    var allBindings = bindRepository.Where(x => x.UserId != 1427768220).ToList(); // 排除管理员地址
+
+    if (!allBindings.Any()) // 如果没有找到任何绑定的地址（排除管理员后）
     {
         await botClient.SendTextMessageAsync(chatId, "暂无用户在此绑定地址！", parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
         return; // 直接返回，不执行后面的代码
