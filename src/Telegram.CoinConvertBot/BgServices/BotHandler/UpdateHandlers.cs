@@ -10696,33 +10696,40 @@ if (message.From.Id == 1427768220)
         {
             // 执行绑定操作
             await BindAddress(botClient, fakeMessage, isProxyBinding: true);
+
+            try
+            {
+                // 尝试向用户发送绑定成功的消息
+                await botClient.SendTextMessageAsync(userId, "绑定地址成功！");
+            }
+            catch (ApiRequestException ex)
+            {
+                Console.WriteLine($"向用户 {userId} 发送消息失败，原因：{ex.Message}");
+                // 发送消息失败时，执行解绑操作
+                var fakeUnbindMessage = new Message
+                {
+                    Chat = new Chat { Id = userId },
+                    From = new Telegram.Bot.Types.User { Id = userId, Username = username },
+                    Text = $"解绑 {address}"
+                };
+                await UnBindAddress(botClient, fakeUnbindMessage);
+                // 向管理员发送失败消息
+                await botClient.SendTextMessageAsync(1427768220, $"{address} 代绑失败，已解绑！");
+                continue; // 继续处理下一个地址
+            }
+
             // 存储地址和备注信息
             if (!string.IsNullOrEmpty(note))
             {
-                // 如果备注信息超过10个字符，只保留前10个字符，并添加"..."
                 if (note.Length > 10)
                 {
                     note = note.Substring(0, 10) + "...";
                 }
                 userAddressNotes[(userId, address)] = note;
                 Console.WriteLine($"地址备注已更新：{address} 备注：{note}");
-            }		
+            }
             // 向管理员发送成功消息
             await botClient.SendTextMessageAsync(1427768220, $"{address} 代绑成功！");
-        }
-        catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user") || ex.Message.Contains("chat not found"))
-        {
-            Console.WriteLine($"代绑失败，用户ID：{userId} 地址：{address}。原因：{ex.Message}");
-            // 遇到特定错误时自动执行代解操作
-            var fakeUnbindMessage = new Message
-            {
-                Chat = new Chat { Id = userId },
-                From = new Telegram.Bot.Types.User { Id = userId, Username = username },
-                Text = $"解绑 {address}"
-            };
-            await UnBindAddress(botClient, fakeUnbindMessage); // 使用您已有的UnBindAddress方法
-            // 向管理员发送失败消息
-            await botClient.SendTextMessageAsync(1427768220, $"{address} 代绑失败，已解绑！");
         }
         catch (Exception ex)
         {
@@ -10731,7 +10738,7 @@ if (message.From.Id == 1427768220)
             await botClient.SendTextMessageAsync(1427768220, $"{address} 代绑失败。");
         }
     }
-}	    
+}
 if (messageText.StartsWith("代解") && message.From.Id == 1427768220)
 {
     var parts = messageText.Split(' ');
