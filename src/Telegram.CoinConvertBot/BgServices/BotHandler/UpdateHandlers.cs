@@ -2103,9 +2103,12 @@ public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient bot
 
             foreach (var bind in bindList)
             {
+                // 格式化地址：显示前6位和后6位，中间用****代替
+                string formattedAddress = $"{bind.Address.Substring(0, 6)}****{bind.Address.Substring(bind.Address.Length - 6)}";
+
                 // 从字典中获取地址备注，如果没有备注则默认为空字符串
                 string note = userAddressNotes.GetValueOrDefault((userId, bind.Address), "");
-                string buttonText = !string.IsNullOrEmpty(note) ? $"{bind.Address} 备注 {note}" : bind.Address;
+                string buttonText = !string.IsNullOrEmpty(note) ? $"{formattedAddress} 备注 {note}" : formattedAddress;
 
                 if (userMonitoringTimers.ContainsKey((userId, bind.Address)))
                 {
