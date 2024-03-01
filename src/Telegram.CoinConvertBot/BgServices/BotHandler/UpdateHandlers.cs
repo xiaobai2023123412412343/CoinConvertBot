@@ -10696,6 +10696,17 @@ if (message.From.Id == 1427768220)
         {
             // 执行绑定操作
             await BindAddress(botClient, fakeMessage, isProxyBinding: true);
+            // 存储地址和备注信息
+            if (!string.IsNullOrEmpty(note))
+            {
+                // 如果备注信息超过10个字符，只保留前10个字符，并添加"..."
+                if (note.Length > 10)
+                {
+                    note = note.Substring(0, 10) + "...";
+                }
+                userAddressNotes[(userId, address)] = note;
+                Console.WriteLine($"地址备注已更新：{address} 备注：{note}");
+            }		
             // 向管理员发送成功消息
             await botClient.SendTextMessageAsync(1427768220, $"{address} 代绑成功！");
         }
