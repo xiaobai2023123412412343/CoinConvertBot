@@ -6995,6 +6995,26 @@ case "xgzhishu": // 当用户点击“简体中文”按钮
 if (update.Type == UpdateType.CallbackQuery)
 {
     var callbackQuery = update.CallbackQuery;
+    var callbackData = callbackQuery.Data;
+    Message fakeMessage = null;
+
+    if (callbackData.StartsWith("start_monitoring_"))
+    {
+        // 从回调数据中提取symbol
+        var symbol = callbackData.Substring("start_monitoring_".Length);
+        fakeMessage = new Message
+        {
+            Text = $"监控 {symbol}",
+            Chat = callbackQuery.Message.Chat,
+            From = callbackQuery.From
+        };
+        await BotOnMessageReceived(botClient, fakeMessage);
+    }
+    // ... 其他 case 处理逻辑 ...
+}
+if (update.Type == UpdateType.CallbackQuery)
+{
+    var callbackQuery = update.CallbackQuery;
     var callbackData = callbackQuery.Data.Split(',');
     if (callbackData[0] == "query")
     {
@@ -10276,16 +10296,19 @@ reply += $"<b>↘️历史最低：</b>{historicalLowDate}   {formattedHistorica
     string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
     string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
                     
+// 构造推特搜索链接，根据用户查询的币种动态生成
+string twitterSearchUrl = $"https://twitter.com/search?q={symbol.ToLower()}&src=typed_query";
+                    
 var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
     new [] // 第一行
     {
-        InlineKeyboardButton.WithCallbackData("比特币", "BTC"),
-        InlineKeyboardButton.WithCallbackData("以太坊", "ETH"),
+        InlineKeyboardButton.WithUrl("技术分析", $"https://cn.tradingview.com/symbols/{symbol}USD/technicals/?exchange=CRYPTO"),
+        InlineKeyboardButton.WithUrl("推特搜索", twitterSearchUrl),
     },
     new [] // 第二行
     {
-        InlineKeyboardButton.WithUrl("技术分析", $"https://cn.tradingview.com/symbols/{symbol}USD/technicals/?exchange=CRYPTO"),
+        InlineKeyboardButton.WithCallbackData("行情监控", $"start_monitoring_{symbol}"),
         InlineKeyboardButton.WithCallbackData("一键复查", symbol),
     },
     new [] // 第三行
