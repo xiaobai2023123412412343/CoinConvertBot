@@ -8301,6 +8301,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 添加群聊：群名字： 群ID： 群链接： 指令：开启/关闭 
 储存群聊资料到仓库，指令为开启或关闭兑换通知；
 代绑 ID 用户名（不用 @） 地址 备注  帮助用户绑定地址；
+（发送仓库储存的用户地址可以批量代绑）
 代解 ID 地址 帮助用户解除地址；
 绑定地址后面加 TRX 不监控TRX余额
 
