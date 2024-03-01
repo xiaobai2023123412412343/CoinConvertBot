@@ -10159,21 +10159,23 @@ catch (Exception)
     // 如果获取永续合约价格失败，假设该币种没有上架永续合约
     // 不显示任何信息
 }
+
 string upSymbol = "\U0001F4C8"; // 📈
 string downSymbol = "\U0001F4C9"; // 📉
 var lastPrice = FormatPrice(decimal.Parse((string)json["lastPrice"]));
 var highPrice = FormatPrice(decimal.Parse((string)json["highPrice"]));
 var lowPrice = FormatPrice(decimal.Parse((string)json["lowPrice"]));
-			
-// 判断涨跌幅正负，选择相应的符号
+
+// 判断涨跌幅正负，选择相应的符号，并决定是否添加+号
 decimal priceChangePercent = decimal.Parse((string)json["priceChangePercent"]);
 string priceChangeSymbol = priceChangePercent >= 0 ? upSymbol : downSymbol;
-			
+string priceChangeSign = priceChangePercent > 0 ? "+" : ""; // 如果涨跌幅大于0，添加+号
+
 reply += $"<b>\U0001F4B0现货价格：</b>{lastPrice}\n" +  
         $"<b>\U0001F4B0合约价格：</b>{futuresPrice}\n" +
         $"<b>⬆️今日最高价：</b>{highPrice}\n" +
         $"<b>⬇️今日最低价：</b>{lowPrice}\n" +
-        $"<b>全天涨跌幅：</b>{priceChangeSymbol} {json["priceChangePercent"]}%\n";
+        $"<b>全天涨跌幅：</b>{priceChangeSymbol} {priceChangeSign}{json["priceChangePercent"]}%\n";
 
 
 
