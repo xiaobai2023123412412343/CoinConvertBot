@@ -2103,16 +2103,20 @@ public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient bot
 
             foreach (var bind in bindList)
             {
+                // 从字典中获取地址备注，如果没有备注则默认为空字符串
+                string note = userAddressNotes.GetValueOrDefault((userId, bind.Address), "");
+                string buttonText = !string.IsNullOrEmpty(note) ? $"{bind.Address} 备注 {note}" : bind.Address;
+
                 if (userMonitoringTimers.ContainsKey((userId, bind.Address)))
                 {
                     // 正在监控的地址
                     monitoringAddresses.Add(bind.Address);
-                    buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(bind.Address, $"query,{bind.Address}") });
+                    buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(buttonText, $"query,{bind.Address}") });
                 }
                 else
                 {
                     // 暂停监控的地址
-                    pausedButtons.Add(new[] { InlineKeyboardButton.WithCallbackData(bind.Address, $"绑定 {bind.Address}") });
+                    pausedButtons.Add(new[] { InlineKeyboardButton.WithCallbackData(buttonText, $"绑定 {bind.Address}") });
                 }
             }
 
