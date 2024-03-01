@@ -10102,14 +10102,17 @@ else
 {
     reply = $"<b> <code>{symbol}</code>/USDT 数据     </b>\n\n";
 }
-// 获取市值
+// 获取市值和流通量
 try
 {
     var marketCapUrl = $"https://min-api.cryptocompare.com/data/pricemultifull?fsyms={symbol}&tsyms=USD";
     var marketCapResponse = await httpClient.GetStringAsync(marketCapUrl);
     var marketCapJson = JObject.Parse(marketCapResponse);
     var marketCap = marketCapJson["RAW"][symbol]["USD"]["CIRCULATINGSUPPLYMKTCAP"].Value<decimal>();
+    var circulatingSupply = marketCapJson["RAW"][symbol]["USD"]["CIRCULATINGSUPPLY"].Value<decimal>();
     var formattedMarketCap = string.Format("{0:N0}", marketCap);
+    var formattedCirculatingSupply = string.Format("{0:N0}", circulatingSupply);
+    
     if (marketCap > 100000000)
     {
         var marketCapInBillion = marketCap / 100000000;
@@ -10118,13 +10121,19 @@ try
     if (marketCap == 0)
     {
         formattedMarketCap = "未收录";
-    }    
+    }
+    if (circulatingSupply == 0)
+    {
+        formattedCirculatingSupply = "未收录";
+    }
+
     reply += $"<b>\U0001F4B0总市值：</b>{formattedMarketCap}\n";
+    reply += $"<b>\U0001F4B0流通量：</b>{formattedCirculatingSupply}\n"; // 添加流通量信息
 }
 catch (Exception ex)
 {
     // 记录错误信息
-    Console.WriteLine($"Error when getting market cap: {ex.Message}");
+    Console.WriteLine($"Error when getting market cap and circulating supply: {ex.Message}");
 }
 
 // 获取永续合约价格
