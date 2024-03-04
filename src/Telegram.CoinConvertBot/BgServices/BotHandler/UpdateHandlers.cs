@@ -7518,7 +7518,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
     }        
         var inputText = message.Text.Trim();
         // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
-        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊)");
+        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复)");
 
         // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
         if (isBindOrUnbindCommand)
@@ -8893,6 +8893,60 @@ if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClien
         }
     }
 }
+// 检查消息是否来自指定管理员ID，并且文本以"回复"开头
+if (message.From.Id == 1427768220 && messageText.StartsWith("回复"))
+{
+    // 解析出群组ID和要发送的消息
+    var parts = messageText.Split(new[] { ' ' }, 3); // 分割文本以获取群组ID和消息
+    if (parts.Length < 3)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "消息格式错误。",
+            parseMode: ParseMode.Html
+        );
+        return;
+    }
+
+    long groupId;
+    if (!long.TryParse(parts[1], out groupId))
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "无效的群组ID。",
+            parseMode: ParseMode.Html
+        );
+        return;
+    }
+
+    var replyMessage = parts[2]; // 要发送的消息
+
+    try
+    {
+        // 尝试向指定群组发送消息
+        await botClient.SendTextMessageAsync(
+            chatId: groupId,
+            text: replyMessage,
+            parseMode: ParseMode.Html
+        );
+
+        // 如果消息发送成功，回复管理员
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "发送成功",
+            parseMode: ParseMode.Html
+        );
+    }
+    catch (Exception ex)
+    {
+        // 如果发送失败，回复管理员失败原因
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"信息发送失败，原因：{ex.Message}",
+            parseMode: ParseMode.Html
+        );
+    }
+}	    
 // 检查是否接收到了 /laoaomen 消息，收到就查询老澳门六合彩开奖结果
 if (messageText.StartsWith("/laoaomen"))
 {
