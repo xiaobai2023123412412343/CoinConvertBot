@@ -40,15 +40,15 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv为监控的收款地址
 //TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv为监控的转账地址
 // 将这个值替换为目标群组的ID
-//const long TARGET_CHAT_ID = -894216057;//指定群聊转发用户对机器人发送的信息
+//const long TARGET_CHAT_ID = -1002006327353;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
 //const string BOT_USERNAME = "yifanfubot";//机器人用户名
 // 指定管理员ID
 //const int ADMIN_ID = 1427768220;//指定管理员ID不转发
 // 将这个值替换为目标群组的ID
-//const long TARGET_CHAT_ID = -894216057;//指定群聊转发用户对机器人发送的信息
+//const long TARGET_CHAT_ID = -1002006327353;//指定群聊转发用户对机器人发送的信息
 //    await botClient.SendTextMessageAsync(
-//        chatId: -894216057, // 群聊ID   用户点击按钮 自动在指定群聊 艾特作者 已取消！！！！！
+//        chatId: -1002006327353, // 群聊ID   用户点击按钮 自动在指定群聊 艾特作者 已取消！！！！！
 //        text: $"@yifanfu 有人需要帮助，用户名： @{update.CallbackQuery.From.Username} 用户ID：{update.CallbackQuery.From.Id}"
 //    );
 //    static GroupManager()  广告发到指定群聊
@@ -8606,7 +8606,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
     return;
 }        
 // 将这个值替换为目标群组的ID
-const long TARGET_CHAT_ID = -894216057;//指定群聊转发用户对机器人发送的信息
+const long TARGET_CHAT_ID = -1002006327353;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
 const string BOT_USERNAME = "yifanfubot";//机器人用户名
 // 指定管理员ID
