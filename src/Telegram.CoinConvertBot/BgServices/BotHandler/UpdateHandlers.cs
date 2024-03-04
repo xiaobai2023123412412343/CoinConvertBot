@@ -1664,12 +1664,18 @@ private static async void CheckPrice(object state)
             if (Math.Abs(change) >= monitorInfo.Threshold)
             {
                 monitorInfo.CurrentPrice = price.Value;
+		    
+                // 创建内联键盘
+                var inlineKeyboard = new InlineKeyboardMarkup(new[]
+                {
+                    InlineKeyboardButton.WithCallbackData($"取消监控 {monitorInfo.Symbol}", $"unmonitor_{monitorInfo.Symbol}")
+                });		    
                 await monitorInfo.BotClient.SendTextMessageAsync(pair.Key, $@"<b>⚠️价格变动提醒</b>：
 
 <b>监控币种</b>：<code>{monitorInfo.Symbol}</code>
 <b>当前币价</b>：$ {monitorInfo.CurrentPrice.ToString("G29")}
 <b>价格变动</b>：{(change > 0 ? "上涨" : "下跌")}  {change:P}
-<b>变动时间</b>：{DateTime.Now:yyyy/MM/dd HH:mm}", parseMode: ParseMode.Html);
+<b>变动时间</b>：{DateTime.Now:yyyy/MM/dd HH:mm}", parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
 
                 monitorInfo.LastPrice = price.Value;
             }
@@ -6997,7 +7003,17 @@ case "xgzhishu": // 当用户点击“简体中文”按钮
         From = callbackQuery.From
     };
     await BotOnMessageReceived(botClient, fakeMessage);
-    break;			    
+    break;	
+    case var callbackCommand when callbackCommand.StartsWith("unmonitor_"):
+        var symbolToUnmonitor = callbackCommand.Substring("unmonitor_".Length);
+        fakeMessage = new Message
+        {
+            Text = $"取消监控 {symbolToUnmonitor}",
+            Chat = callbackQuery.Message.Chat,
+            From = callbackQuery.From
+        };
+        await BotOnMessageReceived(botClient, fakeMessage);
+        break;		    
         // 处理其他回调...
     }
 }
