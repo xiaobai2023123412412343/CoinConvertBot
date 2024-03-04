@@ -8319,7 +8319,8 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 代绑 ID 用户名（不用 @） 地址 备注  帮助用户绑定地址；
 （发送仓库储存的用户地址可以批量代绑）
 代解 ID 地址 帮助用户解除地址；
-绑定地址后面加 TRX 不监控TRX余额
+绑定地址后面加 TRX 不监控TRX余额；
+发送：回复 群ID 内容 可以向指定群聊发文本
 
 启动机器人先：先开启保存群聊资料：<code>/baocunqunliao</code>
 储存之前的用户资料 代绑地址
