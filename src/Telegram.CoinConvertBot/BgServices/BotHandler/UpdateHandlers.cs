@@ -8710,9 +8710,11 @@ var timestamp = message.Date != default(DateTime)
     var isNumberCurrency = Regex.IsMatch(text, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
 
 
-    if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCommand) || isTronAddress || isNumberCurrency)
+if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCommand) || isTronAddress || isNumberCurrency)
+{
+    if (userId != ADMIN_ID)
     {
-        if (userId != ADMIN_ID)
+        try
         {
             await botClient.SendTextMessageAsync(
                 chatId: TARGET_CHAT_ID,
@@ -8720,7 +8722,28 @@ var timestamp = message.Date != default(DateTime)
                 parseMode: ParseMode.Html
             );
         }
+        catch (Telegram.Bot.Exceptions.ApiRequestException ex)
+        {
+            // 这里处理Telegram API请求异常，例如机器人被禁言或没有权限等
+            Console.WriteLine($"消息转发失败，原因：{ex.Message}");
+            // 可以选择将错误消息发送回管理员
+            await botClient.SendTextMessageAsync(
+                chatId: ADMIN_ID,
+                text: $"消息转发失败，原因：{ex.Message}"
+            );
+        }
+        catch (Exception ex)
+        {
+            // 这里处理其他类型的异常
+            Console.WriteLine($"发生异常，原因：{ex.Message}");
+            // 可以选择将错误消息发送回管理员
+            await botClient.SendTextMessageAsync(
+                chatId: ADMIN_ID,
+                text: $"发生异常，原因：{ex.Message}"
+            );
+        }
     }
+}
 } 
 // 定义可以触发功能的命令列表
 string[] commands = new[] { "/music", "点歌", "歌曲", "音乐", "网易云", "听歌" };
