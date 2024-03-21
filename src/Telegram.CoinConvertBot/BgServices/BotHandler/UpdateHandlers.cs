@@ -102,7 +102,8 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-//现货合约价格差
+//现货合约价格差以及字典
+private static Dictionary<long, (int count, DateTime lastQueryDate)> userQueryLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();
 public static class CryptoPriceChecker
 {
     private static readonly HttpClient client = new HttpClient();
@@ -10773,16 +10774,74 @@ if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|
 {
     await HandleCryptoCurrencyMessageAsync(botClient, message);
 }  
-//现货合约价格差	    
+// 现货合约价格差
 if (messageText.StartsWith("/bijiacha"))
 {
-    var responseMessage = await CryptoPriceChecker.CheckPriceDifferencesAsync();
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: responseMessage,
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html // 指定消息格式为HTML
-    );
-}	    
+    var userId = message.From.Id;
+    var today = DateTime.UtcNow.AddHours(8).Date; // 转换为北京时间并获取日期部分
+    bool allowQuery = true; // 默认允许查询
+
+    // 检查用户是否已经查询过
+    if (userQueryLimits.ContainsKey(userId))
+    {
+        var (count, lastQueryDate) = userQueryLimits[userId]; // 取出元组
+        if (lastQueryDate == today && count >= 1)
+        {
+            try
+            {
+                var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
+                if (member.Status == ChatMemberStatus.Left || member.Status == ChatMemberStatus.Kicked)
+                {
+                    // 用户不在群组中
+                    var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                    {
+                        InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+                    });
+
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可不限制查询！",
+                        replyMarkup: keyboard,
+                        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+                    );
+                    return;
+                }
+                // 如果用户在群组中，不需要更新查询次数，直接进行查询
+            }
+            catch (Exception)
+            {
+                // 发生异常，可能是因为机器人不在群组中或群组ID错误，允许查询
+                allowQuery = true;
+            }
+        }
+        else if (lastQueryDate != today)
+        {
+            // 如果今天是用户第一次查询，重置查询次数和日期
+            userQueryLimits[userId] = (1, today);
+        }
+        else
+        {
+            // 如果用户今天的查询次数还没有用完，增加查询次数
+            userQueryLimits[userId] = (count + 1, today);
+        }
+    }
+    else
+    {
+        // 如果用户之前没有查询过，添加新的记录
+        userQueryLimits[userId] = (1, today);
+    }
+
+    if (allowQuery)
+    {
+        // 执行查询逻辑
+        var responseMessage = await CryptoPriceChecker.CheckPriceDifferencesAsync();
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: responseMessage,
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+        );
+    }
+}
 // 检查是否是管理员发送的 "群发" 消息
 if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
 {
