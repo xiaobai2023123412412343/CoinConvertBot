@@ -150,7 +150,8 @@ public static class CryptoPriceChecker
                             var fundingRate = await GetFundingRateAsync(spotPrice.Symbol);
 			    //Console.WriteLine($"获取到{spotPrice.Symbol}的合约资金费率：{fundingRate}"); // 调试输出	
                             //Console.WriteLine($"发现价格差异：{spotPrice.Symbol} - 现货价格：{spotPriceDecimal}, 期货价格：{futuresPriceDecimal}, 差异：{differenceFormatted}%, 合约资金费率：{fundingRate}");
-                            message += $"{spotPrice.Symbol}\n现货价格：{TrimTrailingZeros(spotPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n合约价格：{TrimTrailingZeros(futuresPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n价格差异：{differenceFormatted}%\n合约资金费率：{fundingRate}\n\n";
+			    var symbolFormatted = spotPrice.Symbol.Insert(spotPrice.Symbol.Length - 4, " / "); // 在"USDT"前插入" / "
+                            message += $"{symbolFormatted}\n现货价格：{TrimTrailingZeros(spotPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n合约价格：{TrimTrailingZeros(futuresPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n价格差异：{differenceFormatted}%\n合约资金费率：{fundingRate}\n\n";
                         }
                     }
                     else
