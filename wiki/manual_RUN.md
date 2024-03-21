@@ -63,9 +63,7 @@ nano appsettings.json
 cd ~/CoinConvertBot/src
 docker build -t coin-convert-bot:latest .
 
-docker run -itd -e TZ=Asia/Shanghai --name coin-convert-bot coin-convert-bot:latest
 
-docker logs coin-convert-bot -f
 
 ```
 
@@ -98,6 +96,10 @@ nano Program.cs
 ### 4. 启动docker容器
 ```
 docker run -itd -e TZ=Asia/Shanghai --name coin-convert-bot coin-convert-bot:latest
+
+docker logs coin-convert-bot -f
+
+
 ```
 如果需要查看日志，可以使用以下命令
 ```
