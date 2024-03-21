@@ -6311,6 +6311,10 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         InlineKeyboardButton.WithCallbackData("资金费", $"zijinn"),
         InlineKeyboardButton.WithCallbackData("涨跌榜", $"zhangdiee"),
     },
+    new [] // 第三行按钮
+    {
+        InlineKeyboardButton.WithCallbackData("信号广场", $"bijiacha"),
+    },
 });
 
     if (editMessage)
@@ -7038,6 +7042,15 @@ if (update.Type == UpdateType.CallbackQuery)
             };
             await BotOnMessageReceived(botClient, fakeMessage);
             break; 	
+	        case "bijiacha": // 处理群聊资料按钮的回调
+            fakeMessage = new Message
+            {
+                Text = "/bijiacha",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
+            break; 		    
 case "understandMultiSig": // 处理了解多签按钮的回调
     fakeMessage = new Message
     {
