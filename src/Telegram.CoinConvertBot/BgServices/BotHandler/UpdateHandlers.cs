@@ -102,6 +102,147 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//现货合约价格差
+public static class CryptoPriceChecker
+{
+    private static readonly HttpClient client = new HttpClient();
+    private static readonly string spotPriceUrl = "https://api.binance.com/api/v3/ticker/price";
+    private static readonly string futuresPriceUrl = "https://fapi.binance.com/fapi/v1/ticker/price";
+    private static readonly string fundingRateUrl = "https://fapi.binance.com/fapi/v1/premiumIndex?symbol=";
+
+    public static async Task<string> CheckPriceDifferencesAsync()
+    {
+        try
+        {
+            //Console.WriteLine("开始获取现货价格...");
+            var spotPrices = await GetPricesAsync(spotPriceUrl);
+            //Console.WriteLine($"获取到{spotPrices.Count}个现货价格。");
+
+            //Console.WriteLine("开始获取期货价格...");
+            var futuresPrices = await GetPricesAsync(futuresPriceUrl);
+            //Console.WriteLine($"获取到{futuresPrices.Count}个期货价格。");
+
+            var message = "<b>信号广场：</b>\n\n";
+            bool foundDifference = false;
+
+            foreach (var spotPrice in spotPrices)
+            {
+                if (spotPrice.Symbol.EndsWith("USDT"))
+                {
+                    var futuresPrice = futuresPrices.Find(p => p.Symbol == spotPrice.Symbol);
+                    if (futuresPrice != null)
+                    {
+                        var spotPriceDecimal = decimal.Parse(spotPrice.Price, CultureInfo.InvariantCulture);
+                        var futuresPriceDecimal = decimal.Parse(futuresPrice.Price, CultureInfo.InvariantCulture);
+
+                        if (spotPriceDecimal == 0)
+                        {
+                            //Console.WriteLine($"{spotPrice.Symbol}的现货价格为零，跳过计算。");
+                            continue;
+                        }
+
+                        var difference = Math.Abs(spotPriceDecimal - futuresPriceDecimal) / spotPriceDecimal * 100;
+                        var differenceFormatted = Math.Round(difference, 2);
+
+                        if (difference > 1)
+                        {
+                            foundDifference = true;
+                            var fundingRate = await GetFundingRateAsync(spotPrice.Symbol);
+			    //Console.WriteLine($"获取到{spotPrice.Symbol}的合约资金费率：{fundingRate}"); // 调试输出	
+                            //Console.WriteLine($"发现价格差异：{spotPrice.Symbol} - 现货价格：{spotPriceDecimal}, 期货价格：{futuresPriceDecimal}, 差异：{differenceFormatted}%, 合约资金费率：{fundingRate}");
+                            message += $"{spotPrice.Symbol}\n现货价格：{TrimTrailingZeros(spotPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n合约价格：{TrimTrailingZeros(futuresPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n价格差异：{differenceFormatted}%\n合约资金费率：{fundingRate}\n\n";
+                        }
+                    }
+                    else
+                    {
+                        //Console.WriteLine($"无法找到{spotPrice.Symbol}的期货价格。");
+                    }
+                }
+            }
+
+            if (!foundDifference)
+            {
+                //Console.WriteLine("没有发现显著的价格差异。");
+            }
+
+            return message;
+        }
+        catch (Exception ex)
+        {
+            //Console.WriteLine($"在检查价格差异时发生错误：{ex.Message}");
+            return $"在检查价格差异时发生错误：{ex.Message}";
+        }
+    }
+
+    private static async Task<List<PriceInfo>> GetPricesAsync(string url)
+    {
+        var response = await client.GetAsync(url);
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<PriceInfo>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    }
+
+private static async Task<string> GetFundingRateAsync(string symbol)
+{
+    try
+    {
+        string requestUrl = fundingRateUrl + symbol;
+        var response = await client.GetAsync(requestUrl);
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"无法获取{symbol}的合约资金费率。HTTP状态码：{response.StatusCode}");
+            return "N/A";
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        var fundingInfo = JsonSerializer.Deserialize<FundingInfo>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        if (fundingInfo == null || string.IsNullOrEmpty(fundingInfo.LastFundingRate))
+        {
+            //Console.WriteLine($"未找到{symbol}的合约资金费率信息。");
+            return "错误";
+        }
+
+        // 尝试将LastFundingRate从string转换为decimal
+        if (!decimal.TryParse(fundingInfo.LastFundingRate, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal fundingRateDecimal))
+        {
+            //Console.WriteLine($"无法将{symbol}的合约资金费率转换为数字。");
+            return "错误";
+        }
+
+        var fundingRatePercent = Math.Round(fundingRateDecimal * 100, 2);
+        return $"{fundingRatePercent:F2}%";
+    }
+    catch (Exception ex)
+    {
+        //Console.WriteLine($"获取{symbol}的合约资金费率时发生错误：{ex.Message}");
+        return "错误";
+    }
+}
+
+    private static string TrimTrailingZeros(string number)
+    {
+        return number.TrimEnd('0').TrimEnd('.');
+    }
+
+    class PriceInfo
+    {
+        [JsonPropertyName("symbol")]
+        public string Symbol { get; set; }
+
+        [JsonPropertyName("price")]
+        public string Price { get; set; }
+    }
+
+    class FundingInfo
+    {
+        [JsonPropertyName("symbol")]
+        public string Symbol { get; set; }
+
+        [JsonPropertyName("lastFundingRate")]
+        public string LastFundingRate { get; set; } // 修改为string类型
+    }
+}
+
 public static class IndexDataFetcher//指数行情
 {
     private static readonly HttpClient client = new HttpClient();
@@ -7548,7 +7689,7 @@ if (containsUsername)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|music|usd|more|usdt|tron|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|music|usd|more|usdt|tron|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -8614,7 +8755,7 @@ const string BOT_USERNAME = "yifanfubot";//机器人用户名
 const int ADMIN_ID = 1427768220;//指定管理员ID不转发
 
 // 存储机器人的所有命令
-string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/more","/music", "/cny","/lamzhishu","/xgzhishu","/xamzhishu", "/trc", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni", "/jkbtc", "更多功能", "能量租赁", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "币圈行情", "外汇助手", "监控" };    
+string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/more","/music", "/cny","/lamzhishu","/xgzhishu","/xamzhishu", "/trc", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni","/bijiacha", "/jkbtc", "更多功能", "能量租赁", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "币圈行情", "外汇助手", "监控" };    
 
 if (message.Type == MessageType.Text)
 {	
@@ -10628,6 +10769,16 @@ if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|
 {
     await HandleCryptoCurrencyMessageAsync(botClient, message);
 }  
+//现货合约价格差	    
+if (messageText.StartsWith("/bijiacha"))
+{
+    var responseMessage = await CryptoPriceChecker.CheckPriceDifferencesAsync();
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: responseMessage,
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html // 指定消息格式为HTML
+    );
+}	    
 // 检查是否是管理员发送的 "群发" 消息
 if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
 {
