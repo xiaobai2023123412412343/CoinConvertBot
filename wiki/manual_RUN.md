@@ -62,9 +62,6 @@ nano appsettings.json
 ```
 cd ~/CoinConvertBot/src
 docker build -t coin-convert-bot:latest .
-
-
-
 ```
 
 快速：
