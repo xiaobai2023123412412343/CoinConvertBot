@@ -248,7 +248,7 @@ private static async Task<string> GetFundingRateAsync(string symbol)
 public static class IndexDataFetcher//指数行情
 {
     private static readonly HttpClient client = new HttpClient();
-    private static readonly List<string> licences = new List<string> { "a8d568553657cff90 ", "", "" };//可以一直添加秘钥 http://mairui.club/ 申请
+    private static readonly List<string> licences = new List<string> { "a8d568553657cff90", "", "" };//可以一直添加秘钥 http://mairui.club/ 申请
     private static readonly string[] indexCodes = { "sh000001", "sz399001", "sh000300" };
     private static readonly string[] indexNames = { "上证指数", "深证指数", "沪深  300" };
 
@@ -9434,15 +9434,28 @@ if (messageText.StartsWith("/zhishu"))
     // 查询沪深两市上涨下跌数概览
     var marketOverview = await IndexDataFetcher.FetchMarketOverviewAsync();
 
-    // 初始化messageContent变量，并将指数数据和市场概览整合到一条消息中
-    var messageContent = $"{indexData}\n————————————————————\n{marketOverview}";
+    // 初始化messageContent变量
+    var messageContent = "";
 
-    // 添加额外的链接文本
-    var additionalText = @"
+    // 检查是否所有API请求都失败了
+    if (indexData.Contains("数据获取异常") && marketOverview.Contains("数据解析异常"))
+    {
+        // 如果所有API请求都失败了，只添加额外的链接文本
+        messageContent = @"
+<a href='https://www.google.com/finance/quote/.IXIC:INDEXNASDAQ'>谷歌财经</a>  <a href='https://m.cn.investing.com/markets/'>英为财情</a>  <a href='https://www.jin10.com/'>金十数据 </a> <a href='https://rili.jin10.com/'>金十日历 </a>";
+    }
+    else
+    {
+        // 如果API请求成功，将指数数据和市场概览整合到一条消息中
+        messageContent = $"{indexData}\n————————————————————\n{marketOverview}";
+
+        // 添加额外的链接文本
+        var additionalText = @"
 <a href='https://www.google.com/finance/quote/.IXIC:INDEXNASDAQ'>谷歌财经</a>  <a href='https://m.cn.investing.com/markets/'>英为财情</a>  <a href='https://www.jin10.com/'>金十数据 </a> <a href='https://rili.jin10.com/'>金十日历 </a>";
 
-    // 将additionalText添加到messageContent
-    messageContent += $"{additionalText}";
+        // 将additionalText添加到messageContent
+        messageContent += $"{additionalText}";
+    }
 
     // 向用户发送整合后的数据，确保使用ParseMode.Html以正确解析HTML标签，并关闭链接预览
     await botClient.SendTextMessageAsync(
