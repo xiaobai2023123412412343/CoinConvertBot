@@ -248,7 +248,7 @@ private static async Task<string> GetFundingRateAsync(string symbol)
 public static class IndexDataFetcher//指数行情
 {
     private static readonly HttpClient client = new HttpClient();
-    private static readonly List<string> licences = new List<string> { "a8d568553657cff90 ", "", "" };
+    private static readonly List<string> licences = new List<string> { "a8d568553657cff90 ", "", "" };//可以一直添加秘钥 http://mairui.club/ 申请
     private static readonly string[] indexCodes = { "sh000001", "sz399001", "sh000300" };
     private static readonly string[] indexNames = { "上证指数", "深证指数", "沪深  300" };
 
