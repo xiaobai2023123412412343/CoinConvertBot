@@ -9429,16 +9429,22 @@ if (messageText.StartsWith("/xgzhishu"))
 // 检查是否接收到了 /zhishu 消息，收到就查询指数数据和沪深两市上涨下跌数概览
 if (messageText.StartsWith("/zhishu"))
 {
+    bool allRequestsFailed = true; // 新增标志位
+
     // 查询指数数据
     var indexData = await IndexDataFetcher.FetchIndexDataAsync();
     // 查询沪深两市上涨下跌数概览
     var marketOverview = await IndexDataFetcher.FetchMarketOverviewAsync();
 
-    // 初始化messageContent变量
+    // 检查是否所有API请求都失败了
+    if (!indexData.Contains("数据获取失败") && !marketOverview.Contains("数据获取失败"))
+    {
+        allRequestsFailed = false; // 如果有任何一个请求成功，就更新标志位
+    }
+
     var messageContent = "";
 
-    // 检查是否所有API请求都失败了
-    if (indexData.Contains("数据获取异常") && marketOverview.Contains("数据解析异常"))
+    if (allRequestsFailed)
     {
         // 如果所有API请求都失败了，只添加额外的链接文本
         messageContent = @"
