@@ -9921,7 +9921,7 @@ if (faxianCommandRegex.IsMatch(message.Text))
     if (faxianUserQueries.ContainsKey(userId))
     {
         var (count, lastQueryDate) = faxianUserQueries[userId];
-        if (lastQueryDate == today && count >= 3)
+        if (lastQueryDate == today && count >= 1)
         {
             try
             {
