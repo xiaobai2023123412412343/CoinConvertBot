@@ -10595,7 +10595,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     },
     new [] // 第三行
     {
-        //InlineKeyboardButton.WithSwitchInlineQuery("一键分享", "SHARE"),
+        InlineKeyboardButton.WithUrl("行情走势", $"https://www.binance.com/zh-CN/trade/{symbol}_USDT?_from=markets&type=spot"), // 根据用户查询的币种动态生成链接
         InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
     }    
 });
