@@ -1734,7 +1734,7 @@ public class FuturesPrice
 //监控币价    
 public static class PriceMonitor
 {
-    private static Dictionary<long, List<MonitorInfo>> monitorInfos = new Dictionary<long, List<MonitorInfo>>();  //储存用户监控的币种字典
+    public static Dictionary<long, List<MonitorInfo>> monitorInfos = new Dictionary<long, List<MonitorInfo>>();  //储存用户监控的币种字典
     private static Timer timer;
 
     static PriceMonitor()
@@ -1844,7 +1844,7 @@ private static async void CheckPrice(object state)
         }
     }
 
-    private class MonitorInfo
+    public class MonitorInfo
     {
         public ITelegramBotClient BotClient { get; set; }
         public string Symbol { get; set; }
@@ -10280,12 +10280,27 @@ if (messageText.StartsWith("/jkbtc"))
     }
     else
     {
+        string responseText = "发送 监控+数字货币 例如发送：监控 BTC\n则启动监控任务，当币价涨跌超过5%会触发提醒\n\n发送 取消监控+数字货币 例如发送： 取消监控 BTC\n则停止监控任务，后续涨跌不再下发币价波动提醒！";
+
+        // 检查用户是否有监控的币种
+        if (PriceMonitor.monitorInfos.ContainsKey(message.Chat.Id) && PriceMonitor.monitorInfos[message.Chat.Id].Count > 0)
+        {
+            int monitoredCount = PriceMonitor.monitorInfos[message.Chat.Id].Count;
+            responseText += $"\n\n您当前监控 {monitoredCount} 个加密货币价格变动！";
+
+            // 添加用户监控的币种名称
+            foreach (var monitorInfo in PriceMonitor.monitorInfos[message.Chat.Id])
+            {
+                responseText += $"\n{monitorInfo.Symbol} / USDT";
+            }
+        }
+
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: "发送 监控+数字货币 例如发送：监控 BTC\n则启动监控任务，当币价涨跌超过5%会触发提醒\n\n发送 取消监控+数字货币 例如发送： 取消监控 BTC\n则停止监控任务，后续涨跌不再下发币价波动提醒！"
+            text: responseText
         );
     }
-}        
+}
 if (messageText.StartsWith("监控 "))
 {
     if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
