@@ -7819,7 +7819,7 @@ if(update.CallbackQuery.Data == "membershipOptions")
             await botClient.EditMessageTextAsync(
                 chatId: update.CallbackQuery.Message.Chat.Id,
                 messageId: update.CallbackQuery.Message.MessageId,
-                text: "<b>收款地址</b>：<code>TJ4c6esQYEM7jn5s8DD5zk2DBYJTLHnFR3</code>",
+                text: "<b>收款地址</b>：<code>TDqwLwzr12FZhQf2cyk14sGuRVkXGcpJrf</code>",
                 parseMode: ParseMode.Html,
                 replyMarkup: inlineKeyboard
             );
@@ -8491,6 +8491,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 <code>绑定 TJ4c6esQYEM7jn5s8DD5zk2DBYJTLHnFR3 TRX 备注 安卓比特派</code>
 <code>绑定 TWs6YaFusBbL6UYPjfK9XxpffNGCDu1ApF TRX 备注 安卓抹茶</code>
 <code>绑定 TLowmih1pMgmeUGTAg3Z7Fdk1CZ5KP5ZgB TRX 备注 iOS抹茶</code>
+<code>绑定 TDqwLwzr12FZhQf2cyk14sGuRVkXGcpJrf TRX 备注 飞机钱包</code>
 
 ";
 
