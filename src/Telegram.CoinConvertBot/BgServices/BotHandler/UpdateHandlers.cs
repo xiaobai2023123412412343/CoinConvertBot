@@ -10280,25 +10280,37 @@ if (messageText.StartsWith("/jkbtc"))
     }
     else
     {
-        string responseText = "发送 监控+数字货币 例如发送：监控 BTC\n则启动监控任务，当币价涨跌超过5%会触发提醒\n\n发送 取消监控+数字货币 例如发送： 取消监控 BTC\n则停止监控任务，后续涨跌不再下发币价波动提醒！";
+        string baseResponseText = "发送 监控+数字货币 例如发送：监控 BTC\n则启动监控任务，当币价涨跌超过5%会触发提醒\n\n发送 取消监控+数字货币 例如发送： 取消监控 BTC\n则停止监控任务，后续涨跌不再下发币价波动提醒！";
 
         // 检查用户是否有监控的币种
         if (PriceMonitor.monitorInfos.ContainsKey(message.Chat.Id) && PriceMonitor.monitorInfos[message.Chat.Id].Count > 0)
         {
             int monitoredCount = PriceMonitor.monitorInfos[message.Chat.Id].Count;
-            responseText += $"\n\n您当前监控 {monitoredCount} 个加密货币价格变动！";
+            string monitoringListText = "\n\n监控列表：\n\n";
+            monitoringListText += $"您当前监控 <b>{monitoredCount}</b> 个加密货币价格变动！\n\n";
 
-            // 添加用户监控的币种名称
+            // 添加用户监控的币种名称和价格
             foreach (var monitorInfo in PriceMonitor.monitorInfos[message.Chat.Id])
             {
-                responseText += $"\n{monitorInfo.Symbol} / USDT";
+                string formattedPrice = monitorInfo.LastPrice >= 1 ? monitorInfo.LastPrice.ToString("F2") : monitorInfo.LastPrice.ToString("0.00000000");
+                monitoringListText += $"<code>{monitorInfo.Symbol}</code>/USDT   价格：$ {formattedPrice}\n";
             }
-        }
 
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: responseText
-        );
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: baseResponseText + monitoringListText,
+                parseMode: ParseMode.Html
+            );
+        }
+        else
+        {
+            // 如果用户没有监控任何币种，只回复原有的文本
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: baseResponseText,
+                parseMode: ParseMode.Html
+            );
+        }
     }
 }
 if (messageText.StartsWith("监控 "))
