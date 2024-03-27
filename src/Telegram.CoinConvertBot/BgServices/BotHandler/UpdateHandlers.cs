@@ -1772,7 +1772,8 @@ public static class PriceMonitor
             Threshold = symbol.Equals("BTC", StringComparison.OrdinalIgnoreCase) || symbol.Equals("ETH", StringComparison.OrdinalIgnoreCase) ? 0.02m : 0.05m
         });
 
-        await botClient.SendTextMessageAsync(userId, $"开始监控 {symbol} 的价格变动\n\n⚠️当前价格为：$ {price.Value.ToString("G29")}\n\n如需停止请发送：<code>取消监控 {symbol}</code>", parseMode: ParseMode.Html);
+	string formattedPrice = price.Value >= 1 ? price.Value.ToString("F2") : price.Value.ToString("0.00000000");// 格式化价格信息    
+        await botClient.SendTextMessageAsync(userId, $"开始监控 {symbol} 的价格变动\n\n⚠️当前价格为：$ {formattedPrice}\n\n如需停止请发送：<code>取消监控 {symbol}</code>", parseMode: ParseMode.Html);
     }
 
     public static async Task Unmonitor(ITelegramBotClient botClient, long userId, string symbol)
@@ -1807,16 +1808,19 @@ private static async void CheckPrice(object state)
             if (Math.Abs(change) >= monitorInfo.Threshold)
             {
                 monitorInfo.CurrentPrice = price.Value;
-		    
+
+                // 格式化当前价格信息
+                string formattedCurrentPrice = monitorInfo.CurrentPrice >= 1 ? monitorInfo.CurrentPrice.ToString("F2") : monitorInfo.CurrentPrice.ToString("0.00000000");
+
                 // 创建内联键盘
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
                     InlineKeyboardButton.WithCallbackData($"取消监控 {monitorInfo.Symbol}", $"unmonitor_{monitorInfo.Symbol}")
-                });		    
+                });
                 await monitorInfo.BotClient.SendTextMessageAsync(pair.Key, $@"<b>⚠️价格变动提醒</b>：
 
 <b>监控币种</b>：<code>{monitorInfo.Symbol}</code>
-<b>当前币价</b>：$ {monitorInfo.CurrentPrice.ToString("G29")}
+<b>当前币价</b>：$ {formattedCurrentPrice}
 <b>价格变动</b>：{(change > 0 ? "上涨" : "下跌")}  {change:P}
 <b>变动时间</b>：{DateTime.Now:yyyy/MM/dd HH:mm}", parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
 
