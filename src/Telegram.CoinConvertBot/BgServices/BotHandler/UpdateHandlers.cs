@@ -1734,7 +1734,7 @@ public class FuturesPrice
 //监控币价    
 public static class PriceMonitor
 {
-    private static Dictionary<long, List<MonitorInfo>> monitorInfos = new Dictionary<long, List<MonitorInfo>>();
+    private static Dictionary<long, List<MonitorInfo>> monitorInfos = new Dictionary<long, List<MonitorInfo>>();  //储存用户监控的币种字典
     private static Timer timer;
 
     static PriceMonitor()
