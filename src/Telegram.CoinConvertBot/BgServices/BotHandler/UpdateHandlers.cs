@@ -10565,12 +10565,33 @@ string priceChangeSymbol = priceChangePercent >= 0 ? upSymbol : downSymbol;
 string priceChangeSign = priceChangePercent > 0 ? "+" : ""; // 如果涨跌幅大于0，添加+号
 
 reply += $"<b>\U0001F4B0现货价格：</b>{lastPrice}\n" +  
-        $"<b>\U0001F4B0合约价格：</b>{futuresPrice}\n" +
-        $"<b>⬆️今日最高价：</b>{highPrice}\n" +
-        $"<b>⬇️今日最低价：</b>{lowPrice}\n" +
-        $"<b>全天涨跌幅：</b>{priceChangeSymbol} {priceChangeSign}{json["priceChangePercent"]}%\n";
+        $"<b>\U0001F4B0合约价格：</b>{futuresPrice}\n";
 
+// 尝试从Coinbase获取价格
+string coinbasePrice = null;
+try
+{
+    var coinbaseUrl = $"https://api.pro.coinbase.com/products/{symbol}-USD/ticker";
+    var coinbaseResponse = await httpClient.GetStringAsync(coinbaseUrl);
+    var coinbaseJson = JObject.Parse(coinbaseResponse);
+    coinbasePrice = coinbaseJson["price"]?.ToString();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error when calling Coinbase API: {ex.Message}");
+    // 如果获取失败，coinbasePrice保持为null
+}
 
+// 根据是否获取到Coinbase的价格动态添加到消息中
+if (!string.IsNullOrEmpty(coinbasePrice))
+{
+    reply += $"<b>\U0001F4B0coinbase：</b>{coinbasePrice}\n";
+}
+
+// 继续构建剩余的回复消息...
+reply += $"<b>⬆️今日最高价：</b>{highPrice}\n" +
+         $"<b>⬇️今日最低价：</b>{lowPrice}\n" +
+         $"<b>全天涨跌幅：</b>{priceChangeSymbol} {priceChangeSign}{json["priceChangePercent"]}%\n";
 
 // 计算历史最高价和最低价
 var historicalHighItem = klineData.OrderByDescending(x => decimal.Parse(x.High)).First(); // 最高价
