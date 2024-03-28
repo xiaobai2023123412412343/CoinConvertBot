@@ -111,70 +111,64 @@ public static class CryptoPriceChecker
     private static readonly string futuresPriceUrl = "https://fapi.binance.com/fapi/v1/ticker/price";
     private static readonly string fundingRateUrl = "https://fapi.binance.com/fapi/v1/premiumIndex?symbol=";
 
-    public static async Task<string> CheckPriceDifferencesAsync()
+public static async Task<string> CheckPriceDifferencesAsync()
+{
+    try
     {
-        try
+        var spotPrices = await GetPricesAsync(spotPriceUrl);
+        var futuresPrices = await GetPricesAsync(futuresPriceUrl);
+
+        var message = "<b>信号广场：</b>\n\n";
+        bool foundDifference = false;
+        int count = 0; // 用于计数已添加的币种数量
+
+        foreach (var spotPrice in spotPrices)
         {
-            //Console.WriteLine("开始获取现货价格...");
-            var spotPrices = await GetPricesAsync(spotPriceUrl);
-            //Console.WriteLine($"获取到{spotPrices.Count}个现货价格。");
-
-            //Console.WriteLine("开始获取期货价格...");
-            var futuresPrices = await GetPricesAsync(futuresPriceUrl);
-            //Console.WriteLine($"获取到{futuresPrices.Count}个期货价格。");
-
-            var message = "<b>信号广场：</b>\n\n";
-            bool foundDifference = false;
-
-            foreach (var spotPrice in spotPrices)
+            if (count >= 20) // 如果已添加20个币种，则停止添加新的币种信息
             {
-                if (spotPrice.Symbol.EndsWith("USDT"))
+                break;
+            }
+
+            if (spotPrice.Symbol.EndsWith("USDT"))
+            {
+                var futuresPrice = futuresPrices.Find(p => p.Symbol == spotPrice.Symbol);
+                if (futuresPrice != null)
                 {
-                    var futuresPrice = futuresPrices.Find(p => p.Symbol == spotPrice.Symbol);
-                    if (futuresPrice != null)
+                    var spotPriceDecimal = decimal.Parse(spotPrice.Price, CultureInfo.InvariantCulture);
+                    var futuresPriceDecimal = decimal.Parse(futuresPrice.Price, CultureInfo.InvariantCulture);
+
+                    if (spotPriceDecimal == 0)
                     {
-                        var spotPriceDecimal = decimal.Parse(spotPrice.Price, CultureInfo.InvariantCulture);
-                        var futuresPriceDecimal = decimal.Parse(futuresPrice.Price, CultureInfo.InvariantCulture);
-
-                        if (spotPriceDecimal == 0)
-                        {
-                            //Console.WriteLine($"{spotPrice.Symbol}的现货价格为零，跳过计算。");
-                            continue;
-                        }
-
-                        var difference = Math.Abs(spotPriceDecimal - futuresPriceDecimal) / spotPriceDecimal * 100;
-                        var differenceFormatted = Math.Round(difference, 2);
-
-                        if (difference > 1)
-                        {
-                            foundDifference = true;
-                            var fundingRate = await GetFundingRateAsync(spotPrice.Symbol);
-			    //Console.WriteLine($"获取到{spotPrice.Symbol}的合约资金费率：{fundingRate}"); // 调试输出	
-                            //Console.WriteLine($"发现价格差异：{spotPrice.Symbol} - 现货价格：{spotPriceDecimal}, 期货价格：{futuresPriceDecimal}, 差异：{differenceFormatted}%, 合约资金费率：{fundingRate}");
-			    var symbolFormatted = spotPrice.Symbol.Insert(spotPrice.Symbol.Length - 4, " / "); // 在"USDT"前插入" / "
-                            message += $"{symbolFormatted}\n现货价格：{TrimTrailingZeros(spotPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n合约价格：{TrimTrailingZeros(futuresPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n价格差异：{differenceFormatted}%\n合约资金费率：{fundingRate}\n\n";
-                        }
+                        continue;
                     }
-                    else
+
+                    var difference = Math.Abs(spotPriceDecimal - futuresPriceDecimal) / spotPriceDecimal * 100;
+                    var differenceFormatted = Math.Round(difference, 2);
+
+                    if (difference > 0.5m) // 使用0.5%作为差异阈值
                     {
-                        //Console.WriteLine($"无法找到{spotPrice.Symbol}的期货价格。");
+                        foundDifference = true;
+                        var fundingRate = await GetFundingRateAsync(spotPrice.Symbol);
+                        var symbolFormatted = spotPrice.Symbol.Insert(spotPrice.Symbol.Length - 4, " / "); // 在"USDT"前插入" / "
+                        message += $"{symbolFormatted}\n现货价格：{TrimTrailingZeros(spotPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n合约价格：{TrimTrailingZeros(futuresPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n价格差异：{differenceFormatted}%\n合约资金费率：{fundingRate}\n\n";
+                        count++; // 增加已添加的币种数量
                     }
                 }
             }
-
-            if (!foundDifference)
-            {
-                //Console.WriteLine("没有发现显著的价格差异。");
-            }
-
-            return message;
         }
-        catch (Exception ex)
+
+        if (!foundDifference)
         {
-            //Console.WriteLine($"在检查价格差异时发生错误：{ex.Message}");
-            return $"在检查价格差异时发生错误：{ex.Message}";
+            message += "没有发现显著的价格差异。";
         }
+
+        return message;
     }
+    catch (Exception ex)
+    {
+        return $"在检查价格差异时发生错误：{ex.Message}";
+    }
+}
 
     private static async Task<List<PriceInfo>> GetPricesAsync(string url)
     {
