@@ -1790,7 +1790,46 @@ public static class PriceMonitor
             }
         }
     }
+private static async Task<string> GetFundingRate(string symbol)
+{
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            var url = $"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}USDT";
+            var response = await httpClient.GetStringAsync(url);
+            var json = JObject.Parse(response);
+            var lastFundingRate = decimal.Parse((string)json["lastFundingRate"]);
+            // 转换为百分比形式
+            return (lastFundingRate * 100).ToString("0.000000") + "%";
+        }
+        catch
+        {
+            return "数据获取失败";
+        }
+    }
+}
 
+private static async Task<string> GetLongShortRatio(string symbol)
+{
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            var url = $"https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol={symbol}USDT&period=15m&limit=1";
+            var response = await httpClient.GetStringAsync(url);
+            var jsonArray = JArray.Parse(response);
+            var json = jsonArray[0];
+            var longRatio = decimal.Parse((string)json["longAccount"]);
+            var shortRatio = decimal.Parse((string)json["shortAccount"]);
+            return $"{longRatio:P} / {shortRatio:P}";
+        }
+        catch
+        {
+            return "数据获取失败";
+        }
+    }
+}
 private static async void CheckPrice(object state)
 {
     var monitorInfosCopy = new Dictionary<long, List<MonitorInfo>>(monitorInfos);
@@ -1809,20 +1848,39 @@ private static async void CheckPrice(object state)
             {
                 monitorInfo.CurrentPrice = price.Value;
 
+                // 获取合约资金费和多空比
+                var fundingRate = await GetFundingRate(monitorInfo.Symbol);
+                var longShortRatio = await GetLongShortRatio(monitorInfo.Symbol);
+
                 // 格式化当前价格信息
                 string formattedCurrentPrice = monitorInfo.CurrentPrice >= 1 ? monitorInfo.CurrentPrice.ToString("F2") : monitorInfo.CurrentPrice.ToString("0.00000000");
+
+                // 构建消息内容
+                var messageBuilder = new StringBuilder();
+                messageBuilder.AppendLine($"<b>⚠️价格变动提醒</b>：\n");
+                messageBuilder.AppendLine($"<b>监控币种</b>：<code>{monitorInfo.Symbol}</code>");
+                messageBuilder.AppendLine($"<b>当前币价</b>：$ {formattedCurrentPrice}");
+                messageBuilder.AppendLine($"<b>价格变动</b>：{(change > 0 ? "\U0001F4C8" : "\U0001F4C9")}  {change:P}");
+
+                // 根据数据获取情况动态添加资金费和多空比信息
+                if (fundingRate != "数据获取失败")
+                {
+                    messageBuilder.AppendLine($"<b>资金费</b>：{fundingRate}");
+                }
+                if (longShortRatio != "数据获取失败")
+                {
+                    messageBuilder.AppendLine($"<b>多空比</b>：{longShortRatio}");
+                }
+
+                messageBuilder.AppendLine($"<b>变动时间</b>：{DateTime.Now:yyyy/MM/dd HH:mm}");
 
                 // 创建内联键盘
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
                     InlineKeyboardButton.WithCallbackData($"取消监控 {monitorInfo.Symbol}", $"unmonitor_{monitorInfo.Symbol}")
                 });
-                await monitorInfo.BotClient.SendTextMessageAsync(pair.Key, $@"<b>⚠️价格变动提醒</b>：
 
-<b>监控币种</b>：<code>{monitorInfo.Symbol}</code>
-<b>当前币价</b>：$ {formattedCurrentPrice}
-<b>价格变动</b>：{(change > 0 ? "上涨" : "下跌")}  {change:P}
-<b>变动时间</b>：{DateTime.Now:yyyy/MM/dd HH:mm}", parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
+                await monitorInfo.BotClient.SendTextMessageAsync(pair.Key, messageBuilder.ToString(), parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
 
                 monitorInfo.LastPrice = price.Value;
             }
