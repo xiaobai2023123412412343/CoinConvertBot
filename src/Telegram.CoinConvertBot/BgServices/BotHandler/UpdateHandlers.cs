@@ -6370,6 +6370,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     new [] // 第三行按钮
     {
         InlineKeyboardButton.WithCallbackData("信号广场", $"bijiacha"),
+        InlineKeyboardButton.WithCallbackData("行情监控", $"jkbtcc"),	
     },
 });
 
@@ -7098,6 +7099,15 @@ if (update.Type == UpdateType.CallbackQuery)
             };
             await BotOnMessageReceived(botClient, fakeMessage);
             break; 	
+	        case "jkbtcc": // 处理群聊资料按钮的回调
+            fakeMessage = new Message
+            {
+                Text = "/jkbtc",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
+            break; 		    
 	        case "bijiacha": // 处理群聊资料按钮的回调
             fakeMessage = new Message
             {
