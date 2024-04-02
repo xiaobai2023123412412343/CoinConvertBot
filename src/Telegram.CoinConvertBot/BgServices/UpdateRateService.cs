@@ -21,7 +21,7 @@ namespace Telegram.CoinConvertBot.BgServices
         public UpdateRateService(
             IConfiguration configuration,
             IServiceProvider serviceProvider,
-            ILogger<UpdateRateService> logger) : base("更新汇率", TimeSpan.FromMinutes(10), logger)
+            ILogger<UpdateRateService> logger) : base("更新汇率", TimeSpan.FromMinutes(1), logger)
         {
             _configuration = configuration;
             _serviceProvider = serviceProvider;
