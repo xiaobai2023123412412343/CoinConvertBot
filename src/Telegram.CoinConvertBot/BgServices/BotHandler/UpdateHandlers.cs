@@ -7791,7 +7791,12 @@ else if (message?.Text != null && (message.Text.StartsWith("z0") || message.Text
 {
     // 如果消息文本以 "z0" 开头，则不执行翻译
     return;
-}            
+} 
+else if (Regex.IsMatch(message?.Text ?? "", @"^[a-zA-Z]{2,5}\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$"))
+{
+    // 如果消息文本符合数字货币+时间的格式，则不执行翻译
+    return;
+}		
 else
 {
 // 检查用户是否在黑名单中
