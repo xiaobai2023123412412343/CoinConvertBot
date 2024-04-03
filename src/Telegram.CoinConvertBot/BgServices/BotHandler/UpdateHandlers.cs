@@ -7793,7 +7793,7 @@ else if (message?.Text != null && (message.Text.StartsWith("z0") || message.Text
     // 如果消息文本以 "z0" 开头，则不执行翻译
     return;
 } 
-else if (Regex.IsMatch(message?.Text ?? "", @"^[a-zA-Z]{2,5}\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$"))
+else if (Regex.IsMatch(message?.Text ?? "", @"^[a-zA-Z0-9]{2,}\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$"))
 {
     // 如果消息文本符合数字货币+时间的格式，则不执行翻译
     return;
@@ -10595,7 +10595,7 @@ else if (Regex.IsMatch(messageText, @"^trx\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$", R
         replyMarkup: inlineKeyboard
     );
 }	    
-else if (Regex.IsMatch(messageText, @"^[a-zA-Z]{2,5}\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$")) // 检查消息是否符合币种和时间的格式
+else if (Regex.IsMatch(messageText, @"^[a-zA-Z0-9]{2,}\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$")) // 检查消息是否符合币种和时间的格式
 {
     // 如果消息符合币种和时间的格式，调用查询加密货币价格趋势的方法
     await QueryCryptoPriceTrendAsync(botClient, message.Chat.Id, messageText);
