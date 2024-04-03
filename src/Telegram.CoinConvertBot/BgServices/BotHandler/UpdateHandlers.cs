@@ -4286,17 +4286,20 @@ var usdtTransactions = usdtTransactionsTemp
             return transactionRecords;
         }
     }
-    catch (HttpRequestException ex) when (ex.Message.Contains("403"))
+catch (HttpRequestException ex) when (ex.Message.Contains("403"))
+{
+    Console.WriteLine("服务器拒绝访问：403 Forbidden");
+    await botClient.SendTextMessageAsync(message.Chat.Id, "查询超时，请进交易群查看！", replyMarkup: new InlineKeyboardMarkup(new[]
     {
-        Console.WriteLine("服务器拒绝访问：403 Forbidden");
-        await botClient.SendTextMessageAsync(message.Chat.Id, "服务器超时，请稍后再试！");
-        return "服务器超时，请稍后再试！";
-    }    
-    catch (Exception ex)
-    {
-        Console.WriteLine($"获取交易记录时发生错误：{ex.Message}");
-        return $"获取交易记录时发生错误：{ex.Message}";
-    }
+        InlineKeyboardButton.WithUrl("点击加入交易群", "https://t.me/+b4NunT6Vwf0wZWI1")
+    }));
+    return "服务器超时，请进交易群查看！";
+}    
+catch (Exception ex)
+{
+    Console.WriteLine($"获取交易记录时发生错误：{ex.Message}");
+    return $"获取交易记录时发生错误：{ex.Message}";
+}
 }
 private static List<(DateTime timestamp, string token, decimal amount)> ParseTransactions(string jsonResponse, string token)
 {
