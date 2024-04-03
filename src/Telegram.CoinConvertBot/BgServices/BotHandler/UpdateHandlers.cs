@@ -102,6 +102,64 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient, long chatId, string messageText)
+{
+    try
+    {
+        // 解析消息文本以获取币种和时间
+        var parts = messageText.Split(' ');
+        var symbol = parts[0].ToUpper(); // 币种
+        var dateTimeStr = parts[1] + " " + parts[2]; // 时间字符串
+        var dateTime = DateTime.ParseExact(dateTimeStr, "yyyy/MM/dd HH.mm", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+
+        // 将北京时间转换为UTC时间
+        var utcDateTime = dateTime.ToUniversalTime();
+
+        // 将UTC时间转换为Unix时间戳（毫秒）
+        var unixTimestamp = ((DateTimeOffset)utcDateTime).ToUnixTimeMilliseconds();
+
+        // 构造K线API URL
+        var klineUrl = $"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1m&startTime={unixTimestamp}&endTime={unixTimestamp + 60000}"; // 查询一分钟内的K线数据
+
+        using (var httpClient = new HttpClient())
+        {
+            // 获取K线数据
+            var klineResponse = await httpClient.GetStringAsync(klineUrl);
+            var klineData = JsonSerializer.Deserialize<List<List<JsonElement>>>(klineResponse);
+
+            if (klineData == null || klineData.Count == 0)
+            {
+                await botClient.SendTextMessageAsync(chatId, "未找到指定时间的价格数据。");
+                return;
+            }
+
+            var openPrice = klineData[0][1].GetString(); // 开盘价，保留原始字符串格式
+
+            // 获取当前价格
+            var currentPriceUrl = $"https://api.binance.com/api/v3/ticker/price?symbol={symbol}USDT";
+            var currentPriceResponse = await httpClient.GetStringAsync(currentPriceUrl);
+            var currentPriceData = JsonSerializer.Deserialize<Dictionary<string, string>>(currentPriceResponse);
+            var currentPrice = currentPriceData["price"]; // 当前价格，保留原始字符串格式
+
+            // 计算涨跌幅
+            var priceChangePercent = (decimal.Parse(currentPrice) - decimal.Parse(openPrice)) / decimal.Parse(openPrice) * 100;
+
+            // 构造回复消息
+            var reply = $"查询币种：{symbol}\n\n" +
+                        $"初始时间：{dateTimeStr}\n" +
+                        $"初始价格：{openPrice}\n" + // 不限制小数位数
+                        $"当前价格：{currentPrice}\n" + // 不限制小数位数
+                        $"涨跌幅：{priceChangePercent:F2}%";
+
+            // 发送消息
+            await botClient.SendTextMessageAsync(chatId, reply, ParseMode.Html);
+        }
+    }
+    catch (Exception ex)
+    {
+        await botClient.SendTextMessageAsync(chatId, $"查询时发生错误：{ex.Message}");
+    }
+}
 //现货合约价格差以及字典
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userQueryLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();
 public static class CryptoPriceChecker
@@ -10509,6 +10567,11 @@ if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText
         text: "<b>TRX能量兑换地址</b>：\n\n<code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>",
         parseMode: ParseMode.Html
     );
+}
+else if (Regex.IsMatch(messageText, @"^[a-zA-Z]{2,5}\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$")) // 检查消息是否符合币种和时间的格式
+{
+    // 如果消息符合币种和时间的格式，调用查询加密货币价格趋势的方法
+    await QueryCryptoPriceTrendAsync(botClient, message.Chat.Id, messageText);
 }
 else if (Regex.IsMatch(messageText, @"^[a-zA-Z0-9]+$")) // 检查消息是否包含字母和数字的组合
 {
