@@ -10297,8 +10297,8 @@ if (decimal.TryParse(messageText, out decimal number))
     _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: responseText.ToString(),
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-	replyToMessageId: message.MessageId // 这里引用用户的消息ID    
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown
+	//replyToMessageId: message.MessageId // 这里引用用户的消息ID    
     );
 }
 else if (messageText.Contains("~"))
@@ -10322,8 +10322,8 @@ else if (messageText.Contains("~"))
 
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: responseMessage,
-	    replyToMessageId: message.MessageId // 这里引用用户的消息ID	
+            text: responseMessage
+	    //replyToMessageId: message.MessageId // 这里引用用户的消息ID	
         );
     }
 }
