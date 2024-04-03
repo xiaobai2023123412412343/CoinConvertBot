@@ -7757,7 +7757,15 @@ var containsUsername = Regex.IsMatch(inputText, @"用户名：");
 if (containsUsername)
 {
     return;
-}        
+}  
+// 检查输入文本是否为数字加~的组合，例如 "55~23"
+var isNumberRange = Regex.IsMatch(inputText, @"^\d+~\d+$");
+
+// 如果输入文本符合数字加~的组合，则不执行翻译
+if (isNumberRange)
+{
+    return;
+}	    
         
         // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
         var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
@@ -10272,6 +10280,48 @@ if (messageText.StartsWith("/gongtongqunzu"))
         );
     }
 }   
+// 检查消息是否为纯数字，如果是，则计算上涨和下跌的数据
+if (decimal.TryParse(messageText, out decimal number))
+{
+    var responseText = new StringBuilder();
+    for (decimal i = 0.99m; i >= 0.90m; i -= 0.01m)
+    {
+        decimal down = Math.Round(number * i, 8, MidpointRounding.AwayFromZero); // 下跌
+        decimal up = Math.Round(number * (2 - i), 8, MidpointRounding.AwayFromZero); // 上涨
+        responseText.AppendLine($"`{down} | {number} | {up}`");
+    }
+
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: responseText.ToString(),
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown
+    );
+}
+else if (messageText.Contains("~"))
+{
+    var parts = messageText.Split('~');
+    if (parts.Length == 2 && decimal.TryParse(parts[0], out decimal start) && decimal.TryParse(parts[1], out decimal end))
+    {
+        string responseMessage;
+        if (start < end)
+        {
+            // 计算上涨百分比
+            decimal increasePercentage = Math.Round((end - start) / start * 100, 2);
+            responseMessage = $"从{start}到{end}，上涨 {increasePercentage}%";
+        }
+        else
+        {
+            // 计算下跌百分比
+            decimal decreasePercentage = Math.Round((start - end) / start * 100, 2);
+            responseMessage = $"从{start}到{end}，下跌 {decreasePercentage}%";
+        }
+
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: responseMessage
+        );
+    }
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
