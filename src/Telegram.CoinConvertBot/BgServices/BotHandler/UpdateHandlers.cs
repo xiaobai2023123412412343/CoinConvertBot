@@ -10283,18 +10283,22 @@ if (messageText.StartsWith("/gongtongqunzu"))
 // 检查消息是否为纯数字，如果是，则计算上涨和下跌的数据
 if (decimal.TryParse(messageText, out decimal number))
 {
-    var responseText = new StringBuilder();
-    for (decimal i = 0.99m; i >= 0.90m; i -= 0.01m)
+    var responseText = new StringBuilder($"{number} 涨跌 1-10% 数据\n\n");
+
+    for (int i = 1; i <= 10; i++)
     {
-        decimal down = Math.Round(number * i, 8, MidpointRounding.AwayFromZero); // 下跌
-        decimal up = Math.Round(number * (2 - i), 8, MidpointRounding.AwayFromZero); // 上涨
-        responseText.AppendLine($"`{down} | {number} | {up}`");
+        decimal downPercentage = 1m - (i / 100m);
+        decimal upPercentage = 1m + (i / 100m);
+        decimal down = Math.Round(number * downPercentage, 8, MidpointRounding.AwayFromZero); // 下跌
+        decimal up = Math.Round(number * upPercentage, 8, MidpointRounding.AwayFromZero); // 上涨
+        responseText.AppendLine($"`- {i}%  {down} | {up}  +{i}%`");
     }
 
     _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: responseText.ToString(),
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+	replyToMessageId: message.MessageId // 这里引用用户的消息ID    
     );
 }
 else if (messageText.Contains("~"))
@@ -10318,7 +10322,8 @@ else if (messageText.Contains("~"))
 
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: responseMessage
+            text: responseMessage,
+	    replyToMessageId: message.MessageId // 这里引用用户的消息ID	
         );
     }
 }
