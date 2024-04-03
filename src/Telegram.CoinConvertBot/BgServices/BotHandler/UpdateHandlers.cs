@@ -102,6 +102,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//查询指定时间的币种价格到现在的价格涨跌	
 public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient, long chatId, string messageText)
 {
     try
