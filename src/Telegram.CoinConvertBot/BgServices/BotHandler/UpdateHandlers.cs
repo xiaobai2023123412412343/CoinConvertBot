@@ -10575,6 +10575,20 @@ if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText
         parseMode: ParseMode.Html
     );
 }
+else if (Regex.IsMatch(messageText, @"^trx\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$", RegexOptions.IgnoreCase)) // 检查消息是否为"TRX+时间"的格式
+{
+    // 如果消息是"TRX+时间"的格式，直接回复用户
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "TRX价格走势请进交流查看！",
+        replyMarkup: inlineKeyboard
+    );
+}	    
 else if (Regex.IsMatch(messageText, @"^[a-zA-Z]{2,5}\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$")) // 检查消息是否符合币种和时间的格式
 {
     // 如果消息符合币种和时间的格式，调用查询加密货币价格趋势的方法
