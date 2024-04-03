@@ -152,12 +152,14 @@ public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient
 
             var openPrice = klineData[0][1].GetString();
             var priceChangePercent = (decimal.Parse(currentPrice) - decimal.Parse(openPrice)) / decimal.Parse(openPrice) * 100;
+            // 根据涨跌幅正负决定符号📈📉
+	    var trendSymbol = priceChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";	
 
             var reply = $"查询币种：{symbol} {priceType}\n\n" +
                         $"初始时间：{dateTimeStr}\n" +
                         $"初始价格：{openPrice}\n" +
                         $"当前价格：{currentPrice}\n" +
-                        $"涨跌幅：{priceChangePercent:F2}%";
+                        $"涨跌幅：{trendSymbol} {priceChangePercent:F2}%";
 
             await botClient.SendTextMessageAsync(chatId, reply, ParseMode.Html);
         }
