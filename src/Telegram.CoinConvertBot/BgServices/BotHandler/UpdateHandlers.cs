@@ -106,57 +106,64 @@ public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient
 {
     try
     {
-        // 解析消息文本以获取币种和时间
         var parts = messageText.Split(' ');
-        var symbol = parts[0].ToUpper(); // 币种
-        var dateTimeStr = parts[1] + " " + parts[2]; // 时间字符串
+        var symbol = parts[0].ToUpper();
+        var dateTimeStr = parts[1] + " " + parts[2];
         var dateTime = DateTime.ParseExact(dateTimeStr, "yyyy/MM/dd HH.mm", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
 
-        // 将北京时间转换为UTC时间
         var utcDateTime = dateTime.ToUniversalTime();
-
-        // 将UTC时间转换为Unix时间戳（毫秒）
         var unixTimestamp = ((DateTimeOffset)utcDateTime).ToUnixTimeMilliseconds();
 
-        // 构造K线API URL
-        var klineUrl = $"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1m&startTime={unixTimestamp}&endTime={unixTimestamp + 60000}"; // 查询一分钟内的K线数据
+        string priceType = "现货";
+        string priceUrl = $"https://api.binance.com/api/v3/ticker/price?symbol={symbol}USDT";
+        string klineUrl = $"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1m&startTime={unixTimestamp}&endTime={unixTimestamp + 60000}";
 
         using (var httpClient = new HttpClient())
         {
-            // 获取K线数据
+            var currentPriceResponse = await httpClient.GetStringAsync(priceUrl);
+            var currentPriceData = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(currentPriceResponse);
+            var currentPrice = currentPriceData?["price"].GetString();
+
             var klineResponse = await httpClient.GetStringAsync(klineUrl);
             var klineData = JsonSerializer.Deserialize<List<List<JsonElement>>>(klineResponse);
 
             if (klineData == null || klineData.Count == 0)
             {
-                await botClient.SendTextMessageAsync(chatId, "未找到指定时间的价格数据。");
-                return;
+                priceType = "合约";
+                priceUrl = $"https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}USDT";
+                klineUrl = $"https://fapi.binance.com/fapi/v1/klines?symbol={symbol}USDT&interval=1m&startTime={unixTimestamp}&endTime={unixTimestamp + 60000}";
+
+                currentPriceResponse = await httpClient.GetStringAsync(priceUrl);
+                //Console.WriteLine($"合约价格API返回的数据: {currentPriceResponse}");
+                currentPriceData = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(currentPriceResponse);
+                currentPrice = currentPriceData?["price"].GetString();
+
+                klineResponse = await httpClient.GetStringAsync(klineUrl);
+                //Console.WriteLine($"合约K线API返回的数据: {klineResponse}");
+                klineData = JsonSerializer.Deserialize<List<List<JsonElement>>>(klineResponse);
+
+                if (klineData == null || klineData.Count == 0)
+                {
+                    await botClient.SendTextMessageAsync(chatId, "未找到指定时间的价格数据。");
+                    return;
+                }
             }
 
-            var openPrice = klineData[0][1].GetString(); // 开盘价，保留原始字符串格式
-
-            // 获取当前价格
-            var currentPriceUrl = $"https://api.binance.com/api/v3/ticker/price?symbol={symbol}USDT";
-            var currentPriceResponse = await httpClient.GetStringAsync(currentPriceUrl);
-            var currentPriceData = JsonSerializer.Deserialize<Dictionary<string, string>>(currentPriceResponse);
-            var currentPrice = currentPriceData["price"]; // 当前价格，保留原始字符串格式
-
-            // 计算涨跌幅
+            var openPrice = klineData[0][1].GetString();
             var priceChangePercent = (decimal.Parse(currentPrice) - decimal.Parse(openPrice)) / decimal.Parse(openPrice) * 100;
 
-            // 构造回复消息
-            var reply = $"查询币种：{symbol}\n\n" +
+            var reply = $"查询币种：{symbol} {priceType}\n\n" +
                         $"初始时间：{dateTimeStr}\n" +
-                        $"初始价格：{openPrice}\n" + // 不限制小数位数
-                        $"当前价格：{currentPrice}\n" + // 不限制小数位数
+                        $"初始价格：{openPrice}\n" +
+                        $"当前价格：{currentPrice}\n" +
                         $"涨跌幅：{priceChangePercent:F2}%";
 
-            // 发送消息
             await botClient.SendTextMessageAsync(chatId, reply, ParseMode.Html);
         }
     }
     catch (Exception ex)
     {
+        Console.WriteLine($"查询时发生错误：{ex.Message}");
         await botClient.SendTextMessageAsync(chatId, $"查询时发生错误：{ex.Message}");
     }
 }
