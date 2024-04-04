@@ -115,6 +115,10 @@ public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient
         var utcDateTime = dateTime.ToUniversalTime();
         var unixTimestamp = ((DateTimeOffset)utcDateTime).ToUnixTimeMilliseconds();
 
+        // 计算15分钟和1小时前的时间戳
+        var unixTimestamp15MinAgo = unixTimestamp - 900000; // 15分钟前
+        var unixTimestamp1HourAgo = unixTimestamp - 3600000; // 1小时前
+
         string priceType = "现货";
         string priceUrl = $"https://api.binance.com/api/v3/ticker/price?symbol={symbol}USDT";
         string klineUrl = $"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1m&startTime={unixTimestamp}&endTime={unixTimestamp + 60000}";
@@ -135,12 +139,10 @@ public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient
                 klineUrl = $"https://fapi.binance.com/fapi/v1/klines?symbol={symbol}USDT&interval=1m&startTime={unixTimestamp}&endTime={unixTimestamp + 60000}";
 
                 currentPriceResponse = await httpClient.GetStringAsync(priceUrl);
-                //Console.WriteLine($"合约价格API返回的数据: {currentPriceResponse}");
                 currentPriceData = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(currentPriceResponse);
                 currentPrice = currentPriceData?["price"].GetString();
 
                 klineResponse = await httpClient.GetStringAsync(klineUrl);
-                //Console.WriteLine($"合约K线API返回的数据: {klineResponse}");
                 klineData = JsonSerializer.Deserialize<List<List<JsonElement>>>(klineResponse);
 
                 if (klineData == null || klineData.Count == 0)
@@ -151,12 +153,31 @@ public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient
             }
 
             var openPrice = klineData[0][1].GetString();
+
+            // 获取15分钟前的价格数据
+            var klineResponse15Min = await httpClient.GetStringAsync($"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1m&startTime={unixTimestamp15MinAgo}&endTime={unixTimestamp}");
+            var klineData15Min = JsonSerializer.Deserialize<List<List<JsonElement>>>(klineResponse15Min);
+            var openPrice15Min = klineData15Min?[0][1].GetString();
+            var closePrice15Min = klineData15Min?[klineData15Min.Count - 1][4].GetString();
+            var priceChangePercent15Min = (decimal.Parse(closePrice15Min) - decimal.Parse(openPrice15Min)) / decimal.Parse(openPrice15Min) * 100;
+
+            // 获取1小时前的价格数据
+            var klineResponse1Hour = await httpClient.GetStringAsync($"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1m&startTime={unixTimestamp1HourAgo}&endTime={unixTimestamp}");
+            var klineData1Hour = JsonSerializer.Deserialize<List<List<JsonElement>>>(klineResponse1Hour);
+            var openPrice1Hour = klineData1Hour?[0][1].GetString();
+            var closePrice1Hour = klineData1Hour?[klineData1Hour.Count - 1][4].GetString();
+            var priceChangePercent1Hour = (decimal.Parse(closePrice1Hour) - decimal.Parse(openPrice1Hour)) / decimal.Parse(openPrice1Hour) * 100;
+
             var priceChangePercent = (decimal.Parse(currentPrice) - decimal.Parse(openPrice)) / decimal.Parse(openPrice) * 100;
             // 根据涨跌幅正负决定符号📈📉
-	    var trendSymbol = priceChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";	
+            var trendSymbol = priceChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";	
+            var trendSymbol15Min = priceChangePercent15Min >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            var trendSymbol1Hour = priceChangePercent1Hour >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
             var reply = $"查询币种：{symbol} {priceType}\n\n" +
                         $"初始时间：{dateTimeStr}\n" +
+                        $"前15分钟：{trendSymbol15Min} {priceChangePercent15Min:F2}%\n" +
+                        $"前60分钟：{trendSymbol1Hour} {priceChangePercent1Hour:F2}%\n" +
                         $"初始价格：{openPrice}\n" +
                         $"当前价格：{currentPrice}\n" +
                         $"涨跌幅：{trendSymbol} {priceChangePercent:F2}%";
