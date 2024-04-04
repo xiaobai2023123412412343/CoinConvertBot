@@ -154,19 +154,23 @@ public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient
 
             var openPrice = klineData[0][1].GetString();
 
-            // 获取15分钟前的价格数据
-            var klineResponse15Min = await httpClient.GetStringAsync($"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1m&startTime={unixTimestamp15MinAgo}&endTime={unixTimestamp}");
-            var klineData15Min = JsonSerializer.Deserialize<List<List<JsonElement>>>(klineResponse15Min);
-            var openPrice15Min = klineData15Min?[0][1].GetString();
-            var closePrice15Min = klineData15Min?[klineData15Min.Count - 1][4].GetString();
-            var priceChangePercent15Min = (decimal.Parse(closePrice15Min) - decimal.Parse(openPrice15Min)) / decimal.Parse(openPrice15Min) * 100;
+// 获取15分钟前的价格数据
+var startTime15MinAgo = unixTimestamp - 900000; // 15分钟前的开始时间
+var endTimeFor15Min = unixTimestamp; // 指定时间的结束时间，确保包含指定时间的整个分钟数据
+var klineResponse15Min = await httpClient.GetStringAsync($"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1m&startTime={startTime15MinAgo}&endTime={endTimeFor15Min}");
+var klineData15Min = JsonSerializer.Deserialize<List<List<JsonElement>>>(klineResponse15Min);
+var openPrice15Min = klineData15Min?[0][1].GetString();
+var closePrice15Min = klineData15Min?[klineData15Min.Count - 1][4].GetString();
+var priceChangePercent15Min = (decimal.Parse(closePrice15Min) - decimal.Parse(openPrice15Min)) / decimal.Parse(openPrice15Min) * 100;
 
-            // 获取1小时前的价格数据
-            var klineResponse1Hour = await httpClient.GetStringAsync($"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1m&startTime={unixTimestamp1HourAgo}&endTime={unixTimestamp}");
-            var klineData1Hour = JsonSerializer.Deserialize<List<List<JsonElement>>>(klineResponse1Hour);
-            var openPrice1Hour = klineData1Hour?[0][1].GetString();
-            var closePrice1Hour = klineData1Hour?[klineData1Hour.Count - 1][4].GetString();
-            var priceChangePercent1Hour = (decimal.Parse(closePrice1Hour) - decimal.Parse(openPrice1Hour)) / decimal.Parse(openPrice1Hour) * 100;
+// 获取1小时前的价格数据
+var startTime1HourAgo = unixTimestamp - 3600000; // 1小时前的开始时间
+var endTimeFor1Hour = unixTimestamp; // 指定时间的结束时间，确保包含指定时间的整个分钟数据
+var klineResponse1Hour = await httpClient.GetStringAsync($"https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval=1m&startTime={startTime1HourAgo}&endTime={endTimeFor1Hour}");
+var klineData1Hour = JsonSerializer.Deserialize<List<List<JsonElement>>>(klineResponse1Hour);
+var openPrice1Hour = klineData1Hour?[0][1].GetString();
+var closePrice1Hour = klineData1Hour?[klineData1Hour.Count - 1][4].GetString();
+var priceChangePercent1Hour = (decimal.Parse(closePrice1Hour) - decimal.Parse(openPrice1Hour)) / decimal.Parse(openPrice1Hour) * 100;
 
             var priceChangePercent = (decimal.Parse(currentPrice) - decimal.Parse(openPrice)) / decimal.Parse(openPrice) * 100;
             // 根据涨跌幅正负决定符号📈📉
