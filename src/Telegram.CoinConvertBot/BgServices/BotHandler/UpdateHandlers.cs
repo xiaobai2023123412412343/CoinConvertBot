@@ -9354,7 +9354,7 @@ if (messageText.StartsWith("/lamzhishu"))
     if (oldMacauUserQueries.ContainsKey(userId))
     {
         var (count, lastQueryDate) = oldMacauUserQueries[userId]; // 取出元组
-        if (lastQueryDate == today && count >= 3)
+        if (lastQueryDate == today && count >= 1)
         {
             try
             {
@@ -9453,7 +9453,7 @@ if (messageText.StartsWith("/xamzhishu"))
     if (newMacauUserQueries.ContainsKey(userId))
     {
         var (count, lastQueryDate) = newMacauUserQueries[userId]; // 取出元组
-        if (lastQueryDate == today && count >= 3)
+        if (lastQueryDate == today && count >= 1)
         {
             try
             {
@@ -9550,7 +9550,7 @@ if (messageText.StartsWith("/xgzhishu"))
     if (userQueries.ContainsKey(userId))
     {
         var (count, lastQueryDate) = userQueries[userId]; // 取出元组
-        if (lastQueryDate == today && count >= 3)
+        if (lastQueryDate == today && count >= 1)
         {
             try
             {
@@ -9922,7 +9922,7 @@ if (zijinCommandRegex.IsMatch(message.Text))
     if (zijinUserQueries.ContainsKey(userId))
     {
         var (count, lastQueryDate) = zijinUserQueries[userId]; // 取出元组
-        if (lastQueryDate == today && count >= 3)
+        if (lastQueryDate == today && count >= 1)
         {
             try
             {
