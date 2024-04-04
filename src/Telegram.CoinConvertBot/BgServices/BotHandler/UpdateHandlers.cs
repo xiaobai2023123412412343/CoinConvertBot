@@ -186,7 +186,14 @@ var priceChangePercent1Hour = (decimal.Parse(closePrice1Hour) - decimal.Parse(op
                         $"当前价格：{currentPrice}\n" +
                         $"涨跌幅：{trendSymbol} {priceChangePercent:F2}%";
 
-            await botClient.SendTextMessageAsync(chatId, reply, ParseMode.Html);
+// 创建内联键盘按钮
+var inlineKeyboard = new InlineKeyboardMarkup(new[]
+{
+    InlineKeyboardButton.WithCallbackData("详细信息", $"{symbol}")
+});
+
+// 使用内联键盘发送消息
+await botClient.SendTextMessageAsync(chatId, reply, ParseMode.Html, replyMarkup: inlineKeyboard);
         }
     }
     catch (Exception ex)
