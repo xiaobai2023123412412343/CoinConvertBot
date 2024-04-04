@@ -10028,8 +10028,7 @@ if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", Str
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id, 
         text: "请发送您要查询的<b>TRC-20(波场)地址：</b> ", 
-        parseMode: ParseMode.Html,
-        replyMarkup: new ForceReplyMarkup { InputFieldPlaceholder = "请输入TRC-20地址", Selective = false }
+        parseMode: ParseMode.Html
     );
 }
 // 使用正则表达式来匹配命令，允许命令后面跟随 "@机器人用户名"
