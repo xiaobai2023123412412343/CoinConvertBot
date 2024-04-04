@@ -242,7 +242,8 @@ public static async Task<string> CheckPriceDifferencesAsync()
                     {
                         foundDifference = true;
                         var fundingRate = await GetFundingRateAsync(spotPrice.Symbol);
-                        var symbolFormatted = spotPrice.Symbol.Insert(spotPrice.Symbol.Length - 4, " / "); // 在"USDT"前插入" / "
+                        var baseCurrency = spotPrice.Symbol.Substring(0, spotPrice.Symbol.Length - 4);
+			var symbolFormatted = $"<code>{baseCurrency}</code> / USDT"; // 只对币种名称使用<code>标签    
                         message += $"{symbolFormatted}\n现货价格：{TrimTrailingZeros(spotPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n合约价格：{TrimTrailingZeros(futuresPriceDecimal.ToString(CultureInfo.InvariantCulture))}\n价格差异：{differenceFormatted}%\n合约资金费率：{fundingRate}\n\n";
                         count++; // 增加已添加的币种数量
                     }
