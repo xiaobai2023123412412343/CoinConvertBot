@@ -107,7 +107,7 @@ public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient
 {
     try
     {
-        var parts = messageText.Split(' ');
+        var parts = messageText.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         var symbol = parts[0].ToUpper();
         var dateTimeStr = parts[1] + " " + parts[2];
         var dateTime = DateTime.ParseExact(dateTimeStr, "yyyy/MM/dd HH.mm", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
@@ -7828,9 +7828,9 @@ else if (message?.Text != null && (message.Text.StartsWith("z0") || message.Text
     // 如果消息文本以 "z0" 开头，则不执行翻译
     return;
 } 
-else if (Regex.IsMatch(message?.Text ?? "", @"^[a-zA-Z0-9]{2,}\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$"))
+else if (Regex.IsMatch(message?.Text ?? "", @"^[a-zA-Z0-9]{2,}\s+\d{4}/\d{2}/\d{2}\s+\d{2}\.\d{2}$"))
 {
-    // 如果消息文本符合数字货币+时间的格式，则不执行翻译
+    // 如果消息文本符合数字货币+时间的格式，并且中间允许有多个空格，则不执行翻译
     return;
 }		
 else
@@ -10621,7 +10621,7 @@ if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText
         parseMode: ParseMode.Html
     );
 }
-else if (Regex.IsMatch(messageText, @"^trx\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$", RegexOptions.IgnoreCase)) // 检查消息是否为"TRX+时间"的格式
+else if (Regex.IsMatch(messageText, @"^trx\s+\d{4}/\d{2}/\d{2}\s+\d{2}\.\d{2}$", RegexOptions.IgnoreCase)) // 检查消息是否为"TRX+时间"的格式，允许多个空格
 {
     // 如果消息是"TRX+时间"的格式，直接回复用户
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
@@ -10635,7 +10635,7 @@ else if (Regex.IsMatch(messageText, @"^trx\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$", R
         replyMarkup: inlineKeyboard
     );
 }	    
-else if (Regex.IsMatch(messageText, @"^[a-zA-Z0-9]{2,}\s\d{4}/\d{2}/\d{2}\s\d{2}\.\d{2}$")) // 检查消息是否符合币种和时间的格式
+else if (Regex.IsMatch(messageText, @"^[a-zA-Z0-9]{2,}\s+\d{4}/\d{2}/\d{2}\s+\d{2}\.\d{2}$")) // 检查消息是否符合币种和时间的格式，允许多个空格
 {
     // 如果消息符合币种和时间的格式，调用查询加密货币价格趋势的方法
     await QueryCryptoPriceTrendAsync(botClient, message.Chat.Id, messageText);
