@@ -175,7 +175,7 @@ public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient
             var trendSymbol1Hour = priceChangePercent1Hour >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
             var reply = $"查询币种：{symbol} {priceType}\n\n" +
-                        $"初始时间：{dateTimeStr}\n" +
+                        $"初始时间：<code>{dateTimeStr}</code>\n" +
                         $"前15分钟：{trendSymbol15Min} {priceChangePercent15Min:F2}%\n" +
                         $"前60分钟：{trendSymbol1Hour} {priceChangePercent1Hour:F2}%\n" +
                         $"初始价格：{openPrice}\n" +
