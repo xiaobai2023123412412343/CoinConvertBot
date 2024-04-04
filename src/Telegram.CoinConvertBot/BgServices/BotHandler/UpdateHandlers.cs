@@ -7831,10 +7831,10 @@ if (containsUsername)
 {
     return;
 }  
-// 检查输入文本是否为数字加~的组合，例如 "55~23"
-var isNumberRange = Regex.IsMatch(inputText, @"^\d+~\d+$");
+// 检查输入文本是否为数字加~或～的组合，例如 "55~23" 或 "55～23"
+var isNumberRange = Regex.IsMatch(inputText, @"^\d+[~～]\d+$");
 
-// 如果输入文本符合数字加~的组合，则不执行翻译
+// 如果输入文本符合数字加~或～的组合，则不执行翻译
 if (isNumberRange)
 {
     return;
@@ -10374,9 +10374,9 @@ if (decimal.TryParse(messageText, out decimal number))
 	//replyToMessageId: message.MessageId // 这里引用用户的消息ID    
     );
 }
-else if (messageText.Contains("~"))
+else if (messageText.Contains("~") || messageText.Contains("～"))
 {
-    var parts = messageText.Split('~');
+    var parts = messageText.Split(new[] { '~', '～' }, StringSplitOptions.RemoveEmptyEntries);
     if (parts.Length == 2 && decimal.TryParse(parts[0], out decimal start) && decimal.TryParse(parts[1], out decimal end))
     {
         string responseMessage;
