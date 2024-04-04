@@ -178,7 +178,7 @@ var priceChangePercent1Hour = (decimal.Parse(closePrice1Hour) - decimal.Parse(op
             var trendSymbol15Min = priceChangePercent15Min >= 0 ? "\U0001F4C8" : "\U0001F4C9";
             var trendSymbol1Hour = priceChangePercent1Hour >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
-            var reply = $"查询币种：{symbol} {priceType}\n\n" +
+            var reply = $"查询币种： <code>{symbol}</code>  {priceType}\n\n" +
                         $"初始时间：<code>{dateTimeStr}</code>\n" +
                         $"前15分钟：{trendSymbol15Min} {priceChangePercent15Min:F2}%\n" +
                         $"前60分钟：{trendSymbol1Hour} {priceChangePercent1Hour:F2}%\n" +
