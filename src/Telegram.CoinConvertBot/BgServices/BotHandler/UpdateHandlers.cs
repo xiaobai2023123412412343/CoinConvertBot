@@ -8061,7 +8061,12 @@ else if(update.CallbackQuery.Data == "commandList")
 自动在本群停止翻译，发送外语不再自动翻译成中文！
 
 发送 /bijiacha 自动查询币安所有现货/合约价格差
-当价格出现偏差，意味着价格波动大，套利机会来临！";
+当价格出现偏差，意味着价格波动大，套利机会来临！
+
+发送加密货币代码+时间 即可查询从查询时间到现在的涨跌幅：
+如发送：<code>btc 2024/04/04 00.00</code>
+机器人自动计算从2024/04/04 00.00到现在比特币的涨跌幅情况！
+";
 
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
