@@ -189,7 +189,11 @@ var priceChangePercent1Hour = (decimal.Parse(closePrice1Hour) - decimal.Parse(op
 // 创建内联键盘按钮
 var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
-    InlineKeyboardButton.WithCallbackData("详细信息", $"{symbol}")
+    new[] // 添加这一行来创建一个按钮数组，使得按钮可以在同一行显示
+    {
+        InlineKeyboardButton.WithCallbackData("再查一次", $"{symbol} {dateTime.ToString("yyyy/MM/dd HH.mm")}"), // 添加再查一次按钮
+        InlineKeyboardButton.WithCallbackData("详细信息", $"{symbol}")
+    }
 });
 
 // 使用内联键盘发送消息
