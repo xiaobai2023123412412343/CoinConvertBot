@@ -7864,14 +7864,14 @@ if (containsUsername)
 {
     return;
 }  
-// 检查输入文本是否为数字加~或～的组合，例如 "55~23" 或 "55～23"
-var isNumberRange = Regex.IsMatch(inputText, @"^\d+[~～]\d+$");
+// 检查输入文本是否为数字（包括小数）加~或～的组合，例如 "55~23"、"55～23" 或 "0.12~0.15"
+var isNumberRange = Regex.IsMatch(inputText, @"^\d+(\.\d+)?[~～]\d+(\.\d+)?$");
 
-// 如果输入文本符合数字加~或～的组合，则不执行翻译
+// 如果输入文本符合数字（包括小数）加~或～的组合，则不执行翻译
 if (isNumberRange)
 {
     return;
-}	    
+}    
         
         // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
         var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
