@@ -8060,7 +8060,7 @@ else if(update.CallbackQuery.Data == "commandList")
 例如发送：<code>汇率14</code>  自动计算返回：当汇率14时，手续费为 48.79%
 
 在群里发送：<code>开启兑换通知</code>/<code>关闭兑换通知</code>
-自动在本群开启或关闭机器人兑换账单播报
+自动在本群开启或关闭机器人兑换账单播报！
 
 在群里发送：<code>关闭键盘</code>
 自动把机器人键盘收回去。
@@ -8074,6 +8074,10 @@ else if(update.CallbackQuery.Data == "commandList")
 发送加密货币代码+时间 即可查询从查询时间到现在的涨跌幅：
 如发送：<code>btc 2024/04/04 00.00</code>
 机器人自动计算从2024/04/04 00.00到现在比特币的涨跌幅情况！
+
+发送单个数字自带计算正负10%的涨跌幅；
+发送两个数字（中间加~）直接返回二者的涨跌幅百分比：
+如发送： <code> 1~2  </code>机器人计算并回复：从1到2，上涨 100%！
 ";
 
     await botClient.SendTextMessageAsync(
