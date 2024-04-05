@@ -10635,7 +10635,7 @@ else if (Regex.IsMatch(messageText, @"^trx\s+\d{4}/\d{2}/\d{2}\s+\d{2}\.\d{2}$",
 
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: "TRX价格走势请进交流查看！",
+        text: "TRX价格走势请进交流群查看！",
         replyMarkup: inlineKeyboard
     );
 }	    
