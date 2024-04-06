@@ -10777,7 +10777,7 @@ if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergr
         }
     }
 }
-if (messageText.StartsWith("/jkbtc"))
+if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
 {
     if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
     {
