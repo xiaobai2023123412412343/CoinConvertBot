@@ -10120,8 +10120,8 @@ if (messageText.Contains("作者") || messageText.Contains("管理") || messageT
         replyMarkup: inlineKeyboard // 添加这行代码
     );
 }	    
-// 使用正则表达式来匹配 /zijin 命令，允许命令后面跟随 "@机器人用户名"
-var zijinCommandRegex = new Regex(@"^/zijin(@\w+)?$", RegexOptions.IgnoreCase);
+// 修改正则表达式来同时匹配 "/zijin" 命令和 "资金费率" 文本
+var zijinCommandRegex = new Regex(@"^(/zijin(@\w+)?|资金费率)$", RegexOptions.IgnoreCase);
 if (zijinCommandRegex.IsMatch(message.Text))
 {
     var userId = message.From.Id;
