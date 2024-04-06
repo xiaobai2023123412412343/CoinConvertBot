@@ -115,7 +115,7 @@ public class CryptoPriceMonitor
         {
             isMonitoringStarted = true;
             priceUpdateTimer = new Timer(async _ => await UpdatePricesAsync(), null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
-            await botClient.SendTextMessageAsync(chatId, "数据初始化中，请1分钟后查询...");
+            await botClient.SendTextMessageAsync(chatId, "数据初始化中，请15分钟后查询...");
         }
         else
         {
@@ -248,30 +248,30 @@ private static string FormatPrice(string priceStr)
 private static async Task CompareAndSendPriceChangeAsync(ITelegramBotClient botClient, long chatId)
 {
     var currentPrices = await FetchCurrentPricesAsync();
-    if (priceHistory.Count == 0)
+    if (priceHistory.Count < MaxMinutes)
     {
-        await botClient.SendTextMessageAsync(chatId, "价格数据尚未初始化，请稍后再试。");
+        int minutesToWait = MaxMinutes - priceHistory.Count;
+        await botClient.SendTextMessageAsync(chatId, $"价格数据尚未积累到15分钟，请{minutesToWait}分钟后再试。");
         return;
     }
 
-    var lastRecordedPrices = priceHistory.Last();
+    // 获取15分钟前的价格数据，即队列中的第一条数据
+    var fifteenMinutesAgoPrices = priceHistory.Peek(); // 使用 Peek() 而不是 Last()
 
     var priceChanges = currentPrices.Select(cp =>
     {
         var symbol = cp.Key.Replace("USDT", ""); // 去除币种名称中的"USDT"
         var currentPrice = cp.Value;
-        var lastRecordedPrice = lastRecordedPrices.ContainsKey(cp.Key) ? lastRecordedPrices[cp.Key] : 0m;
-        var changePercent = lastRecordedPrice != 0 ? (currentPrice - lastRecordedPrice) / lastRecordedPrice * 100 : 0;
-        // 直接使用Decimal类型，避免中间转换为字符串
+        var fifteenMinutesAgoPrice = fifteenMinutesAgoPrices.ContainsKey(cp.Key) ? fifteenMinutesAgoPrices[cp.Key] : 0m;
+        var changePercent = fifteenMinutesAgoPrice != 0 ? (currentPrice - fifteenMinutesAgoPrice) / fifteenMinutesAgoPrice * 100 : 0;
         return new { Symbol = symbol, ChangePercent = changePercent, CurrentPrice = currentPrice };
     }).ToList();
 
     var topGainers = priceChanges.OrderByDescending(p => p.ChangePercent).Take(5);
     var topLosers = priceChanges.OrderBy(p => p.ChangePercent).Take(5);
 
-    // 在构建最终消息字符串时处理价格格式，去除末尾无用的零
-    string message = "1分钟上涨：\n" + string.Join("\n", topGainers.Select(g => $"{g.Symbol.Replace("USDT", "")} 上涨：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}"))
-                     + "\n\n1分钟下跌：\n" + string.Join("\n", topLosers.Select(l => $"{l.Symbol.Replace("USDT", "")} 下跌{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"));
+    string message = "15分钟上涨：\n" + string.Join("\n", topGainers.Select(g => $"{g.Symbol} 上涨：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}"))
+                     + "\n\n15分钟下跌：\n" + string.Join("\n", topLosers.Select(l => $"{l.Symbol} 下跌{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"));
 
     await botClient.SendTextMessageAsync(chatId, message, ParseMode.Markdown);
 }
