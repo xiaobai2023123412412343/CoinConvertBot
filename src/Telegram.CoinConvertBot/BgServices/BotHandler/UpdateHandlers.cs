@@ -6649,7 +6649,7 @@ for (int i = startIndex; i < endIndex; i++)
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
@@ -8100,7 +8100,7 @@ if (isNumberRange)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|music|usd|more|usdt|tron|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jisuzhangdie|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|查询余额|地址监听|币圈行情|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|music|usd|more|usdt|tron|z0|cny|trc|home|jiankong|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|jisuzhangdie|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|查询余额|地址监听|加密货币|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -9180,7 +9180,7 @@ const string BOT_USERNAME = "yifanfubot";//机器人用户名
 const int ADMIN_ID = 1427768220;//指定管理员ID不转发
 
 // 存储机器人的所有命令
-string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/more","/music", "/cny","/lamzhishu","/xgzhishu","/xamzhishu", "/trc", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni","/bijiacha", "/jkbtc", "更多功能", "能量租赁", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "币圈行情", "外汇助手", "监控" };    
+string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/more","/music", "/cny","/lamzhishu","/xgzhishu","/xamzhishu", "/trc", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni","/bijiacha", "/jkbtc", "更多功能", "能量租赁", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "加密货币", "外汇助手", "监控" };    
 
 if (message.Type == MessageType.Text)
 {	
@@ -11823,7 +11823,7 @@ else if (messageText.StartsWith("/cny") || messageText.StartsWith("\U0001F947合
     _ = SendAdvertisementOnce(botClient, cancellationTokenSource.Token, rateRepository, FeeRate, message.Chat.Id);
 }        
 // 添加这部分代码以处理 /crypto 和 /btc 指令
-if (messageText.StartsWith("币圈行情", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
+if (messageText.StartsWith("加密货币", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
 {
     await SendCryptoPricesAsync(botClient, message, 1, false);
 }
@@ -12350,7 +12350,7 @@ USDT余额： <b>{USDT}</b>
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
@@ -12459,7 +12459,7 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
@@ -12545,7 +12545,7 @@ catch (Telegram.Bot.Exceptions.ApiRequestException ex)
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
@@ -12612,7 +12612,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
@@ -12704,7 +12704,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
@@ -12807,7 +12807,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
@@ -12910,7 +12910,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
@@ -12979,7 +12979,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
@@ -13020,7 +13020,7 @@ static async Task<Message> zulin(ITelegramBotClient botClient, Message message)
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
@@ -13136,7 +13136,7 @@ static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, 
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
-            new KeyboardButton("币圈行情"),
+            new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
         },   
