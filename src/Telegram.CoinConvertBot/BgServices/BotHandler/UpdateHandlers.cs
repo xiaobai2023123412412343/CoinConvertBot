@@ -246,7 +246,7 @@ private static async Task CompareAndSendPriceChangeAsync(ITelegramBotClient botC
     if (priceHistory.Count < MaxMinutes)
     {
         int minutesToWait = MaxMinutes - priceHistory.Count;
-        await botClient.SendTextMessageAsync(chatId, $"价格数据尚未积累到15分钟，请{minutesToWait}分钟后再试。");
+        await botClient.SendTextMessageAsync(chatId, $"价格数据尚未积累到15分钟，请{minutesToWait}分钟后再试。", parseMode: ParseMode.Html);
         return;
     }
 
@@ -269,10 +269,10 @@ private static async Task CompareAndSendPriceChangeAsync(ITelegramBotClient botC
     var topGainers = priceChanges.OrderByDescending(p => p.ChangePercent).Take(5);
     var topLosers = priceChanges.OrderBy(p => p.ChangePercent).Take(5);
 
-    string message = $"15分钟走势：\n比特币{(btcChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {btcChange.ChangePercent:F2}%, ${FormatPrice(btcChange.CurrentPrice.ToString())}\n以太坊{(ethChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {ethChange.ChangePercent:F2}%, ${FormatPrice(ethChange.CurrentPrice.ToString())}\n\n急速上涨：\n" + string.Join("\n", topGainers.Select(g => $"{g.Symbol} \U0001F4C8：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}"))
-                     + "\n\n急速下跌：\n" + string.Join("\n", topLosers.Select(l => $"{l.Symbol} \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"));
+    string message = $"<b>15分钟走势：</b>\n\n比特币{(btcChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {btcChange.ChangePercent:F2}%, ${FormatPrice(btcChange.CurrentPrice.ToString())}\n以太坊{(ethChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {ethChange.ChangePercent:F2}%, ${FormatPrice(ethChange.CurrentPrice.ToString())}\n\n<b>急速上涨：</b>\n" + string.Join("\n", topGainers.Select(g => $"<code>{g.Symbol}</code> \U0001F4C8：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}"))
+                     + "\n\n<b>急速下跌：</b>\n" + string.Join("\n", topLosers.Select(l => $"<code>{l.Symbol}</code> \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"));
 
-    await botClient.SendTextMessageAsync(chatId, message, ParseMode.Markdown);
+    await botClient.SendTextMessageAsync(chatId, message, parseMode: ParseMode.Html);
 }
 
 private static (decimal ChangePercent, decimal CurrentPrice) CalculatePriceChange(string symbol, Dictionary<string, decimal> currentPrices, Dictionary<string, decimal> fifteenMinutesAgoPrices)
