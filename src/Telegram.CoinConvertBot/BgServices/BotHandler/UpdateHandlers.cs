@@ -102,7 +102,9 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-//短期15分钟涨跌数据	
+//短期15分钟涨跌数据
+// 为 /jisuzhangdie 命令创建一个新的字典来跟踪用户查询限制
+private static Dictionary<long, (int count, DateTime lastQueryDate)> userJisuZhangdieLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
 public class CryptoPriceMonitor
 {
     private static readonly int MaxMinutes = 15;
@@ -10649,7 +10651,65 @@ else if (messageText.Contains("~") || messageText.Contains("～"))
 // 在处理消息的地方，当机器人收到 /jisuzhangdie 消息时
 if (messageText.StartsWith("/jisuzhangdie"))
 {
-    await CryptoPriceMonitor.StartMonitoringAsync(botClient, message.Chat.Id);
+    var userId = message.From.Id;
+    var today = DateTime.UtcNow.AddHours(8).Date; // 转换为北京时间并获取日期部分
+    bool allowQuery = true; // 默认允许查询
+
+    // 检查用户是否已经查询过
+    if (userJisuZhangdieLimits.ContainsKey(userId))
+    {
+        var (count, lastQueryDate) = userJisuZhangdieLimits[userId]; // 取出元组
+        if (lastQueryDate == today && count >= 1)
+        {
+            try
+            {
+                var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
+                if (member.Status == ChatMemberStatus.Left || member.Status == ChatMemberStatus.Kicked)
+                {
+                    // 用户不在群组中
+                    var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                    {
+                        InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+                    });
+
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可不限制查询！",
+                        replyMarkup: keyboard,
+                        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+                    );
+                    return;
+                }
+                // 如果用户在群组中，不需要更新查询次数，直接进行查询
+            }
+            catch (Exception)
+            {
+                // 发生异常，可能是因为机器人不在群组中或群组ID错误，允许查询
+                allowQuery = true;
+            }
+        }
+        else if (lastQueryDate != today)
+        {
+            // 如果今天是用户第一次查询，重置查询次数和日期
+            userJisuZhangdieLimits[userId] = (1, today);
+        }
+        else
+        {
+            // 如果用户今天的查询次数还没有用完，增加查询次数
+            userJisuZhangdieLimits[userId] = (count + 1, today);
+        }
+    }
+    else
+    {
+        // 如果用户之前没有查询过，添加新的记录
+        userJisuZhangdieLimits[userId] = (1, today);
+    }
+
+    if (allowQuery)
+    {
+        // 执行查询逻辑
+        await CryptoPriceMonitor.StartMonitoringAsync(botClient, message.Chat.Id);
+    }
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
