@@ -12921,11 +12921,10 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
         }
-    })	
-    {
-        ResizeKeyboard = true,
-        OneTimeKeyboard = false
-    };
+    });		
+
+        keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+        keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后不会消失。
 
     return await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
@@ -13032,11 +13031,10 @@ static async Task<Message> zulin(ITelegramBotClient botClient, Message message)
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
         }
-    })	
-    {
-        ResizeKeyboard = true, // 将键盘高度设置为最低
-        OneTimeKeyboard = false // 添加这一行，确保虚拟键盘在用户与其交互后保持可见
-    };
+    });		
+
+        keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+        keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后不会消失。
 
     return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                 text: promptText,
