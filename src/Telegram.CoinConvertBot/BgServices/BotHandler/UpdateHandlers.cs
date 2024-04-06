@@ -250,11 +250,15 @@ private static async Task CompareAndSendPriceChangeAsync(ITelegramBotClient botC
     }
 
     // 获取15分钟前的价格数据，即队列中的第一条数据
-    var fifteenMinutesAgoPrices = priceHistory.Peek(); // 使用 Peek() 而不是 Last()
+    var fifteenMinutesAgoPrices = priceHistory.Peek();
+
+    // 特别处理比特币和以太坊的价格变化
+    var btcChange = CalculatePriceChange("BTCUSDT", currentPrices, fifteenMinutesAgoPrices);
+    var ethChange = CalculatePriceChange("ETHUSDT", currentPrices, fifteenMinutesAgoPrices);
 
     var priceChanges = currentPrices.Select(cp =>
     {
-        var symbol = cp.Key.Replace("USDT", ""); // 去除币种名称中的"USDT"
+        var symbol = cp.Key.Replace("USDT", "");
         var currentPrice = cp.Value;
         var fifteenMinutesAgoPrice = fifteenMinutesAgoPrices.ContainsKey(cp.Key) ? fifteenMinutesAgoPrices[cp.Key] : 0m;
         var changePercent = fifteenMinutesAgoPrice != 0 ? (currentPrice - fifteenMinutesAgoPrice) / fifteenMinutesAgoPrice * 100 : 0;
@@ -264,10 +268,18 @@ private static async Task CompareAndSendPriceChangeAsync(ITelegramBotClient botC
     var topGainers = priceChanges.OrderByDescending(p => p.ChangePercent).Take(5);
     var topLosers = priceChanges.OrderBy(p => p.ChangePercent).Take(5);
 
-    string message = "15分钟上涨：\n" + string.Join("\n", topGainers.Select(g => $"{g.Symbol} 上涨：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}"))
-                     + "\n\n15分钟下跌：\n" + string.Join("\n", topLosers.Select(l => $"{l.Symbol} 下跌{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"));
+    string message = $"15分钟走势：\n比特币{(btcChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {btcChange.ChangePercent:F2}%, ${FormatPrice(btcChange.CurrentPrice.ToString())}\n以太坊{(ethChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {ethChange.ChangePercent:F2}%, ${FormatPrice(ethChange.CurrentPrice.ToString())}\n\n急速上涨：\n" + string.Join("\n", topGainers.Select(g => $"{g.Symbol} \U0001F4C8：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}"))
+                     + "\n\n急速下跌：\n" + string.Join("\n", topLosers.Select(l => $"{l.Symbol} \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"));
 
     await botClient.SendTextMessageAsync(chatId, message, ParseMode.Markdown);
+}
+
+private static (decimal ChangePercent, decimal CurrentPrice) CalculatePriceChange(string symbol, Dictionary<string, decimal> currentPrices, Dictionary<string, decimal> fifteenMinutesAgoPrices)
+{
+    decimal currentPrice = currentPrices.ContainsKey(symbol) ? currentPrices[symbol] : 0m;
+    decimal fifteenMinutesAgoPrice = fifteenMinutesAgoPrices.ContainsKey(symbol) ? fifteenMinutesAgoPrices[symbol] : 0m;
+    decimal changePercent = fifteenMinutesAgoPrice != 0 ? (currentPrice - fifteenMinutesAgoPrice) / fifteenMinutesAgoPrice * 100 : 0;
+    return (ChangePercent: changePercent, CurrentPrice: currentPrice);
 }
 }
 //查询指定时间的币种价格到现在的价格涨跌	
