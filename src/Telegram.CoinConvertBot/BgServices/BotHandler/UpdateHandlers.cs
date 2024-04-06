@@ -7883,7 +7883,13 @@ if (containsUsername)
 }  
 // 检查输入文本是否为数字（包括小数）加~或～的组合，例如 "55~23"、"55～23" 或 "0.12~0.15"
 var isNumberRange = Regex.IsMatch(inputText, @"^\d+(\.\d+)?[~～]\d+(\.\d+)?$");
-
+// 检查输入文本是否为以#开头的加密货币标识，例如 "#btc"
+var isCryptoSymbol = Regex.IsMatch(inputText, @"^#[a-zA-Z0-9]+$");
+// 如果输入文本符合数字（包括小数）加~或～的组合，或者是以#开头的加密货币标识，则不执行翻译
+if (isNumberRange || isCryptoSymbol)
+{
+    return;
+}
 // 如果输入文本符合数字（包括小数）加~或～的组合，则不执行翻译
 if (isNumberRange)
 {
@@ -10646,6 +10652,22 @@ if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText
         parseMode: ParseMode.Html
     );
 }
+else if (messageText.Contains("#")) // 检查消息是否包含#
+{
+    // 提取加密货币标识
+    var match = Regex.Match(messageText, @"#([a-zA-Z0-9]+)");
+    if (match.Success)
+    {
+        var symbol = match.Groups[1].Value.ToUpper(); // 加密货币标识，转大写
+        var beijingTime = DateTime.UtcNow.AddHours(8); // 将当前UTC时间转换为北京时间
+        var formattedTime = beijingTime.ToString("yyyy/MM/dd HH.mm"); // 格式化时间字符串
+
+        // 构造查询文本
+        var queryText = $"{symbol} {formattedTime}";
+        // 调用查询加密货币价格趋势的方法
+        await QueryCryptoPriceTrendAsync(botClient, message.Chat.Id, queryText);
+    }
+}	    
 else if (Regex.IsMatch(messageText, @"^trx\s+\d{4}/\d{2}/\d{2}\s+\d{2}\.\d{2}$", RegexOptions.IgnoreCase)) // 检查消息是否为"TRX+时间"的格式，允许多个空格
 {
     // 如果消息是"TRX+时间"的格式，直接回复用户
