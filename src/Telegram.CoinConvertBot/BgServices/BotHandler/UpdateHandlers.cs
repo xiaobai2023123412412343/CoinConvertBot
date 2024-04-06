@@ -102,6 +102,180 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public class CryptoPriceMonitor
+{
+    private static readonly int MaxMinutes = 15;
+    private static Queue<Dictionary<string, decimal>> priceHistory = new Queue<Dictionary<string, decimal>>(MaxMinutes);
+    private static Timer priceUpdateTimer;
+    private static bool isMonitoringStarted = false;
+
+    public static async Task StartMonitoringAsync(ITelegramBotClient botClient, long chatId)
+    {
+        if (!isMonitoringStarted)
+        {
+            isMonitoringStarted = true;
+            priceUpdateTimer = new Timer(async _ => await UpdatePricesAsync(), null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            await botClient.SendTextMessageAsync(chatId, "数据初始化中，请1分钟后查询...");
+        }
+        else
+        {
+            await CompareAndSendPriceChangeAsync(botClient, chatId);
+        }
+    }
+
+    private static async Task UpdatePricesAsync()
+    {
+        var prices = await FetchCurrentPricesAsync();
+        if (priceHistory.Count == MaxMinutes)
+        {
+            priceHistory.Dequeue(); // 移除最旧的一分钟数据
+        }
+        priceHistory.Enqueue(prices); // 添加最新的一分钟数据
+    }
+
+private static async Task<Dictionary<string, decimal>> FetchCurrentPricesAsync()
+{
+    string spotApiUrl = "https://api.binance.com/api/v3/ticker/price";
+    string futuresApiUrl = "https://fapi.binance.com/fapi/v1/ticker/price"; // 假设的合约API URL
+    int maxRetries = 3;
+    int retryDelay = 5000; // 重试间隔，单位毫秒
+
+    for (int attempt = 1; attempt <= maxRetries; attempt++)
+    {
+        try
+        {
+            // 尝试从现货API获取数据
+            using (var httpClient = new HttpClient())
+            {
+                var response = await httpClient.GetStringAsync(spotApiUrl);
+                var prices = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(response);
+                return prices.Where(p => p["symbol"].EndsWith("USDT")).ToDictionary(p => p["symbol"], p => decimal.Parse(p["price"]));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"现货API获取失败，尝试次数 {attempt}。错误: {ex.Message}");
+            if (attempt == maxRetries)
+            {
+                // 现货API尝试次数用尽，切换到合约API
+                Console.WriteLine("切换到合约API...");
+                for (int futuresAttempt = 1; futuresAttempt <= maxRetries; futuresAttempt++)
+                {
+                    try
+                    {
+                        using (var httpClient = new HttpClient())
+                        {
+                            var response = await httpClient.GetStringAsync(futuresApiUrl);
+                            var prices = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(response);
+                            return prices.Where(p => p["symbol"].EndsWith("USDT")).ToDictionary(p => p["symbol"], p => decimal.Parse(p["price"]));
+                        }
+                    }
+                    catch (Exception futuresEx)
+                    {
+                        Console.WriteLine($"合约API获取失败，尝试次数 {futuresAttempt}。错误: {futuresEx.Message}");
+                        if (futuresAttempt == maxRetries)
+                        {
+                            // 合约API尝试次数用尽，暂停任务并清空数据
+                            Console.WriteLine("合约API获取失败，任务暂停，清空数据...");
+                            priceHistory.Clear();
+                            isMonitoringStarted = false; // 停止监控
+                            return null; // 或者抛出异常，根据您的需求处理
+                        }
+                    }
+                    await Task.Delay(retryDelay);
+                }
+            }
+        }
+        await Task.Delay(retryDelay);
+    }
+
+    return null; // 如果所有尝试都失败，返回null或适当处理
+}
+
+private static async Task<Dictionary<string, decimal>> FetchPricesFromBackupApi(string url, int maxRetries, int retryDelay)
+{
+    for (int attempt = 1; attempt <= maxRetries; attempt++)
+    {
+        try
+        {
+            using (var httpClient = new HttpClient())
+            {
+                var response = await httpClient.GetStringAsync(url);
+                var prices = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(response);
+                return prices.Where(p => p["symbol"].EndsWith("USDT")).ToDictionary(p => p["symbol"], p => decimal.Parse(p["price"]));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"备用API尝试 {attempt} 失败: {ex.Message}");
+            if (attempt == maxRetries)
+            {
+                Console.WriteLine("备用API获取失败，停止任务并清空数据...");
+                StopMonitoringAndClearData();
+            }
+            await Task.Delay(retryDelay);
+        }
+    }
+
+    // 如果所有尝试都失败，返回空字典
+    return new Dictionary<string, decimal>();
+}
+
+private static void StopMonitoringAndClearData()
+{
+    priceUpdateTimer?.Change(Timeout.Infinite, 0); // 停止定时器
+    priceHistory.Clear(); // 清空价格历史
+    isMonitoringStarted = false; // 重置监控状态
+    Console.WriteLine("监控任务已停止，数据已清空。");
+}
+private static string FormatPrice(string priceStr)
+{
+    // 将字符串转换为decimal，确保不丢失精度
+    decimal price = decimal.Parse(priceStr, CultureInfo.InvariantCulture);
+
+    // 转换回字符串，去除末尾无用的零
+    // 使用 "G29" 保证转换回来的字符串不会使用科学记数法
+    string formattedPrice = price.ToString("G29", CultureInfo.InvariantCulture);
+
+    // 如果数字是整数但以 ".0" 结尾，去除这部分
+    if (formattedPrice.Contains(".") && formattedPrice.EndsWith("0"))
+    {
+        formattedPrice = formattedPrice.TrimEnd('0').TrimEnd('.');
+    }
+
+    return formattedPrice;
+}
+private static async Task CompareAndSendPriceChangeAsync(ITelegramBotClient botClient, long chatId)
+{
+    var currentPrices = await FetchCurrentPricesAsync();
+    if (priceHistory.Count == 0)
+    {
+        await botClient.SendTextMessageAsync(chatId, "价格数据尚未初始化，请稍后再试。");
+        return;
+    }
+
+    var lastRecordedPrices = priceHistory.Last();
+
+    var priceChanges = currentPrices.Select(cp =>
+    {
+        var symbol = cp.Key.Replace("USDT", ""); // 去除币种名称中的"USDT"
+        var currentPrice = cp.Value;
+        var lastRecordedPrice = lastRecordedPrices.ContainsKey(cp.Key) ? lastRecordedPrices[cp.Key] : 0m;
+        var changePercent = lastRecordedPrice != 0 ? (currentPrice - lastRecordedPrice) / lastRecordedPrice * 100 : 0;
+        // 直接使用Decimal类型，避免中间转换为字符串
+        return new { Symbol = symbol, ChangePercent = changePercent, CurrentPrice = currentPrice };
+    }).ToList();
+
+    var topGainers = priceChanges.OrderByDescending(p => p.ChangePercent).Take(5);
+    var topLosers = priceChanges.OrderBy(p => p.ChangePercent).Take(5);
+
+    // 在构建最终消息字符串时处理价格格式，去除末尾无用的零
+    string message = "1分钟上涨：\n" + string.Join("\n", topGainers.Select(g => $"{g.Symbol.Replace("USDT", "")} 上涨：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}"))
+                     + "\n\n1分钟下跌：\n" + string.Join("\n", topLosers.Select(l => $"{l.Symbol.Replace("USDT", "")} 下跌{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"));
+
+    await botClient.SendTextMessageAsync(chatId, message, ParseMode.Markdown);
+}
+}
 //查询指定时间的币种价格到现在的价格涨跌	
 public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient, long chatId, string messageText)
 {
@@ -10464,6 +10638,11 @@ else if (messageText.Contains("~") || messageText.Contains("～"))
 	    //replyToMessageId: message.MessageId // 这里引用用户的消息ID	
         );
     }
+}
+// 在处理消息的地方，当机器人收到 /jisuzhangdie 消息时
+if (messageText.StartsWith("/jisuzhangdie"))
+{
+    await CryptoPriceMonitor.StartMonitoringAsync(botClient, message.Chat.Id);
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
