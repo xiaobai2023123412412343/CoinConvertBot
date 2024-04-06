@@ -233,15 +233,9 @@ private static string FormatPrice(string priceStr)
     // 将字符串转换为decimal，确保不丢失精度
     decimal price = decimal.Parse(priceStr, CultureInfo.InvariantCulture);
 
-    // 转换回字符串，去除末尾无用的零
     // 使用 "G29" 保证转换回来的字符串不会使用科学记数法
-    string formattedPrice = price.ToString("G29", CultureInfo.InvariantCulture);
-
-    // 如果数字是整数但以 ".0" 结尾，去除这部分
-    if (formattedPrice.Contains(".") && formattedPrice.EndsWith("0"))
-    {
-        formattedPrice = formattedPrice.TrimEnd('0').TrimEnd('.');
-    }
+    // 并且使用 "0.#############################" 格式化字符串以去除末尾无用的零
+    string formattedPrice = price.ToString("0.#############################", CultureInfo.InvariantCulture);
 
     return formattedPrice;
 }
