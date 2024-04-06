@@ -201,7 +201,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     },
     new[] // 第三行按钮
     {
-        InlineKeyboardButton.WithCallbackData($"{symbol} 价格变动提醒", $"监控 {symbol}")
+        InlineKeyboardButton.WithCallbackData($"订阅 {symbol} 价格变动提醒", $"监控 {symbol}")
     }
 });
 
