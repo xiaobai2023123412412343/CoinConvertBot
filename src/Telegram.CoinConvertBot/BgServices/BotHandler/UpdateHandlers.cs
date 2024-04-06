@@ -6673,15 +6673,9 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         InlineKeyboardButton.WithCallbackData("上一页", $"shangyiye_{page - 1}"),
         InlineKeyboardButton.WithCallbackData("下一页", $"xiayiye_{page + 1}"),
     },
-    new [] // 第二行按钮
-    {
-        InlineKeyboardButton.WithCallbackData("资金费", $"zijinn"),
-        InlineKeyboardButton.WithCallbackData("涨跌榜", $"zhangdiee"),
-    },
-    new [] // 第三行按钮
+    new [] // 第2行按钮
     {
         InlineKeyboardButton.WithCallbackData("信号广场", $"bijiacha"),
-        InlineKeyboardButton.WithCallbackData("行情监控", $"jkbtcc"),	
     },
 });
 
