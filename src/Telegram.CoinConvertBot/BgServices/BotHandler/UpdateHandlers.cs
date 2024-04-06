@@ -1849,7 +1849,11 @@ public static class PriceMonitor
     {
         timer = new Timer(CheckPrice, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
     }
-
+    // 新增公开方法以获取最新价格
+    public static async Task<decimal?> GetLatestPrice(string symbol)
+    {
+        return await GetPrice(symbol); // 调用私有方法获取价格
+    }
     public static async Task Monitor(ITelegramBotClient botClient, long userId, string symbol)
     {
         symbol = symbol.ToUpper();
@@ -10530,40 +10534,44 @@ if (messageText.StartsWith("/jkbtc"))
             text: "请私聊机器人启动监控！"
         );
     }
+else
+{
+    string baseResponseText = "发送 监控+数字货币 例如发送：监控 BTC\n则启动监控任务，当币价涨跌超过5%会触发提醒\n\n发送 取消监控+数字货币 例如发送： 取消监控 BTC\n则停止监控任务，后续涨跌不再下发币价波动提醒！";
+
+    if (PriceMonitor.monitorInfos.ContainsKey(message.Chat.Id) && PriceMonitor.monitorInfos[message.Chat.Id].Count > 0)
+    {
+        int monitoredCount = PriceMonitor.monitorInfos[message.Chat.Id].Count;
+        string monitoringListText = "\n\n监控列表：\n\n";
+        monitoringListText += $"您当前监控 <b>{monitoredCount}</b> 个加密货币价格变动！\n\n";
+
+        foreach (var monitorInfo in PriceMonitor.monitorInfos[message.Chat.Id])
+        {
+            decimal? currentPrice = await PriceMonitor.GetLatestPrice(monitorInfo.Symbol); // 使用新方法获取最新价格
+            if (currentPrice.HasValue)
+            {
+                decimal priceChangePercent = ((currentPrice.Value - monitorInfo.LastPrice) / monitorInfo.LastPrice) * 100;
+                string priceChangeDirection = priceChangePercent > 0 ? "\U0001F4C8" : "\U0001F4C9";
+                string formattedInitialPrice = monitorInfo.LastPrice >= 1 ? monitorInfo.LastPrice.ToString("F2") : monitorInfo.LastPrice.ToString("0.00000000");
+                string formattedCurrentPrice = currentPrice.Value >= 1 ? currentPrice.Value.ToString("F2") : currentPrice.Value.ToString("0.00000000");
+                monitoringListText += $"<code>{monitorInfo.Symbol}</code>/USDT   初始价格：$ {formattedInitialPrice}\n最新价格：$ {formattedCurrentPrice}  {priceChangeDirection} {Math.Abs(priceChangePercent).ToString("0.00")}%\n\n";
+            }
+        }
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: baseResponseText + monitoringListText,
+            parseMode: ParseMode.Html
+        );
+    }
     else
     {
-        string baseResponseText = "发送 监控+数字货币 例如发送：监控 BTC\n则启动监控任务，当币价涨跌超过5%会触发提醒\n\n发送 取消监控+数字货币 例如发送： 取消监控 BTC\n则停止监控任务，后续涨跌不再下发币价波动提醒！";
-
-        // 检查用户是否有监控的币种
-        if (PriceMonitor.monitorInfos.ContainsKey(message.Chat.Id) && PriceMonitor.monitorInfos[message.Chat.Id].Count > 0)
-        {
-            int monitoredCount = PriceMonitor.monitorInfos[message.Chat.Id].Count;
-            string monitoringListText = "\n\n监控列表：\n\n";
-            monitoringListText += $"您当前监控 <b>{monitoredCount}</b> 个加密货币价格变动！\n\n";
-
-            // 添加用户监控的币种名称和价格
-            foreach (var monitorInfo in PriceMonitor.monitorInfos[message.Chat.Id])
-            {
-                string formattedPrice = monitorInfo.LastPrice >= 1 ? monitorInfo.LastPrice.ToString("F2") : monitorInfo.LastPrice.ToString("0.00000000");
-                monitoringListText += $"<code>{monitorInfo.Symbol}</code>/USDT   价格：$ {formattedPrice}\n";
-            }
-
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: baseResponseText + monitoringListText,
-                parseMode: ParseMode.Html
-            );
-        }
-        else
-        {
-            // 如果用户没有监控任何币种，只回复原有的文本
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: baseResponseText,
-                parseMode: ParseMode.Html
-            );
-        }
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: baseResponseText,
+            parseMode: ParseMode.Html
+        );
     }
+}
 }
 if (messageText.StartsWith("监控 "))
 {
