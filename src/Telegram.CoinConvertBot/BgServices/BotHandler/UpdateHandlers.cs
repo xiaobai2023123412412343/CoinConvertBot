@@ -10648,8 +10648,8 @@ else if (messageText.Contains("~") || messageText.Contains("～"))
         );
     }
 }
-// 在处理消息的地方，当机器人收到 /jisuzhangdie 消息时
-if (messageText.StartsWith("/jisuzhangdie"))
+// 在处理消息的地方，当机器人收到 /jisuzhangdie 消息或者 "市场异动" 文本时
+if (messageText.StartsWith("/jisuzhangdie") || messageText.Contains("市场异动"))
 {
     var userId = message.From.Id;
     var today = DateTime.UtcNow.AddHours(8).Date; // 转换为北京时间并获取日期部分
