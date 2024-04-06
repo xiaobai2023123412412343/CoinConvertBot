@@ -10310,8 +10310,8 @@ if (messageText.Equals("/chaxun", StringComparison.OrdinalIgnoreCase))
         parseMode: ParseMode.Html
     );
 }
-///faxian指令查询涨跌榜单
-var faxianCommandRegex = new Regex(@"^/faxian(@\w+)?$", RegexOptions.IgnoreCase);
+// 修改正则表达式来同时匹配 "/faxian" 命令和 "龙虎榜单" 文本
+var faxianCommandRegex = new Regex(@"^(/faxian(@\w+)?|龙虎榜单)$", RegexOptions.IgnoreCase);
 if (faxianCommandRegex.IsMatch(message.Text))
 {
     var userId = message.From.Id;
