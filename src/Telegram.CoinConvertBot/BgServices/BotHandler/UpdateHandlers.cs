@@ -102,6 +102,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//短期15分钟涨跌数据	
 public class CryptoPriceMonitor
 {
     private static readonly int MaxMinutes = 15;
