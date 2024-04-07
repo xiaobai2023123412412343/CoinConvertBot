@@ -138,8 +138,8 @@ public class CryptoPriceMonitor
 
 private static async Task<Dictionary<string, decimal>> FetchCurrentPricesAsync()
 {
-    string spotApiUrl = "https://api.binance.com/api/v3/ticker/price";
-    string futuresApiUrl = "https://fapi.binance.com/fapi/v1/ticker/price"; // 假设的合约API URL
+    string spotApiUrl = "https://api.binance.com/api/v3/ticker/price";//币安现货价格
+    string futuresApiUrl = "https://fapi.binance.com/fapi/v1/ticker/price"; // 币安合约价格
     int maxRetries = 3;
     int retryDelay = 5000; // 重试间隔，单位毫秒
 
