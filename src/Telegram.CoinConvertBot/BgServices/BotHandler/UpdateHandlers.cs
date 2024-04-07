@@ -252,7 +252,7 @@ private static async Task CompareAndSendPriceChangeAsync(ITelegramBotClient botC
         return;
     }
 
-    // 获取15分钟前的价格数据，即队列中的第一条数据
+    // 获取30分钟前的价格数据，即队列中的第一条数据
     var fifteenMinutesAgoPrices = priceHistory.Peek();
 
     // 特别处理比特币和以太坊的价格变化
