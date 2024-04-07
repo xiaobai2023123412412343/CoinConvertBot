@@ -102,7 +102,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-//短期15分钟涨跌数据
+//短期30分钟涨跌数据
 // 为 /jisuzhangdie 命令创建一个新的字典来跟踪用户查询限制
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userJisuZhangdieLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
 public class CryptoPriceMonitor
