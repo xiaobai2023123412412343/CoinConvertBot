@@ -388,7 +388,7 @@ var priceChangePercent1Hour = (decimal.Parse(closePrice1Hour) - decimal.Parse(op
                         $"当前价格：{currentPrice}\n" +
                         $"初始到现在涨跌幅：{trendSymbol} {priceChangePercent:F2}%\n" +
                         $"近24小时涨跌幅：{trendSymbol24Hours} {priceChangePercent24Hours:F2}%\n" +
-                        $"当日涨跌幅：{trendSymbolDay} {priceChangePercentDay:F2}%";
+                        $"北京时间当日涨跌幅：{trendSymbolDay} {priceChangePercentDay:F2}%";
 
 // 创建内联键盘按钮
 var inlineKeyboard = new InlineKeyboardMarkup(new[]
