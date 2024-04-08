@@ -339,7 +339,7 @@ public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient
 		
 // 获取当前UTC时间，并转换为北京时间进行调试输出
 var beijingTimeNow = DateTime.UtcNow.AddHours(8);
-Console.WriteLine($"当前时间是 {beijingTimeNow.ToString("yyyy-MM-dd HH:mm:ss")}"); // 增加调试输出
+//Console.WriteLine($"当前时间是 {beijingTimeNow.ToString("yyyy-MM-dd HH:mm:ss")}"); // 增加调试输出
 
 // 计算北京时间当日0点对应的UTC时间
 // 注意：这里创建的DateTime已经是UTC时间，因为我们从UTC时间减去8小时得到的
@@ -347,7 +347,7 @@ var startOfBeijingDayUtc = new DateTime(beijingTimeNow.Year, beijingTimeNow.Mont
 var unixTimestampStartOfBeijingDay = ((DateTimeOffset)startOfBeijingDayUtc).ToUnixTimeMilliseconds();
 
 // 调试输出，确保我们有正确的北京时间0点对应的UTC时间
-Console.WriteLine($"北京时间0点对应的UTC时间是 {startOfBeijingDayUtc.ToString("yyyy-MM-dd HH:mm:ss")}"); 
+//Console.WriteLine($"北京时间0点对应的UTC时间是 {startOfBeijingDayUtc.ToString("yyyy-MM-dd HH:mm:ss")}"); 
 
 // 获取当前时间的Unix时间戳
 var unixTimestampNow = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeMilliseconds();
@@ -463,11 +463,11 @@ private static async Task<decimal> GetPriceChangePercentAsync(HttpClient httpCli
             // 增加调试输出
             if (is24Hours)
             {
-                Console.WriteLine($"24小时前的开盘价是：{openPrice}, 当前价格是：{currentPrice}");
+                //Console.WriteLine($"24小时前的开盘价是：{openPrice}, 当前价格是：{currentPrice}");
             }
             else
             {
-                Console.WriteLine($"北京时间0点的开盘价是：{openPrice}, 当前价格是：{currentPrice}");
+                //Console.WriteLine($"北京时间0点的开盘价是：{openPrice}, 当前价格是：{currentPrice}");
             }
 
             return priceChangePercent;
