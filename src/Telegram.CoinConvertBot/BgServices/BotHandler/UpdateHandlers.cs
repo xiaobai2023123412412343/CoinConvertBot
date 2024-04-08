@@ -11030,13 +11030,31 @@ else if (messageText.Contains("#")) // 检查消息是否包含#
     if (match.Success)
     {
         var symbol = match.Groups[1].Value.ToUpper(); // 加密货币标识，转大写
-        var beijingTime = DateTime.UtcNow.AddHours(8); // 将当前UTC时间转换为北京时间
-        var formattedTime = beijingTime.ToString("yyyy/MM/dd HH.mm"); // 格式化时间字符串
+        
+        // 特殊处理#TRX
+        if (symbol == "TRX")
+        {
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+            });
 
-        // 构造查询文本
-        var queryText = $"{symbol} {formattedTime}";
-        // 调用查询加密货币价格趋势的方法
-        await QueryCryptoPriceTrendAsync(botClient, message.Chat.Id, queryText);
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "TRX价格走势请进交流群查看！",
+                replyMarkup: inlineKeyboard
+            );
+        }
+        else
+        {
+            var beijingTime = DateTime.UtcNow.AddHours(8); // 将当前UTC时间转换为北京时间
+            var formattedTime = beijingTime.ToString("yyyy/MM/dd HH.mm"); // 格式化时间字符串
+
+            // 构造查询文本
+            var queryText = $"{symbol} {formattedTime}";
+            // 调用查询加密货币价格趋势的方法
+            await QueryCryptoPriceTrendAsync(botClient, message.Chat.Id, queryText);
+        }
     }
 }	    
 else if (Regex.IsMatch(messageText, @"^trx\s+\d{4}/\d{2}/\d{2}\s+\d{2}\.\d{2}$", RegexOptions.IgnoreCase)) // 检查消息是否为"TRX+时间"的格式，允许多个空格
