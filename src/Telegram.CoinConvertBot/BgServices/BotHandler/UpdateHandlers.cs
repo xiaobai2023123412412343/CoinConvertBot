@@ -336,7 +336,24 @@ public static async Task QueryCryptoPriceTrendAsync(ITelegramBotClient botClient
             }
 
             var openPrice = klineData[0][1].GetString();
+		
+    // 获取当前UTC时间，并转换为北京时间
+    var beijingTimeNow = DateTime.UtcNow.AddHours(8);
+    // 计算北京时间当日0点对应的UTC时间
+    var startOfBeijingDayUtc = new DateTime(beijingTimeNow.Year, beijingTimeNow.Month, beijingTimeNow.Day, 0, 0, 0, DateTimeKind.Local).AddHours(-8);
+    var unixTimestampStartOfBeijingDay = ((DateTimeOffset)startOfBeijingDayUtc).ToUnixTimeMilliseconds();
 
+    // 获取当前时间的Unix时间戳
+    var unixTimestampNow = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeMilliseconds();
+
+    // 获取近24小时涨跌幅
+    var unixTimestamp24HoursAgo = unixTimestampNow - 86400000; // 24小时前
+    decimal priceChangePercent24Hours = await GetPriceChangePercentAsync(httpClient, symbol, unixTimestamp24HoursAgo, unixTimestampNow);
+
+    // 获取当日涨跌幅（基于北京时间0点）
+    decimal priceChangePercentDay = await GetPriceChangePercentAsync(httpClient, symbol, unixTimestampStartOfBeijingDay, unixTimestampNow);
+
+		
 // 获取15分钟前的价格数据
 var startTime15MinAgo = unixTimestamp - 900000; // 15分钟前的开始时间
 var endTimeFor15Min = unixTimestamp; // 指定时间的结束时间，确保包含指定时间的整个分钟数据
@@ -360,6 +377,8 @@ var priceChangePercent1Hour = (decimal.Parse(closePrice1Hour) - decimal.Parse(op
             var trendSymbol = priceChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";	
             var trendSymbol15Min = priceChangePercent15Min >= 0 ? "\U0001F4C8" : "\U0001F4C9";
             var trendSymbol1Hour = priceChangePercent1Hour >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+	    string trendSymbol24Hours = priceChangePercent24Hours >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            string trendSymbolDay = priceChangePercentDay >= 0 ? "\U0001F4C8" : "\U0001F4C9";	
 
             var reply = $"查询币种： <code>{symbol}</code>  {priceType}\n\n" +
                         $"初始时间：<code>{dateTimeStr}</code>\n" +
@@ -367,7 +386,9 @@ var priceChangePercent1Hour = (decimal.Parse(closePrice1Hour) - decimal.Parse(op
                         $"前60分钟：{trendSymbol1Hour} {priceChangePercent1Hour:F2}%\n" +
                         $"初始价格：{openPrice}\n" +
                         $"当前价格：{currentPrice}\n" +
-                        $"初始到现在涨跌幅：{trendSymbol} {priceChangePercent:F2}%";
+                        $"初始到现在涨跌幅：{trendSymbol} {priceChangePercent:F2}%\n" +
+                        $"近24小时涨跌幅：{trendSymbol24Hours} {priceChangePercent24Hours:F2}%\n" +
+                        $"当日涨跌幅：{trendSymbolDay} {priceChangePercentDay:F2}%";
 
 // 创建内联键盘按钮
 var inlineKeyboard = new InlineKeyboardMarkup(new[]
@@ -398,6 +419,50 @@ await botClient.SendTextMessageAsync(chatId, reply, ParseMode.Html, replyMarkup:
         await botClient.SendTextMessageAsync(chatId, $"查询时发生错误：{ex.Message}");
     }
 }
+private static async Task<decimal> GetPriceChangePercentAsync(HttpClient httpClient, string symbol, long startTime, long endTime, bool is24Hours = false)
+{
+    string apiUrlFormat = "https://api.binance.com/api/v3/klines?symbol={0}USDT&interval=1m&startTime={1}&endTime={2}";
+    string futuresApiUrlFormat = "https://fapi.binance.com/fapi/v1/klines?symbol={0}USDT&interval=1m&startTime={1}&endTime={2}";
+
+    string apiUrl = string.Format(apiUrlFormat, symbol, startTime, endTime);
+    string futuresApiUrl = string.Format(futuresApiUrlFormat, symbol, startTime, endTime);
+
+    try
+    {
+        // 尝试使用现货API
+        var response = await httpClient.GetStringAsync(apiUrl);
+        var klineData = JsonSerializer.Deserialize<List<List<JsonElement>>>(response);
+        if (klineData != null && klineData.Count > 0)
+        {
+            var openPrice = decimal.Parse(klineData[0][1].GetString());
+            var closePrice = decimal.Parse(klineData[^1][4].GetString());
+            return (closePrice - openPrice) / openPrice * 100;
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"现货API获取失败: {ex.Message}");
+        // 现货API失败，尝试合约API
+        try
+        {
+            var response = await httpClient.GetStringAsync(futuresApiUrl);
+            var klineData = JsonSerializer.Deserialize<List<List<JsonElement>>>(response);
+            if (klineData != null && klineData.Count > 0)
+            {
+                var openPrice = decimal.Parse(klineData[0][1].GetString());
+                var closePrice = decimal.Parse(klineData[^1][4].GetString());
+                return (closePrice - openPrice) / openPrice * 100;
+            }
+        }
+        catch (Exception futuresEx)
+        {
+            Console.WriteLine($"合约API获取失败: {futuresEx.Message}");
+        }
+    }
+
+    // 如果两个API都失败，返回0
+    return 0;
+}	
 //现货合约价格差以及字典
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userQueryLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();
 public static class CryptoPriceChecker
