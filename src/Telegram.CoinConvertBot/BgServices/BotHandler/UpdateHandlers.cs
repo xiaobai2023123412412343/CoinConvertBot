@@ -258,18 +258,27 @@ private static async Task CompareAndSendPriceChangeAsync(ITelegramBotClient botC
     // 特别处理比特币和以太坊的价格变化
     var btcChange = CalculatePriceChange("BTCUSDT", currentPrices, fifteenMinutesAgoPrices);
     var ethChange = CalculatePriceChange("ETHUSDT", currentPrices, fifteenMinutesAgoPrices);
+	
+    // 过滤掉TRXUSDT交易对
+    var filteredCurrentPrices = currentPrices.Where(p => p.Key != "TRXUSDT").ToDictionary(p => p.Key, p => p.Value);
+    var filteredFifteenMinutesAgoPrices = fifteenMinutesAgoPrices.Where(p => p.Key != "TRXUSDT").ToDictionary(p => p.Key, p => p.Value);
 
-    var priceChanges = currentPrices.Select(cp =>
+    var priceChanges = filteredCurrentPrices.Select(cp =>
     {
         var symbol = cp.Key.Replace("USDT", "");
         var currentPrice = cp.Value;
-        var fifteenMinutesAgoPrice = fifteenMinutesAgoPrices.ContainsKey(cp.Key) ? fifteenMinutesAgoPrices[cp.Key] : 0m;
+        var fifteenMinutesAgoPrice = filteredFifteenMinutesAgoPrices.ContainsKey(cp.Key) ? filteredFifteenMinutesAgoPrices[cp.Key] : 0m;
         var changePercent = fifteenMinutesAgoPrice != 0 ? (currentPrice - fifteenMinutesAgoPrice) / fifteenMinutesAgoPrice * 100 : 0;
         return new { Symbol = symbol, ChangePercent = changePercent, CurrentPrice = currentPrice };
     }).ToList();
 
-    var topGainers = priceChanges.OrderByDescending(p => p.ChangePercent).Take(5);
-    var topLosers = priceChanges.OrderBy(p => p.ChangePercent).Take(5);
+    // 根据变化百分比排序，并考虑过滤TRXUSDT后的条目数量
+    var topGainers = priceChanges.OrderByDescending(p => p.ChangePercent).Take(5 + (currentPrices.ContainsKey("TRXUSDT") ? 1 : 0));
+    var topLosers = priceChanges.OrderBy(p => p.ChangePercent).Take(5 + (currentPrices.ContainsKey("TRXUSDT") ? 1 : 0));
+
+    // 如果TRXUSDT存在，确保只取前5条数据
+    var finalTopGainers = topGainers.Take(5);
+    var finalTopLosers = topLosers.Take(5);
 
     string message = $"<b>30分钟走势：</b>\n\n比特币{(btcChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {btcChange.ChangePercent:F2}%, ${FormatPrice(btcChange.CurrentPrice.ToString())}\n以太坊{(ethChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {ethChange.ChangePercent:F2}%, ${FormatPrice(ethChange.CurrentPrice.ToString())}\n\n<b>急速上涨：</b>\n" + string.Join("\n", topGainers.Select(g => $"<code>{g.Symbol}</code> \U0001F4C8：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}"))
                      + "\n\n<b>急速下跌：</b>\n" + string.Join("\n", topLosers.Select(l => $"<code>{l.Symbol}</code> \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"));
