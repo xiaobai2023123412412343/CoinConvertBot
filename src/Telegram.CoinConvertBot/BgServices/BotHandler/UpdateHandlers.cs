@@ -392,7 +392,7 @@ var priceChangePercent1Hour = (decimal.Parse(closePrice1Hour) - decimal.Parse(op
                         $"前60分钟：{trendSymbol1Hour} {priceChangePercent1Hour:F2}%\n" +
                         $"初始价格：{openPrice}\n" +
                         $"当前价格：{currentPrice}\n" +
-                        $"初始到现在涨跌幅：{trendSymbol} {priceChangePercent:F2}%\n" +
+                        $"初始到现在涨跌幅：{trendSymbol} {priceChangePercent:F2}%\n\n" +
                         $"近24小时涨跌幅：{trendSymbol24Hours} {priceChangePercent24Hours:F2}%\n" +
                         $"北京时间当日涨跌幅：{trendSymbolDay} {priceChangePercentDay:F2}%";
 
@@ -427,15 +427,22 @@ await botClient.SendTextMessageAsync(chatId, reply, ParseMode.Html, replyMarkup:
 }
 private static async Task<decimal> GetPriceChangePercentAsync(HttpClient httpClient, string symbol, long startTime, long endTime, bool is24Hours = false)
 {
-    // 尝试使用现货API
+    // 获取当前价格
+    string currentPriceUrl = $"https://api.binance.com/api/v3/ticker/price?symbol={symbol}USDT";
+    var currentPriceResponse = await httpClient.GetStringAsync(currentPriceUrl);
+    var currentPriceData = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(currentPriceResponse);
+    var currentPriceStr = currentPriceData?["price"].GetString();
+    decimal currentPrice = decimal.Parse(currentPriceStr);
+
+    // 尝试使用现货API获取开盘价
     string spotApiUrlFormat = "https://api.binance.com/api/v3/klines?symbol={0}USDT&interval=1m&startTime={1}&endTime={2}";
     string spotApiUrl = string.Format(spotApiUrlFormat, symbol, startTime, endTime);
 
-    // 尝试使用合约API
+    // 尝试使用合约API获取开盘价
     string futuresApiUrlFormat = "https://fapi.binance.com/fapi/v1/klines?symbol={0}USDT&interval=1m&startTime={1}&endTime={2}";
     string futuresApiUrl = string.Format(futuresApiUrlFormat, symbol, startTime, endTime);
 
-    // 尝试获取现货K线数据
+    // 尝试获取K线数据
     var response = await TryGetKlineDataAsync(httpClient, spotApiUrl);
     if (response == null)
     {
@@ -449,24 +456,25 @@ private static async Task<decimal> GetPriceChangePercentAsync(HttpClient httpCli
         if (klineData != null && klineData.Count > 0)
         {
             var openPrice = decimal.Parse(klineData[0][1].GetString());
-            var closePrice = decimal.Parse(klineData[^1][4].GetString());
+
+            // 计算涨跌幅
+            var priceChangePercent = (currentPrice - openPrice) / openPrice * 100;
 
             // 增加调试输出
             if (is24Hours)
             {
-                Console.WriteLine($"24小时前的开盘价是：{openPrice}");
+                Console.WriteLine($"24小时前的开盘价是：{openPrice}, 当前价格是：{currentPrice}");
             }
             else
             {
-                Console.WriteLine($"北京时间0点的开盘价是：{openPrice}");
+                Console.WriteLine($"北京时间0点的开盘价是：{openPrice}, 当前价格是：{currentPrice}");
             }
 
-            // 计算涨跌幅
-            return (closePrice - openPrice) / openPrice * 100;
+            return priceChangePercent;
         }
     }
 
-    // 如果API调用失败，返回0
+    // 如果API调用失败或没有数据，返回0
     return 0;
 }
 
