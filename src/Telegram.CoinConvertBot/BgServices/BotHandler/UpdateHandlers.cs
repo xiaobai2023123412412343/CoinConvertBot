@@ -10403,6 +10403,10 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
             InlineKeyboardButton.WithCallbackData("老澳门彩", "laoaomen"),
             InlineKeyboardButton.WithCallbackData("新澳门彩", "xinaomen"),
             InlineKeyboardButton.WithCallbackData("香港六合", "xianggang")
+        },
+        new [] // 新增第五行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo")
         }
     });
 
