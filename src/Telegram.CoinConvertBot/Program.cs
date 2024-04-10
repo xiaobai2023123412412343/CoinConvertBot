@@ -106,7 +106,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
         new BotCommand(){Command="yi",Description="U兑TRX"},
         new BotCommand(){Command="fan",Description="实时汇率"},
         new BotCommand(){Command="fu",Description="汇率换算"},
-        new BotCommand(){Command="ucard",Description="虚拟神卡"},               
+        new BotCommand(){Command="ucard",Description="消费u卡"},               
         new BotCommand(){Command="trc",Description="查询余额"},   
         new BotCommand(){Command="tron",Description="能量租赁"},            
         new BotCommand(){Command="btc",Description="币圈行情"},
