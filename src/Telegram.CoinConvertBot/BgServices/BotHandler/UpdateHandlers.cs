@@ -11657,38 +11657,54 @@ if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
     var messageToSend = Regex.Replace(originalMessage, @"([^\(\（]+)[\(\（]([^\)\）]+)[\)\）]", m => $"<a href='{m.Groups[2].Value}'>{m.Groups[1].Value.Trim()}</a>");
 
     int total = 0, success = 0, fail = 0;
+    int batchSize = 200; // 每批次群发的用户数量
+    Random random = new Random();
 
-    // 向所有关注者发送消息
-    foreach (var follower in Followers.ToList()) // 使用 ToList() 创建一个副本，以便在遍历过程中修改集合
+    try
     {
-        total++;
-        try
+        for (int i = 0; i < Followers.Count; i += batchSize)
         {
-            await botClient.SendTextMessageAsync(
-                chatId: follower.Id, 
-                text: messageToSend, 
-                parseMode: ParseMode.Html,
-                disableWebPagePreview: true); // 关闭链接预览
-            success++;
-        }
-        catch (ApiRequestException e)
-        {
-            // 用户不存在或已经屏蔽了机器人
-            // 在这里记录异常，然后继续向下一个用户发送消息
-            Log.Error($"Failed to send message to {follower.Id}: {e.Message}");
-            fail++;
-
-            // 检查错误消息以确定是否应该删除用户
-            if (e.Message.Contains("bot can't send messages to bots") ||
-                e.Message.Contains("bot was blocked by the user") ||
-                e.Message.Contains("user is deactivated") ||
-                e.Message.Contains("chat not found")||
-                e.Message.Contains("bot can't initiate conversation with a user"))
+            var currentBatch = Followers.Skip(i).Take(batchSize).ToList();
+            foreach (var follower in currentBatch)
             {
-                // 从存储库中删除用户
-                Followers.Remove(follower);
+                total++;
+                try
+                {
+                    await botClient.SendTextMessageAsync(
+                        chatId: follower.Id, 
+                        text: messageToSend, 
+                        parseMode: ParseMode.Html,
+                        disableWebPagePreview: true); // 关闭链接预览
+                    success++;
+                }
+                catch (ApiRequestException e)
+                {
+                    // 用户不存在或已经屏蔽了机器人
+                    // 在这里记录异常，然后继续向下一个用户发送消息
+                    Log.Error($"Failed to send message to {follower.Id}: {e.Message}");
+                    fail++;
+
+                    // 检查错误消息以确定是否应该删除用户
+                    if (e.Message.Contains("bot can't send messages to bots") ||
+                        e.Message.Contains("bot was blocked by the user") ||
+                        e.Message.Contains("user is deactivated") ||
+                        e.Message.Contains("chat not found")||
+                        e.Message.Contains("bot can't initiate conversation with a user"))
+                    {
+                        // 从存储库中删除用户
+                        Followers.Remove(follower);
+                    }
+                }
             }
+
+            // 在批次之间等待随机时间 1-2 秒
+            await Task.Delay(random.Next(1000, 2001));
         }
+    }
+    catch (Exception ex)
+    {
+        // 通用异常处理，取消剩余的群发任务
+        Log.Error($"An error occurred, stopping broadcast: {ex.Message}");
     }
 
     // 发送统计信息
