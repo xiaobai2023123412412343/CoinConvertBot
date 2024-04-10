@@ -13064,8 +13064,8 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
     string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
     string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
     string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
-    string groupFunctionText = $"<a href=\"{shareLink}\">2️⃣ 防骗助手：点击拉我进群，群成员修改资料会发送提醒哦！</a>";
-    string uCardText = $"1️⃣ USDT消费卡,无需实名即可使用！如需了解点击： /ucard ";
+    string groupFunctionText = $"<a href=\"{shareLink}\">⚠️ 点击拉我进群，有人修改资料将播报提醒！</a>";
+    string uCardText = $"\U0001F4B3 免实名USDT消费卡-享全球消费\U0001F449 /ucard ";
 
     string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
 
@@ -13074,8 +13074,8 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
    转账USDT到指定地址，即可秒回TRX！
    如需了解机器人功能介绍，直接发送：<code>帮助</code> 
    
-{uCardText}
 {groupFunctionText}
+{uCardText}
 ";
 
     // 创建包含三行，每行4个按钮的虚拟键盘
