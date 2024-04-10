@@ -10823,11 +10823,22 @@ if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || mes
 {
     // 首先发送一张图片
     var imageUrl = "https://i.postimg.cc/GhQHdgVp/Dupay-Card.webp";
+    var inlineKeyboard = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(
+        new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton[][]
+        {
+            new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton[]
+            {
+                Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithUrl("立即开卡", "https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn")
+            }
+        }
+    );
+
     _ = botClient.SendPhotoAsync(
         chatId: message.Chat.Id,
         photo: imageUrl,
         caption: "年轻人的第一张u卡，<b>免实名</b> 直接使用！\n充值 <b>USDT</b> 即可绑定美团/微信/支付宝消费！！\n同时支持包括苹果商店/谷歌商店等一切平台！！！\n\n注册邀请码： <b>625174</b>\n注册链接：https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\n\n使用邀请码或链接注册，即可享受 <b>0手续费！</b> 随用随充，随心所欲！",
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        replyMarkup: inlineKeyboard
     );
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
