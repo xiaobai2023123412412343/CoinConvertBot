@@ -1754,7 +1754,9 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n\n" +    
 			      //$"------------------------------------------------------------------------\n" +
                               $"交易费用：<b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
-			      $"<a href=\"https://t.me/yifanfubot\">省钱妙招：\n提前租赁能量，交易费用最低降至 7.00 TRX！</a>\n"; // 新增的一行文字 
+                              $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">1️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
+                              $"<a href=\"https://t.me/yifanfubot\">2️⃣提前租赁能量，交易费用最低降至 7.00 TRX！</a>\n"; // 修改后的两行文字
+		    
                 var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
@@ -1774,6 +1776,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                     },   
                     new [] // first row
                     {
+                        InlineKeyboardButton.WithCallbackData("消费U卡介绍", "energy_introo"), // 新增的按钮				    
                         InlineKeyboardButton.WithCallbackData("波场能量介绍", "energy_intro") // 新增的按钮		
                     } 			
                 });                
@@ -7482,7 +7485,15 @@ if (update.Type == UpdateType.CallbackQuery)
             };
             await BotOnMessageReceived(botClient, fakeMessage);
             break;              
-
+        case "energy_introo": // 处理群聊资料按钮的回调
+            fakeMessage = new Message
+            {
+                Text = "/ucard",
+                Chat = callbackQuery.Message.Chat,
+                From = callbackQuery.From
+            };
+            await BotOnMessageReceived(botClient, fakeMessage);
+            break;    
 	        case "绑定": // 处理群聊资料按钮的回调
             fakeMessage = new Message
             {
@@ -13026,7 +13037,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
     string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
     string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
     string groupFunctionText = $"<a href=\"{shareLink}\">2️⃣ 防骗助手：点击拉我进群，群成员修改资料会发送提醒哦！</a>";
-    string uCardText = $"1️⃣ USDT信用卡,无需实名即可使用！如需了解点击： /ucard ";
+    string uCardText = $"1️⃣ USDT消费卡,无需实名即可使用！如需了解点击： /ucard ";
 
     string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
 
