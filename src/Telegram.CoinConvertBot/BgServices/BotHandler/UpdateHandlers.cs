@@ -8167,7 +8167,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
     }        
         var inputText = message.Text.Trim();
         // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
-        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复)");
+        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|群发)");
 
         // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
         if (isBindOrUnbindCommand)
@@ -8986,7 +8986,7 @@ else if(update.CallbackQuery.Data == "contactAdmin")
 else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id == AdminUserId)
 {
     string commandsText = @"拉黑 ID 或者 拉白 ID 可以将用户拉入黑名单或移出；
-群发 内容 机器人可以一键群发内容；
+群发 +文本（后面带括号文本内嵌链接） 机器人可以一键群发内容；
 <code>开启广告</code> <code>关闭广告</code> 指定管理员才可以执行；
 <code>开启兑换通知</code> <code>关闭兑换通知</code> 群内兑换通知开启关闭；
 <code>开启翻译</code> <code>关闭翻译</code> 群内开启或关闭翻译功能；
@@ -11651,7 +11651,11 @@ if (messageText.StartsWith("/bijiacha"))
 // 检查是否是管理员发送的 "群发" 消息
 if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
 {
-    var messageToSend = message.Text.Substring(3); // 去掉 "群发 " 前缀
+    var originalMessage = message.Text.Substring(3); // 去掉 "群发 " 前缀
+    // 使用正则表达式查找文本中的链接，并将其转换为电报支持的内嵌链接格式
+    // 正则表达式同时支持中文括号和英文括号
+    var messageToSend = Regex.Replace(originalMessage, @"([^\(\（]+)[\(\（]([^\)\）]+)[\)\）]", m => $"<a href='{m.Groups[2].Value}'>{m.Groups[1].Value.Trim()}</a>");
+
     int total = 0, success = 0, fail = 0;
 
     // 向所有关注者发送消息
@@ -11660,7 +11664,11 @@ if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
         total++;
         try
         {
-            await botClient.SendTextMessageAsync(chatId: follower.Id, text: messageToSend);
+            await botClient.SendTextMessageAsync(
+                chatId: follower.Id, 
+                text: messageToSend, 
+                parseMode: ParseMode.Html,
+                disableWebPagePreview: true); // 关闭链接预览
             success++;
         }
         catch (ApiRequestException e)
@@ -11684,8 +11692,12 @@ if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
     }
 
     // 发送统计信息
-    await botClient.SendTextMessageAsync(chatId: message.From.Id, text: $"群发总数：<b>{total}</b>   成功：<b>{success}</b>  失败：<b>{fail}</b>", parseMode: ParseMode.Html);
-} 
+    await botClient.SendTextMessageAsync(
+        chatId: message.From.Id, 
+        text: $"群发总数：<b>{total}</b>   成功：<b>{success}</b>  失败：<b>{fail}</b>", 
+        parseMode: ParseMode.Html,
+        disableWebPagePreview: true); // 关闭链接预览
+}
 if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
 {
     var groupId = message.Chat.Id;
