@@ -9346,10 +9346,17 @@ Telegram 官方只开放了语言包翻译接口, 并没有提供中文语言包
 目前所有的中文语言包都是非官方人员翻译, 由作者统一整理编录的；
 如果中文语言包对您有帮助，欢迎使用并在有需要时推荐给他人，谢谢！";
 
+    // 创建内联键盘并添加按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithUrl("点击应用原 @zh_cn 简体中文语言包", "https://t.me/setlanguage/classic-zh-cn")
+    });
+
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: languagePackMessage,
-        disableWebPagePreview: true // 添加这一行来关闭链接预览
+        disableWebPagePreview: true, // 关闭链接预览
+        replyMarkup: inlineKeyboard // 添加内联键盘
     );
 }    
 // 获取北京时区
