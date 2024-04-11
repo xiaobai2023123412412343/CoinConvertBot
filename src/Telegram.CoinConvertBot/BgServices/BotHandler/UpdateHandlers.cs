@@ -9306,6 +9306,7 @@ if (messageText.Contains("中文") || messageText.Contains("简体") || messageT
 支持 Nicegram/Plus Messager/Unigram 第三方客户端
 Telegram 官网网页版不能使用语言包.
 如果遇到不能更改语言包, 先把Telegram客户端升级新版
+
 各个语言包:
 
 中文(简体)-聪聪: https://t.me/setlanguage/zhcncc
