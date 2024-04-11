@@ -8925,7 +8925,8 @@ else if(update.CallbackQuery.Data == "memberEmojis")
 6：龙年特辑：https://t.me/addemoji/Yifanfu2024
 7：币圈专用：https://t.me/addemoji/Yifanfubtc
 8：qq经典表情：https://t.me/addemoji/Yifanfuqq
-"
+",
+        disableWebPagePreview: true // 关闭链接预览
     );
 }
 else if(update.CallbackQuery.Data == "energyComparison")
@@ -9339,14 +9340,16 @@ Telegram 官网网页版不能使用语言包.
 中文(台灣)-文言: https://t.me/setlanguage/chinese-literary
 中文(台灣)-魔法師: https://t.me/setlanguage/encha
 日文: https://t.me/setlanguage/ja-beta
+
 说明:
-Telegram 官方只开放了语言包翻译接口, 官方没有提供中文语言包
-目前所有的中文语言包都是非官方人员翻译的, 都是用户翻译的
-觉得好用可以推荐朋友使用~~~";
+Telegram 官方只开放了语言包翻译接口, 并没有提供中文语言包；
+目前所有的中文语言包都是非官方人员翻译, 由作者统一整理编录的；
+如果中文语言包对您有帮助，欢迎使用并在有需要时推荐给他人，谢谢！";
 
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: languagePackMessage
+        text: languagePackMessage,
+        disableWebPagePreview: true // 添加这一行来关闭链接预览
     );
 }    
 // 获取北京时区
