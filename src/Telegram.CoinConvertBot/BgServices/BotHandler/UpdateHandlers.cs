@@ -8200,7 +8200,7 @@ if (isNumberRange)
         // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
         var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
         // 添加新正则表达式以检查输入文本是否包含 "查id"、"查ID" 或 "t.me/"
-        var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|t\.me/", RegexOptions.IgnoreCase);
+        var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|yhk|t\.me/", RegexOptions.IgnoreCase);
 
         // 如果输入文本包含 "查id"、"查ID" 或 "t.me/"，则不执行翻译
         if (containsIdOrTme)
@@ -10834,7 +10834,7 @@ if (messageText.StartsWith("/jisuzhangdie") || messageText.Contains("市场异�
     }
 }
 // 检查是否接收到了 /ucard 消息或文本包含特定关键词，收到就回复用户
-if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || messageText.Contains("信用卡") || messageText.Contains("虚拟"))
+if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || messageText.Contains("yhk") || messageText.Contains("消费卡") || messageText.Contains("信用卡") || messageText.Contains("虚拟"))
 {
     // 首先发送一张图片
     var imageUrl = "https://i.postimg.cc/GhQHdgVp/Dupay-Card.webp";
