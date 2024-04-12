@@ -1509,15 +1509,16 @@ public static async Task<List<string>> FetchLotteryZodiacHistoryAsync(int year, 
 }
 public static class MusicFetcher // 网易云音乐
 {
-    public static async Task<(bool success, string musicUrl, string title)> FetchMusicInfoAsync(string url)
+    public static async Task<(bool success, string musicUrl, string title)> FetchMusicInfoAsync()
     {
         int attempt = 0;
+        string url = "https://dataiqs.com/api/netease/music/?type=random"; // 新的API URL
         while (attempt < 10)
         {
             using (var client = new HttpClient())
             {
-                // 设置HttpClient的超时时间为3秒
-                client.Timeout = TimeSpan.FromSeconds(3);
+                // 设置HttpClient的超时时间为10秒
+                client.Timeout = TimeSpan.FromSeconds(10);
 
                 try
                 {
@@ -1532,17 +1533,18 @@ public static class MusicFetcher // 网易云音乐
                     var jsonString = await response.Content.ReadAsStringAsync();
                     var json = JObject.Parse(jsonString);
 
-                    // 根据新的API返回格式进行调整
-                    var musicUrl = json["info"]["url"].ToString(); // 更新字段名为"url"
-                    if (string.IsNullOrWhiteSpace(musicUrl) || musicUrl.Contains("music.163.com/404"))
+                    // 根据新API的返回格式获取歌曲URL和ID
+                    var musicUrl = json["data"]["song_url"].ToString();
+                    var songId = json["data"]["song_id"].ToString();
+
+                    if (string.IsNullOrWhiteSpace(musicUrl))
                     {
                         Console.WriteLine($"尝试 {attempt + 1}: 无效的音乐文件链接 - {musicUrl}");
                         attempt++;
                         continue;
                     }
 
-                    // 更新获取歌手和歌曲名的方式
-                    var title = $"歌手：{json["info"]["auther"]}   歌曲名：{json["info"]["name"]}";
+                    var title = $"歌曲ID：{songId}"; // 使用歌曲ID作为标题
                     return (true, musicUrl, title);
                 }
                 catch (TaskCanceledException)
@@ -8724,14 +8726,7 @@ else if (update.CallbackQuery.Data == "listenToMusicc")
     // 定义内联键盘，与 /music 命令相同的布局
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        new [] // 第一行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("热歌", "listenToMusic_热歌榜"),
-            InlineKeyboardButton.WithCallbackData("新歌", "listenToMusic_新歌榜"),
-            InlineKeyboardButton.WithCallbackData("飙升", "listenToMusic_飙升榜"),
-            InlineKeyboardButton.WithCallbackData("原创", "listenToMusic_原创")
-        },
-        new [] // 第二行按钮，用于随机歌曲
+        new [] // 第1行按钮，用于随机歌曲
         {
             InlineKeyboardButton.WithCallbackData("随机5首歌曲", "random5Songs"),
             InlineKeyboardButton.WithCallbackData("随机10首歌曲", "random10Songs")
@@ -8750,33 +8745,20 @@ else if (update.CallbackQuery.Data == "listenToMusicc")
 }	    
 else if (update.CallbackQuery.Data == "random10Songs")
 {
-    var categories = new[] { "热歌榜", "新歌榜", "飙升榜", "原创" };
-    var random = new Random();
-    
     // 准备内联键盘
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        new [] // 新增的内联按钮行
-        {
-            InlineKeyboardButton.WithCallbackData("热歌", "listenToMusic_热歌榜"),
-            InlineKeyboardButton.WithCallbackData("新歌", "listenToMusic_新歌榜"),
-            InlineKeyboardButton.WithCallbackData("飙升", "listenToMusic_飙升榜"),
-            InlineKeyboardButton.WithCallbackData("原创", "listenToMusic_原创")
-        },
-        new [] // 新增的第二行按钮，用于随机10首歌曲
+        new [] // 新增的第1行按钮，用于随机10首歌曲
         {
             InlineKeyboardButton.WithCallbackData("随机5首歌曲", "random5Songs"),
-            InlineKeyboardButton.WithCallbackData("随机10首歌曲", "random10Songs")	
+            InlineKeyboardButton.WithCallbackData("随机10首歌曲", "random10Songs")		    
         }
     });
 
     for (int i = 0; i < 10; i++)
     {
-        // 随机选择一个榜单
-        var category = categories[random.Next(categories.Length)];
-        var sortUrl = $"https://api.vvhan.com/api/wyMusic/{category}?type=json";
-
-        var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(sortUrl);
+        // 直接调用FetchMusicInfoAsync方法获取随机歌曲
+        var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(); // 注意这里不再传递URL参数
         if (success)
         {
             // 判断是否为最后一首歌曲，如果是，则附加内联键盘
@@ -8803,23 +8785,13 @@ else if (update.CallbackQuery.Data == "random10Songs")
         // 为了避免API限制，可以在这里添加短暂的延迟
         await Task.Delay(500); // 500毫秒的延迟
     }
-} 
+}
 else if (update.CallbackQuery.Data == "random5Songs")
 {
-    var categories = new[] { "热歌榜", "新歌榜", "飙升榜", "原创" };
-    var random = new Random();
-    
     // 准备内联键盘
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        new [] // 新增的内联按钮行
-        {
-            InlineKeyboardButton.WithCallbackData("热歌", "listenToMusic_热歌榜"),
-            InlineKeyboardButton.WithCallbackData("新歌", "listenToMusic_新歌榜"),
-            InlineKeyboardButton.WithCallbackData("飙升", "listenToMusic_飙升榜"),
-            InlineKeyboardButton.WithCallbackData("原创", "listenToMusic_原创")
-        },
-        new [] // 新增的第二行按钮，用于随机10首歌曲
+        new [] // 新增的第1行按钮，用于随机10首歌曲
         {
             InlineKeyboardButton.WithCallbackData("随机5首歌曲", "random5Songs"),
             InlineKeyboardButton.WithCallbackData("随机10首歌曲", "random10Songs")		    
@@ -8828,12 +8800,8 @@ else if (update.CallbackQuery.Data == "random5Songs")
 
     for (int i = 0; i < 5; i++)
     {
-        // 随机选择一个榜单
-        var category = categories[random.Next(categories.Length)];
-        // 根据榜单类型选择正确的API URL，替换掉里面的榜单名称
-        var sortUrl = $"https://api.vvhan.com/api/wyMusic/{category}?type=json";
-
-        var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(sortUrl);
+        // 直接调用FetchMusicInfoAsync方法获取随机歌曲
+        var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(); // 注意这里不再传递URL参数
         if (success)
         {
             // 判断是否为最后一首歌曲，如果是，则附加内联键盘
@@ -8859,57 +8827,6 @@ else if (update.CallbackQuery.Data == "random5Songs")
         
         // 为了避免API限制，可以在这里添加短暂的延迟
         await Task.Delay(500); // 500毫秒的延迟
-    }
-}
-else if (update.CallbackQuery.Data.StartsWith("listenToMusic"))
-{
-    // 从回调数据中提取榜单类型
-    var sortType = update.CallbackQuery.Data.Split('_').LastOrDefault();
-    var sortUrl = sortType switch
-    {
-        "热歌榜" => "https://api.vvhan.com/api/wyMusic/热歌榜?type=json",
-        "新歌榜" => "https://api.vvhan.com/api/wyMusic/新歌榜?type=json",
-        "飙升榜" => "https://api.vvhan.com/api/wyMusic/飙升榜?type=json",
-        "原创" => "https://api.vvhan.com/api/wyMusic/原创榜?type=json",
-        _ => "https://api.vvhan.com/api/wyMusic/热歌榜?type=json" // 默认为热歌榜
-    };
-
-    var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(sortUrl); // 尝试获取音乐链接和标题，传递榜单URL
-
-    if (success)
-    {
-        // 定义内联键盘
-        var inlineKeyboard = new InlineKeyboardMarkup(new[]
-        {
-            new [] // 新增的内联按钮行
-            {
-                InlineKeyboardButton.WithCallbackData("热歌", "listenToMusic_热歌榜"),
-                InlineKeyboardButton.WithCallbackData("新歌", "listenToMusic_新歌榜"),
-                InlineKeyboardButton.WithCallbackData("飙升", "listenToMusic_飙升榜"),
-                InlineKeyboardButton.WithCallbackData("原创", "listenToMusic_原创")
-            },	
-            new [] // 新增的内联按钮行
-            {
-                InlineKeyboardButton.WithCallbackData("随机5首歌曲", "random5Songs"),	
-                InlineKeyboardButton.WithCallbackData("随机10首歌曲", "random10Songs")		
-            }		
-        });
-
-        // 发送MP3格式的音乐文件，并附加内联键盘
-        await botClient.SendAudioAsync(
-            chatId: update.CallbackQuery.Message.Chat.Id,
-            audio: musicUrl, // 使用获取到的音乐链接
-            caption: title, // 使用获取到的标题作为描述
-            replyMarkup: inlineKeyboard // 添加内联键盘
-        );
-    }
-    else
-    {
-        // 如果尝试10次后仍未成功获取音乐链接，回复用户操作繁忙信息
-        await botClient.SendTextMessageAsync(
-            chatId: update.CallbackQuery.Message.Chat.Id,
-            text: "操作繁忙，请稍等重试！"
-        );
     }
 }
 else if(update.CallbackQuery.Data == "memberEmojis")
