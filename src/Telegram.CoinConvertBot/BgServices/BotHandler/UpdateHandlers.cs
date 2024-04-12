@@ -1532,7 +1532,8 @@ public static class MusicFetcher // 网易云音乐
                     var jsonString = await response.Content.ReadAsStringAsync();
                     var json = JObject.Parse(jsonString);
 
-                    var musicUrl = json["info"]["mp3url"].ToString();
+                    // 根据新的API返回格式进行调整
+                    var musicUrl = json["info"]["url"].ToString(); // 更新字段名为"url"
                     if (string.IsNullOrWhiteSpace(musicUrl) || musicUrl.Contains("music.163.com/404"))
                     {
                         Console.WriteLine($"尝试 {attempt + 1}: 无效的音乐文件链接 - {musicUrl}");
@@ -1540,6 +1541,7 @@ public static class MusicFetcher // 网易云音乐
                         continue;
                     }
 
+                    // 更新获取歌手和歌曲名的方式
                     var title = $"歌手：{json["info"]["auther"]}   歌曲名：{json["info"]["name"]}";
                     return (true, musicUrl, title);
                 }
@@ -1547,12 +1549,10 @@ public static class MusicFetcher // 网易云音乐
                 {
                     // 请求超时会抛出TaskCanceledException异常
                     Console.WriteLine($"尝试 {attempt + 1}: 请求超时，3秒内未响应。");
-                    // 不需要显式地增加attempt，因为即将执行下一次循环
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"尝试 {attempt + 1}: 捕获到异常 - {ex.Message}");
-                    // 对于除了请求超时之外的其他异常，仍然增加尝试次数
                 }
                 attempt++;
             }
@@ -8866,11 +8866,11 @@ else if (update.CallbackQuery.Data.StartsWith("listenToMusic"))
     var sortType = update.CallbackQuery.Data.Split('_').LastOrDefault();
     var sortUrl = sortType switch
     {
-        "热歌榜" => "https://api.vvhan.com/api/rand.music?type=json&sort=热歌榜",
-        "新歌榜" => "https://api.vvhan.com/api/rand.music?type=json&sort=新歌榜",
-        "飙升榜" => "https://api.vvhan.com/api/rand.music?type=json&sort=飙升榜",
-        "原创" => "https://api.vvhan.com/api/rand.music?type=json&sort=原创",
-        _ => "https://api.vvhan.com/api/rand.music?type=json&sort=热歌榜" // 默认为热歌榜
+        "热歌榜" => "https://api.vvhan.com/api/wyMusic/热歌榜?type=json",
+        "新歌榜" => "https://api.vvhan.com/api/wyMusic/新歌榜?type=json",
+        "飙升榜" => "https://api.vvhan.com/api/wyMusic/飙升榜?type=json",
+        "原创" => "https://api.vvhan.com/api/wyMusic/原创榜?type=json",
+        _ => "https://api.vvhan.com/api/wyMusic/热歌榜?type=json" // 默认为热歌榜
     };
 
     var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(sortUrl); // 尝试获取音乐链接和标题，传递榜单URL
