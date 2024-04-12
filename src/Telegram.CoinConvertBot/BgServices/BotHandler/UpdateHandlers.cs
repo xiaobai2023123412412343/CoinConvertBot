@@ -8774,7 +8774,7 @@ else if (update.CallbackQuery.Data == "random10Songs")
     {
         // 随机选择一个榜单
         var category = categories[random.Next(categories.Length)];
-        var sortUrl = $"https://api.vvhan.com/api/rand.music?type=json&sort={category}";
+        var sortUrl = $"https://api.vvhan.com/api/wyMusic/{category}?type=json";
 
         var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(sortUrl);
         if (success)
@@ -8830,7 +8830,8 @@ else if (update.CallbackQuery.Data == "random5Songs")
     {
         // 随机选择一个榜单
         var category = categories[random.Next(categories.Length)];
-        var sortUrl = $"https://api.vvhan.com/api/rand.music?type=json&sort={category}";
+        // 根据榜单类型选择正确的API URL，替换掉里面的榜单名称
+        var sortUrl = $"https://api.vvhan.com/api/wyMusic/{category}?type=json";
 
         var (success, musicUrl, title) = await MusicFetcher.FetchMusicInfoAsync(sortUrl);
         if (success)
@@ -8859,7 +8860,7 @@ else if (update.CallbackQuery.Data == "random5Songs")
         // 为了避免API限制，可以在这里添加短暂的延迟
         await Task.Delay(500); // 500毫秒的延迟
     }
-} 	    
+}
 else if (update.CallbackQuery.Data.StartsWith("listenToMusic"))
 {
     // 从回调数据中提取榜单类型
