@@ -9226,8 +9226,7 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
                 MessageId = message.MessageId // 根据需要设置更多属性
             };
 
-            // 注意：这里直接调用处理文本消息的逻辑，而不是递归调用BotOnMessageReceived
-            // 假设您有一个专门处理文本消息的方法，例如 ProcessTextMessage
+            // 使用模拟的文本消息调用BotOnMessageReceived方法
             await BotOnMessageReceived(botClient, fakeMessage);
         }
         else
