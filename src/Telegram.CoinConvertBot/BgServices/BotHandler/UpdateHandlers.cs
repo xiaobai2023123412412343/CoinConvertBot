@@ -272,6 +272,10 @@ private static async Task CompareAndSendPriceChangeAsync(ITelegramBotClient botC
         return new { Symbol = symbol, ChangePercent = changePercent, CurrentPrice = currentPrice };
     }).ToList();
 
+// 统计上涨和下跌的总数
+int totalGainers = priceChanges.Count(p => p.ChangePercent > 0);
+int totalLosers = priceChanges.Count(p => p.ChangePercent < 0);	
+
     // 根据变化百分比排序，并考虑过滤TRXUSDT后的条目数量
     var topGainers = priceChanges.OrderByDescending(p => p.ChangePercent).Take(5 + (currentPrices.ContainsKey("TRXUSDT") ? 1 : 0));
     var topLosers = priceChanges.OrderBy(p => p.ChangePercent).Take(5 + (currentPrices.ContainsKey("TRXUSDT") ? 1 : 0));
@@ -281,7 +285,8 @@ private static async Task CompareAndSendPriceChangeAsync(ITelegramBotClient botC
     var finalTopLosers = topLosers.Take(5);
 
     string message = $"<b>30分钟走势：</b>\n\n比特币{(btcChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {btcChange.ChangePercent:F2}%, ${FormatPrice(btcChange.CurrentPrice.ToString())}\n以太坊{(ethChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {ethChange.ChangePercent:F2}%, ${FormatPrice(ethChange.CurrentPrice.ToString())}\n\n<b>急速上涨：</b>\n" + string.Join("\n", topGainers.Select(g => $"<code>{g.Symbol}</code> \U0001F4C8：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}"))
-                     + "\n\n<b>急速下跌：</b>\n" + string.Join("\n", topLosers.Select(l => $"<code>{l.Symbol}</code> \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"));
+                     + "\n\n<b>急速下跌：</b>\n" + string.Join("\n", topLosers.Select(l => $"<code>{l.Symbol}</code> \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"))
+	             + $"\n\n\U0001F4C8上涨总数： <b>{totalGainers}</b>\n\U0001F4C9下跌总数： <b>{totalLosers}</b>";
 
     await botClient.SendTextMessageAsync(chatId, message, parseMode: ParseMode.Html);
 }
