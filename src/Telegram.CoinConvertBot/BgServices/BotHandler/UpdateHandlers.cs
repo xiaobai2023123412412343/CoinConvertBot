@@ -9216,39 +9216,6 @@ if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCom
     }
 }
 } 
-// 定义可以触发功能的命令列表
-string[] commands = new[] { "/music", "点歌", "歌曲", "音乐", "网易云", "听歌" };
-
-// 检查消息文本是否以数组中的任何命令开头
-if (commands.Any(cmd => messageText.StartsWith(cmd)))
-{
-    // 定义内联键盘
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
-    {
-        new [] // 第一行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("热歌", "listenToMusic_热歌榜"),
-            InlineKeyboardButton.WithCallbackData("新歌", "listenToMusic_新歌榜"),
-            InlineKeyboardButton.WithCallbackData("飙升", "listenToMusic_飙升榜"),
-            InlineKeyboardButton.WithCallbackData("原创", "listenToMusic_原创")
-        },
-        new [] // 第二行按钮，用于随机歌曲
-        {
-            InlineKeyboardButton.WithCallbackData("随机5首歌曲", "random5Songs"),
-            InlineKeyboardButton.WithCallbackData("随机10首歌曲", "random10Songs")
-        }
-    });
-
-    // 图片链接
-    string imageUrl = "https://i.postimg.cc/tTLqXVjT/f727b28633ba6d063e0dee837cba705f.png";
-
-    // 发送图片给用户，附带内联键盘
-    _ = botClient.SendPhotoAsync(
-        chatId: message.Chat.Id,
-        photo: imageUrl,
-        replyMarkup: inlineKeyboard
-    );
-}	    
 // 获取群资料
 try
 {
