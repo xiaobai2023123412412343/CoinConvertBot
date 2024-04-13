@@ -7530,7 +7530,15 @@ case "shiyong": // 当用户点击“简体中文”按钮
     };
     await BotOnMessageReceived(botClient, fakeMessage);
     break;	
-		    
+case "send_huansuan": // 当用户点击“简体中文”按钮
+    fakeMessage = new Message
+    {
+        Text = "/fu",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
+    break;			    
 case "indexMarket": // 当用户点击“简体中文”按钮
     fakeMessage = new Message
     {
@@ -10139,17 +10147,17 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
         {
             InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
             InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),
-            InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")
+            InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
         },
         new [] // 第二行按钮
         {
             InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
             InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers"),
-            InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusicc")
+            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese")
         },
         new [] // 第三行按钮
         {
-            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
+            InlineKeyboardButton.WithCallbackData("汇率换算", "send_huansuan"),
             InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),
             InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
         },
@@ -12151,31 +12159,49 @@ foreach (var tx in transactions["data"])
 
 if (UserId != AdminUserId)
 {
+    // 创建内联键盘
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         new [] // 第一行按钮
         {
             InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
-            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),		
-            InlineKeyboardButton.WithCallbackData("联系管理", "contactAdmin")		    
+            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),
+            InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
         },
-        new [] // 新增的第二行按钮
+        new [] // 第二行按钮
         {
             InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
             InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers"),
-            InlineKeyboardButton.WithCallbackData("网易音乐", "listenToMusicc") 		    
+            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese")
         },
-        new [] // 新增的第三行按钮
+        new [] // 第三行按钮
         {
-            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese"),
-            InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),  
-            InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")	    
+            InlineKeyboardButton.WithCallbackData("汇率换算", "send_huansuan"),
+            InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),
+            InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
+        },
+        new [] // 新增第四行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("指数行情", "indexMarket"),
+            InlineKeyboardButton.WithCallbackData("在线音频", "onlineAudio"),
+            InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading")
+        },
+        new [] // 新增第四行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("老澳门彩", "laoaomen"),
+            InlineKeyboardButton.WithCallbackData("新澳门彩", "xinaomen"),
+            InlineKeyboardButton.WithCallbackData("香港六合", "xianggang")
+        },
+        new [] // 新增第五行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo")
         }
     });
 
-    await botClient.SendTextMessageAsync(
+    // 向用户发送一条消息，告知他们可以选择下方按钮操作
+    _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: "欢迎使用本机器人,请选择下方按钮操作：",
+        text: "欢迎使用本机器人，请选择下方按钮操作：",
         replyMarkup: inlineKeyboard
     );
 
