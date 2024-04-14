@@ -139,6 +139,12 @@ private static string FormatCryptoData(List<Dictionary<string, JsonElement>> cry
     var formattedData = new List<string> { $"<b>币圈市值TOP{startRank}-{endRank} 近1h/24h/7d数据</b>" };
     foreach (var crypto in cryptos)
     {
+        // 跳过TRX币种
+        if (crypto["symbol"].GetString().Equals("TRX", StringComparison.OrdinalIgnoreCase))
+        {
+            continue;
+        }
+	    
         var percentChange1h = crypto["percent_change_1h"].GetDecimal();
         var percentChange24h = crypto["percent_change_24h"].GetDecimal();
         var percentChange7d = crypto["percent_change_7d"].GetDecimal();
