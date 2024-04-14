@@ -2659,11 +2659,13 @@ public static class BinancePriceInfo
             var recentData = klineData.TakeLast(period);
             decimal resistance = recentData.Max(x => decimal.Parse(x.High)); // 最高价
             decimal support = recentData.Min(x => decimal.Parse(x.Low)); // 最低价
+	    decimal movingAverage = recentData.Average(x => decimal.Parse(x.Close)); // 计算平均收盘价作为MA指标	
 
             string formatResistance = FormatPrice(resistance);
             string formatSupport = FormatPrice(support);
+	    string formattedMA = FormatPrice(movingAverage); // 格式化MA指标的值	
 
-            result += $"<b>{period}D压力位：</b> {formatSupport}   <b>阻力位：</b> {formatResistance}\n\n";
+            result += $"<b>{period}D压力位：</b> {formatSupport}   <b>阻力位：</b> {formatResistance}   <b>m{period}：</b> {formattedMA}\n\n";
         }
 
         return result;
