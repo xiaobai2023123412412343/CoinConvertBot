@@ -102,6 +102,60 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class CryptoDataFetcher
+{
+    private static readonly string ApiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker";
+
+public static async Task<string> FetchAndFormatCryptoDataAsync(int startRank, int endRank)
+{
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            var response = await httpClient.GetStringAsync(ApiUrl);
+            var cryptos = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(response);
+            // 筛选出排名在指定范围内的加密货币
+            var filteredCryptos = cryptos.Where(crypto => 
+                crypto.ContainsKey("rank") && 
+                crypto["rank"].GetInt32() >= startRank && 
+                crypto["rank"].GetInt32() <= endRank).ToList();
+            return FormatCryptoData(filteredCryptos, startRank, endRank);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"获取数据失败: {ex.Message}");
+            return "获取加密货币数据失败，请稍后再试。";
+        }
+    }
+}
+
+private static string FormatCryptoData(List<Dictionary<string, JsonElement>> cryptos, int startRank, int endRank)
+{
+    if (cryptos == null || cryptos.Count == 0) return "<b>当前没有可用的加密货币数据。</b>";
+
+    // 筛选出指定排名范围内的币种
+    var filteredCryptos = cryptos.FindAll(crypto => crypto["rank"].GetInt32() >= startRank && crypto["rank"].GetInt32() <= endRank);
+
+    var formattedData = new List<string> { $"<b>币圈TOP{startRank}-{endRank} 近1h/24h/7d数据</b>" };
+    foreach (var crypto in filteredCryptos)
+    {
+        var percentChange1h = crypto["percent_change_1h"].GetDecimal();
+        var percentChange24h = crypto["percent_change_24h"].GetDecimal();
+        var percentChange7d = crypto["percent_change_7d"].GetDecimal();
+
+        var upEmoji = "\U0001F4C8";
+        var downEmoji = "\U0001F4C9";
+
+        formattedData.Add($"<b>{crypto["rank"].GetInt32()}: {crypto["symbol"].GetString()}</b>  $:{crypto["price_usd"].GetDecimal()} " +
+                          $"流通市值$: {crypto["market_cap_usd"].GetDecimal() / 100000000:F2}亿\n " +
+                          $"{(percentChange1h > 0 ? upEmoji : downEmoji)}{percentChange1h}% ；" +
+                          $"{(percentChange24h > 0 ? upEmoji : downEmoji)}{percentChange24h}%；" +
+                          $"{(percentChange7d > 0 ? upEmoji : downEmoji)}{percentChange7d}%");
+    }
+
+    return string.Join("\n\n", formattedData);
+}
+}	
 //短期30分钟涨跌数据
 // 为 /jisuzhangdie 命令创建一个新的字典来跟踪用户查询限制
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userJisuZhangdieLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
@@ -10628,6 +10682,25 @@ if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || mes
         caption: "年轻人的第一张u卡，<b>免实名  无冻卡风险</b> ！\n充值 <b>USDT</b> 即可绑定美团/微信/支付宝消费！！\n同时支持包括苹果商店/谷歌商店等一切平台！！！\n\n注册邀请码： <b>625174</b>\n注册链接：https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\n\n使用邀请码或链接注册，即可享受 <b>0手续费！</b> 随用随充，随心所欲！",
         parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
         replyMarkup: inlineKeyboard
+    );
+}
+// 检查是否接收到了 /feixiaohao 消息，收到就启动数据获取
+if (messageText.StartsWith("/feixiaohao"))
+{
+    var cryptoData = await CryptoDataFetcher.FetchAndFormatCryptoDataAsync(1, 50);
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: cryptoData,
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+    );
+}
+else if (messageText.StartsWith("/xiaohao"))
+{
+    var cryptoData = await CryptoDataFetcher.FetchAndFormatCryptoDataAsync(51, 100);
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: cryptoData,
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
     );
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
