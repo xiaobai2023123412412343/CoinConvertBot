@@ -7675,6 +7675,15 @@ case "feixiaohao": // 处理市值TOP50大数据按钮的回调
         From = callbackQuery.From
     };
     await BotOnMessageReceived(botClient, fakeMessage);
+    break;
+case "xiaohao": // 处理市值TOP50大数据按钮的回调
+    fakeMessage = new Message
+    {
+        Text = "/xiaohao",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
     break;		    
     case var callbackCommand when callbackCommand.StartsWith("unmonitor_"):
         var symbolToUnmonitor = callbackCommand.Substring("unmonitor_".Length);
@@ -10703,19 +10712,31 @@ if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || mes
 if (messageText.StartsWith("/feixiaohao"))
 {
     var cryptoData = await CryptoDataFetcher.FetchAndFormatCryptoDataAsync(1, 50);
+    var replyMarkup = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("TOP51-100数据", "xiaohao"),
+        InlineKeyboardButton.WithCallbackData("返回", "back")
+    });
     _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: cryptoData,
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        replyMarkup: replyMarkup
     );
 }
 else if (messageText.StartsWith("/xiaohao"))
 {
     var cryptoData = await CryptoDataFetcher.FetchAndFormatCryptoDataAsync(51, 100);
+    var replyMarkup = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("TOP1-50数据", "feixiaohao"),
+        InlineKeyboardButton.WithCallbackData("返回", "back")
+    });
     _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: cryptoData,
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        replyMarkup: replyMarkup
     );
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
