@@ -343,7 +343,12 @@ int totalLosers = priceChanges.Count(p => p.ChangePercent < 0);
                      + "\n\n<b>急速下跌：</b>\n" + string.Join("\n", topLosers.Select(l => $"<code>{l.Symbol}</code> \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"))
 	             + $"\n\n\U0001F4C8上涨总数： <b>{totalGainers}</b>\n\U0001F4C9下跌总数： <b>{totalLosers}</b>";
 
-    await botClient.SendTextMessageAsync(chatId, message, parseMode: ParseMode.Html);
+var inlineKeyboard = new InlineKeyboardMarkup(new[]
+{
+    InlineKeyboardButton.WithCallbackData("市值TOP50 大数据", "feixiaohao")
+});
+
+await botClient.SendTextMessageAsync(chatId, message, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
 }
 
 private static (decimal ChangePercent, decimal CurrentPrice) CalculatePriceChange(string symbol, Dictionary<string, decimal> currentPrices, Dictionary<string, decimal> fifteenMinutesAgoPrices)
@@ -7662,6 +7667,15 @@ case "xgzhishu": // 当用户点击“简体中文”按钮
     };
     await BotOnMessageReceived(botClient, fakeMessage);
     break;	
+case "feixiaohao": // 处理市值TOP50大数据按钮的回调
+    fakeMessage = new Message
+    {
+        Text = "/feixiaohao",
+        Chat = callbackQuery.Message.Chat,
+        From = callbackQuery.From
+    };
+    await BotOnMessageReceived(botClient, fakeMessage);
+    break;		    
     case var callbackCommand when callbackCommand.StartsWith("unmonitor_"):
         var symbolToUnmonitor = callbackCommand.Substring("unmonitor_".Length);
         fakeMessage = new Message
