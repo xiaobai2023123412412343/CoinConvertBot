@@ -102,6 +102,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//非小号大数据	
 public static class CryptoDataFetcher
 {
     private static readonly string ApiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker";
@@ -136,7 +137,7 @@ private static string FormatCryptoData(List<Dictionary<string, JsonElement>> cry
     // 筛选出指定排名范围内的币种
     var filteredCryptos = cryptos.FindAll(crypto => crypto["rank"].GetInt32() >= startRank && crypto["rank"].GetInt32() <= endRank);
 
-    var formattedData = new List<string> { $"<b>币圈TOP{startRank}-{endRank} 近1h/24h/7d数据</b>" };
+    var formattedData = new List<string> { $"<b>币圈市值TOP{startRank}-{endRank} 近1h/24h/7d数据</b>" };
     foreach (var crypto in filteredCryptos)
     {
         var percentChange1h = crypto["percent_change_1h"].GetDecimal();
