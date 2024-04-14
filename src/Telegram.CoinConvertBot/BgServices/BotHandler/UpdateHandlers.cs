@@ -134,18 +134,22 @@ private static string FormatCryptoData(List<Dictionary<string, JsonElement>> cry
 {
     if (cryptos == null || cryptos.Count == 0) return "<b>当前没有可用的加密货币数据。</b>";
 
-    // 筛选出指定排名范围内的币种
-    var filteredCryptos = cryptos.FindAll(crypto => crypto["rank"].GetInt32() >= startRank && crypto["rank"].GetInt32() <= endRank);
+    int up1h = 0, down1h = 0, up24h = 0, down24h = 0, up7d = 0, down7d = 0;
 
     var formattedData = new List<string> { $"<b>币圈市值TOP{startRank}-{endRank} 近1h/24h/7d数据</b>" };
-    foreach (var crypto in filteredCryptos)
+    foreach (var crypto in cryptos)
     {
         var percentChange1h = crypto["percent_change_1h"].GetDecimal();
         var percentChange24h = crypto["percent_change_24h"].GetDecimal();
         var percentChange7d = crypto["percent_change_7d"].GetDecimal();
 
-        var upEmoji = "\U0001F4C8";
-        var downEmoji = "\U0001F4C9";
+        // 更新上涨下跌计数
+        if (percentChange1h > 0) up1h++; else down1h++;
+        if (percentChange24h > 0) up24h++; else down24h++;
+        if (percentChange7d > 0) up7d++; else down7d++;
+
+        var upEmoji = "\U0001F4C8";//上涨符号
+        var downEmoji = "\U0001F4C9";//下跌符号
 
         formattedData.Add($"<b>{crypto["rank"].GetInt32()}: {crypto["symbol"].GetString()}</b>  $:{crypto["price_usd"].GetDecimal()} " +
                           $"流通市值$: {crypto["market_cap_usd"].GetDecimal() / 100000000:F2}亿\n " +
@@ -153,6 +157,8 @@ private static string FormatCryptoData(List<Dictionary<string, JsonElement>> cry
                           $"{(percentChange24h > 0 ? upEmoji : downEmoji)}{percentChange24h}%；" +
                           $"{(percentChange7d > 0 ? upEmoji : downEmoji)}{percentChange7d}%");
     }
+    // 添加上涨下跌总数
+    formattedData.Add($"<b>1小时变动</b>：\U0001F4C8：{up1h}   \U0001F4C9：{down1h}\n<b>24小时变动</b>：\U0001F4C8：{up24h}   \U0001F4C9：{down24h}\n<b>近7天变动</b>：\U0001F4C8：{up7d}   \U0001F4C9：{down7d}");
 
     return string.Join("\n\n", formattedData);
 }
