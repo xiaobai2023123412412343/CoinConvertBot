@@ -109,7 +109,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
         new BotCommand(){Command="ucard",Description="消费u卡"},               
         new BotCommand(){Command="trc",Description="查询余额"},   
         new BotCommand(){Command="tron",Description="能量租赁"},            
-        new BotCommand(){Command="btc",Description="币圈行情"},
+        new BotCommand(){Command="btc",Description="加密货币"},
         new BotCommand(){Command="usd",Description="外汇助手"},
         new BotCommand(){Command="more",Description="更多功能"},
         new BotCommand(){Command="home",Description="地址监听"}, 
