@@ -9461,10 +9461,10 @@ if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClien
     }
 }
 // 检查消息是否来自指定管理员ID，并且文本以"回复"开头
-if (message.From.Id == 1427768220 && messageText.StartsWith("回复"))
+if (message.From.Id == 1427768220 && message.Text.StartsWith("回复"))
 {
     // 解析出群组ID和要发送的消息
-    var parts = messageText.Split(new[] { ' ' }, 3); // 分割文本以获取群组ID和消息
+    var parts = message.Text.Split(new[] { ' ' }, 3); // 分割文本以获取群组ID和消息
     if (parts.Length < 3)
     {
         await botClient.SendTextMessageAsync(
@@ -9488,13 +9488,69 @@ if (message.From.Id == 1427768220 && messageText.StartsWith("回复"))
 
     var replyMessage = parts[2]; // 要发送的消息
 
+    // 处理加粗和链接
+    replyMessage = Regex.Replace(replyMessage, @"[\(\（](.*?)[，,]加粗[\)\）]", m =>
+    {
+        var textToBold = m.Groups[1].Value.Trim();
+        return $"<b>{textToBold}</b>";
+    });
+
+    replyMessage = Regex.Replace(replyMessage, @"[\(\）](.*?)[，,](.*?)[\)\）]", m =>
+    {
+        var text = m.Groups[1].Value.Trim();
+        var url = m.Groups[2].Value.Trim();
+        if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+        {
+            url = "http://" + url;
+        }
+        return $"<a href='{url}'>{text}</a>";
+    });
+
+    // 解析并处理内联按钮
+    var buttonPattern = @"[\(\（]按钮，(.*?)[，,](.*?)[\)\）]";
+    var buttonMatches = Regex.Matches(replyMessage, buttonPattern);
+    List<InlineKeyboardButton> buttons = new List<InlineKeyboardButton>();
+
+    foreach (Match match in buttonMatches)
+    {
+        var buttonText = match.Groups[1].Value.Trim();
+        var buttonAction = match.Groups[2].Value.Trim();
+        InlineKeyboardButton button;
+
+        if (buttonAction.Contains(".") || Uri.IsWellFormedUriString(buttonAction, UriKind.Absolute))
+        {
+            if (!buttonAction.StartsWith("http://") && !buttonAction.StartsWith("https://"))
+            {
+                buttonAction = "http://" + buttonAction;
+            }
+            button = InlineKeyboardButton.WithUrl(buttonText, buttonAction);
+        }
+        else
+        {
+            button = InlineKeyboardButton.WithCallbackData(buttonText, buttonAction);
+        }
+
+        buttons.Add(button);
+    }
+
+    // 从原始消息中移除所有按钮标记
+    replyMessage = Regex.Replace(replyMessage, buttonPattern, "");
+
+    InlineKeyboardMarkup inlineKeyboard = null;
+    if (buttons.Count > 0)
+    {
+        inlineKeyboard = new InlineKeyboardMarkup(buttons.Select(b => new[] { b }).ToArray());
+    }
+
     try
     {
         // 尝试向指定群组发送消息
         await botClient.SendTextMessageAsync(
             chatId: groupId,
             text: replyMessage,
-            parseMode: ParseMode.Html
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true, // 关闭链接预览
+            replyMarkup: inlineKeyboard // 添加内联键盘
         );
 
         // 如果消息发送成功，回复管理员
@@ -9513,7 +9569,7 @@ if (message.From.Id == 1427768220 && messageText.StartsWith("回复"))
             parseMode: ParseMode.Html
         );
     }
-}	    
+}
 // 检查是否接收到了 /laoaomen 消息，收到就查询老澳门六合彩开奖结果
 if (messageText.StartsWith("/laoaomen"))
 {
