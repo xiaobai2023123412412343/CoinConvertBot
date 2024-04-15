@@ -8846,7 +8846,7 @@ else if(update.CallbackQuery.Data == "contactAdmin")
 else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id == AdminUserId)
 {
     string commandsText = @"拉黑 ID 或者 拉白 ID 可以将用户拉入黑名单或移出；
-群发 +文本（（内容，链接）或（内容，加粗）或（按钮，名字，链接或指令）） 机器人可以一键群发内容；
+群发 +文本（（内容，链接）分行（内容，加粗）或（按钮，名字，链接或指令）） 机器人可以一键群发内容；
 <code>开启广告</code> <code>关闭广告</code> 指定管理员才可以执行；
 <code>开启兑换通知</code> <code>关闭兑换通知</code> 群内兑换通知开启关闭；
 <code>开启翻译</code> <code>关闭翻译</code> 群内开启或关闭翻译功能；
