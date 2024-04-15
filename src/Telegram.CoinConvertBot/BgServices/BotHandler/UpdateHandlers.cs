@@ -8857,6 +8857,8 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 代解 ID 地址 帮助用户解除地址；
 绑定地址后面加 TRX 不监控TRX余额；
 发送：回复 群ID 内容 可以向指定群聊发文本
+英文括号（内容，链接）中文括号（内容，加粗）中文括号（按钮，名称，链接或回调）
+末尾带置顶，可以尝试置顶
 
 启动机器人先：先开启保存群聊资料：<code>/baocunqunliao</code>
 储存之前的用户资料 代绑地址
