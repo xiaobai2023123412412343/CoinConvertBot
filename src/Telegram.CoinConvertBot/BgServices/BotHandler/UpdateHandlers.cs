@@ -9487,6 +9487,12 @@ if (message.From.Id == 1427768220 && message.Text.StartsWith("回复"))
     }
 
     var replyMessage = parts[2]; // 要发送的消息
+    bool shouldPin = replyMessage.EndsWith("置顶");
+    if (shouldPin)
+    {
+        // 移除文本中的“置顶”
+        replyMessage = replyMessage.Substring(0, replyMessage.Length - 2).Trim();
+    }
 
     // 处理加粗和链接
     replyMessage = Regex.Replace(replyMessage, @"[\(\（](.*?)[，,]加粗[\)\）]", m =>
@@ -9544,21 +9550,43 @@ if (message.From.Id == 1427768220 && message.Text.StartsWith("回复"))
 
     try
     {
-        // 尝试向指定群组发送消息
-        await botClient.SendTextMessageAsync(
-            chatId: groupId,
-            text: replyMessage,
-            parseMode: ParseMode.Html,
-            disableWebPagePreview: true, // 关闭链接预览
-            replyMarkup: inlineKeyboard // 添加内联键盘
-        );
+// 尝试向指定群组发送消息
+var sentReplyMessage = await botClient.SendTextMessageAsync(
+    chatId: groupId,
+    text: replyMessage,
+    parseMode: ParseMode.Html,
+    disableWebPagePreview: true, // 关闭链接预览
+    replyMarkup: inlineKeyboard // 添加内联键盘
+);
 
-        // 如果消息发送成功，回复管理员
+// 如果消息发送成功，回复管理员
+await botClient.SendTextMessageAsync(
+    chatId: message.Chat.Id,
+    text: "发送成功",
+    parseMode: ParseMode.Html
+);
+
+if (shouldPin)
+{
+    try
+    {
+        // 尝试置顶消息，使用静默置顶
+        await botClient.PinChatMessageAsync(
+            chatId: groupId,
+            messageId: sentReplyMessage.MessageId, // 使用发送消息后返回的Message对象的MessageId
+            disableNotification: true
+        );
+    }
+    catch (Exception ex)
+    {
+        // 如果置顶失败（例如，由于权限问题），可以在这里处理
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: "发送成功",
+            text: $"消息已发送，但置顶失败，原因：{ex.Message}",
             parseMode: ParseMode.Html
         );
+    }
+}
     }
     catch (Exception ex)
     {
