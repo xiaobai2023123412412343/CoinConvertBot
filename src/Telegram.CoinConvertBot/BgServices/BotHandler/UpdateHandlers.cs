@@ -11552,25 +11552,65 @@ if (messageText.StartsWith("/bijiacha"))
 // 检查是否是管理员发送的 "群发" 消息
 if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
 {
+    // 正确初始化 originalMessage 变量
     var originalMessage = message.Text.Substring(3); // 去掉 "群发 " 前缀
-    // 使用正则表达式查找文本中的链接，并将其转换为电报支持的内嵌链接格式
-    // 正则表达式同时支持中文括号和英文括号
-var messageToSend = originalMessage;
+    var messageToSend = originalMessage; // 基于 originalMessage 初始化 messageToSend
 
-// 首先处理加粗效果 如（你好，加粗）
-messageToSend = Regex.Replace(messageToSend, @"[\(\（](.*?)[，,]加粗[\)\）]", m =>
-{
-    var textToBold = m.Groups[1].Value.Trim();
-    return $"<b>{textToBold}</b>";
-});
+    // 解析并处理多个按钮
+    var buttonPattern = @"[\(\（]按钮，(.*?)[，,](.*?)[\)\）]";
+    var buttonMatches = Regex.Matches(messageToSend, buttonPattern);
+    List<InlineKeyboardButton> buttons = new List<InlineKeyboardButton>();
 
-// 然后处理链接 如（你好，www.google.cn）
-messageToSend = Regex.Replace(messageToSend, @"[\(\（](.*?)[，,](.*?)[\)\）]", m =>
+foreach (Match match in buttonMatches)
 {
-    var text = m.Groups[1].Value.Trim();
-    var url = m.Groups[2].Value.Trim();
-    return $"<a href='{url}'>{text}</a>";
-});
+    var buttonText = match.Groups[1].Value.Trim();
+    var buttonAction = match.Groups[2].Value.Trim();
+    InlineKeyboardButton button;
+
+    // 更严格地判断按钮动作是URL还是回调数据
+    // 如果buttonAction包含"."，则认为它是一个URL
+    if (buttonAction.Contains(".") || Uri.IsWellFormedUriString(buttonAction, UriKind.Absolute))
+    {
+        // 确保URL以http://或https://开头
+        if (!buttonAction.StartsWith("http://") && !buttonAction.StartsWith("https://"))
+        {
+            buttonAction = "http://" + buttonAction;
+        }
+        button = InlineKeyboardButton.WithUrl(buttonText, buttonAction);
+    }
+    else
+    {
+        button = InlineKeyboardButton.WithCallbackData(buttonText, buttonAction);
+    }
+
+    buttons.Add(button);
+}
+
+    // 从原始消息中移除所有按钮标记
+    messageToSend = Regex.Replace(messageToSend, buttonPattern, "");
+
+    // 创建内联键盘
+    InlineKeyboardMarkup inlineKeyboard = null;
+    if (buttons.Count > 0)
+    {
+        inlineKeyboard = new InlineKeyboardMarkup(buttons.Select(b => new[] { b }).ToArray());
+    }
+
+    // 处理加粗效果和链接
+    // 首先处理加粗效果 如（你好，加粗）
+    messageToSend = Regex.Replace(messageToSend, @"[\(\（](.*?)[，,]加粗[\)\）]", m =>
+    {
+        var textToBold = m.Groups[1].Value.Trim();
+        return $"<b>{textToBold}</b>";
+    });
+
+    // 然后处理链接 如（你好，www.google.cn）
+    messageToSend = Regex.Replace(messageToSend, @"[\(\）](.*?)[，,](.*?)[\)\）]", m =>
+    {
+        var text = m.Groups[1].Value.Trim();
+        var url = m.Groups[2].Value.Trim();
+        return $"<a href='{url}'>{text}</a>";
+    });
 
     int total = 0, success = 0, fail = 0;
     int batchSize = 200; // 每批次群发的用户数量
@@ -11590,7 +11630,8 @@ messageToSend = Regex.Replace(messageToSend, @"[\(\（](.*?)[，,](.*?)[\)\）]"
                         chatId: follower.Id, 
                         text: messageToSend, 
                         parseMode: ParseMode.Html,
-                        disableWebPagePreview: true); // 关闭链接预览
+                        disableWebPagePreview: true,// 关闭链接预览
+			replyMarkup: inlineKeyboard); // 添加内联键盘    
                     success++;
                 }
                 catch (ApiRequestException e)
