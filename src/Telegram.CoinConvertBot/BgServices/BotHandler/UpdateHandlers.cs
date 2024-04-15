@@ -11605,7 +11605,7 @@ foreach (Match match in buttonMatches)
     });
 
     // 然后处理链接 如（你好，www.google.cn）
-    messageToSend = Regex.Replace(messageToSend, @"[\(\）](.*?)[，,](.*?)[\)\）]", m =>
+    messageToSend = Regex.Replace(messageToSend, @"[\(\（](.*?)[，,](.*?)[\)\）]", m =>
     {
         var text = m.Groups[1].Value.Trim();
         var url = m.Groups[2].Value.Trim();
