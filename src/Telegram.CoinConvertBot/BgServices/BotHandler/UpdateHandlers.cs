@@ -11555,7 +11555,12 @@ if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
     var originalMessage = message.Text.Substring(3); // 去掉 "群发 " 前缀
     // 使用正则表达式查找文本中的链接，并将其转换为电报支持的内嵌链接格式
     // 正则表达式同时支持中文括号和英文括号
-    var messageToSend = Regex.Replace(originalMessage, @"([^\(\（]+)[\(\（]([^\)\）]+)[\)\）]", m => $"<a href='{m.Groups[2].Value}'>{m.Groups[1].Value.Trim()}</a>");
+var messageToSend = Regex.Replace(originalMessage, @"[\(\（](.*?)[，,](.*?)[\)\）]", m =>
+{
+    var text = m.Groups[1].Value.Trim();
+    var url = m.Groups[2].Value.Trim();
+    return $"<a href='{url}'>{text}</a>";
+});
 
     int total = 0, success = 0, fail = 0;
     int batchSize = 200; // 每批次群发的用户数量
