@@ -2409,6 +2409,23 @@ public static class PriceMonitor
             }
         }
     }
+    public static async Task<decimal?> GetLatestPricee(string symbol) //调用缓存数据给 行情监控 里的最新价格使用
+    {
+        try
+        {
+            var coinInfo = await CoinDataCache.GetCoinInfoAsync(symbol);
+            if (coinInfo != null && coinInfo.TryGetValue("price_usd", out JsonElement priceElement))
+            {
+                decimal price = priceElement.GetDecimal();
+                return price;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"获取{symbol}价格失败: {ex.Message}");
+        }
+        return null; // 如果无法获取价格信息，则返回null
+    }		
 private static async Task<string> GetFundingRate(string symbol)
 {
     using (var httpClient = new HttpClient())
@@ -2506,24 +2523,42 @@ private static async void CheckPrice(object state)
         }
     }
 }
-
-    private static async Task<decimal?> GetPrice(string symbol)
+    //private static async Task<decimal?> GetPrice(string symbol) // 旧版 调用币安 现货api  已取消
+    //{
+     //   using (var httpClient = new HttpClient())
+     //   {
+    //        try
+    //        {
+     //           var url = $"https://api.binance.com/api/v3/ticker/price?symbol={symbol}USDT";
+    //            var response = await httpClient.GetStringAsync(url);
+    //            var json = JObject.Parse(response);
+   //             return decimal.Parse((string)json["price"]);
+    //        }
+    //        catch
+    //        {
+    //            return null;
+    //        }
+    //    }
+ //   }
+private static async Task<decimal?> GetPrice(string symbol) //新版 直接调用缓存数据
+{
+    var coinInfo = await CoinDataCache.GetCoinInfoAsync(symbol);
+    if (coinInfo != null && coinInfo.TryGetValue("price_usd", out JsonElement priceElement))
     {
-        using (var httpClient = new HttpClient())
+        // 直接获取价格信息的数值
+        try
         {
-            try
-            {
-                var url = $"https://api.binance.com/api/v3/ticker/price?symbol={symbol}USDT";
-                var response = await httpClient.GetStringAsync(url);
-                var json = JObject.Parse(response);
-                return decimal.Parse((string)json["price"]);
-            }
-            catch
-            {
-                return null;
-            }
+            decimal price = priceElement.GetDecimal();
+            return price;
+        }
+        catch (Exception)
+        {
+            // 如果无法获取价格，可能是因为数据类型不匹配或其他原因
+            return null;
         }
     }
+    return null; // 如果本地缓存中没有找到信息，则返回null
+}
 
     public class MonitorInfo
     {
@@ -11152,7 +11187,7 @@ else
 
         foreach (var monitorInfo in PriceMonitor.monitorInfos[message.Chat.Id])
         {
-            decimal? currentPrice = await PriceMonitor.GetLatestPrice(monitorInfo.Symbol); // 使用新方法获取最新价格
+            decimal? currentPrice = await PriceMonitor.GetLatestPricee(monitorInfo.Symbol); // 使用新方法获取最新价格
             if (currentPrice.HasValue)
             {
                 decimal priceChangePercent = ((currentPrice.Value - monitorInfo.LastPrice) / monitorInfo.LastPrice) * 100;
