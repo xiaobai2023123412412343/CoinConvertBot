@@ -170,23 +170,95 @@ public static class CryptoMarketAnalyzer
     }
 }
 //非小号查币	
+public static class CoinDataCache
+{
+    private static Dictionary<string, Dictionary<string, JsonElement>> _coinData = new();
+    private static readonly string ApiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker?limit=450";
+    private static Timer _timer;
+    private static readonly HttpClient _httpClient = new();
+
+    static CoinDataCache()
+    {
+        // 移除初始的数据更新调用，改为按需更新
+    }
+
+    private static void StartTimer()
+    {
+        _timer = new Timer(async _ =>
+        {
+            //Console.WriteLine("Timer triggered for data update.");
+            await UpdateDataAsync(retryCount: 3);
+        }, null, TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(new Random().Next(45, 61)));
+    }
+
+    public static async Task<Dictionary<string, JsonElement>> GetCoinInfoAsync(string symbol)
+    {
+        if (!_coinData.ContainsKey(symbol.ToUpper()))
+        {
+            //Console.WriteLine($"Cache miss for {symbol}. Fetching data...");
+            await UpdateDataAsync(retryCount: 3);
+            StartTimer(); // 确保计时器在首次需要时启动
+        }
+        else
+        {
+            //Console.WriteLine($"Cache hit for {symbol}.");
+        }
+
+        _coinData.TryGetValue(symbol.ToUpper(), out var coinInfo);
+        return coinInfo;
+    }
+
+    private static async Task UpdateDataAsync(int retryCount)
+    {
+        for (int attempt = 0; attempt < retryCount; attempt++)
+        {
+            try
+            {
+                //Console.WriteLine("Attempting to fetch data from API...");
+                var response = await _httpClient.GetStringAsync(ApiUrl);
+                var coins = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(response);
+                if (coins != null)
+                {
+                    var newCoinData = new Dictionary<string, Dictionary<string, JsonElement>>();
+                    foreach (var coin in coins)
+                    {
+                        if (coin.TryGetValue("symbol", out JsonElement symbolElement))
+                        {
+                            var symbol = symbolElement.GetString();
+                            if (!string.IsNullOrEmpty(symbol))
+                            {
+                                newCoinData[symbol.ToUpper()] = coin;
+                            }
+                        }
+                    }
+                    _coinData = newCoinData; // 更新缓存
+                    //Console.WriteLine("Data updated successfully.");
+                    break; // 成功更新数据后退出循环
+                }
+            }
+            catch (Exception ex)
+            {
+                //Console.WriteLine($"Failed to fetch data from API: {ex.Message}");
+                if (attempt == retryCount - 1) // 最后一次尝试仍然失败
+                {
+                    Console.WriteLine("Final attempt to fetch data failed. Waiting for next cycle.");
+                }
+                await Task.Delay(5000); // 等待一段时间后重试
+            }
+        }
+    }
+}
 public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long chatId, string coinSymbol)
 {
     try
     {
-        using (var httpClient = new HttpClient())
+        var coinInfo = await CoinDataCache.GetCoinInfoAsync(coinSymbol);
+        if (coinInfo == null)
         {
-            var apiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker?limit=450";
-            var response = await httpClient.GetStringAsync(apiUrl);
-            var coins = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(response);
-
-            var coinInfo = coins.FirstOrDefault(coin => coin["symbol"].GetString().Equals(coinSymbol, StringComparison.OrdinalIgnoreCase));
-
-            if (coinInfo == null)
-            {
-                await botClient.SendTextMessageAsync(chatId, "未查到该币种的信息！", ParseMode.Html);
-                return;
-            }
+            //Console.WriteLine("No data found for the requested symbol.");
+            await botClient.SendTextMessageAsync(chatId, "未查到该币种的信息！", ParseMode.Html);
+            return;
+        }
 
             string symbol = coinInfo["symbol"].GetString();
             decimal priceUsd = coinInfo["price_usd"].GetDecimal();
@@ -212,7 +284,7 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
                              $"7d{change7dSymbol}：{percentChange7d}%";
 
             await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html);
-        }
+        
     }
     catch (Exception ex)
     {
