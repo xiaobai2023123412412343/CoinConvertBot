@@ -3148,109 +3148,80 @@ private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, 
 //计算数字+数字货币的各地货币价值    
 private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient botClient, Message message)
 {
-    var cryptoNames = new List<(string, string, string)>
-    {
-        ("tether", "USDT", "泰达币"),
-        ("bitcoin", "比特币", "btc"),
-        ("bitcoin-cash", "比特现金", "bch"),
-        ("ethereum", "以太坊", "eth"),
-        ("ethereum-classic", "以太经典", "etc"),
-        ("binancecoin", "币安币", "bnb"),
-        ("bitget-token", "币记-BGB", "bgb"),
-        ("okb", "欧易-okb", "okb"),
-        ("huobi-token", "火币积分-HT", "ht"),
-        ("the-open-network", "电报币", "ton"),
-        ("ripple", "瑞波币", "xrp"),
-        ("cardano", "艾达币", "ada"),
-        ("uniswap", "uni", "uni"),
-        ("dogecoin", "狗狗币", "doge"),
-        ("shiba-inu", "shib", "shib"),
-        ("solana", "Sol", "sol"),
-        ("avalanche-2", "AVAX", "avax"),
-        ("litecoin", "莱特币", "ltc"),
-        ("monero", "门罗币", "xmr"),
-        ("chainlink", "link", "link")
-    };
+    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)([a-zA-Z]+)$", RegexOptions.IgnoreCase);
 
-    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$", RegexOptions.IgnoreCase);
-
-    
     if (!match.Success)
     {
         return;
     }
 
     var amount = decimal.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
-    var currencyName = match.Groups[3].Value.ToLower();
+    var currencySymbol = match.Groups[3].Value.ToUpper(); // 将币种符号转换为大写
 
-    var currencyTuple = cryptoNames.FirstOrDefault(x => x.Item2.ToLower() == currencyName.ToLower() || x.Item3.ToLower() == currencyName.ToLower());
-    var currency = currencyTuple.Item1;
-    if (currency == null)
+    // 从本地缓存获取币种信息
+    var coinInfo = await CoinDataCache.GetCoinInfoAsync(currencySymbol);
+    if (coinInfo == null || !coinInfo.ContainsKey("price_usd"))
     {
+        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"没有找到{currencySymbol}的价格数据！");
         return;
     }
 
-    var (prices, changes) = await GetCryptoPricesAsync(new[] { currency });
-    var cryptoPriceInUsdt = prices[0] * amount;
+    decimal priceUsd = coinInfo["price_usd"].GetDecimal();
+    var cryptoPriceInUsdt = priceUsd * amount;
 
+    // 假设 GetOkxPriceAsync 和 GetCurrencyRatesAsync 方法保持不变
     var cnyPerUsdt = await GetOkxPriceAsync("usdt", "cny", "all");
     var cryptoPriceInCny = cryptoPriceInUsdt * cnyPerUsdt;
-    var cryptoToCnyRate = cryptoPriceInUsdt * cnyPerUsdt;
 
     var rates = await GetCurrencyRatesAsync();
-var responseText = $"<b>{amount} 枚 {currencyTuple.Item2}</b> 的价值是：\n\n<code>{cryptoToCnyRate:N2} 人民币 (CNY)</code>\n—————————————————\n";
-var rateList = rates.ToList();
-for (int i = 0; i < Math.Min(9, rateList.Count); i++)
-{
-    var rate = rateList[i];
-    var cryptoPriceInCurrency = cryptoPriceInCny * rate.Value.Item1;
-    var currencyFullName = CurrencyFullNames.ContainsKey(rate.Key) ? CurrencyFullNames[rate.Key] : rate.Key;
-    responseText += $"<code>{cryptoPriceInCurrency:N2} {currencyFullName}</code>";
-    if (i != Math.Min(9, rateList.Count) - 1)
+    var responseText = $"<b>{amount} 枚 {currencySymbol}</b> 的价值是：\n\n<code>{cryptoPriceInCny:N2} 人民币 (CNY)</code>\n—————————————————\n";
+    var rateList = rates.ToList();
+    for (int i = 0; i < Math.Min(9, rateList.Count); i++)
     {
-        responseText += "\n—————————————————\n";
+        var rate = rateList[i];
+        var cryptoPriceInCurrency = cryptoPriceInCny * rate.Value.Item1;
+        var currencyFullName = CurrencyFullNames.ContainsKey(rate.Key) ? CurrencyFullNames[rate.Key] : rate.Key;
+        responseText += $"<code>{cryptoPriceInCurrency:N2} {currencyFullName}</code>";
+        if (i != Math.Min(9, rateList.Count) - 1)
+        {
+            responseText += "\n—————————————————\n";
+        }
     }
-}
 
-var inlineKeyboardButton1 = new InlineKeyboardButton($"完整的 {currencyTuple.Item2} 价值表")
-{
-    CallbackData = $"full_rates,{cryptoPriceInCny},{amount},{currencyTuple.Item2},{cryptoPriceInCny}"
-};
+    var inlineKeyboardButton1 = new InlineKeyboardButton($"完整的 {currencySymbol} 价值表")
+    {
+        CallbackData = $"full_rates,{cryptoPriceInCny},{amount},{currencySymbol},{cryptoPriceInCny}"
+    };
 
-var inlineKeyboardButton2 = InlineKeyboardButton.WithUrl("穿越牛熊，慢，就是快！", "https://t.me/+b4NunT6Vwf0wZWI1");
+    var inlineKeyboardButton2 = InlineKeyboardButton.WithUrl("穿越牛熊，慢，就是快！", "https://t.me/+b4NunT6Vwf0wZWI1");
 
-var inlineKeyboard = new InlineKeyboardMarkup(new[]
-{
-    new [] { inlineKeyboardButton1 },
-    new [] { inlineKeyboardButton2 }
-});
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new [] { inlineKeyboardButton1 },
+        new [] { inlineKeyboardButton2 }
+    });
 
-try
-{
-    await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                         text: responseText,
-                                         parseMode: ParseMode.Html,
-                                         replyMarkup: inlineKeyboard);
-}
-catch (Exception ex)
-{
-    Log.Error($"发送消息失败: {ex.Message}");
-
-    // 尝试向用户发送一条消息，告知他们查询失败
     try
     {
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                             text: "查询失败，请稍后再试！",
-                                             parseMode: ParseMode.Html);
+                                             text: responseText,
+                                             parseMode: ParseMode.Html,
+                                             replyMarkup: inlineKeyboard);
     }
-    catch (Exception sendEx)
+    catch (Exception ex)
     {
-        // 如果向用户发送消息也失败，那么记录这个异常，但不再尝试发送消息
-        Log.Error($"向用户发送失败消息也失败了: {sendEx.Message}");
+        Log.Error($"发送消息失败: {ex.Message}");
+        try
+        {
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                 text: "查询失败，请稍后再试！",
+                                                 parseMode: ParseMode.Html);
+        }
+        catch (Exception sendEx)
+        {
+            Log.Error($"向用户发送失败消息也失败了: {sendEx.Message}");
+        }
     }
-
-    return;
-}
 }
 //查询用户电报资料    
 public class UserInfo
@@ -11824,10 +11795,11 @@ if (Regex.IsMatch(message.Text, @"用户名：|ID："))
 {
     await HandleStoreCommandAsync(botClient, message);
 }       
-if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$", RegexOptions.IgnoreCase))
+// 修改启动方法以匹配任何数字后跟任何字母组合的币种符号
+if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?[a-zA-Z]+$", RegexOptions.IgnoreCase))
 {
     await HandleCryptoCurrencyMessageAsync(botClient, message);
-}  
+}
 // 现货合约价格差
 if (messageText.StartsWith("/bijiacha"))
 {
