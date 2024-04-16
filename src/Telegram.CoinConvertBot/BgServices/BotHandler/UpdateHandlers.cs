@@ -3152,18 +3152,23 @@ private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient bo
 
     if (!match.Success)
     {
-        return;
+        return; // 如果不匹配，直接返回，不做任何处理
     }
 
     var amount = decimal.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
     var currencySymbol = match.Groups[3].Value.ToUpper(); // 将币种符号转换为大写
 
+    // 如果用户查询的是TRX，或者没有匹配到任何币种，直接返回，不做任何处理
+    if (currencySymbol == "TRX")
+    {
+        return;
+    }
+
     // 从本地缓存获取币种信息
     var coinInfo = await CoinDataCache.GetCoinInfoAsync(currencySymbol);
     if (coinInfo == null || !coinInfo.ContainsKey("price_usd"))
     {
-        await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"没有找到{currencySymbol}的价格数据！");
-        return;
+        return; // 如果没有找到币种信息，直接返回，不做任何处理
     }
 
     decimal priceUsd = coinInfo["price_usd"].GetDecimal();
