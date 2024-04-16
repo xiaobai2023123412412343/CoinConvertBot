@@ -283,7 +283,9 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
                              $"24h{change24hSymbol}：{percentChange24h}%\n" +
                              $"7d{change7dSymbol}：{percentChange7d}%";
 
-            await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html);
+        var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("关闭", "back"));
+
+        await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html, replyMarkup: keyboard);
         
     }
     catch (Exception ex)
