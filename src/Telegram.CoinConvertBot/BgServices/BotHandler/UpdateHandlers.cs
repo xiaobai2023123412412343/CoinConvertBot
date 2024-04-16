@@ -6992,7 +6992,7 @@ for (int i = startIndex; i < endIndex; i++)
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
@@ -12836,7 +12836,7 @@ USDT余额： <b>{USDT}</b>
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
@@ -12945,7 +12945,7 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
@@ -13031,7 +13031,7 @@ catch (Telegram.Bot.Exceptions.ApiRequestException ex)
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
@@ -13098,7 +13098,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
@@ -13190,7 +13190,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
@@ -13293,7 +13293,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
@@ -13397,7 +13397,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
@@ -13466,7 +13466,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
@@ -13507,7 +13507,7 @@ static async Task<Message> zulin(ITelegramBotClient botClient, Message message)
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
@@ -13623,7 +13623,7 @@ static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, 
         },   
         new [] // 第三行
         {
-            new KeyboardButton("资金费率"),
+            new KeyboardButton("财富密码"),
             new KeyboardButton("龙虎榜单"),
             new KeyboardButton("市场异动"),
             new KeyboardButton("更多功能"),
