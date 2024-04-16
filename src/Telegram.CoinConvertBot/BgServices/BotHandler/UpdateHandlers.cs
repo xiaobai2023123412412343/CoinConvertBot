@@ -7012,6 +7012,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     },
     new [] // 第2行按钮
     {
+        InlineKeyboardButton.WithCallbackData("资金费率", $"zijinn"),	    
         InlineKeyboardButton.WithCallbackData("信号广场", $"bijiacha"),
     },
 });
