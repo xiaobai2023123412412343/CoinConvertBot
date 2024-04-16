@@ -134,6 +134,7 @@ public static class CryptoMarketAnalyzer
                         PercentChange24h = coin["percent_change_24h"].GetDecimal(),
                         PercentChange7d = coin["percent_change_7d"].GetDecimal()
                     })
+		    .Where(coin => chatId == 1427768220 || coin.Symbol != "TRX") // 如果使用者ID非1427768220，则不包含TRX
                     .OrderByDescending(coin => coin.VolumePercentage)
                     .Take(10);
 
@@ -153,6 +154,7 @@ public static class CryptoMarketAnalyzer
                     // 创建内联键盘
                     var inlineKeyboard = new InlineKeyboardMarkup(new[]
                     {
+			InlineKeyboardButton.WithUrl("合约数据", "https://www.coinglass.com/zh/BitcoinOpenInterest"),    
                         InlineKeyboardButton.WithUrl($"{coin.Symbol}详细数据", $"https://www.feixiaohao.com/currencies/{coin.Id}/")
                     });
                     await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
@@ -162,7 +164,7 @@ public static class CryptoMarketAnalyzer
         catch (Exception ex)
         {
             Console.WriteLine($"API请求失败: {ex.Message}");
-            await botClient.SendTextMessageAsync(chatId, "抱歉，目前无法获取市场数据，请稍后再试。", ParseMode.Html);
+            await botClient.SendTextMessageAsync(chatId, "数据超时，请稍后重试！", ParseMode.Html);
         }
     }
 }
