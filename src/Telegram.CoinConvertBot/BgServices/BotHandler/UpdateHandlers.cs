@@ -169,6 +169,57 @@ public static class CryptoMarketAnalyzer
         }
     }
 }
+//非小号查币	
+public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long chatId, string coinSymbol)
+{
+    try
+    {
+        using (var httpClient = new HttpClient())
+        {
+            var apiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker?limit=450";
+            var response = await httpClient.GetStringAsync(apiUrl);
+            var coins = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(response);
+
+            var coinInfo = coins.FirstOrDefault(coin => coin["symbol"].GetString().Equals(coinSymbol, StringComparison.OrdinalIgnoreCase));
+
+            if (coinInfo == null)
+            {
+                await botClient.SendTextMessageAsync(chatId, "未查到该币种的信息！", ParseMode.Html);
+                return;
+            }
+
+            string symbol = coinInfo["symbol"].GetString();
+            decimal priceUsd = coinInfo["price_usd"].GetDecimal();
+            decimal marketCapUsd = coinInfo["market_cap_usd"].GetDecimal();
+            int rank = coinInfo["rank"].GetInt32();
+            decimal volume24hUsd = coinInfo["volume_24h_usd"].GetDecimal();
+            decimal percentChange1h = coinInfo["percent_change_1h"].GetDecimal();
+            decimal percentChange24h = coinInfo["percent_change_24h"].GetDecimal();
+            decimal percentChange7d = coinInfo["percent_change_7d"].GetDecimal();
+
+            string marketCapDisplay = marketCapUsd >= 100_000_000 ? $"{Math.Round(marketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(marketCapUsd / 1_000_000, 2)}m";
+            string volume24hDisplay = volume24hUsd >= 100_000_000 ? $"{Math.Round(volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(volume24hUsd / 1_000_000, 2)}m";
+
+            string change1hSymbol = percentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            string change24hSymbol = percentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            string change7dSymbol = percentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+            string message = $"<b>{symbol}</b> 价格：$ {priceUsd}\n" +
+                             $"市值：{marketCapDisplay}  No.<b>{rank}</b>\n" +
+                             $"24小时成交：${volume24hDisplay}\n" +
+                             $"1h{change1hSymbol}：{percentChange1h}%\n" +
+                             $"24h{change24hSymbol}：{percentChange24h}%\n" +
+                             $"7d{change7dSymbol}：{percentChange7d}%";
+
+            await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html);
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"API请求失败: {ex.Message}");
+        await botClient.SendTextMessageAsync(chatId, "数据超时，请稍后重试！", ParseMode.Html);
+    }
+}
 //非小号大数据	
 public static class CryptoDataFetcher
 {
@@ -10910,6 +10961,12 @@ else if (messageText.StartsWith("/xiaohao"))
 if (messageText.StartsWith("/shizhi") || messageText.Equals("财富密码"))
 {
     await CryptoMarketAnalyzer.AnalyzeAndReportAsync(botClient, message.Chat.Id);
+}
+// 检查是否接收到了查询特定币种信息的消息，例如"查btc"
+if (messageText.StartsWith("查"))
+{
+    string coinSymbol = messageText.Substring(1).Trim(); // 从消息文本中提取币种简称
+    _ = QueryCoinInfoAsync(botClient, message.Chat.Id, coinSymbol);
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
