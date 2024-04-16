@@ -102,6 +102,70 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class CryptoMarketAnalyzer
+{
+    private static readonly string ApiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker?limit=450";
+
+    public static async Task AnalyzeAndReportAsync(ITelegramBotClient botClient, long chatId)
+    {
+        try
+        {
+            using (var httpClient = new HttpClient())
+            {
+                var response = await httpClient.GetStringAsync(ApiUrl);
+                var coins = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(response);
+
+                var filteredAndSortedCoins = coins
+                    .Where(coin =>
+                        coin["volume_24h_usd"].GetDecimal() >= coin["market_cap_usd"].GetDecimal() * 0.1m &&
+                        coin["percent_change_24h"].GetDecimal() > 5m &&
+                        coin["percent_change_24h"].GetDecimal() <= 20m &&
+                        coin["percent_change_1h"].GetDecimal() > 0m)
+                    .Select(coin => new
+                    {
+                        Id = coin["id"].GetString(), // 获取币种ID
+                        Symbol = coin["symbol"].GetString(),
+                        PriceUsd = coin["price_usd"].GetDecimal(),
+                        Rank = coin["rank"].GetInt32(),
+                        MarketCapUsd = coin["market_cap_usd"].GetDecimal() / 1_000_000m,
+                        Volume24hUsd = coin["volume_24h_usd"].GetDecimal() / 1_000_000m,
+                        VolumePercentage = coin["volume_24h_usd"].GetDecimal() / coin["market_cap_usd"].GetDecimal() * 100m,
+                        PercentChange1h = coin["percent_change_1h"].GetDecimal(),
+                        PercentChange24h = coin["percent_change_24h"].GetDecimal(),
+                        PercentChange7d = coin["percent_change_7d"].GetDecimal()
+                    })
+                    .OrderByDescending(coin => coin.VolumePercentage)
+                    .Take(10);
+
+                foreach (var coin in filteredAndSortedCoins)
+                {
+                    string marketCapDisplay = coin.MarketCapUsd >= 100 ? $"{Math.Round(coin.MarketCapUsd / 100, 2)}亿" : $"{Math.Round(coin.MarketCapUsd, 2)}m";
+                    string volume24hDisplay = coin.Volume24hUsd >= 100 ? $"{Math.Round(coin.Volume24hUsd / 100, 2)}亿" : $"{Math.Round(coin.Volume24hUsd, 2)}m";
+
+                    string change1hSymbol = coin.PercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+                    string change24hSymbol = coin.PercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+                    string change7dSymbol = coin.PercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+                    string message = $"<b>{coin.Symbol}</b> 价格:$ {coin.PriceUsd} 排名：No.{coin.Rank}\n" +
+                                     $"市值：{marketCapDisplay}，24小时成交：{volume24hDisplay}，占比：{Math.Round(coin.VolumePercentage, 2)}%\n" +
+                                     $"1h{change1hSymbol}：{coin.PercentChange1h}% | 24h{change24hSymbol}：{coin.PercentChange24h}% | 7d{change7dSymbol}：{coin.PercentChange7d}%";
+
+                    // 创建内联键盘
+                    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+                    {
+                        InlineKeyboardButton.WithUrl($"{coin.Symbol}详细数据", $"https://www.feixiaohao.com/currencies/{coin.Id}/")
+                    });
+                    await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"API请求失败: {ex.Message}");
+            await botClient.SendTextMessageAsync(chatId, "抱歉，目前无法获取市场数据，请稍后再试。", ParseMode.Html);
+        }
+    }
+}
 //非小号大数据	
 public static class CryptoDataFetcher
 {
@@ -10838,6 +10902,11 @@ else if (messageText.StartsWith("/xiaohao"))
         parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
         replyMarkup: replyMarkup
     );
+}
+// 检查是否接收到了 /shizhi 消息或者特定的“财富密码”，收到就启动市值查询
+if (messageText.StartsWith("/shizhi") || messageText.Equals("财富密码"))
+{
+    await CryptoMarketAnalyzer.AnalyzeAndReportAsync(botClient, message.Chat.Id);
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
