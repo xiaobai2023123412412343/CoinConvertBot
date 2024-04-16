@@ -262,6 +262,7 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
         }
 
             string symbol = coinInfo["symbol"].GetString();
+	    string id = coinInfo["id"].GetString(); 
             decimal priceUsd = coinInfo["price_usd"].GetDecimal();
             decimal marketCapUsd = coinInfo["market_cap_usd"].GetDecimal();
             int rank = coinInfo["rank"].GetInt32();
@@ -284,7 +285,20 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
                              $"24h{change24hSymbol}：{percentChange24h}%\n" +
                              $"7d{change7dSymbol}：{percentChange7d}%";
 
-        var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("关闭", "back"));
+var keyboard = new InlineKeyboardMarkup(new[]
+{
+    // 第一排按钮
+    new[]
+    {
+        InlineKeyboardButton.WithUrl("合约", "https://www.coinglass.com/zh/BitcoinOpenInterest"),
+        InlineKeyboardButton.WithUrl($"详情", $"https://www.feixiaohao.com/currencies/{id}/")
+    },
+    // 第二排按钮
+    new[]
+    {
+        InlineKeyboardButton.WithCallbackData("关闭", "back")
+    }
+});
 
         await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html, replyMarkup: keyboard);
         
