@@ -102,6 +102,7 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//统计非小号币种数据
 public static class CryptoMarketAnalyzer
 {
     private static readonly string ApiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker?limit=450";
@@ -117,10 +118,10 @@ public static class CryptoMarketAnalyzer
 
                 var filteredAndSortedCoins = coins
                     .Where(coin =>
-                        coin["volume_24h_usd"].GetDecimal() >= coin["market_cap_usd"].GetDecimal() * 0.1m &&
-                        coin["percent_change_24h"].GetDecimal() > 5m &&
-                        coin["percent_change_24h"].GetDecimal() <= 20m &&
-                        coin["percent_change_1h"].GetDecimal() > 0m)
+                        coin["volume_24h_usd"].GetDecimal() >= coin["market_cap_usd"].GetDecimal() * 0.1m && //24小时成交量占比市值>10%
+                        coin["percent_change_24h"].GetDecimal() > 5m && //24小时涨幅大于5%
+                        coin["percent_change_24h"].GetDecimal() <= 20m && //24小时涨幅小于20%
+                        coin["percent_change_1h"].GetDecimal() > 0m) //近1小时涨幅大于0%
                     .Select(coin => new
                     {
                         Id = coin["id"].GetString(), // 获取币种ID
