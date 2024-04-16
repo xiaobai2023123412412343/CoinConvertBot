@@ -10645,23 +10645,46 @@ if (faxianCommandRegex.IsMatch(message.Text))
         topFall = fallList.Where(coin => !coin.Symbol.Equals("TRXUSDT")).OrderByDescending(x => x.Days).Take(5);
     }
 
-    var reply = "<b>币安连续上涨TOP5：</b>\n";
-    foreach (var coin in topRise)
-    {
-        reply += $"<code>{coin.Symbol.Replace("USDT", "")}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
-    }
+var reply = "<b>币安连续上涨TOP5：</b>\n";
+List<InlineKeyboardButton[]> rows = new List<InlineKeyboardButton[]>();
+InlineKeyboardButton[] row = new InlineKeyboardButton[5];
+int index = 0; // 用于计数和显示数字
 
-    reply += "\n<b>币安连续下跌TOP5：</b>\n";
-    foreach (var coin in topFall)
+// 上涨币种
+foreach (var coin in topRise)
+{
+    reply += $"{index}️⃣ <code>{coin.Symbol.Replace("USDT", "")}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+    row[index % 5] = InlineKeyboardButton.WithCallbackData($"{index}️⃣", $"查{coin.Symbol.ToLower().Replace("usdt", "")}");
+    if ((index + 1) % 5 == 0 || index == topRise.Count() - 1)
     {
-        reply += $"<code>{coin.Symbol.Replace("USDT", "")}</code>/USDT 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+        rows.Add(row);
+        row = new InlineKeyboardButton[5]; // 为下一排按钮准备新的数组
     }
+    index++;
+}
 
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: reply,
-        parseMode: ParseMode.Html
-    );
+reply += "\n<b>币安连续下跌TOP5：</b>\n";
+// 下跌币种
+foreach (var coin in topFall)
+{
+    reply += $"{index}️⃣ <code>{coin.Symbol.Replace("USDT", "")}</code>/USDT 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+    row[index % 5] = InlineKeyboardButton.WithCallbackData($"{index}️⃣", $"查{coin.Symbol.ToLower().Replace("usdt", "")}");
+    if ((index + 1) % 5 == 0 || index == topFall.Count() + topRise.Count() - 1)
+    {
+        rows.Add(row);
+        row = new InlineKeyboardButton[5]; // 为下一排按钮准备新的数组
+    }
+    index++;
+}
+
+var inlineKeyboard = new InlineKeyboardMarkup(rows);
+
+await botClient.SendTextMessageAsync(
+    chatId: message.Chat.Id,
+    text: reply,
+    parseMode: ParseMode.Html,
+    replyMarkup: inlineKeyboard
+);
     }
 }
 // 获取涨跌天数统计
