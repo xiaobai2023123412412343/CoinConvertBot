@@ -149,7 +149,7 @@ public static class CryptoMarketAnalyzer
                     string change24hSymbol = coin.PercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
                     string change7dSymbol = coin.PercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
-                    string message = $"<b>{coin.Symbol}</b>   价格:$ {coin.PriceUsd} 排名：No.{coin.Rank}\n" +
+                    string message = $"<code>{coin.Symbol}</code>   价格:$ {coin.PriceUsd} 排名：No.{coin.Rank}\n" +
                                      $"市值：{marketCapDisplay}，24小时成交：{volume24hDisplay}，占比：{Math.Round(coin.VolumePercentage, 2)}%\n" +
                                      $"1h{change1hSymbol}：{coin.PercentChange1h}% | 24h{change24hSymbol}：{coin.PercentChange24h}% | 7d{change7dSymbol}：{coin.PercentChange7d}%";
 
