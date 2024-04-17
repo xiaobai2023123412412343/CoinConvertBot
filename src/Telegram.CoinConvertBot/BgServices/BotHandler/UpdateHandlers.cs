@@ -106,7 +106,7 @@ public static class UpdateHandlers
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userShizhiLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>(); //限制用户每日查询次数字典	
 public static class CryptoMarketAnalyzer
 {
-    //private static readonly string ApiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker?limit=450";
+    //private static readonly string ApiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker?limit=450"; //已取消从api获取 直接从本地获取
 
     public static async Task AnalyzeAndReportAsync(ITelegramBotClient botClient, long chatId)
     {
@@ -221,7 +221,7 @@ public static class CoinDataCache
     {
         // 移除初始的数据更新调用，改为按需更新
     }
-public static Dictionary<string, Dictionary<string, JsonElement>> GetAllCoinsData()
+public static Dictionary<string, Dictionary<string, JsonElement>> GetAllCoinsData()   //获取本地缓存所有币种的信息
 {
     return _coinData;
 }
