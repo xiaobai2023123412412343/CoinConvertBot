@@ -278,7 +278,7 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
             string change24hSymbol = percentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
             string change7dSymbol = percentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
-            string message = $"<b>{symbol}</b> 价格：$ {priceUsd}\n" +
+            string message = $"<code>{symbol}</code> 价格：$ {priceUsd}\n" +
                              $"市值：{marketCapDisplay}  No.<b>{rank}</b>\n" +
                              $"24小时成交：${volume24hDisplay}\n" +
                              $"1h{change1hSymbol}：{percentChange1h}%\n" +
