@@ -309,6 +309,17 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
 {
     try
     {
+        // 如果是TRX，直接返回特定信息和按钮
+        if (coinSymbol.Equals("TRX", StringComparison.OrdinalIgnoreCase))
+        {
+            var trxKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                InlineKeyboardButton.WithUrl("点击进群", "https://t.me/+b4NunT6Vwf0wZWI1")
+            });
+
+            await botClient.SendTextMessageAsync(chatId, "TRX数据请进群查看！", ParseMode.Html, replyMarkup: trxKeyboard);
+            return;
+        }	    
         var coinInfo = await CoinDataCache.GetCoinInfoAsync(coinSymbol);
         if (coinInfo == null)
         {
