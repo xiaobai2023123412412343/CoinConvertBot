@@ -558,15 +558,39 @@ int totalLosers = priceChanges.Count(p => p.ChangePercent < 0);
     var finalTopGainers = topGainers.Take(5);
     var finalTopLosers = topLosers.Take(5);
 
-    string message = $"<b>30分钟走势：</b>\n\n比特币{(btcChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {btcChange.ChangePercent:F2}%, ${FormatPrice(btcChange.CurrentPrice.ToString())}\n以太坊{(ethChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {ethChange.ChangePercent:F2}%, ${FormatPrice(ethChange.CurrentPrice.ToString())}\n\n<b>急速上涨：</b>\n" + string.Join("\n", topGainers.Select(g => $"<code>{g.Symbol}</code> \U0001F4C8：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}"))
-                     + "\n\n<b>急速下跌：</b>\n" + string.Join("\n", topLosers.Select(l => $"<code>{l.Symbol}</code> \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}"))
-	             + $"\n\n\U0001F4C8上涨总数： <b>{totalGainers}</b>\n\U0001F4C9下跌总数： <b>{totalLosers}</b>";
+// 组装消息文本
+string message = $"<b>30分钟走势：</b>\n\n比特币{(btcChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {btcChange.ChangePercent:F2}%, ${FormatPrice(btcChange.CurrentPrice.ToString())}\n以太坊{(ethChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {ethChange.ChangePercent:F2}%, ${FormatPrice(ethChange.CurrentPrice.ToString())}\n\n<b>急速上涨：</b>\n" 
++ string.Join("\n", finalTopGainers.Select((g, index) => $"{index}️⃣  <code>{g.Symbol}</code> \U0001F4C8：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}").Take(5))
++ "\n\n<b>急速下跌：</b>\n" 
++ string.Join("\n", finalTopLosers.Select((l, index) => $"{index + 5}️⃣  <code>{l.Symbol}</code> \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}").Take(5))
++ $"\n\n\U0001F4C8上涨总数： <b>{totalGainers}</b>\n\U0001F4C9下跌总数： <b>{totalLosers}</b>";
 
-var inlineKeyboard = new InlineKeyboardMarkup(new[]
+// 构建按钮
+List<InlineKeyboardButton[]> rows = new List<InlineKeyboardButton[]>();
+
+// 添加上涨按钮
+InlineKeyboardButton[] riseButtons = new InlineKeyboardButton[5];
+for (int i = 0; i < 5; i++)
 {
-    InlineKeyboardButton.WithCallbackData("市值TOP50 大数据", "feixiaohao")
-});
+    riseButtons[i] = InlineKeyboardButton.WithCallbackData($"{i}️⃣", $"查{finalTopGainers.ElementAt(i).Symbol.ToLower().Replace("usdt", "")}");
+}
+rows.Add(riseButtons);
 
+// 添加下跌按钮
+InlineKeyboardButton[] fallButtons = new InlineKeyboardButton[5];
+for (int i = 0; i < 5; i++)
+{
+    fallButtons[i] = InlineKeyboardButton.WithCallbackData($"{i + 5}️⃣", $"查{finalTopLosers.ElementAt(i).Symbol.ToLower().Replace("usdt", "")}");
+}
+rows.Add(fallButtons);
+
+// 添加原有的按钮
+rows.Add(new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("市值TOP50 大数据", "feixiaohao") });
+
+// 创建键盘
+var inlineKeyboard = new InlineKeyboardMarkup(rows);
+
+// 发送消息
 await botClient.SendTextMessageAsync(chatId, message, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
 }
 
