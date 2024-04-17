@@ -139,6 +139,12 @@ public static class CryptoMarketAnalyzer
 		    .Where(coin => chatId == 1427768220 || coin.Symbol != "TRX") // 如果使用者ID非1427768220，则不包含TRX
                     .OrderByDescending(coin => coin.VolumePercentage)
                     .Take(10);
+		    
+            if (!filteredAndSortedCoins.Any())
+            {
+                await botClient.SendTextMessageAsync(chatId, "暂未发现财富密码，持续监控中...", ParseMode.Html);
+                return;
+            }		    
 
                 foreach (var coin in filteredAndSortedCoins)
                 {
@@ -156,8 +162,15 @@ public static class CryptoMarketAnalyzer
                     // 创建内联键盘
                     var inlineKeyboard = new InlineKeyboardMarkup(new[]
                     {
-			InlineKeyboardButton.WithUrl("合约数据", "https://www.coinglass.com/zh/BitcoinOpenInterest"),    
+                    new[] // 第一排按钮
+                    {
+                        InlineKeyboardButton.WithUrl("合约数据", "https://www.coinglass.com/zh/BitcoinOpenInterest"),
                         InlineKeyboardButton.WithUrl($"{coin.Symbol}详细数据", $"https://www.feixiaohao.com/currencies/{coin.Id}/")
+                    },
+                    new[] // 第二排按钮，增加监控行情波动按钮
+                    {
+                        InlineKeyboardButton.WithCallbackData($"监控 {coin.Symbol} 行情波动", $"监控 {coin.Symbol}")
+                    }
                     });
                     await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
                 }
