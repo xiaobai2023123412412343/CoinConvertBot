@@ -212,6 +212,7 @@ public static class CryptoMarketAnalyzer
 //非小号查币	
 public static class CoinDataCache
 {
+    private static bool _initialized = false; // 用于标记是否已经初始化和开始缓存更新
     private static Dictionary<string, Dictionary<string, JsonElement>> _coinData = new();
     private static readonly string ApiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker?limit=450";
     private static Timer _timer;
@@ -225,13 +226,26 @@ public static Dictionary<string, Dictionary<string, JsonElement>> GetAllCoinsDat
 {
     return _coinData;
 }
+    public static async Task EnsureCacheInitializedAsync()
+    {
+        if (!_initialized)
+        {
+            await UpdateDataAsync(retryCount: 3);
+            StartTimer();
+            _initialized = true; // 标记为已初始化
+        }
+    }	
+    // 确保StartTimer方法是public或者被EnsureCacheInitializedAsync调用
     private static void StartTimer()
     {
-        _timer = new Timer(async _ =>
+        if (_timer == null)
         {
-            //Console.WriteLine("Timer triggered for data update.");
-            await UpdateDataAsync(retryCount: 3);
-        }, null, TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(new Random().Next(45, 61)));
+            _timer = new Timer(async _ =>
+            {
+	        //Console.WriteLine("Timer triggered for data update.");
+                await UpdateDataAsync(retryCount: 3);
+            }, null, TimeSpan.Zero, TimeSpan.FromSeconds(new Random().Next(45, 61)));
+        }
     }
 
     public static async Task<Dictionary<string, JsonElement>> GetCoinInfoAsync(string symbol)
@@ -11115,6 +11129,7 @@ if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || mes
 // 检查是否接收到了 /feixiaohao 消息，收到就启动数据获取
 if (messageText.StartsWith("/feixiaohao"))
 {
+    await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
     var cryptoData = CryptoDataFetcher.FetchAndFormatCryptoDataAsync(1, 50); // 注意这里不再使用 await
     var replyMarkup = new InlineKeyboardMarkup(new[]
     {
@@ -11130,6 +11145,7 @@ if (messageText.StartsWith("/feixiaohao"))
 }
 else if (messageText.StartsWith("/xiaohao"))
 {
+    await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
     var cryptoData = CryptoDataFetcher.FetchAndFormatCryptoDataAsync(51, 100); // 注意这里不再使用 await
     var replyMarkup = new InlineKeyboardMarkup(new[]
     {
