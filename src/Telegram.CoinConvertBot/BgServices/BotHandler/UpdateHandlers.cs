@@ -112,69 +112,69 @@ public static class CryptoMarketAnalyzer
     {
         try
         {
-        // 获取比特币和以太坊的数据
-        var btcData = await CoinDataCache.GetCoinInfoAsync("BTC");
-        var ethData = await CoinDataCache.GetCoinInfoAsync("ETH");
+            // 获取比特币和以太坊的数据
+            var btcData = await CoinDataCache.GetCoinInfoAsync("BTC");
+            var ethData = await CoinDataCache.GetCoinInfoAsync("ETH");
 
-        decimal btcPercentChange1h = btcData != null && btcData.ContainsKey("percent_change_1h") ? btcData["percent_change_1h"].GetDecimal() : 0m;
-        decimal btcPercentChange24h = btcData != null && btcData.ContainsKey("percent_change_24h") ? btcData["percent_change_24h"].GetDecimal() : 0m;
-        decimal btcPercentChange7d = btcData != null && btcData.ContainsKey("percent_change_7d") ? btcData["percent_change_7d"].GetDecimal() : 0m;
+            decimal btcPercentChange1h = btcData != null && btcData.ContainsKey("percent_change_1h") ? btcData["percent_change_1h"].GetDecimal() : 0m;
+            decimal btcPercentChange24h = btcData != null && btcData.ContainsKey("percent_change_24h") ? btcData["percent_change_24h"].GetDecimal() : 0m;
+            decimal btcPercentChange7d = btcData != null && btcData.ContainsKey("percent_change_7d") ? btcData["percent_change_7d"].GetDecimal() : 0m;
 
-        decimal ethPercentChange1h = ethData != null && ethData.ContainsKey("percent_change_1h") ? ethData["percent_change_1h"].GetDecimal() : 0m;
-        decimal ethPercentChange24h = ethData != null && ethData.ContainsKey("percent_change_24h") ? ethData["percent_change_24h"].GetDecimal() : 0m;
-        decimal ethPercentChange7d = ethData != null && ethData.ContainsKey("percent_change_7d") ? ethData["percent_change_7d"].GetDecimal() : 0m;
+            decimal ethPercentChange1h = ethData != null && ethData.ContainsKey("percent_change_1h") ? ethData["percent_change_1h"].GetDecimal() : 0m;
+            decimal ethPercentChange24h = ethData != null && ethData.ContainsKey("percent_change_24h") ? ethData["percent_change_24h"].GetDecimal() : 0m;
+            decimal ethPercentChange7d = ethData != null && ethData.ContainsKey("percent_change_7d") ? ethData["percent_change_7d"].GetDecimal() : 0m;
 
-	// 获取所有币种的数据
-        var allCoinsData = CoinDataCache.GetAllCoinsData();
-        var coins = allCoinsData.Values.ToList();
-		    
-                var filteredAndSortedCoins = coins
-                    .Where(coin =>
-                        coin["volume_24h_usd"].GetDecimal() >= coin["market_cap_usd"].GetDecimal() * 0.1m && //24小时成交量占比市值>10%
-                        coin["percent_change_24h"].GetDecimal() > 5m && //24小时涨幅大于5%
-                        coin["percent_change_24h"].GetDecimal() <= 20m && //24小时涨幅小于20%
-                        coin["percent_change_1h"].GetDecimal() > 0m &&  //近1小时涨幅大于0%
-                       ((btcPercentChange7d > 0 && coin["percent_change_7d"].GetDecimal() > btcPercentChange7d) || // 比特币上涨，币种涨幅需大于比特币
-                       (btcPercentChange7d < 0 && (coin["percent_change_7d"].GetDecimal() > btcPercentChange7d || coin["percent_change_7d"].GetDecimal() >= 0)))) // 比特币下跌，币种跌幅需小于比特币或者币种为上涨
-                    .Select(coin => new
-                    {
-                        Id = coin["id"].GetString(), // 获取币种ID
-                        Symbol = coin["symbol"].GetString(),
-                        PriceUsd = coin["price_usd"].GetDecimal(),
-                        Rank = coin["rank"].GetInt32(),
-                        MarketCapUsd = coin["market_cap_usd"].GetDecimal() / 1_000_000m,
-                        Volume24hUsd = coin["volume_24h_usd"].GetDecimal() / 1_000_000m,
-                        VolumePercentage = coin["volume_24h_usd"].GetDecimal() / coin["market_cap_usd"].GetDecimal() * 100m,
-                        PercentChange1h = coin["percent_change_1h"].GetDecimal(),
-                        PercentChange24h = coin["percent_change_24h"].GetDecimal(),
-                        PercentChange7d = coin["percent_change_7d"].GetDecimal()
-                    })
-		    .Where(coin => chatId == 1427768220 || coin.Symbol != "TRX") // 如果使用者ID非1427768220，则不包含TRX
-                    .OrderByDescending(coin => coin.VolumePercentage)
-                    .Take(10);
-		    
+            // 获取所有币种的数据
+            var allCoinsData = CoinDataCache.GetAllCoinsData();
+            var coins = allCoinsData.Values.ToList();
+
+            var filteredAndSortedCoins = coins
+                .Where(coin =>
+                    coin["volume_24h_usd"].GetDecimal() >= coin["market_cap_usd"].GetDecimal() * 0.1m && //24小时成交量占比市值>10%
+                    coin["percent_change_24h"].GetDecimal() > 5m && //24小时涨幅大于5%
+                    coin["percent_change_24h"].GetDecimal() <= 20m && //24小时涨幅小于20%
+                    coin["percent_change_1h"].GetDecimal() > 0m &&  //近1小时涨幅大于0%
+                   ((btcPercentChange7d > 0 && coin["percent_change_7d"].GetDecimal() > btcPercentChange7d) || // 比特币上涨，币种涨幅需大于比特币
+                   (btcPercentChange7d < 0 && (coin["percent_change_7d"].GetDecimal() > btcPercentChange7d || coin["percent_change_7d"].GetDecimal() >= 0)))) // 比特币下跌，币种跌幅需小于比特币或者币种为上涨
+                .Select(coin => new
+                {
+                    Id = coin["id"].GetString(), // 获取币种ID
+                    Symbol = coin["symbol"].GetString(),
+                    PriceUsd = coin["price_usd"].GetDecimal(),
+                    Rank = coin["rank"].GetInt32(),
+                    MarketCapUsd = coin["market_cap_usd"].GetDecimal() / 1_000_000m,
+                    Volume24hUsd = coin["volume_24h_usd"].GetDecimal() / 1_000_000m,
+                    VolumePercentage = coin["volume_24h_usd"].GetDecimal() / coin["market_cap_usd"].GetDecimal() * 100m,
+                    PercentChange1h = coin["percent_change_1h"].GetDecimal(),
+                    PercentChange24h = coin["percent_change_24h"].GetDecimal(),
+                    PercentChange7d = coin["percent_change_7d"].GetDecimal()
+                })
+                .Where(coin => chatId == 1427768220 || coin.Symbol != "TRX") // 如果使用者ID非1427768220，则不包含TRX
+                .OrderByDescending(coin => coin.VolumePercentage)
+                .Take(10);
+
             if (!filteredAndSortedCoins.Any())
             {
                 await botClient.SendTextMessageAsync(chatId, "暂未发现财富密码，持续监控中...", ParseMode.Html);
                 return;
-            }		    
+            }
 
-                foreach (var coin in filteredAndSortedCoins)
+            foreach (var coin in filteredAndSortedCoins)
+            {
+                string marketCapDisplay = coin.MarketCapUsd >= 100 ? $"{Math.Round(coin.MarketCapUsd / 100, 2)}亿" : $"{Math.Round(coin.MarketCapUsd, 2)}m";
+                string volume24hDisplay = coin.Volume24hUsd >= 100 ? $"{Math.Round(coin.Volume24hUsd / 100, 2)}亿" : $"{Math.Round(coin.Volume24hUsd, 2)}m";
+
+                string change1hSymbol = coin.PercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+                string change24hSymbol = coin.PercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+                string change7dSymbol = coin.PercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+                string message = $"<code>{coin.Symbol}</code>   价格:$ {coin.PriceUsd} 排名：No.{coin.Rank}\n" +
+                                 $"市值：{marketCapDisplay}，24小时成交：{volume24hDisplay}，占比：{Math.Round(coin.VolumePercentage, 2)}%\n" +
+                                 $"1h{change1hSymbol}：{coin.PercentChange1h}% | 24h{change24hSymbol}：{coin.PercentChange24h}% | 7d{change7dSymbol}：{coin.PercentChange7d}%";
+
+                // 创建内联键盘
+                var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
-                    string marketCapDisplay = coin.MarketCapUsd >= 100 ? $"{Math.Round(coin.MarketCapUsd / 100, 2)}亿" : $"{Math.Round(coin.MarketCapUsd, 2)}m";
-                    string volume24hDisplay = coin.Volume24hUsd >= 100 ? $"{Math.Round(coin.Volume24hUsd / 100, 2)}亿" : $"{Math.Round(coin.Volume24hUsd, 2)}m";
-
-                    string change1hSymbol = coin.PercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-                    string change24hSymbol = coin.PercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-                    string change7dSymbol = coin.PercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-
-                    string message = $"<code>{coin.Symbol}</code>   价格:$ {coin.PriceUsd} 排名：No.{coin.Rank}\n" +
-                                     $"市值：{marketCapDisplay}，24小时成交：{volume24hDisplay}，占比：{Math.Round(coin.VolumePercentage, 2)}%\n" +
-                                     $"1h{change1hSymbol}：{coin.PercentChange1h}% | 24h{change24hSymbol}：{coin.PercentChange24h}% | 7d{change7dSymbol}：{coin.PercentChange7d}%";
-
-                    // 创建内联键盘
-                    var inlineKeyboard = new InlineKeyboardMarkup(new[]
-                    {
                     new[] // 第一排按钮
                     {
                         InlineKeyboardButton.WithUrl("合约数据", "https://www.coinglass.com/zh/BitcoinOpenInterest"),
@@ -184,23 +184,23 @@ public static class CryptoMarketAnalyzer
                     {
                         InlineKeyboardButton.WithCallbackData($"监控 {coin.Symbol} 行情波动", $"监控 {coin.Symbol}")
                     }
-                    });
-                    await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
-                }
-// 在发送完币种数据后，构建并发送比特币和以太坊的涨跌数据
-string btcChange1hSymbol = btcPercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-string btcChange24hSymbol = btcPercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-string btcChange7dSymbol = btcPercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+                });
+                await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
+            }
+            // 在发送完币种数据后，构建并发送比特币和以太坊的涨跌数据
+            string btcChange1hSymbol = btcPercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            string btcChange24hSymbol = btcPercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            string btcChange7dSymbol = btcPercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
-string ethChange1hSymbol = ethPercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-string ethChange24hSymbol = ethPercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-string ethChange7dSymbol = ethPercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            string ethChange1hSymbol = ethPercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            string ethChange24hSymbol = ethPercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            string ethChange7dSymbol = ethPercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
-// 构建汇总消息
-string summaryMessage = $"<b>BTC</b> 1h{btcChange1hSymbol}：{btcPercentChange1h:F2}% | 24h{btcChange24hSymbol}：{btcPercentChange24h:F2}% | 7d{btcChange7dSymbol}：{btcPercentChange7d:F2}%\n" +
-                        $"<b>ETH</b> 1h{ethChange1hSymbol}：{ethPercentChange1h:F2}% | 24h{ethChange24hSymbol}：{ethPercentChange24h:F2}% | 7d{ethChange7dSymbol}：{ethPercentChange7d:F2}%";
+            // 构建汇总消息
+            string summaryMessage = $"<b>BTC</b> 1h{btcChange1hSymbol}：{btcPercentChange1h:F2}% | 24h{btcChange24hSymbol}：{btcPercentChange24h:F2}% | 7d{btcChange7dSymbol}：{btcPercentChange7d:F2}%\n" +
+                                    $"<b>ETH</b> 1h{ethChange1hSymbol}：{ethPercentChange1h:F2}% | 24h{ethChange24hSymbol}：{ethPercentChange24h:F2}% | 7d{ethChange7dSymbol}：{ethPercentChange7d:F2}%";
 
-await botClient.SendTextMessageAsync(chatId, summaryMessage, ParseMode.Html);	                
+            await botClient.SendTextMessageAsync(chatId, summaryMessage, ParseMode.Html);                
         }
         catch (Exception ex)
         {
