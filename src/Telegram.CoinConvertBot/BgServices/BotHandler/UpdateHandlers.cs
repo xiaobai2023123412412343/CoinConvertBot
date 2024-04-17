@@ -8493,7 +8493,7 @@ if (containsUsername)
 // 检查输入文本是否为数字（包括小数）加~或～的组合，例如 "55~23"、"55～23" 或 "0.12~0.15"
 var isNumberRange = Regex.IsMatch(inputText, @"^\d+(\.\d+)?[~～]\d+(\.\d+)?$");
 // 检查输入文本是否为以#开头的加密货币标识，例如 "#btc"
-var isCryptoSymbol = Regex.IsMatch(inputText, @"^#[a-zA-Z0-9]+$");
+var isCryptoSymbol = Regex.IsMatch(inputText, @"^(#|查\s*)[a-zA-Z0-9]+$");
 // 如果输入文本符合数字（包括小数）加~或～的组合，或者是以#开头的加密货币标识，则不执行翻译
 if (isNumberRange || isCryptoSymbol)
 {
