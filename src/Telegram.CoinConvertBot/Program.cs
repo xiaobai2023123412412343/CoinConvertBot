@@ -117,6 +117,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
         new BotCommand(){Command="usdt",Description="实时u价"},                   
         new BotCommand(){Command="jkbtc",Description="行情监控"},                     
         new BotCommand(){Command="zijin",Description="资金费率"},   
+        new BotCommand(){Command="caifu",Description="财富密码"},              
         new BotCommand(){Command="faxian",Description="龙虎榜单"},   
         new BotCommand(){Command="bijiacha",Description="信号广场"},             
         new BotCommand(){Command="help",Description="使用帮助"},             
