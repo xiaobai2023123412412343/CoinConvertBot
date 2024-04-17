@@ -117,9 +117,17 @@ public static class CryptoMarketAnalyzer
                 var response = await httpClient.GetStringAsync(ApiUrl);
                 var coins = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(response);
 		    
-                // 找到比特币的数据
-                var btcData = coins.FirstOrDefault(coin => coin["symbol"].GetString() == "BTC");
-                decimal btcPercentChange7d = btcData != null ? btcData["percent_change_7d"].GetDecimal() : 0m;
+            // 找到比特币和以太坊的数据
+            var btcData = coins.FirstOrDefault(coin => coin["symbol"].GetString() == "BTC");
+            var ethData = coins.FirstOrDefault(coin => coin["symbol"].GetString() == "ETH");
+
+            decimal btcPercentChange1h = btcData != null ? btcData["percent_change_1h"].GetDecimal() : 0m;
+            decimal btcPercentChange24h = btcData != null ? btcData["percent_change_24h"].GetDecimal() : 0m;
+            decimal btcPercentChange7d = btcData != null ? btcData["percent_change_7d"].GetDecimal() : 0m;
+
+            decimal ethPercentChange1h = ethData != null ? ethData["percent_change_1h"].GetDecimal() : 0m;
+            decimal ethPercentChange24h = ethData != null ? ethData["percent_change_24h"].GetDecimal() : 0m;
+            decimal ethPercentChange7d = ethData != null ? ethData["percent_change_7d"].GetDecimal() : 0m;
 		    
                 var filteredAndSortedCoins = coins
                     .Where(coin =>
@@ -180,6 +188,20 @@ public static class CryptoMarketAnalyzer
                     });
                     await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html, replyMarkup: inlineKeyboard);
                 }
+// 在发送完币种数据后，构建并发送比特币和以太坊的涨跌数据
+string btcChange1hSymbol = btcPercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+string btcChange24hSymbol = btcPercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+string btcChange7dSymbol = btcPercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+string ethChange1hSymbol = ethPercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+string ethChange24hSymbol = ethPercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+string ethChange7dSymbol = ethPercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+// 构建汇总消息
+string summaryMessage = $"<b>BTC</b> 1h{btcChange1hSymbol}：{btcPercentChange1h:F2}% | 24h{btcChange24hSymbol}：{btcPercentChange24h:F2}% | 7d{btcChange7dSymbol}：{btcPercentChange7d:F2}%\n" +
+                        $"<b>ETH</b> 1h{ethChange1hSymbol}：{ethPercentChange1h:F2}% | 24h{ethChange24hSymbol}：{ethPercentChange24h:F2}% | 7d{ethChange7dSymbol}：{ethPercentChange7d:F2}%";
+
+await botClient.SendTextMessageAsync(chatId, summaryMessage, ParseMode.Html);	    
             }
         }
         catch (Exception ex)
