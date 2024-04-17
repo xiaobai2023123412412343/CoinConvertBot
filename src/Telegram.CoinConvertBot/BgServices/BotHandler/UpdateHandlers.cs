@@ -296,6 +296,7 @@ var keyboard = new InlineKeyboardMarkup(new[]
     // 第二排按钮
     new[]
     {
+	InlineKeyboardButton.WithCallbackData("监控", $"监控 {symbol}"), // 添加监控按钮   
         InlineKeyboardButton.WithCallbackData("关闭", "back")
     }
 });
