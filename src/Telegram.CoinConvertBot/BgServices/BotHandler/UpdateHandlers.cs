@@ -355,20 +355,15 @@ var keyboard = new InlineKeyboardMarkup(new[]
 //非小号大数据	
 public static class CryptoDataFetcher
 {
-    private static readonly string ApiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker";
-
-public static async Task<string> FetchAndFormatCryptoDataAsync(int startRank, int endRank)
-{
-    using (var httpClient = new HttpClient())
+    public static string FetchAndFormatCryptoDataAsync(int startRank, int endRank)
     {
         try
         {
-            var response = await httpClient.GetStringAsync(ApiUrl);
-            var cryptos = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(response);
+            var cryptos = CoinDataCache.GetAllCoinsData().Values.ToList();
             // 筛选出排名在指定范围内的加密货币
-            var filteredCryptos = cryptos.Where(crypto => 
-                crypto.ContainsKey("rank") && 
-                crypto["rank"].GetInt32() >= startRank && 
+            var filteredCryptos = cryptos.Where(crypto =>
+                crypto.ContainsKey("rank") &&
+                crypto["rank"].GetInt32() >= startRank &&
                 crypto["rank"].GetInt32() <= endRank).ToList();
             return FormatCryptoData(filteredCryptos, startRank, endRank);
         }
@@ -378,46 +373,45 @@ public static async Task<string> FetchAndFormatCryptoDataAsync(int startRank, in
             return "获取加密货币数据失败，请稍后再试。";
         }
     }
-}
 
-private static string FormatCryptoData(List<Dictionary<string, JsonElement>> cryptos, int startRank, int endRank)
-{
-    if (cryptos == null || cryptos.Count == 0) return "<b>当前没有可用的加密货币数据。</b>";
-
-    int up1h = 0, down1h = 0, up24h = 0, down24h = 0, up7d = 0, down7d = 0;
-
-    var formattedData = new List<string> { $"<b>币圈市值TOP{startRank}-{endRank} 近1h/24h/7d数据</b>" };
-    foreach (var crypto in cryptos)
+    private static string FormatCryptoData(List<Dictionary<string, JsonElement>> cryptos, int startRank, int endRank)
     {
-        // 跳过TRX币种
-        if (crypto["symbol"].GetString().Equals("TRX", StringComparison.OrdinalIgnoreCase))
+        if (cryptos == null || cryptos.Count == 0) return "<b>当前没有可用的加密货币数据。</b>";
+
+        int up1h = 0, down1h = 0, up24h = 0, down24h = 0, up7d = 0, down7d = 0;
+
+        var formattedData = new List<string> { $"<b>币圈市值TOP{startRank}-{endRank} 近1h/24h/7d数据</b>" };
+        foreach (var crypto in cryptos)
         {
-            continue;
+            // 跳过TRX币种
+            if (crypto["symbol"].GetString().Equals("TRX", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var percentChange1h = crypto["percent_change_1h"].GetDecimal();
+            var percentChange24h = crypto["percent_change_24h"].GetDecimal();
+            var percentChange7d = crypto["percent_change_7d"].GetDecimal();
+
+            // 更新上涨下跌计数
+            if (percentChange1h > 0) up1h++; else down1h++;
+            if (percentChange24h > 0) up24h++; else down24h++;
+            if (percentChange7d > 0) up7d++; else down7d++;
+
+            var upEmoji = "\U0001F4C8";//上涨符号
+            var downEmoji = "\U0001F4C9";//下跌符号
+
+            formattedData.Add($"<b>{crypto["rank"].GetInt32()}: {crypto["symbol"].GetString()}</b>  $:{crypto["price_usd"].GetDecimal()} " +
+                              $"流通市值$: {crypto["market_cap_usd"].GetDecimal() / 100000000:F2}亿\n " +
+                              $"{(percentChange1h > 0 ? upEmoji : downEmoji)}{percentChange1h}% ；" +
+                              $"{(percentChange24h > 0 ? upEmoji : downEmoji)}{percentChange24h}%；" +
+                              $"{(percentChange7d > 0 ? upEmoji : downEmoji)}{percentChange7d}%");
         }
-	    
-        var percentChange1h = crypto["percent_change_1h"].GetDecimal();
-        var percentChange24h = crypto["percent_change_24h"].GetDecimal();
-        var percentChange7d = crypto["percent_change_7d"].GetDecimal();
+        // 添加上涨下跌总数
+        formattedData.Add($"<b>1小时变动</b>：\U0001F4C8：{up1h}   \U0001F4C9：{down1h}\n<b>24小时变动</b>：\U0001F4C8：{up24h}   \U0001F4C9：{down24h}\n<b>近7天变动</b>：\U0001F4C8：{up7d}   \U0001F4C9：{down7d}");
 
-        // 更新上涨下跌计数
-        if (percentChange1h > 0) up1h++; else down1h++;
-        if (percentChange24h > 0) up24h++; else down24h++;
-        if (percentChange7d > 0) up7d++; else down7d++;
-
-        var upEmoji = "\U0001F4C8";//上涨符号
-        var downEmoji = "\U0001F4C9";//下跌符号
-
-        formattedData.Add($"<b>{crypto["rank"].GetInt32()}: {crypto["symbol"].GetString()}</b>  $:{crypto["price_usd"].GetDecimal()} " +
-                          $"流通市值$: {crypto["market_cap_usd"].GetDecimal() / 100000000:F2}亿\n " +
-                          $"{(percentChange1h > 0 ? upEmoji : downEmoji)}{percentChange1h}% ；" +
-                          $"{(percentChange24h > 0 ? upEmoji : downEmoji)}{percentChange24h}%；" +
-                          $"{(percentChange7d > 0 ? upEmoji : downEmoji)}{percentChange7d}%");
+        return string.Join("\n\n", formattedData);
     }
-    // 添加上涨下跌总数
-    formattedData.Add($"<b>1小时变动</b>：\U0001F4C8：{up1h}   \U0001F4C9：{down1h}\n<b>24小时变动</b>：\U0001F4C8：{up24h}   \U0001F4C9：{down24h}\n<b>近7天变动</b>：\U0001F4C8：{up7d}   \U0001F4C9：{down7d}");
-
-    return string.Join("\n\n", formattedData);
-}
 }	
 //短期30分钟涨跌数据
 // 为 /jisuzhangdie 命令创建一个新的字典来跟踪用户查询限制
@@ -11121,7 +11115,7 @@ if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || mes
 // 检查是否接收到了 /feixiaohao 消息，收到就启动数据获取
 if (messageText.StartsWith("/feixiaohao"))
 {
-    var cryptoData = await CryptoDataFetcher.FetchAndFormatCryptoDataAsync(1, 50);
+    var cryptoData = CryptoDataFetcher.FetchAndFormatCryptoDataAsync(1, 50); // 注意这里不再使用 await
     var replyMarkup = new InlineKeyboardMarkup(new[]
     {
         InlineKeyboardButton.WithCallbackData("TOP51-100数据", "xiaohao"),
@@ -11132,11 +11126,11 @@ if (messageText.StartsWith("/feixiaohao"))
         text: cryptoData,
         parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
         replyMarkup: replyMarkup
-    );
+    ).ConfigureAwait(false); // 保持异步调用的非阻塞性
 }
 else if (messageText.StartsWith("/xiaohao"))
 {
-    var cryptoData = await CryptoDataFetcher.FetchAndFormatCryptoDataAsync(51, 100);
+    var cryptoData = CryptoDataFetcher.FetchAndFormatCryptoDataAsync(51, 100); // 注意这里不再使用 await
     var replyMarkup = new InlineKeyboardMarkup(new[]
     {
         InlineKeyboardButton.WithCallbackData("TOP1-50数据", "feixiaohao"),
@@ -11147,7 +11141,7 @@ else if (messageText.StartsWith("/xiaohao"))
         text: cryptoData,
         parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
         replyMarkup: replyMarkup
-    );
+    ).ConfigureAwait(false); // 保持异步调用的非阻塞性
 }
 // 在处理消息的地方，当机器人收到 /caifu 消息或者 "财富密码" 文本时
 if (messageText.StartsWith("/caifu") || messageText.Equals("财富密码"))
