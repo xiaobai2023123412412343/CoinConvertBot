@@ -133,7 +133,7 @@ public static class CryptoMarketAnalyzer
                     coin["volume_24h_usd"].GetDecimal() >= coin["market_cap_usd"].GetDecimal() * 0.1m && //24小时成交量占比市值>10%
                     coin["percent_change_24h"].GetDecimal() > 5m && //24小时涨幅大于5%
                     coin["percent_change_24h"].GetDecimal() <= 20m && //24小时涨幅小于20%
-                    coin["percent_change_1h"].GetDecimal() > 0m &&  //近1小时涨幅大于0%
+                    coin["percent_change_1h"].GetDecimal() > 0m &&  //近1小时涨幅大于0%  不想要比特币数据直接： 0m) //近1小时涨幅大于0%
                    ((btcPercentChange7d > 0 && coin["percent_change_7d"].GetDecimal() > btcPercentChange7d) || // 比特币上涨，币种涨幅需大于比特币
                    (btcPercentChange7d < 0 && (coin["percent_change_7d"].GetDecimal() > btcPercentChange7d || coin["percent_change_7d"].GetDecimal() >= 0)))) // 比特币下跌，币种跌幅需小于比特币或者币种为上涨
                 .Select(coin => new
