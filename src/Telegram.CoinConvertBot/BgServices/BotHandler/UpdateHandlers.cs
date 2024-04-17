@@ -264,7 +264,8 @@ public static Dictionary<string, Dictionary<string, JsonElement>> GetAllCoinsDat
         _coinData.TryGetValue(symbol.ToUpper(), out var coinInfo);
         return coinInfo;
     }
-
+	
+    //储存币种到本地数据库
     private static async Task UpdateDataAsync(int retryCount)
     {
         for (int attempt = 0; attempt < retryCount; attempt++)
@@ -282,7 +283,7 @@ public static Dictionary<string, Dictionary<string, JsonElement>> GetAllCoinsDat
                         if (coin.TryGetValue("symbol", out JsonElement symbolElement))
                         {
                             var symbol = symbolElement.GetString();
-                            if (!string.IsNullOrEmpty(symbol))
+                            if (!string.IsNullOrEmpty(symbol) && !symbol.Equals("TRX", StringComparison.OrdinalIgnoreCase)) //如果是TRX  直接不缓存数据
                             {
                                 newCoinData[symbol.ToUpper()] = coin;
                             }
