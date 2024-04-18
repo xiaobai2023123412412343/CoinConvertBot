@@ -31,7 +31,7 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Numerics;
 using System.Globalization;
-
+using System.Collections.Concurrent;
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 
@@ -4022,7 +4022,82 @@ private static async Task BotOnMyChatMemberChanged(ITelegramBotClient botClient,
 }
 // 存储被拉黑的用户 ID
 private static HashSet<long> blacklistedUserIds = new HashSet<long>();
+// 用户行为记录
+public class UserBehavior
+{
+    public DateTime LastMessageTime { get; set; }
+    public string LastMessageText { get; set; }
+    public int MessageCount { get; set; } = 0;
+    public int WarningCount { get; set; } = 0;
+    public DateTime? UnbanTime { get; set; }
+}
 
+// 用于跟踪用户行为的字典
+private static ConcurrentDictionary<long, UserBehavior> userBehaviors = new ConcurrentDictionary<long, UserBehavior>();
+private static async Task CheckUserBehavior(ITelegramBotClient botClient, Message message)
+{
+    if (message.From.Id == 1427768220 || message.Text == "/start") return; // 管理员或 /start 命令不受限制
+
+    var userId = message.From.Id;
+    var userBehavior = userBehaviors.GetOrAdd(userId, new UserBehavior());
+
+    // 检查是否是重复消息
+    if (userBehavior.LastMessageText == message.Text && (DateTime.UtcNow - userBehavior.LastMessageTime).TotalSeconds <= 5)
+    {
+        userBehavior.MessageCount++;
+    }
+    else
+    {
+        userBehavior.MessageCount = 1; // 重置计数
+    }
+
+    userBehavior.LastMessageTime = DateTime.UtcNow;
+    userBehavior.LastMessageText = message.Text;
+
+    if (userBehavior.MessageCount >= 3) // 触发提醒或拉黑条件
+    {
+        if (userBehavior.WarningCount == 0)
+        {
+            // 第一次提醒
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "请勿高频发送指令，否则将被机器人限制！"
+            );
+            userBehavior.WarningCount++;
+            // 设置提醒倒计时解除
+            Task.Delay(TimeSpan.FromHours(2)).ContinueWith(_ => userBehavior.WarningCount = 0);
+        }
+        else
+        {
+            // 已提醒过，拉黑并设置24小时后解除
+            try
+            {
+                blacklistedUserIds.Add(userId);
+                userBehavior.UnbanTime = DateTime.UtcNow.AddHours(24);
+                var timeLeft = userBehavior.UnbanTime.Value - DateTime.UtcNow;
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: $"您已违规高频操作，请在 {timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00} 后重试！"
+                );
+                Task.Delay(TimeSpan.FromHours(24)).ContinueWith(_ =>
+                {
+                    try
+                    {
+                        blacklistedUserIds.Remove(userId);
+                    }
+                    catch
+                    {
+                        // 如果移除失败，取消本次操作
+                    }
+                });
+            }
+            catch
+            {
+                // 如果添加到黑名单失败，取消本次操作
+            }
+        }
+    }
+}
 private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient botClient, Message message)
 {
     try
@@ -9737,15 +9812,41 @@ if (message.Type == MessageType.ChatMembersAdded)
         {
             Log.Logger.Error(e, "更新Telegram用户信息失败！");
         }
-// 检查用户是否在黑名单中
-if (blacklistedUserIds.Contains(message.From.Id))
-{
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: "受限用户！"
-    );
-    return;
-}        
+    // 检查用户是否在黑名单中
+    if (blacklistedUserIds.Contains(message.From.Id))
+    {
+        var userBehavior = userBehaviors.GetOrAdd(message.From.Id, new UserBehavior());
+        if (userBehavior.UnbanTime.HasValue)
+        {
+            var timeLeft = userBehavior.UnbanTime.Value - DateTime.UtcNow;
+            if (timeLeft > TimeSpan.Zero)
+            {
+                // 用户被自动拉黑，回复剩余时间
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: $"您已触发高频操作，请在 {timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00} 后重试！"
+                );
+            }
+            else
+            {
+                // 解禁时间已过，但由于某种原因未能自动移除黑名单，尝试移除
+                blacklistedUserIds.Remove(message.From.Id);
+                userBehavior.UnbanTime = null;
+            }
+        }
+        else
+        {
+            // 用户是被管理员手动拉黑，回复通用消息
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "受限用户！"
+            );
+        }
+        return;
+    }
+// 新增：检查用户行为是否触发提醒或拉黑	    
+await CheckUserBehavior(botClient, message);	  
+	    
 // 将这个值替换为目标群组的ID
 const long TARGET_CHAT_ID = -1002006327353;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
