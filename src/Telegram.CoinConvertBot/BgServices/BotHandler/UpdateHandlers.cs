@@ -11393,6 +11393,25 @@ else if (messageText.StartsWith("/7dshuju"))
     var (replyMessage, inlineKeyboard) = await CoinDataCache.GetTopMoversAsync("7d");
     await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: replyMessage, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, replyMarkup: inlineKeyboard);
 }
+if (messageText.StartsWith("/genjuzhiding"))
+{
+    string replyMessage = "选择指定时间，返回币种上涨下跌数据：";
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new[] // 第一排按钮
+        {
+            InlineKeyboardButton.WithCallbackData("1小时", "/1hshuju"),
+            InlineKeyboardButton.WithCallbackData("24小时", "/24hshuju"),
+            InlineKeyboardButton.WithCallbackData("7天", "/7dshuju")
+        },
+        new[] // 第二排按钮
+        {
+            InlineKeyboardButton.WithCallbackData("关闭", "back")
+        }
+    });
+
+    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: replyMessage, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, replyMarkup: inlineKeyboard);
+}	    
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
