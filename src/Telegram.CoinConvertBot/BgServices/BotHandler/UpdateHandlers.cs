@@ -630,7 +630,7 @@ public class CryptoPriceMonitor
         }
         priceHistory.Enqueue(prices); // 添加最新的一分钟数据
     }
-
+//新版数据直接从本地缓存获取
 private static async Task<Dictionary<string, decimal>> FetchCurrentPricesAsync()
 {
     // 确保缓存已经初始化并且是最新的
