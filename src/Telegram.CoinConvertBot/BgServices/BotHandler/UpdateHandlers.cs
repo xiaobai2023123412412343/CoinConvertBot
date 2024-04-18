@@ -11601,7 +11601,7 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
                         foreach (var record in priceChangeRecords.Skip(1)) // 跳过第一条记录，因为它是初始价格
                         {
                             string changeSymbol = record.ChangePercentage > 0 ? "\U0001F4C8" : "\U0001F4C9";
-                            priceChangeText += $"{record.Time:yyyy/MM/dd HH:mm:ss} {changeSymbol} {Math.Abs(record.ChangePercentage):0.00}% $ {record.Price}\n";
+                            priceChangeText += $"{record.Time:yyyy/MM/dd HH:mm} {changeSymbol} {Math.Abs(record.ChangePercentage):0.00}% $ {record.Price}\n";
                         }
 
                         string formattedInitialPrice = initialPriceRecord.Price >= 1 ? initialPriceRecord.Price.ToString("F2") : initialPriceRecord.Price.ToString("0.00000000");
