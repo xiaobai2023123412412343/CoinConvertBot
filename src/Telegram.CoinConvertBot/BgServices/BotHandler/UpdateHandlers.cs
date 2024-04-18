@@ -325,7 +325,9 @@ public static async Task<string> GetTopMoversAsync(string timeFrame)
         {
             Symbol = kv.Key,
             Data = kv.Value,
-            PercentChange = kv.Value.TryGetValue(percentChangeKey, out JsonElement percentChangeElement) && percentChangeElement.TryGetDouble(out double percentChange) ? percentChange : 0.0
+            PercentChange = kv.Value.TryGetValue(percentChangeKey, out JsonElement percentChangeElement) && percentChangeElement.TryGetDouble(out double percentChange) ? percentChange : 0.0,
+            // 尝试获取价格信息
+            PriceUsd = kv.Value.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double price) ? price : 0.0
         })
         .OrderByDescending(x => Math.Abs(x.PercentChange)) // 根据变化幅度的绝对值排序
         .ToList();
@@ -335,9 +337,9 @@ public static async Task<string> GetTopMoversAsync(string timeFrame)
     var topFallers = topMovers.Where(x => x.PercentChange < 0).Take(5);
 
     string message = $"{timeFrame}上涨TOP5：\n" +
-                     string.Join("\n", topRisers.Select(x => $"{x.Symbol} \U0001F4C8 {x.PercentChange:F2}%")) +
+                     string.Join("\n", topRisers.Select(x => $"{x.Symbol} \U0001F4C8 {x.PercentChange:F2}%   $：{x.PriceUsd:F2}")) +
                      $"\n\n{timeFrame}下跌TOP5：\n" +
-                     string.Join("\n", topFallers.Select(x => $"{x.Symbol} \U0001F4C9 {x.PercentChange:F2}%"));
+                     string.Join("\n", topFallers.Select(x => $"{x.Symbol} \U0001F4C9 {x.PercentChange:F2}%   $：{x.PriceUsd:F2}"));
 
     return message;
 }	
