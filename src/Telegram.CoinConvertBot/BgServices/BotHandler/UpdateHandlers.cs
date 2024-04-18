@@ -200,7 +200,12 @@ public static class CryptoMarketAnalyzer
 
             if (!filteredAndSortedCoins.Any())
             {
-                await botClient.SendTextMessageAsync(chatId, "暂未发现财富密码，持续监控中...", ParseMode.Html);
+                var customQueryKeyboard = new InlineKeyboardMarkup(new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding")
+                });		    
+		    
+                await botClient.SendTextMessageAsync(chatId, "暂未发现财富密码，持续监控中...", ParseMode.Html, replyMarkup: customQueryKeyboard);
                 return;
             }
 
