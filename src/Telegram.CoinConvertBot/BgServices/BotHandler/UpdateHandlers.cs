@@ -2650,6 +2650,7 @@ public static class PriceMonitor
     {
         return await GetPrice(symbol); // 调用私有方法获取价格
     }
+//监控任务启动方法	
 public static async Task Monitor(ITelegramBotClient botClient, long userId, string symbol)
 {
     symbol = symbol.ToUpper();
@@ -2708,13 +2709,26 @@ public static async Task Monitor(ITelegramBotClient botClient, long userId, stri
     string formattedPrice = price.Value >= 1 ? price.Value.ToString("F2") : price.Value.ToString("0.00000000");// 格式化价格信息    
     await botClient.SendTextMessageAsync(userId, $"开始监控 {symbol} 的价格变动\n\n⚠️当前价格为：$ {formattedPrice}\n\n如需停止请发送：<code>取消监控 {symbol}</code>", parseMode: ParseMode.Html);
 }
-
+//取消监控任务的方法
 public static async Task Unmonitor(ITelegramBotClient botClient, long userId, string symbol)
 {
     symbol = symbol.ToUpper();
 
+    // 检查是否存在监控信息
+    if (!monitorInfos.ContainsKey(userId) || !monitorInfos[userId].Any(x => x.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase)))
+    {
+        await botClient.SendTextMessageAsync(userId, $"未找到 {symbol} 的监控任务！");
+        return; // 直接返回，不执行后续代码
+    }
+
     // 移除监控信息
     monitorInfos[userId] = monitorInfos[userId].Where(x => !x.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    // 如果移除后该用户没有任何监控信息，则从字典中完全移除该用户的记录
+    if (!monitorInfos[userId].Any())
+    {
+        monitorInfos.Remove(userId);
+    }
 
     // 清空价格变动信息
     if (priceAlertInfos.ContainsKey(userId) && priceAlertInfos[userId].ContainsKey(symbol))
@@ -2722,7 +2736,7 @@ public static async Task Unmonitor(ITelegramBotClient botClient, long userId, st
         priceAlertInfos[userId][symbol].Clear();
     }
 
-    await botClient.SendTextMessageAsync(userId, $"已停止监控 {symbol} 的价格变动");
+    await botClient.SendTextMessageAsync(userId, $"已停止监控 {symbol} 的价格变动。");
 }
     public static async Task<decimal?> GetLatestPricee(string symbol) //调用缓存数据给 行情监控 里的最新价格使用
     {
