@@ -633,61 +633,28 @@ public class CryptoPriceMonitor
 
 private static async Task<Dictionary<string, decimal>> FetchCurrentPricesAsync()
 {
-    string spotApiUrl = "https://api.binance.com/api/v3/ticker/price";//币安现货价格
-    string futuresApiUrl = "https://fapi.binance.com/fapi/v1/ticker/price"; // 币安合约价格
-    int maxRetries = 3;
-    int retryDelay = 5000; // 重试间隔，单位毫秒
+    // 确保缓存已经初始化并且是最新的
+    await CoinDataCache.EnsureCacheInitializedAsync();
 
-    for (int attempt = 1; attempt <= maxRetries; attempt++)
-    {
-        try
-        {
-            // 尝试从现货API获取数据
-            using (var httpClient = new HttpClient())
-            {
-                var response = await httpClient.GetStringAsync(spotApiUrl);
-                var prices = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(response);
-                return prices.Where(p => p["symbol"].EndsWith("USDT")).ToDictionary(p => p["symbol"], p => decimal.Parse(p["price"]));
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"现货API获取失败，尝试次数 {attempt}。错误: {ex.Message}");
-            if (attempt == maxRetries)
-            {
-                // 现货API尝试次数用尽，切换到合约API
-                Console.WriteLine("切换到合约API...");
-                for (int futuresAttempt = 1; futuresAttempt <= maxRetries; futuresAttempt++)
-                {
-                    try
-                    {
-                        using (var httpClient = new HttpClient())
-                        {
-                            var response = await httpClient.GetStringAsync(futuresApiUrl);
-                            var prices = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(response);
-                            return prices.Where(p => p["symbol"].EndsWith("USDT")).ToDictionary(p => p["symbol"], p => decimal.Parse(p["price"]));
-                        }
-                    }
-                    catch (Exception futuresEx)
-                    {
-                        Console.WriteLine($"合约API获取失败，尝试次数 {futuresAttempt}。错误: {futuresEx.Message}");
-                        if (futuresAttempt == maxRetries)
-                        {
-                            // 合约API尝试次数用尽，暂停任务并清空数据
-                            Console.WriteLine("合约API获取失败，任务暂停，清空数据...");
-                            priceHistory.Clear();
-                            isMonitoringStarted = false; // 停止监控
-                            return null; // 或者抛出异常，根据您的需求处理
-                        }
-                    }
-                    await Task.Delay(retryDelay);
-                }
-            }
-        }
-        await Task.Delay(retryDelay);
-    }
+    // 获取所有币种的数据
+    var allCoinsData = CoinDataCache.GetAllCoinsData();
 
-    return null; // 如果所有尝试都失败，返回null或适当处理
+    // 过滤掉 "TRX" 币种，并将数据转换为所需的格式
+    var filteredPrices = allCoinsData
+        .Where(kv => !kv.Key.Equals("TRX", StringComparison.OrdinalIgnoreCase)) // 过滤掉 "TRX"
+        .Select(kv =>
+        {
+            decimal price = 0m;
+            if (kv.Value.TryGetValue("price_usd", out JsonElement priceElement) && decimal.TryParse(priceElement.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out price))
+            {
+                return new { Key = kv.Key + "USDT", Price = price }; // 假设您需要将币种符号转换为以 "USDT" 结尾的格式
+            }
+            return null;
+        })
+        .Where(kv => kv != null)
+        .ToDictionary(kv => kv.Key, kv => kv.Price);
+
+    return filteredPrices;
 }
 
 private static async Task<Dictionary<string, decimal>> FetchPricesFromBackupApi(string url, int maxRetries, int retryDelay)
