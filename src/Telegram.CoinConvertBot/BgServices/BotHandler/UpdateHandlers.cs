@@ -205,7 +205,16 @@ public static class CryptoMarketAnalyzer
                     InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding")
                 });		    
 		    
-                await botClient.SendTextMessageAsync(chatId, "暂未发现财富密码，持续监控中...", ParseMode.Html, replyMarkup: customQueryKeyboard);
+                string noDataMessage = "暂未发现财富密码，持续监控中...\n\n" +
+                           "判断标准：\n" +
+                           "近1小时涨幅大于0%\n" +
+                           "24小时成交量占比市值>40%\n" +
+                           "24小时涨幅大于5%，小于20%\n" +
+                           "24小时比特币上涨的话，涨幅大于比特币\n" +
+                           "24小时比特币下跌的话，跌幅小于比特币\n\n" +
+                           "如果有更合理的条件判断，欢迎联系作者！";
+
+                await botClient.SendTextMessageAsync(chatId, noDataMessage, ParseMode.Html, replyMarkup: customQueryKeyboard);
                 return;
             }
 
