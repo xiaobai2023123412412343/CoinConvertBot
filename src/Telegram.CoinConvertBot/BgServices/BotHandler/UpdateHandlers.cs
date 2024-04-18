@@ -4073,24 +4073,39 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
             try
             {
                 blacklistedUserIds.Add(userId);
-                //userBehavior.UnbanTime = DateTime.UtcNow.AddHours(24);   //封禁24小时
-		userBehavior.UnbanTime = DateTime.UtcNow.AddMinutes(1); //  封禁1分钟
+                // userBehavior.UnbanTime = DateTime.UtcNow.AddHours(24);   // 封禁24小时，测试后请取消注释
+		        userBehavior.UnbanTime = DateTime.UtcNow.AddMinutes(1); // 封禁1分钟，测试用
                 var timeLeft = userBehavior.UnbanTime.Value - DateTime.UtcNow;
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: $"您已触发反高频行为，请在 <b>{timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00}</b> 后重试！", 
-		    parseMode: ParseMode.Html	
+		            parseMode: ParseMode.Html	
                 );
-                Task.Delay(TimeSpan.FromMinutes(1)).ContinueWith(_ => //封禁1分钟
-		//Task.Delay(TimeSpan.FromHours(24)).ContinueWith(_ =>	//封禁24小时
+                Task.Delay(TimeSpan.FromMinutes(1)).ContinueWith(async _ => // 封禁1分钟，测试用
+		        // Task.Delay(TimeSpan.FromHours(24)).ContinueWith(async _ =>	// 封禁24小时，测试后请取消注释
                 {
-                    try
+                    if (blacklistedUserIds.Remove(userId)) // 尝试移除用户ID，如果成功则表示用户被解禁
                     {
-                        blacklistedUserIds.Remove(userId);
-                    }
-                    catch
-                    {
-                        // 如果移除失败，取消本次操作
+                        // 模拟一个 /start 消息
+                        var fakeMessage = new Message
+                        {
+                            Text = "/start",
+                            Chat = message.Chat,
+                            From = new Telegram.Bot.Types.User { Id = userId }, // 明确指定类型为 Telegram.Bot.Types.User
+                            Date = DateTime.UtcNow,
+                            MessageId = 0 // 根据需要设置，这里假设为0
+                        };
+
+                        // 调用处理消息的方法，传入模拟的 /start 消息
+                        try
+                        {
+                            await BotOnMessageReceived(botClient, fakeMessage);
+                        }
+                        catch (Exception ex)
+                        {
+                            // 处理或记录异常
+                            Console.WriteLine($"在发送模拟/start消息时发生错误: {ex.Message}");
+                        }
                     }
                 });
             }
