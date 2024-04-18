@@ -196,27 +196,41 @@ public static class CryptoMarketAnalyzer
             string ethChange24hSymbol = ethPercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
             string ethChange7dSymbol = ethPercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 		
-            // 获取近1小时上涨最多的前三个币种
-            var top3CoinsBy1hChange = allCoinsData.Values
-                .OrderByDescending(coin => coin["percent_change_1h"].GetDecimal())
-                .Take(3)
-                .Select(coin => $"{coin["symbol"].GetString()} ：{coin["percent_change_1h"].GetDecimal():F2}%")
-                .ToArray();
+        // 过滤掉TRX并获取近1小时上涨最多的前三个币种
+        var top3CoinsBy1hChange = allCoinsData.Values
+            .Where(coin => coin["symbol"].GetString() != "TRX")
+            .OrderByDescending(coin => coin["percent_change_1h"].GetDecimal())
+            .Take(3)
+            .Select(coin => new { Symbol = coin["symbol"].GetString(), Change = coin["percent_change_1h"].GetDecimal() })
+            .ToList(); // 使用ToList确保是一个具体的集合类型
 
-            // 获取近24小时上涨最多的前三个币种
-            var top3CoinsBy24hChange = allCoinsData.Values
-                .OrderByDescending(coin => coin["percent_change_24h"].GetDecimal())
-                .Take(3)
-                .Select(coin => $"{coin["symbol"].GetString()} ：{coin["percent_change_24h"].GetDecimal():F2}%")
-                .ToArray();
+        // 过滤掉TRX并获取近24小时上涨最多的前三个币种
+        var top3CoinsBy24hChange = allCoinsData.Values
+            .Where(coin => coin["symbol"].GetString() != "TRX")
+            .OrderByDescending(coin => coin["percent_change_24h"].GetDecimal())
+            .Take(3)
+            .Select(coin => new { Symbol = coin["symbol"].GetString(), Change = coin["percent_change_24h"].GetDecimal() })
+            .ToList(); // 使用ToList确保是一个具体的集合类型
 
-            // 构建汇总消息
-            string summaryMessage = $"<b>BTC</b> 1h{btcChange1hSymbol}：{btcPercentChange1h:F2}% | 24h{btcChange24hSymbol}：{btcPercentChange24h:F2}% | 7d{btcChange7dSymbol}：{btcPercentChange7d:F2}%\n" +
-                                    $"<b>ETH</b> 1h{ethChange1hSymbol}：{ethPercentChange1h:F2}% | 24h{ethChange24hSymbol}：{ethPercentChange24h:F2}% | 7d{ethChange7dSymbol}：{ethPercentChange7d:F2}%\n\n" +
-		                    $"1小时涨幅榜：\n{string.Join(" | ", top3CoinsBy1hChange)}\n\n" +
-		                    $"24小时涨幅榜：\n{string.Join(" | ", top3CoinsBy24hChange)}";
+        // 构建汇总消息
+        string summaryMessage = $"<b>BTC</b> 1h{btcChange1hSymbol}：{btcPercentChange1h:F2}% | 24h{btcChange24hSymbol}：{btcPercentChange24h:F2}% | 7d{btcChange7dSymbol}：{btcPercentChange7d:F2}%\n" +
+                                $"<b>ETH</b> 1h{ethChange1hSymbol}：{ethPercentChange1h:F2}% | 24h{ethChange24hSymbol}：{ethPercentChange24h:F2}% | 7d{ethChange7dSymbol}：{ethPercentChange7d:F2}%\n\n" +
+                                $"1小时涨幅榜：\n{string.Join(" | ", top3CoinsBy1hChange.Select((coin, index) => $"{index + 1}️⃣ {coin.Symbol} ：{coin.Change:F2}%"))}\n\n" +
+                                $"24小时涨幅榜：\n{string.Join(" | ", top3CoinsBy24hChange.Select((coin, index) => $"{index + 4}️⃣ {coin.Symbol} ：{coin.Change:F2}%"))}";
 
-            await botClient.SendTextMessageAsync(chatId, summaryMessage, ParseMode.Html);                
+        // 创建内联键盘按钮，横排排列
+        var inlineKeyboardButtons = new List<InlineKeyboardButton>();
+        int index = 1;
+        foreach (var coin in top3CoinsBy1hChange.Concat(top3CoinsBy24hChange))
+        {
+            inlineKeyboardButtons.Add(InlineKeyboardButton.WithCallbackData($"{index}️⃣", $"查{coin.Symbol.ToLower()}"));
+            index++;
+        }
+
+        var summaryInlineKeyboard = new InlineKeyboardMarkup(new[] { inlineKeyboardButtons.ToArray() });
+
+        await botClient.SendTextMessageAsync(chatId, summaryMessage, ParseMode.Html, replyMarkup: summaryInlineKeyboard);
+		
         }
         catch (Exception ex)
         {
