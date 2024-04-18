@@ -2870,7 +2870,7 @@ private static void UpdatePriceAlertInfo(long userId, string symbol, decimal cur
     });
 
     // 保留最新的3条变动信息，如果超过3条，则移除最旧的
-    while (alerts.Count > 3)
+    while (alerts.Count > 4)
     {
         alerts.RemoveAt(1); // 保留索引0的初始价格记录，从索引1开始移除
     }
