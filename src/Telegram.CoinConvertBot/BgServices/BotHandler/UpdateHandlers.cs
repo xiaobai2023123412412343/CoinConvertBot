@@ -4073,11 +4073,13 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
             try
             {
                 blacklistedUserIds.Add(userId);
-                userBehavior.UnbanTime = DateTime.UtcNow.AddHours(24);
+                //userBehavior.UnbanTime = DateTime.UtcNow.AddHours(24);   //封禁24小时
+		userBehavior.UnbanTime = DateTime.UtcNow.AddMinutes(1); //  封禁1分钟
                 var timeLeft = userBehavior.UnbanTime.Value - DateTime.UtcNow;
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: $"您已违规高频操作，请在 {timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00} 后重试！"
+                    text: $"您已触发反高频行为，请在 <b>{timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00}</b> 后重试！", 
+		    parseMode: ParseMode.Html	
                 );
                 Task.Delay(TimeSpan.FromHours(24)).ContinueWith(_ =>
                 {
@@ -9824,7 +9826,8 @@ if (message.Type == MessageType.ChatMembersAdded)
                 // 用户被自动拉黑，回复剩余时间
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: $"您已触发高频操作，请在 {timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00} 后重试！"
+                    text: $"您已触发反高频行为，请在 <b>{timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00}</b> 后重试！", 
+		    parseMode: ParseMode.Html	
                 );
             }
             else
