@@ -11662,7 +11662,8 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
         }
     }
 }
-if (messageText.StartsWith("监控 "))
+//加密货币 监控和取消监控任务
+if (Regex.IsMatch(messageText, @"^监控\s*\S+", RegexOptions.IgnoreCase))
 {
     if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
     {
@@ -11673,11 +11674,12 @@ if (messageText.StartsWith("监控 "))
     }
     else
     {
-        var symbol = messageText.Substring(3);
+        var match = Regex.Match(messageText, @"^监控\s*(\S+)$", RegexOptions.IgnoreCase);
+        var symbol = match.Groups[1].Value.Trim();
         await PriceMonitor.Monitor(botClient, message.Chat.Id, symbol);
     }
 }
-else if (messageText.StartsWith("取消监控 "))
+else if (Regex.IsMatch(messageText, @"^取消监控\s*\S+", RegexOptions.IgnoreCase))
 {
     if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
     {
@@ -11688,7 +11690,8 @@ else if (messageText.StartsWith("取消监控 "))
     }
     else
     {
-        var symbol = messageText.Substring(5);
+        var match = Regex.Match(messageText, @"^取消监控\s*(\S+)$", RegexOptions.IgnoreCase);
+        var symbol = match.Groups[1].Value.Trim();
         await PriceMonitor.Unmonitor(botClient, message.Chat.Id, symbol);
     }
 }
