@@ -4039,7 +4039,10 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
     var userId = message.From.Id;
     // 管理员或 /start 命令不受限制
     if (userId == 1427768220 || message.Text == "/start") return;
-
+	
+    // 仅在私聊中检查用户行为，跳过群聊消息
+    if (message.Chat.Type != ChatType.Private) return;
+	
     var userBehavior = userBehaviors.GetOrAdd(userId, new UserBehavior());
 
     // 更新消息计数和时间
