@@ -106,6 +106,51 @@ public static class UpdateHandlers
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userShizhiLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>(); //限制用户每日查询次数字典	
 public static class CryptoMarketAnalyzer
 {
+    private static readonly HttpClient httpClient = new HttpClient();
+
+    //获取各平台永续合约资金费
+    public static async Task<string> GetFundingRateAsync(string symbol)
+    {
+        try
+        {
+            // 尝试从抹茶(MEXC)获取资金费率
+            string mexcUrl = $"https://contract.mexc.com/api/v1/contract/funding_rate/{symbol}_USDT";
+            var mexcResponse = await httpClient.GetStringAsync(mexcUrl);
+            var mexcData = JsonSerializer.Deserialize<JsonElement>(mexcResponse);
+            if (mexcData.GetProperty("success").GetBoolean() && mexcData.GetProperty("code").GetInt32() == 0)
+            {
+                decimal fundingRate = mexcData.GetProperty("data").GetProperty("fundingRate").GetDecimal();
+                return $"{fundingRate * 100:0.####}%";
+            }
+
+            // 尝试从币安(Binance)获取资金费率
+            string binanceUrl = $"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}USDT";
+            var binanceResponse = await httpClient.GetStringAsync(binanceUrl);
+            var binanceData = JsonSerializer.Deserialize<JsonElement>(binanceResponse);
+            if (binanceData.TryGetProperty("lastFundingRate", out var lastFundingRate))
+            {
+                decimal fundingRate = lastFundingRate.GetDecimal();
+                return $"{fundingRate * 100:0.####}%";
+            }
+
+            // 尝试从欧意(OKX)获取资金费率
+            string okxUrl = $"https://www.okx.com/api/v5/public/funding-rate?instId={symbol}-USD-SWAP";
+            var okxResponse = await httpClient.GetStringAsync(okxUrl);
+            var okxData = JsonSerializer.Deserialize<JsonElement>(okxResponse);
+            if (okxData.GetProperty("code").GetString() == "0" && okxData.GetProperty("data").GetArrayLength() > 0)
+            {
+                decimal fundingRate = okxData.GetProperty("data")[0].GetProperty("fundingRate").GetDecimal();
+                return $"{fundingRate * 100:0.####}%";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"获取资金费率失败: {ex.Message}");
+        }
+
+        // 如果所有API都没有返回有效的资金费率
+        return "无合约资金费";
+    }	
     //private static readonly string ApiUrl = "https://fxhapi.feixiaohao.com/public/v1/ticker?limit=450"; //已取消从api获取 直接从本地获取
 
     public static async Task AnalyzeAndReportAsync(ITelegramBotClient botClient, long chatId)
@@ -161,6 +206,10 @@ public static class CryptoMarketAnalyzer
 
             foreach (var coin in filteredAndSortedCoins)
             {
+                // 尝试获取资金费率
+                string fundingRateMessage = await GetFundingRateAsync(coin.Symbol);
+                string fundingRateDisplay = fundingRateMessage != "无合约资金费" ? $" 资金费：{fundingRateMessage}" : "";	
+		    
                 string marketCapDisplay = coin.MarketCapUsd >= 100 ? $"{Math.Round(coin.MarketCapUsd / 100, 2)}亿" : $"{Math.Round(coin.MarketCapUsd, 2)}m";
                 string volume24hDisplay = coin.Volume24hUsd >= 100 ? $"{Math.Round(coin.Volume24hUsd / 100, 2)}亿" : $"{Math.Round(coin.Volume24hUsd, 2)}m";
 
@@ -168,7 +217,7 @@ public static class CryptoMarketAnalyzer
                 string change24hSymbol = coin.PercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
                 string change7dSymbol = coin.PercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
-                string message = $"<code>{coin.Symbol}</code>   价格:$ {coin.PriceUsd} 排名：No.{coin.Rank}\n" +
+                string message = $"<code>{coin.Symbol}</code>   价格:$ {coin.PriceUsd} 排名：No.{coin.Rank}{fundingRateDisplay}\n" +
                                  $"市值：{marketCapDisplay}，24小时成交：{volume24hDisplay}，占比：{Math.Round(coin.VolumePercentage, 2)}%\n" +
                                  $"1h{change1hSymbol}：{coin.PercentChange1h}% | 24h{change24hSymbol}：{coin.PercentChange24h}% | 7d{change7dSymbol}：{coin.PercentChange7d}%";
 
