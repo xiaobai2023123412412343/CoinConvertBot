@@ -288,7 +288,7 @@ public static class CryptoMarketAnalyzer
         }
     }
 }
-//非小号查币	
+//非小号查币    
 public static class CoinDataCache
 {
     private static bool _initialized = false; // 用于标记是否已经初始化和开始缓存更新
@@ -301,68 +301,68 @@ public static class CoinDataCache
     {
         // 移除初始的数据更新调用，改为按需更新
     }
-public static Dictionary<string, Dictionary<string, JsonElement>> GetAllCoinsData()   //获取本地缓存所有币种的信息
-{
-    return _coinData;
-}
-// 在 CoinDataCache 类中添加一个新的方法来获取排序后的币种信息
-public static async Task<(string, InlineKeyboardMarkup)> GetTopMoversAsync(string timeFrame)
-{
-    await EnsureCacheInitializedAsync(); // 确保缓存已初始化
-
-    string percentChangeKey = timeFrame switch
+    public static Dictionary<string, Dictionary<string, JsonElement>> GetAllCoinsData()   //获取本地缓存所有币种的信息
     {
-        "1h" => "percent_change_1h",
-        "24h" => "percent_change_24h",
-        "7d" => "percent_change_7d",
-        _ => throw new ArgumentException("Invalid time frame", nameof(timeFrame))
-    };
+        return _coinData;
+    }
+    // 在 CoinDataCache 类中添加一个新的方法来获取排序后的币种信息
+    public static async Task<(string, InlineKeyboardMarkup)> GetTopMoversAsync(string timeFrame)
+    {
+        await EnsureCacheInitializedAsync(); // 确保缓存已初始化
 
-    // 先筛选出非TRX的币种，然后根据变化幅度排序
-    var topMovers = _coinData
-        .Where(kv => kv.Key != "TRX") // 过滤掉TRX
-        .Select(kv => new
+        string percentChangeKey = timeFrame switch
         {
-            Symbol = kv.Key,
-            PercentChange = kv.Value.TryGetValue(percentChangeKey, out JsonElement percentChangeElement) && percentChangeElement.TryGetDouble(out double percentChange) ? percentChange : 0.0,
-            PriceUsd = kv.Value.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double price) ? price : 0.0
-        })
-        .ToList();
+            "1h" => "percent_change_1h",
+            "24h" => "percent_change_24h",
+            "7d" => "percent_change_7d",
+            _ => throw new ArgumentException("Invalid time frame", nameof(timeFrame))
+        };
 
-    // 获取上涨和下跌的前5名
-    var topRisers = topMovers.Where(x => x.PercentChange > 0).OrderByDescending(x => x.PercentChange).Take(5);
-    var topFallers = topMovers.Where(x => x.PercentChange < 0).OrderBy(x => x.PercentChange).Take(5);
+        // 先筛选出非TRX的币种，然后根据变化幅度排序
+        var topMovers = _coinData
+            .Where(kv => kv.Key != "TRX") // 过滤掉TRX
+            .Select(kv => new
+            {
+                Symbol = kv.Key,
+                PercentChange = kv.Value.TryGetValue(percentChangeKey, out JsonElement percentChangeElement) && percentChangeElement.TryGetDouble(out double percentChange) ? percentChange : 0.0,
+                PriceUsd = kv.Value.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double price) ? price : 0.0
+            })
+            .ToList();
 
-    string message = $"全网{timeFrame}上涨TOP5：\n";
-    List<InlineKeyboardButton[]> rows = new List<InlineKeyboardButton[]>();
-    InlineKeyboardButton[] row1 = new InlineKeyboardButton[5];
-    InlineKeyboardButton[] row2 = new InlineKeyboardButton[5];
-    int index = 0;
+        // 获取上涨和下跌的前5名
+        var topRisers = topMovers.Where(x => x.PercentChange > 0).OrderByDescending(x => x.PercentChange).Take(5);
+        var topFallers = topMovers.Where(x => x.PercentChange < 0).OrderBy(x => x.PercentChange).Take(5);
 
-    foreach (var mover in topRisers)
-    {
-        message += $"{index}️⃣ {mover.Symbol} \U0001F4C8 {mover.PercentChange:F2}%   $：{mover.PriceUsd:F2}\n";
-        row1[index] = InlineKeyboardButton.WithCallbackData($"{index}️⃣", $"查{mover.Symbol.ToLower()}");
-        index++;
+        string message = $"全网{timeFrame}上涨TOP5：\n";
+        List<InlineKeyboardButton[]> rows = new List<InlineKeyboardButton[]>();
+        InlineKeyboardButton[] row1 = new InlineKeyboardButton[5];
+        InlineKeyboardButton[] row2 = new InlineKeyboardButton[5];
+        int index = 0;
+
+        foreach (var mover in topRisers)
+        {
+            message += $"{index}️⃣ {mover.Symbol} \U0001F4C8 {mover.PercentChange:F2}%   $：{mover.PriceUsd:F2}\n";
+            row1[index] = InlineKeyboardButton.WithCallbackData($"{index}️⃣", $"查{mover.Symbol.ToLower()}");
+            index++;
+        }
+
+        message += $"\n全网{timeFrame}下跌TOP5：\n";
+        foreach (var mover in topFallers)
+        {
+            message += $"{index}️⃣ {mover.Symbol} \U0001F4C9 {mover.PercentChange:F2}%   $：{mover.PriceUsd:F2}\n";
+            row2[index - 5] = InlineKeyboardButton.WithCallbackData($"{index}️⃣", $"查{mover.Symbol.ToLower()}");
+            index++;
+        }
+
+        // 添加按钮行
+        rows.Add(row1);
+        rows.Add(row2);
+        // 添加关闭按钮
+        rows.Add(new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("关闭", "back") });
+
+        var inlineKeyboard = new InlineKeyboardMarkup(rows);
+        return (message, inlineKeyboard);
     }
-
-    message += $"\n全网{timeFrame}下跌TOP5：\n";
-    foreach (var mover in topFallers)
-    {
-        message += $"{index}️⃣ {mover.Symbol} \U0001F4C9 {mover.PercentChange:F2}%   $：{mover.PriceUsd:F2}\n";
-        row2[index - 5] = InlineKeyboardButton.WithCallbackData($"{index}️⃣", $"查{mover.Symbol.ToLower()}");
-        index++;
-    }
-
-    // 添加按钮行
-    rows.Add(row1);
-    rows.Add(row2);
-    // 添加关闭按钮
-    rows.Add(new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("关闭", "back") });
-
-    var inlineKeyboard = new InlineKeyboardMarkup(rows);
-    return (message, inlineKeyboard);
-}
     public static async Task EnsureCacheInitializedAsync()
     {
         if (!_initialized)
@@ -371,7 +371,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetTopMoversAsync(strin
             StartTimer();
             _initialized = true; // 标记为已初始化
         }
-    }	
+    }   
     // 确保StartTimer方法是public或者被EnsureCacheInitializedAsync调用
     private static void StartTimer()
     {
@@ -379,7 +379,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetTopMoversAsync(strin
         {
             _timer = new Timer(async _ =>
             {
-	        //Console.WriteLine("Timer triggered for data update.");
+                //Console.WriteLine("Timer triggered for data update.");
                 await UpdateDataAsync(retryCount: 3);
             }, null, TimeSpan.Zero, TimeSpan.FromSeconds(new Random().Next(45, 61)));
         }
@@ -401,7 +401,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetTopMoversAsync(strin
         _coinData.TryGetValue(symbol.ToUpper(), out var coinInfo);
         return coinInfo;
     }
-	
+    
     //储存币种到本地数据库
     private static async Task UpdateDataAsync(int retryCount)
     {
