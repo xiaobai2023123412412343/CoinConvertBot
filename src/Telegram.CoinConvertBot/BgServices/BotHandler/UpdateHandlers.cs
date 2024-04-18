@@ -281,7 +281,14 @@ public static class CryptoMarketAnalyzer
             index++;
         }
 
-        var summaryInlineKeyboard = new InlineKeyboardMarkup(new[] { inlineKeyboardButtons.ToArray() });
+        var summaryInlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            inlineKeyboardButtons.ToArray(), // 第一排按钮，包含1-6的按钮
+            new[] // 新增第二排按钮
+            {
+                InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding")
+            }
+        });
 
         await botClient.SendTextMessageAsync(chatId, summaryMessage, ParseMode.Html, replyMarkup: summaryInlineKeyboard);
 		
