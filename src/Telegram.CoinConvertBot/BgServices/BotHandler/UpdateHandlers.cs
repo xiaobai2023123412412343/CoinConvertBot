@@ -305,6 +305,42 @@ public static Dictionary<string, Dictionary<string, JsonElement>> GetAllCoinsDat
 {
     return _coinData;
 }
+// 在 CoinDataCache 类中添加一个新的方法来获取排序后的币种信息
+public static async Task<string> GetTopMoversAsync(string timeFrame)
+{
+    await EnsureCacheInitializedAsync(); // 确保缓存已初始化
+
+    // 将时间帧转换为对应的 JSON 属性名
+    string percentChangeKey = timeFrame switch
+    {
+        "1h" => "percent_change_1h",
+        "24h" => "percent_change_24h",
+        "7d" => "percent_change_7d",
+        _ => throw new ArgumentException("Invalid time frame", nameof(timeFrame))
+    };
+
+    // 从缓存中获取数据并进行排序
+    var topMovers = _coinData
+        .Select(kv => new
+        {
+            Symbol = kv.Key,
+            Data = kv.Value,
+            PercentChange = kv.Value.TryGetValue(percentChangeKey, out JsonElement percentChangeElement) && percentChangeElement.TryGetDouble(out double percentChange) ? percentChange : 0.0
+        })
+        .OrderByDescending(x => Math.Abs(x.PercentChange)) // 根据变化幅度的绝对值排序
+        .ToList();
+
+    // 构建消息文本
+    var topRisers = topMovers.Where(x => x.PercentChange > 0).Take(5);
+    var topFallers = topMovers.Where(x => x.PercentChange < 0).Take(5);
+
+    string message = $"{timeFrame}上涨TOP5：\n" +
+                     string.Join("\n", topRisers.Select(x => $"{x.Symbol} \U0001F4C8 {x.PercentChange:F2}%")) +
+                     $"\n\n{timeFrame}下跌TOP5：\n" +
+                     string.Join("\n", topFallers.Select(x => $"{x.Symbol} \U0001F4C9 {x.PercentChange:F2}%"));
+
+    return message;
+}	
     public static async Task EnsureCacheInitializedAsync()
     {
         if (!_initialized)
@@ -11318,6 +11354,22 @@ if (messageText.StartsWith("查"))
 {
     string coinSymbol = messageText.Substring(1).Trim(); // 从消息文本中提取币种简称
     _ = QueryCoinInfoAsync(botClient, message.Chat.Id, coinSymbol);
+}
+// 检查是否接收到了 /1hshuju, /24hshuju, 或 /7dshuju 消息
+if (messageText.StartsWith("/1hshuju"))
+{
+    string replyMessage = await CoinDataCache.GetTopMoversAsync("1h");
+    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: replyMessage, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+}
+else if (messageText.StartsWith("/24hshuju"))
+{
+    string replyMessage = await CoinDataCache.GetTopMoversAsync("24h");
+    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: replyMessage, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+}
+else if (messageText.StartsWith("/7dshuju"))
+{
+    string replyMessage = await CoinDataCache.GetTopMoversAsync("7d");
+    await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: replyMessage, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
