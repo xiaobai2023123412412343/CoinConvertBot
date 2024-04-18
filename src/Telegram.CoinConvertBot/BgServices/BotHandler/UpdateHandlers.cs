@@ -4036,12 +4036,13 @@ public class UserBehavior
 private static ConcurrentDictionary<long, UserBehavior> userBehaviors = new ConcurrentDictionary<long, UserBehavior>();
 private static async Task CheckUserBehavior(ITelegramBotClient botClient, Message message)
 {
-    if (message.From.Id == 1427768220 || message.Text == "/start") return; // 管理员或 /start 命令不受限制
-
     var userId = message.From.Id;
+    // 管理员或 /start 命令不受限制
+    if (userId == 1427768220 || message.Text == "/start") return;
+
     var userBehavior = userBehaviors.GetOrAdd(userId, new UserBehavior());
 
-    // 检查是否是重复消息
+    // 更新消息计数和时间
     if (userBehavior.LastMessageText == message.Text && (DateTime.UtcNow - userBehavior.LastMessageTime).TotalSeconds <= 5)
     {
         userBehavior.MessageCount++;
@@ -4050,11 +4051,18 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
     {
         userBehavior.MessageCount = 1; // 重置计数
     }
-
     userBehavior.LastMessageTime = DateTime.UtcNow;
     userBehavior.LastMessageText = message.Text;
 
-    if (userBehavior.MessageCount >= 3) // 触发提醒或拉黑条件
+    // 检查是否应该解除黑名单
+    if (blacklistedUserIds.Contains(userId) && userBehavior.UnbanTime.HasValue && DateTime.UtcNow >= userBehavior.UnbanTime.Value)
+    {
+        blacklistedUserIds.Remove(userId);
+        userBehavior.UnbanTime = null;
+    }
+
+    // 触发提醒或拉黑条件
+    if (userBehavior.MessageCount >= 3)
     {
         if (userBehavior.WarningCount == 0)
         {
@@ -4118,55 +4126,41 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
 }
 private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient botClient, Message message)
 {
-    try
+    // 检查消息是否来自指定的管理员
+    if (message.From.Id != 1427768220) return;
+
+    var commandParts = message.Text.Split(' ');
+    if (commandParts.Length != 2) return;
+
+    var command = commandParts[0];
+    if (!long.TryParse(commandParts[1], out long userId)) return;
+
+    switch (command)
     {
-        // 检查 message 和 message.Text 是否为 null
-        if (message == null || message.Text == null)
-        {
-            return;
-        }
-
-        // 检查消息是否来自指定的管理员
-        if (message.From.Id != 1427768220)//管理员
-        {
-            return;
-        }
-
-        // 检查消息是否包含拉黑或拉白命令
-        var commandParts = message.Text.Split(' ');
-        if (commandParts.Length != 2)
-        {
-            return;
-        }
-
-        var command = commandParts[0];
-        if (!long.TryParse(commandParts[1], out long userId))
-        {
-            return;
-        }
-
-        switch (command)
-        {
-            case "拉黑":
-                blacklistedUserIds.Add(userId);
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: $"用户 {userId} 已被拉黑。"
-                );
-                break;
-            case "拉白":
-                blacklistedUserIds.Remove(userId);
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: $"用户 {userId} 已被拉白。"
-                );
-                break;
-        }
-    }
-    catch (Exception ex)
-    {
-        // 在这里处理异常，例如记录错误日志或发送错误消息
-        Console.WriteLine($"处理拉黑和拉白命令时发生错误: {ex.Message}");
+        case "拉黑":
+            blacklistedUserIds.Add(userId);
+            // 立即清除用户的解禁时间
+            if (userBehaviors.TryGetValue(userId, out UserBehavior userBehavior))
+            {
+                userBehavior.UnbanTime = null;
+            }
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"用户 {userId} 已被拉黑。"
+            );
+            break;
+        case "拉白":
+            blacklistedUserIds.Remove(userId);
+            // 清除用户的解禁时间
+            if (userBehaviors.TryGetValue(userId, out userBehavior))
+            {
+                userBehavior.UnbanTime = null;
+            }
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"用户 {userId} 已被拉白。"
+            );
+            break;
     }
 }
 //监控信息变更提醒    
