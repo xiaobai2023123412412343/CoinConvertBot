@@ -2660,7 +2660,7 @@ public static async Task Monitor(ITelegramBotClient botClient, long userId, stri
         BotClient = botClient,
         Symbol = symbol,
         LastPrice = price.Value,
-        Threshold = symbol.Equals("BTC", StringComparison.OrdinalIgnoreCase) || symbol.Equals("ETH", StringComparison.OrdinalIgnoreCase) ? 0.0002m : 0.0005m
+        Threshold = symbol.Equals("BTC", StringComparison.OrdinalIgnoreCase) || symbol.Equals("ETH", StringComparison.OrdinalIgnoreCase) ? 0.02m : 0.05m
     });
 
     // 清空旧的价格变动信息并添加新的初始价格记录
