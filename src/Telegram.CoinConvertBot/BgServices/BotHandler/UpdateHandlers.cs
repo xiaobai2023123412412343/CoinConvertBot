@@ -11377,6 +11377,7 @@ if (messageText.StartsWith("查"))
     string coinSymbol = messageText.Substring(1).Trim(); // 从消息文本中提取币种简称
     _ = QueryCoinInfoAsync(botClient, message.Chat.Id, coinSymbol);
 }
+//根据时间查询币种数据
 if (messageText.StartsWith("/1hshuju"))
 {
     var (replyMessage, inlineKeyboard) = await CoinDataCache.GetTopMoversAsync("1h");
