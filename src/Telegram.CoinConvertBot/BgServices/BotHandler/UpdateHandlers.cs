@@ -195,10 +195,26 @@ public static class CryptoMarketAnalyzer
             string ethChange1hSymbol = ethPercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
             string ethChange24hSymbol = ethPercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
             string ethChange7dSymbol = ethPercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+		
+            // 获取近1小时上涨最多的前三个币种
+            var top3CoinsBy1hChange = allCoinsData.Values
+                .OrderByDescending(coin => coin["percent_change_1h"].GetDecimal())
+                .Take(3)
+                .Select(coin => $"{coin["symbol"].GetString()} ：{coin["percent_change_1h"].GetDecimal():F2}%")
+                .ToArray();
+
+            // 获取近24小时上涨最多的前三个币种
+            var top3CoinsBy24hChange = allCoinsData.Values
+                .OrderByDescending(coin => coin["percent_change_24h"].GetDecimal())
+                .Take(3)
+                .Select(coin => $"{coin["symbol"].GetString()} ：{coin["percent_change_24h"].GetDecimal():F2}%")
+                .ToArray();
 
             // 构建汇总消息
             string summaryMessage = $"<b>BTC</b> 1h{btcChange1hSymbol}：{btcPercentChange1h:F2}% | 24h{btcChange24hSymbol}：{btcPercentChange24h:F2}% | 7d{btcChange7dSymbol}：{btcPercentChange7d:F2}%\n" +
-                                    $"<b>ETH</b> 1h{ethChange1hSymbol}：{ethPercentChange1h:F2}% | 24h{ethChange24hSymbol}：{ethPercentChange24h:F2}% | 7d{ethChange7dSymbol}：{ethPercentChange7d:F2}%";
+                                    $"<b>ETH</b> 1h{ethChange1hSymbol}：{ethPercentChange1h:F2}% | 24h{ethChange24hSymbol}：{ethPercentChange24h:F2}% | 7d{ethChange7dSymbol}：{ethPercentChange7d:F2}%\n\n" +
+		                    $"1小时涨幅榜：\n{string.Join(" | ", top3CoinsBy1hChange)}\n\n" +
+		                    $"24小时涨幅榜：\n{string.Join(" | ", top3CoinsBy24hChange)}";
 
             await botClient.SendTextMessageAsync(chatId, summaryMessage, ParseMode.Html);                
         }
