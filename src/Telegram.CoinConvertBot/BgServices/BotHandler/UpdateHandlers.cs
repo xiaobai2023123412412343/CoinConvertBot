@@ -4085,15 +4085,15 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
             {
                 blacklistedUserIds.Add(userId);
                 // userBehavior.UnbanTime = DateTime.UtcNow.AddHours(24);   // 封禁24小时，测试后请取消注释
-		        userBehavior.UnbanTime = DateTime.UtcNow.AddMinutes(1); // 封禁1分钟，测试用
+		userBehavior.UnbanTime = DateTime.UtcNow.AddMinutes(10); // 封禁10分钟，测试用
                 var timeLeft = userBehavior.UnbanTime.Value - DateTime.UtcNow;
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: $"您已触发反高频行为，请在 <b>{timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00}</b> 后重试！", 
 		            parseMode: ParseMode.Html	
                 );
-                Task.Delay(TimeSpan.FromMinutes(1)).ContinueWith(async _ => // 封禁1分钟，测试用
-		        // Task.Delay(TimeSpan.FromHours(24)).ContinueWith(async _ =>	// 封禁24小时，测试后请取消注释
+                Task.Delay(TimeSpan.FromMinutes(10)).ContinueWith(async _ => // 封禁10分钟，测试用
+		// Task.Delay(TimeSpan.FromHours(24)).ContinueWith(async _ =>	// 封禁24小时，测试后请取消注释
                 {
                     if (blacklistedUserIds.Remove(userId)) // 尝试移除用户ID，如果成功则表示用户被解禁
                     {
