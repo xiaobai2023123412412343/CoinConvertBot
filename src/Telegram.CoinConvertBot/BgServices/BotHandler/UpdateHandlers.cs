@@ -4081,7 +4081,8 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
                     text: $"您已触发反高频行为，请在 <b>{timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00}</b> 后重试！", 
 		    parseMode: ParseMode.Html	
                 );
-                Task.Delay(TimeSpan.FromHours(24)).ContinueWith(_ =>
+                Task.Delay(TimeSpan.FromMinutes(1)).ContinueWith(_ => //封禁1分钟
+		//Task.Delay(TimeSpan.FromHours(24)).ContinueWith(_ =>	//封禁24小时
                 {
                     try
                     {
