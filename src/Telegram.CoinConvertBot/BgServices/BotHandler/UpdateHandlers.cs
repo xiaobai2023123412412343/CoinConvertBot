@@ -2623,69 +2623,80 @@ public static class PriceMonitor
     {
         return await GetPrice(symbol); // 调用私有方法获取价格
     }
-    public static async Task Monitor(ITelegramBotClient botClient, long userId, string symbol)
+public static async Task Monitor(ITelegramBotClient botClient, long userId, string symbol)
+{
+    symbol = symbol.ToUpper();
+
+    if (symbol.Equals("TRX", StringComparison.OrdinalIgnoreCase))
     {
-        symbol = symbol.ToUpper();
+        await botClient.SendTextMessageAsync(userId, "TRX能量价格变动请进群查看！");
+        return;
+    }
 
-        if (symbol.Equals("TRX", StringComparison.OrdinalIgnoreCase))
+    var price = await GetPrice(symbol);
+    if (price == null)
+    {
+        await botClient.SendTextMessageAsync(userId, "监控失败，暂未收录该币种！");
+        return;
+    }
+
+    if (!monitorInfos.ContainsKey(userId))
+    {
+        monitorInfos[userId] = new List<MonitorInfo>();
+    }
+    else
+    {
+        // 检查是否已经监控了该币种，如果是，则先移除
+        var existingMonitorInfo = monitorInfos[userId].FirstOrDefault(x => x.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase));
+        if (existingMonitorInfo != null)
         {
-            await botClient.SendTextMessageAsync(userId, "TRX能量价格变动请进群查看！");
-            return;
+            monitorInfos[userId].Remove(existingMonitorInfo);
         }
+    }
 
-        var price = await GetPrice(symbol);
-        if (price == null)
-        {
-            await botClient.SendTextMessageAsync(userId, "监控失败，暂未收录该币种！");
-            return;
-        }
+    // 添加或更新监控信息
+    monitorInfos[userId].Add(new MonitorInfo
+    {
+        BotClient = botClient,
+        Symbol = symbol,
+        LastPrice = price.Value,
+        Threshold = symbol.Equals("BTC", StringComparison.OrdinalIgnoreCase) || symbol.Equals("ETH", StringComparison.OrdinalIgnoreCase) ? 0.0002m : 0.0005m
+    });
 
-        if (!monitorInfos.ContainsKey(userId))
-        {
-            monitorInfos[userId] = new List<MonitorInfo>();
-        }
-
-        monitorInfos[userId].Add(new MonitorInfo
-        {
-            BotClient = botClient,
-            Symbol = symbol,
-            LastPrice = price.Value,
-            Threshold = symbol.Equals("BTC", StringComparison.OrdinalIgnoreCase) || symbol.Equals("ETH", StringComparison.OrdinalIgnoreCase) ? 0.0002m : 0.0005m
-        });
-    // 在用户首次监控时初始化价格变动信息列表
+    // 清空旧的价格变动信息并添加新的初始价格记录
     if (!priceAlertInfos.ContainsKey(userId))
     {
         priceAlertInfos[userId] = new Dictionary<string, List<PriceAlertInfo>>();
     }
-    if (!priceAlertInfos[userId].ContainsKey(symbol))
+    priceAlertInfos[userId][symbol] = new List<PriceAlertInfo> // 直接赋值以清空旧数据并添加新的初始价格记录
     {
-        priceAlertInfos[userId][symbol] = new List<PriceAlertInfo>();
-        // 添加初始价格记录
-        priceAlertInfos[userId][symbol].Add(new PriceAlertInfo
+        new PriceAlertInfo
         {
             Time = DateTime.Now,
             Price = price.Value,
             ChangePercentage = 0 // 初始价格变动百分比为0
-        });
-    }
-	string formattedPrice = price.Value >= 1 ? price.Value.ToString("F2") : price.Value.ToString("0.00000000");// 格式化价格信息    
-        await botClient.SendTextMessageAsync(userId, $"开始监控 {symbol} 的价格变动\n\n⚠️当前价格为：$ {formattedPrice}\n\n如需停止请发送：<code>取消监控 {symbol}</code>", parseMode: ParseMode.Html);
-    }
-
-    public static async Task Unmonitor(ITelegramBotClient botClient, long userId, string symbol)
-    {
-        symbol = symbol.ToUpper();
-
-        if (monitorInfos.ContainsKey(userId))
-        {
-            var monitorInfo = monitorInfos[userId].FirstOrDefault(x => x.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase));
-            if (monitorInfo != null)
-            {
-                monitorInfos[userId].Remove(monitorInfo);
-                await botClient.SendTextMessageAsync(userId, $"已停止监控 {symbol} 的价格变动");
-            }
         }
+    };
+
+    string formattedPrice = price.Value >= 1 ? price.Value.ToString("F2") : price.Value.ToString("0.00000000");// 格式化价格信息    
+    await botClient.SendTextMessageAsync(userId, $"开始监控 {symbol} 的价格变动\n\n⚠️当前价格为：$ {formattedPrice}\n\n如需停止请发送：<code>取消监控 {symbol}</code>", parseMode: ParseMode.Html);
+}
+
+public static async Task Unmonitor(ITelegramBotClient botClient, long userId, string symbol)
+{
+    symbol = symbol.ToUpper();
+
+    // 移除监控信息
+    monitorInfos[userId] = monitorInfos[userId].Where(x => !x.Symbol.Equals(symbol, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    // 清空价格变动信息
+    if (priceAlertInfos.ContainsKey(userId) && priceAlertInfos[userId].ContainsKey(symbol))
+    {
+        priceAlertInfos[userId][symbol].Clear();
     }
+
+    await botClient.SendTextMessageAsync(userId, $"已停止监控 {symbol} 的价格变动");
+}
     public static async Task<decimal?> GetLatestPricee(string symbol) //调用缓存数据给 行情监控 里的最新价格使用
     {
         try
