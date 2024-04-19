@@ -4084,7 +4084,7 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
             // 第一次提醒
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: "请勿高频发送指令，否则将被机器人限制！"
+                text: "请勿频繁发重复指令，否则将被机器人限制！"
             );
             userBehavior.WarningCount++;
             // 设置提醒倒计时解除
