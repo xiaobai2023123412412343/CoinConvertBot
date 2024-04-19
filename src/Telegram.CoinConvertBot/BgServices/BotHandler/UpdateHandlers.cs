@@ -295,6 +295,8 @@ public static class CryptoMarketAnalyzer
             inlineKeyboardButtons.ToArray(), // 第一排按钮，包含1-6的按钮
             new[] // 新增第二排按钮
             {
+                InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
+                InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),		    
                 InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding")
             }
         });
