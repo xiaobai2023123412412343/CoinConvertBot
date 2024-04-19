@@ -12165,28 +12165,15 @@ var klineData = klineDataRaw.Select(item => new KlineDataItem
 
 // 计算连续上涨或下跌的天数
 var (riseDays, fallDays) = GetContinuousRiseFallDays(klineData);
-
-// 如果连续上涨或下跌的天数大于2，就添加到返回的消息中
-string reply;
-if (riseDays > 2)
-{
-    reply = $"<b> <code>{symbol}</code>/USDT 数据     连续上涨{riseDays}天！</b>\n\n";
-}
-else if (fallDays > 2)
-{
-    reply = $"<b> <code>{symbol}</code>/USDT 数据     连续下跌{fallDays}天！</b>\n\n";
-}
-else
-{
-    reply = $"<b> <code>{symbol}</code>/USDT 数据     </b>\n\n";
-}
+			
 // 尝试从本地缓存获取市值、流通量和图片URL
 string imageUrl = null;
 decimal marketCap = 0;
 decimal circulatingSupply = 0;
 string formattedMarketCap = "未收录";
 string formattedCirculatingSupply = "未收录";
-
+string rankText = null; // 用于存储币种排名信息
+			
 var coinInfo = await CoinDataCache.GetCoinInfoAsync(symbol);
 if (coinInfo != null && coinInfo.Count > 0)
 {
@@ -12207,6 +12194,11 @@ if (coinInfo != null && coinInfo.Count > 0)
    // Console.WriteLine($"从本地缓存获取到市值: {formattedMarketCap}");
     formattedCirculatingSupply = circulatingSupply > 0 ? string.Format("{0:N0}", circulatingSupply) : "未收录";
    // Console.WriteLine($"从本地缓存获取到流通量: {formattedCirculatingSupply}");
+    // 尝试获取币种排名
+    if (coinInfo.TryGetValue("rank", out JsonElement rankElement) && rankElement.TryGetInt32(out int rank))
+    {
+        rankText = $"<b>No.{rank}</b>"; // 格式化排名信息，加粗显示
+    }	
 }
 else
 {
@@ -12250,6 +12242,21 @@ else
     {
         Console.WriteLine($"Error when getting market cap, circulating supply, and image URL from API: {ex.Message}");
     }
+}
+
+// 如果连续上涨或下跌的天数大于2，就添加到返回的消息中
+string reply;
+if (riseDays > 2)
+{
+    reply = $"<b> <code>{symbol}</code>/USDT 数据   {rankText}   连续上涨{riseDays}天！</b>\n\n";
+}
+else if (fallDays > 2)
+{
+    reply = $"<b> <code>{symbol}</code>/USDT 数据   {rankText}   连续下跌{fallDays}天！</b>\n\n";
+}
+else
+{
+    reply = $"<b> <code>{symbol}</code>/USDT 数据   {rankText}   </b>\n\n";
 }
 
 // 构建回复消息
