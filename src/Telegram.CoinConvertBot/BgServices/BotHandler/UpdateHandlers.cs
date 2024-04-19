@@ -4141,6 +4141,11 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
 }
 private static async Task HandleBlacklistAndWhitelistCommands(ITelegramBotClient botClient, Message message)
 {
+    // 检查 message 是否为 null
+    if (message == null || message.From == null || message.Text == null)
+    {
+        return;
+    }	
     // 检查消息是否来自指定的管理员
     if (message.From.Id != 1427768220) return;
 
