@@ -12180,47 +12180,82 @@ else
 {
     reply = $"<b> <code>{symbol}</code>/USDT 数据     </b>\n\n";
 }
-// 获取市值、流通量和图片URL
+// 尝试从本地缓存获取市值、流通量和图片URL
 string imageUrl = null;
-try
+decimal marketCap = 0;
+decimal circulatingSupply = 0;
+string formattedMarketCap = "未收录";
+string formattedCirculatingSupply = "未收录";
+
+var coinInfo = await CoinDataCache.GetCoinInfoAsync(symbol);
+if (coinInfo != null && coinInfo.Count > 0)
 {
-    var marketCapUrl = $"https://min-api.cryptocompare.com/data/pricemultifull?fsyms={symbol}&tsyms=USD";
-    var marketCapResponse = await httpClient.GetStringAsync(marketCapUrl);
-    var marketCapJson = JObject.Parse(marketCapResponse);
-    var marketCap = marketCapJson["RAW"][symbol]["USD"]["CIRCULATINGSUPPLYMKTCAP"].Value<decimal>();
-    var circulatingSupply = marketCapJson["RAW"][symbol]["USD"]["CIRCULATINGSUPPLY"].Value<decimal>();
-    var formattedMarketCap = string.Format("{0:N0}", marketCap);
-    var formattedCirculatingSupply = string.Format("{0:N0}", circulatingSupply);
-    
+    //Console.WriteLine($"从本地缓存获取到数据：{symbol}");
+    // 从缓存获取信息
+    imageUrl = coinInfo.TryGetValue("logo_png", out JsonElement logoElement) ? logoElement.GetString() : null;
+    if (imageUrl != null) //Console.WriteLine($"从本地缓存获取到图片: {imageUrl}");
+
+    marketCap = coinInfo.TryGetValue("market_cap_usd", out JsonElement marketCapElement) && marketCapElement.TryGetDecimal(out decimal mc) ? mc : 0;
+    circulatingSupply = coinInfo.TryGetValue("available_supply", out JsonElement supplyElement) && supplyElement.TryGetDecimal(out decimal cs) ? cs : 0;
+
+    formattedMarketCap = marketCap > 0 ? string.Format("{0:N0}", marketCap) : "未收录";
     if (marketCap > 100000000)
     {
         var marketCapInBillion = marketCap / 100000000;
         formattedMarketCap += $" ≈ {marketCapInBillion:N2}亿";
     }
-    if (marketCap == 0)
-    {
-        formattedMarketCap = "未收录";
-    }
-    if (circulatingSupply == 0)
-    {
-        formattedCirculatingSupply = "未收录";
-    }
-
-    reply += $"<b>\U0001F4B0总市值：</b>{formattedMarketCap}\n";
-    reply += $"<b>\U0001F4B0流通量：</b>{formattedCirculatingSupply}\n"; // 添加流通量信息
-
-    // 获取图片URL
-    imageUrl = marketCapJson["DISPLAY"][symbol]["USD"]["IMAGEURL"]?.ToString();
-    if (!string.IsNullOrEmpty(imageUrl))
-    {
-        imageUrl = $"https://www.cryptocompare.com{imageUrl}";
-    }
+   // Console.WriteLine($"从本地缓存获取到市值: {formattedMarketCap}");
+    formattedCirculatingSupply = circulatingSupply > 0 ? string.Format("{0:N0}", circulatingSupply) : "未收录";
+   // Console.WriteLine($"从本地缓存获取到流通量: {formattedCirculatingSupply}");
 }
-catch (Exception ex)
+else
 {
-    // 记录错误信息
-    Console.WriteLine($"Error when getting market cap, circulating supply, and image URL: {ex.Message}");
+   // Console.WriteLine($"本地缓存中未找到数据，从API获取：{symbol}");
+    // 如果本地缓存没有数据，从API获取
+    try
+    {
+        var marketCapUrl = $"https://min-api.cryptocompare.com/data/pricemultifull?fsyms={symbol}&tsyms=USD";
+        var marketCapResponse = await httpClient.GetStringAsync(marketCapUrl);
+        var marketCapJson = JObject.Parse(marketCapResponse);
+        marketCap = marketCapJson["RAW"][symbol]["USD"]["CIRCULATINGSUPPLYMKTCAP"].Value<decimal>();
+        circulatingSupply = marketCapJson["RAW"][symbol]["USD"]["CIRCULATINGSUPPLY"].Value<decimal>();
+        formattedMarketCap = string.Format("{0:N0}", marketCap);
+        formattedCirculatingSupply = string.Format("{0:N0}", circulatingSupply);
+
+        if (marketCap > 100000000)
+        {
+            var marketCapInBillion = marketCap / 100000000;
+            formattedMarketCap += $" ≈ {marketCapInBillion:N2}亿";
+        }
+        if (marketCap == 0)
+        {
+            formattedMarketCap = "未收录";
+        }
+        if (circulatingSupply == 0)
+        {
+            formattedCirculatingSupply = "未收录";
+        }
+
+        // 获取图片URL
+        imageUrl = marketCapJson["DISPLAY"][symbol]["USD"]["IMAGEURL"]?.ToString();
+        if (!string.IsNullOrEmpty(imageUrl))
+        {
+            imageUrl = $"https://www.cryptocompare.com{imageUrl}";
+        }
+        //Console.WriteLine($"从API获取到图片: {imageUrl}");
+       // Console.WriteLine($"从API获取到市值: {formattedMarketCap}");
+       // Console.WriteLine($"从API获取到流通量: {formattedCirculatingSupply}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error when getting market cap, circulating supply, and image URL from API: {ex.Message}");
+    }
 }
+
+// 构建回复消息
+reply += $"<b>\U0001F4B0总市值：</b>{formattedMarketCap}\n";
+reply += $"<b>\U0001F4B0流通量：</b>{formattedCirculatingSupply}\n"; // 添加流通量信息
+			
 // 获取永续合约价格
 string futuresPrice = "该币种未上线永续合约";
 try
@@ -12351,7 +12386,7 @@ try
     }
     else
     {
-        Console.WriteLine("No data returned from the API.");
+        //Console.WriteLine("No data returned from the API.");
     }
 }
 catch (Exception ex)
