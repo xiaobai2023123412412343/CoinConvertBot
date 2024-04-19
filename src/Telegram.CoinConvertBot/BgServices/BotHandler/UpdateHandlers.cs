@@ -202,6 +202,8 @@ public static class CryptoMarketAnalyzer
             {
                 var customQueryKeyboard = new InlineKeyboardMarkup(new[]
                 {
+		    InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
+                    InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),
                     InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding")
                 });		    
 		    
