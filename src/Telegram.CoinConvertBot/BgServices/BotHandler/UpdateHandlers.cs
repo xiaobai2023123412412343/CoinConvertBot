@@ -110,97 +110,98 @@ public static class VipAuthorizationHandler
     private static ConcurrentDictionary<long, DateTime> vipUserExpiryTimes = new ConcurrentDictionary<long, DateTime>();
     private static ConcurrentDictionary<long, CancellationTokenSource> vipUserTimers = new ConcurrentDictionary<long, CancellationTokenSource>();
 
-    public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message message, long authorizedById)
+public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message message, long authorizedById)
+{
+    const long authorizingUserId = 1427768220; // 指定可以授权的用户ID
+    if (message.From.Id != authorizingUserId)
     {
-        const long authorizingUserId = 1427768220; // 指定可以授权的用户ID
-        if (message.From.Id != authorizingUserId)
-        {
-            return; // 如果消息不是来自指定的授权用户，则不进行任何操作
-        }
-
-        var parts = message.Text.Split(' ');
-        if (parts.Length < 3)
-        {
-            return; // 确保命令格式正确
-        }
-
-        if (!long.TryParse(parts[1], out long userIdToAuthorize))
-        {
-            await botClient.SendTextMessageAsync(message.Chat.Id, "无效的用户ID。");
-            return;
-        }
-
-        var duration = ParseDuration(parts[2]);
-        if (duration == TimeSpan.Zero)
-        {
-            await botClient.SendTextMessageAsync(message.Chat.Id, "无效的时间格式。");
-            return;
-        }
-
-        DateTime newExpiryTime;
-        TimeSpan additionalTime = duration;
-        CancellationTokenSource cts = new CancellationTokenSource();
-
-        if (vipUserExpiryTimes.TryGetValue(userIdToAuthorize, out var existingExpiryTime) && DateTime.UtcNow < existingExpiryTime)
-        {
-            // 用户已是VIP且存在倒计时，累加时间
-            newExpiryTime = existingExpiryTime.Add(additionalTime);
-        }
-        else
-        {
-            // 用户不是VIP或倒计时已结束，设置新的倒计时
-            newExpiryTime = DateTime.UtcNow.Add(additionalTime);
-        }
-
-        // 更新或设置新的倒计时
-        if (vipUserTimers.TryGetValue(userIdToAuthorize, out var existingCts))
-        {
-            existingCts.Cancel();
-        }
-        else
-        {
-            existingCts = new CancellationTokenSource();
-            vipUserTimers[userIdToAuthorize] = existingCts;
-        }
-
-        vipUserExpiryTimes[userIdToAuthorize] = newExpiryTime;
-        vipUsers[userIdToAuthorize] = true; // 标记为VIP
-
-        existingCts.CancelAfter(additionalTime);
-        _ = Task.Delay(additionalTime, existingCts.Token).ContinueWith(task =>
-        {
-            if (!task.IsCanceled)
-            {
-                vipUsers.Remove(userIdToAuthorize);
-                DateTime removedDateTime;
-                vipUserExpiryTimes.TryRemove(userIdToAuthorize, out removedDateTime);
-                CancellationTokenSource removedCts;
-                vipUserTimers.TryRemove(userIdToAuthorize, out removedCts);
-            }
-        }, TaskScheduler.Default);
-
-        await botClient.SendTextMessageAsync(message.Chat.Id, $"用户 {userIdToAuthorize} 现在是VIP，授权时间累加至：{newExpiryTime}。");
+        return; // 如果消息不是来自指定的授权用户，则不进行任何操作
     }
+
+    var parts = message.Text.Split(' ');
+    if (parts.Length < 3)
+    {
+        return; // 确保命令格式正确
+    }
+
+    if (!long.TryParse(parts[1], out long userIdToAuthorize))
+    {
+        await botClient.SendTextMessageAsync(message.Chat.Id, "无效的用户ID。");
+        return;
+    }
+
+    var duration = ParseDuration(parts[2]);
+    if (duration == TimeSpan.Zero)
+    {
+        await botClient.SendTextMessageAsync(message.Chat.Id, "无效的时间格式。");
+        return;
+    }
+
+    DateTime newExpiryTime;
+    TimeSpan additionalTime = duration;
+
+    if (vipUserExpiryTimes.TryGetValue(userIdToAuthorize, out var existingExpiryTime) && DateTime.UtcNow < existingExpiryTime)
+    {
+        // 用户已是VIP且存在倒计时，累加时间
+        newExpiryTime = existingExpiryTime.Add(additionalTime);
+    }
+    else
+    {
+        // 用户不是VIP或倒计时已结束，设置新的倒计时
+        newExpiryTime = DateTime.UtcNow.Add(additionalTime);
+    }
+
+    // 使用TimeZoneInfo将UTC时间转换为北京时间（UTC+8）
+    TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+    DateTime beijingTime = TimeZoneInfo.ConvertTimeFromUtc(newExpiryTime, chinaZone);
+
+    // 更新或设置新的倒计时
+    if (vipUserTimers.TryGetValue(userIdToAuthorize, out var existingCts))
+    {
+        existingCts.Cancel();
+    }
+    existingCts = new CancellationTokenSource();
+    vipUserTimers[userIdToAuthorize] = existingCts;
+
+    vipUserExpiryTimes[userIdToAuthorize] = newExpiryTime; // 存储的是UTC时间
+    vipUsers[userIdToAuthorize] = true; // 标记为VIP
+
+    existingCts.CancelAfter(additionalTime);
+    _ = Task.Delay(additionalTime, existingCts.Token).ContinueWith(task =>
+    {
+        if (!task.IsCanceled)
+        {
+            vipUsers.Remove(userIdToAuthorize);
+            DateTime removedDateTime;
+            vipUserExpiryTimes.TryRemove(userIdToAuthorize, out removedDateTime);
+            CancellationTokenSource removedCts;
+            vipUserTimers.TryRemove(userIdToAuthorize, out removedCts);
+        }
+    }, TaskScheduler.Default);
+
+    await botClient.SendTextMessageAsync(message.Chat.Id, $"用户 {userIdToAuthorize} 现在是VIP，授权时间累加至：{beijingTime:yyyy/MM/dd HH:mm:ss}。");
+}
 
     private static TimeSpan ParseDuration(string durationText)
     {
-        durationText = durationText.Trim().ToLower();
-        var duration = TimeSpan.Zero;
+        // 使用正则表达式匹配数字和单位
+        var match = Regex.Match(durationText, @"(\d+)\s*(分钟|小时|天)");
+        if (!match.Success) return TimeSpan.Zero;
 
-        if (durationText == "1分钟" || durationText == "一分钟")
-        {
-            duration = TimeSpan.FromMinutes(1);
-        }
-        else if (durationText == "1小时" || durationText == "一小时")
-        {
-            duration = TimeSpan.FromHours(1);
-        }
-        else if (durationText == "1天" || durationText == "一天")
-        {
-            duration = TimeSpan.FromDays(1);
-        }
+        int amount = int.Parse(match.Groups[1].Value);
+        string unit = match.Groups[2].Value;
 
-        return duration;
+        switch (unit)
+        {
+            case "分钟":
+                return TimeSpan.FromMinutes(amount);
+            case "小时":
+                return TimeSpan.FromHours(amount);
+            case "天":
+                return TimeSpan.FromDays(amount);
+            default:
+                return TimeSpan.Zero;
+        }
     }
 }
 //统计非小号币种数据
