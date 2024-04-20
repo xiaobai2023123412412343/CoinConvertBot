@@ -102,6 +102,8 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// VIP用户字典		
+private static Dictionary<long, bool> vipUsers = new Dictionary<long, bool>(); // VIP用户字典		
 //统计非小号币种数据
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userShizhiLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>(); //限制用户每日查询次数字典	
 public static class CryptoMarketAnalyzer
@@ -13843,7 +13845,23 @@ USDT余额： <b>{USDT}</b>
         // 如果第二部分不符合地址格式，发送错误消息
         return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: $"您输入的波场地址<b>{address}</b>有误！", parseMode: ParseMode.Html);
     }
+    // 从 message.From 中提取 userId
+    var userId = message.From.Id;
 
+    // 获取bindRepository
+    var bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
+
+    // 查询用户已绑定的地址数量
+    var existingBindsCount = bindRepository.Where(x => x.UserId == userId).Count();
+
+    // 检查用户是否是VIP用户
+    bool isVip = vipUsers.ContainsKey(userId);
+
+    // 如果用户已绑定地址达到3个且不是VIP用户
+    if (existingBindsCount >= 3 && !isVip)
+    {
+        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "绑定失败，请先解绑，单用户最多绑定3个地址！\n订阅 FF Pro会员，缓解服务器压力即可不限制绑定！", parseMode: ParseMode.Html);
+    }
     // 如果消息来自群聊，不进行绑定
    // if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
   //  {
