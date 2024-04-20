@@ -735,7 +735,7 @@ private static async Task HandleUserJoinOrLeave(ITelegramBotClient botClient, Me
                     string displayName = newUser.FirstName + (newUser.LastName != null ? " " + newUser.LastName : "");
                     // 如果没有用户名，添加 "ID:" 前缀
                     string usernameOrId = newUser.Username != null ? "@" + newUser.Username : "ID:" + newUser.Id.ToString();
-                    string msg = $"{displayName} {usernameOrId} 欢迎加入群组！";
+                    string msg = $"{displayName} {usernameOrId} 欢迎进群！";
                     await botClient.SendTextMessageAsync(message.Chat.Id, msg);
                 }
             }
