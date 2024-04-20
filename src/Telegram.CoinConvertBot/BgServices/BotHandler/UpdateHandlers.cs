@@ -609,6 +609,29 @@ public static class CryptoDataFetcher
         return string.Join("\n\n", formattedData);
     }
 }	
+private static async Task HandleUserJoinOrLeave(ITelegramBotClient botClient, Message message)
+{
+    if (message.Type == MessageType.ChatMembersAdded)
+    {
+        foreach (var newUser in message.NewChatMembers)
+        {
+            if (!newUser.IsBot) // 确保不是机器人加入
+            {
+                string msg = $"{newUser.FirstName} ({newUser.Id}) 加入群组！";
+                await botClient.SendTextMessageAsync(message.Chat.Id, msg);
+            }
+        }
+    }
+    else if (message.Type == MessageType.ChatMemberLeft)
+    {
+        var leftUser = message.LeftChatMember;
+        if (leftUser != null && !leftUser.IsBot) // 确保不是机器人离开
+        {
+            string msg = $"{leftUser.FirstName} ({leftUser.Id}) 离开群组！";
+            await botClient.SendTextMessageAsync(message.Chat.Id, msg);
+        }
+    }
+}	
 //短期30分钟涨跌数据
 // 为 /jisuzhangdie 命令创建一个新的字典来跟踪用户查询限制
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userJisuZhangdieLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
@@ -9755,6 +9778,13 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
     {
         await HandleBlacklistAndWhitelistCommands(botClient, message);
         Log.Information($"Receive message type: {message.Type}");
+
+    // 处理用户加入或离开群组的事件
+    if (message.Type == MessageType.ChatMembersAdded || message.Type == MessageType.ChatMemberLeft)
+    {
+        await HandleUserJoinOrLeave(botClient, message);
+    }
+	    
     // 检查消息是否为图片类型
     if (message.Type == MessageType.Photo)
     {
