@@ -103,7 +103,93 @@ public static class UpdateHandlers
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
 // VIP用户字典		
-private static Dictionary<long, bool> vipUsers = new Dictionary<long, bool>(); // VIP用户字典		
+private static Dictionary<long, bool> vipUsers = new Dictionary<long, bool>(); // VIP用户字典	
+public static class VipAuthorizationHandler
+{
+    private static Dictionary<long, CancellationTokenSource> vipUserTimers = new Dictionary<long, CancellationTokenSource>();
+
+    public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message message, long authorizedById)
+    {
+        const long authorizingUserId = 1427768220; // 指定可以授权的用户ID
+        if (message.From.Id != authorizingUserId)
+        {
+            return; // 如果消息不是来自指定的授权用户，则不进行任何操作
+        }
+
+        var parts = message.Text.Split(' ');
+        if (parts.Length < 3)
+        {
+            return; // 确保命令格式正确
+        }
+
+        if (!long.TryParse(parts[1], out long userIdToAuthorize))
+        {
+            await botClient.SendTextMessageAsync(message.Chat.Id, "无效的用户ID。");
+            return;
+        }
+
+        var duration = ParseDuration(parts[2]);
+        if (duration == TimeSpan.Zero)
+        {
+            await botClient.SendTextMessageAsync(message.Chat.Id, "无效的时间格式。");
+            return;
+        }
+
+        // 取消之前的倒计时（如果存在）
+        if (vipUserTimers.TryGetValue(userIdToAuthorize, out var existingCts))
+        {
+            existingCts.Cancel();
+        }
+
+        // 设置新的倒计时
+        var cts = new CancellationTokenSource();
+        vipUserTimers[userIdToAuthorize] = cts;
+        vipUsers[userIdToAuthorize] = true; // 添加到VIP字典
+
+        _ = RemoveVipUserAfterDelay(userIdToAuthorize, duration, cts.Token);
+
+        await botClient.SendTextMessageAsync(message.Chat.Id, $"用户 {userIdToAuthorize} 现在是VIP，授权时间：{parts[2]}。");
+    }
+
+    private static async Task RemoveVipUserAfterDelay(long userId, TimeSpan delay, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(delay, token);
+            if (!token.IsCancellationRequested)
+            {
+                vipUsers.Remove(userId);
+                vipUserTimers.Remove(userId);
+                // 这里可以添加代码来通知某人或记录日志
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            // 如果任务被取消，则不执行任何操作
+        }
+    }
+
+    private static TimeSpan ParseDuration(string durationText)
+    {
+        durationText = durationText.Trim().ToLower();
+        var duration = TimeSpan.Zero;
+
+        if (durationText == "1分钟" || durationText == "一分钟")
+        {
+            duration = TimeSpan.FromMinutes(1);
+        }
+        else if (durationText == "1小时" || durationText == "一小时")
+        {
+            duration = TimeSpan.FromHours(1);
+        }
+        else if (durationText == "1天" || durationText == "一天")
+        {
+            duration = TimeSpan.FromDays(1);
+        }
+
+        return duration;
+    }
+}	
 //统计非小号币种数据
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userShizhiLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>(); //限制用户每日查询次数字典	
 public static class CryptoMarketAnalyzer
@@ -8982,7 +9068,7 @@ if (isNumberRange)
         // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
         var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
         // 添加新正则表达式以检查输入文本是否包含 "查id"、"查ID" 或 "t.me/"
-        var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|yhk|t\.me/", RegexOptions.IgnoreCase);
+        var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|授权|yhk|t\.me/", RegexOptions.IgnoreCase);
 
         // 如果输入文本包含 "查id"、"查ID" 或 "t.me/"，则不执行翻译
         if (containsIdOrTme)
@@ -11910,6 +11996,11 @@ if (messageText.StartsWith("/genjuzhiding"))
     });
 
     await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: replyMessage, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, replyMarkup: inlineKeyboard);
+}
+// 检查是否接收到了授权命令
+if (messageText.StartsWith("授权"))
+{
+    await VipAuthorizationHandler.AuthorizeVipUser(botClient, message, message.From.Id);
 }	    
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
