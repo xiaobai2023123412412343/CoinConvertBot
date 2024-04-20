@@ -3516,28 +3516,7 @@ public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient bot
     try
     {
         var userId = message.From.Id;
-	    
-        // 使用新的公共方法检查VIP状态
-        if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime))
-        {
-            // 用户是VIP，处理VIP逻辑...
-            TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
-            DateTime beijingTime = TimeZoneInfo.ConvertTimeFromUtc(expiryTime, chinaZone);
-
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: $"您已是 FF Pro会员，到期时间为：{beijingTime:yyyy/MM/dd HH:mm:ss}。"
-            );
-        }
-        else
-        {
-            // 用户不是VIP
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: "您还不是 FF Pro会员，订阅会员即可享受机器人完整功能！"
-            );
-        }
-	    
+	    	    
         // 获取_bindRepository
         var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
         // 查询是否存在一个与当前用户ID匹配的TokenBind对象
@@ -12166,6 +12145,30 @@ if (messageText.Contains("订阅"))
         parseMode: ParseMode.Html, // 设置消息格式为HTML
         replyMarkup: inlineKeyboard
     );
+}
+if (message.Text.StartsWith("/provip"))
+{
+    var userId = message.From.Id;
+    // 使用新的公共方法检查VIP状态
+    if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime))
+    {
+        // 用户是VIP，处理VIP逻辑...
+        TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+        DateTime beijingTime = TimeZoneInfo.ConvertTimeFromUtc(expiryTime, chinaZone);
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"您已是 FF Pro会员，到期时间为：{beijingTime:yyyy/MM/dd HH:mm:ss}。"
+        );
+    }
+    else
+    {
+        // 用户不是VIP
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "您还不是 FF Pro会员，订阅会员即可享受机器人完整功能！"
+        );
+    }
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
