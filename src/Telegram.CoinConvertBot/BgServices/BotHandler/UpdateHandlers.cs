@@ -8853,17 +8853,25 @@ if (message.Text.StartsWith("/gzgzgz") && message.From.Id == AdminUserId)
     await HandleGetFollowersCommandAsync(botClient, message);
 }
     
-    // 检查输入文本是否为 Tron 地址
-    var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
+// 检查输入文本是否为 Tron 地址
+var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
+var addressLength = message.Text.Length;
 
-    if (isTronAddress)
-    {
-        await HandleQueryCommandAsync(botClient, message); // 当满足条件时，调用查询方法
-    }
-    else
-    {
-        // 在这里处理其他文本消息
-    }
+// 检查地址长度是否大于10且小于33，或者大于33
+var isInvalidLength = message.Text.StartsWith("T") && (addressLength > 20 && addressLength < 34 || addressLength > 34);
+
+if (isTronAddress)
+{
+    await HandleQueryCommandAsync(botClient, message); // 当满足条件时，调用查询方法
+}
+else if (isInvalidLength)
+{
+    await botClient.SendTextMessageAsync(message.Chat.Id, "这好像是个波场TRC-20地址，长度不正确，请仔细检查！");
+}
+else
+{
+    // 在这里处理其他文本消息
+}
 }
         // 检查消息文本是否以 "转" 开头
         if (message?.Text != null && message.Text.StartsWith("转"))
@@ -8949,7 +8957,8 @@ if (isNumberRange)
             var isChineseTextWithSpaces = Regex.IsMatch(inputText, @"^[\u4e00-\u9fa5\s]+$");
 
             // 检查输入文本是否为 Tron 地址
-            var isTronAddress = Regex.IsMatch(inputText, @"^(T[A-Za-z0-9]{33})$");
+            //var isTronAddress = Regex.IsMatch(inputText, @"^(T[A-Za-z0-9]{33})$");
+	    var isTronAddress = Regex.IsMatch(inputText, @"^T[A-Za-z0-9]{20,}$");
 
             // 检查输入文本是否为币种
             var currencyNamesRegex = new Regex(@"(美元|港币|台币|日元|英镑|欧元|澳元|韩元|柬币|泰铢|越南盾|老挝币|缅甸币|印度卢比|瑞士法郎|新西兰元|新加坡新元|柬埔寨瑞尔|菲律宾披索|墨西哥比索|迪拜迪拉姆|俄罗斯卢布|加拿大加元|马来西亚币|科威特第纳尔|元|块|美金|法郎|新币|瑞尔|迪拉姆|卢布|披索|比索|马币|第纳尔|卢比|CNY|USD|HKD|TWD|JPY|GBP|EUR|AUD|KRW|THB|VND|LAK|MMK|INR|CHF|NZD|SGD|KHR|PHP|MXN|AED|RUB|CAD|MYR|KWD)", RegexOptions.IgnoreCase);		
