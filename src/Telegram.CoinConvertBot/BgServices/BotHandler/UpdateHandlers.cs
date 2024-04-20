@@ -13003,6 +13003,43 @@ if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
         Console.WriteLine($"代绑请求格式错误，接收到的消息：{messageText}");
     }
 }
+if (messageText.StartsWith("绑定") && messageText.Length == "绑定".Length + 34)
+{
+    var address = messageText.Substring("绑定".Length);
+    // 检查地址是否符合波场地址的基本格式要求
+    if (address.StartsWith("T") && address.Length == 34)
+    {
+        // 构造格式化后的消息文本，即在“绑定”和地址之间加上一个空格
+        var formattedMessageText = $"绑定 {address}";
+        var fakeMessage = new Message
+        {
+            Chat = message.Chat,
+            From = message.From,
+            Text = formattedMessageText
+        };
+
+        try
+        {
+            // 调用绑定方法，传入模拟的消息对象
+            await BindAddress(botClient, fakeMessage);
+            Console.WriteLine($"自动格式化绑定请求成功，地址：{address}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"自动格式化绑定请求失败，地址：{address}，错误：{ex.Message}");
+            // 这里可以根据需要添加更多的错误处理逻辑
+        }
+    }
+    else
+    {
+        Console.WriteLine($"消息格式正确，但地址不符合波场地址格式，接收到的消息：{messageText}");
+    }
+}
+else
+{
+    Console.WriteLine($"消息格式不符合自动格式化绑定的要求，接收到的消息：{messageText}");
+    // 这里可以处理其他类型的消息
+}
 // 批量代绑地址
 if (message.From.Id == 1427768220)
 {
