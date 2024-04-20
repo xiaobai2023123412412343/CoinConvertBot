@@ -14086,11 +14086,22 @@ USDT余额： <b>{USDT}</b>
     // 检查用户是否是VIP用户
     bool isVip = vipUsers.ContainsKey(userId);
 
-    // 如果用户已绑定地址达到3个且不是VIP用户
-    if (existingBindsCount >= 3 && !isVip)
+// 如果用户已绑定地址达到3个且不是VIP用户
+if (existingBindsCount >= 3 && !isVip)
+{
+    // 创建内联键盘按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "绑定失败，请先解绑，单用户最多绑定3个地址！\n订阅 FF Pro会员，缓解服务器压力即可不限制绑定！", parseMode: ParseMode.Html);
-    }
+        InlineKeyboardButton.WithCallbackData("订阅 FF Pro 会员", "订阅")
+    });
+
+    return await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "绑定失败，请先解绑，单用户最多绑定3个地址！\n订阅 FF Pro会员，缓解服务器压力即可不限制绑定！",
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}
     // 如果消息来自群聊，不进行绑定
    // if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
   //  {
