@@ -611,25 +611,44 @@ public static class CryptoDataFetcher
 }	
 private static async Task HandleUserJoinOrLeave(ITelegramBotClient botClient, Message message)
 {
-    if (message.Type == MessageType.ChatMembersAdded)
+    try
     {
-        foreach (var newUser in message.NewChatMembers)
+        if (message.Type == MessageType.ChatMembersAdded)
         {
-            if (!newUser.IsBot) // 确保不是机器人加入
+            foreach (var newUser in message.NewChatMembers)
             {
-                string msg = $"{newUser.FirstName} ({newUser.Id}) 加入群组！";
+                if (!newUser.IsBot) // 确保不是机器人加入
+                {
+                    string displayName = newUser.FirstName + (newUser.LastName != null ? " " + newUser.LastName : "");
+                    // 如果没有用户名，添加 "ID:" 前缀
+                    string usernameOrId = newUser.Username != null ? "@" + newUser.Username : "ID:" + newUser.Id.ToString();
+                    string msg = $"{displayName} {usernameOrId} 欢迎加入群组！";
+                    await botClient.SendTextMessageAsync(message.Chat.Id, msg);
+                }
+            }
+        }
+        else if (message.Type == MessageType.ChatMemberLeft)
+        {
+            var leftUser = message.LeftChatMember;
+            if (leftUser != null && !leftUser.IsBot) // 确保不是机器人离开
+            {
+                string displayName = leftUser.FirstName + (leftUser.LastName != null ? " " + leftUser.LastName : "");
+                // 如果没有用户名，添加 "ID:" 前缀
+                string usernameOrId = leftUser.Username != null ? "@" + leftUser.Username : "ID:" + leftUser.Id.ToString();
+                string msg = $"{displayName} {usernameOrId} 离开群组！";
                 await botClient.SendTextMessageAsync(message.Chat.Id, msg);
             }
         }
     }
-    else if (message.Type == MessageType.ChatMemberLeft)
+    catch (Telegram.Bot.Exceptions.ApiRequestException ex)
     {
-        var leftUser = message.LeftChatMember;
-        if (leftUser != null && !leftUser.IsBot) // 确保不是机器人离开
-        {
-            string msg = $"{leftUser.FirstName} ({leftUser.Id}) 离开群组！";
-            await botClient.SendTextMessageAsync(message.Chat.Id, msg);
-        }
+        // 处理没有发送消息权限的情况或其他API请求异常
+        Console.WriteLine($"无法发送消息: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        // 处理其他异常
+        Console.WriteLine($"发生异常: {ex.Message}");
     }
 }	
 //短期30分钟涨跌数据
