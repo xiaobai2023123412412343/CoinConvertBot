@@ -115,7 +115,11 @@ public static class VipAuthorizationHandler
     {
         return vipUserExpiryTimes.TryGetValue(userId, out expiryTime);
     }
-	
+    // 新的公共静态方法，用于获取所有VIP用户的到期时间
+    public static IDictionary<long, DateTime> GetAllVipUsersExpiryTime()
+    {
+        return vipUserExpiryTimes.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }	
 public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message message, long authorizedById)
 {
     const long authorizingUserId = 1427768220; // 指定可以授权的用户ID
@@ -9120,7 +9124,7 @@ if (isNumberRange)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|music|usd|more|usdt|tron|z0|cny|trc|home|jiankong|caifu|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|ucard|jisuzhangdie|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|查询余额|地址监听|加密货币|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|music|huiyuanku|usd|more|usdt|tron|z0|cny|trc|home|jiankong|caifu|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|ucard|jisuzhangdie|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|查询余额|地址监听|加密货币|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -12042,7 +12046,72 @@ if (messageText.StartsWith("/genjuzhiding"))
 if (messageText.StartsWith("授权"))
 {
     await VipAuthorizationHandler.AuthorizeVipUser(botClient, message, message.From.Id);
-}	    
+}
+if (messageText.StartsWith("/huiyuanku") && message.From.Id == 1427768220)
+{
+    var allVipUsersExpiryTime = VipAuthorizationHandler.GetAllVipUsersExpiryTime();
+    StringBuilder messageBuilder = new StringBuilder();
+    int count = 0;
+
+    // 获取当前的北京时间
+    TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+    DateTime nowBeijingTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaZone);
+
+    foreach (var kvp in allVipUsersExpiryTime)
+    {
+        DateTime beijingTime = TimeZoneInfo.ConvertTimeFromUtc(kvp.Value, chinaZone);
+        TimeSpan timeLeft = beijingTime - nowBeijingTime;
+
+        // 格式化剩余时间
+        string formattedTimeLeft = FormatTimeLeft(timeLeft);
+
+        messageBuilder.AppendLine($"{kvp.Key} 到期时间：{beijingTime:yyyy/MM/dd HH:mm:ss} {formattedTimeLeft}");
+        count++;
+
+        if (count % 50 == 0 || count == allVipUsersExpiryTime.Count)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: messageBuilder.ToString(),
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+            );
+            messageBuilder.Clear();
+        }
+    }
+
+    if (count == 0)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "无用户订阅会员！"
+        );
+    }
+}
+
+// 辅助方法，用于格式化剩余时间为天、时、分、秒
+string FormatTimeLeft(TimeSpan timeLeft)
+{
+    string result = string.Empty;
+    if (timeLeft.TotalDays >= 1)
+    {
+        result = $"{(int)timeLeft.TotalDays}天";
+        timeLeft = timeLeft.Subtract(TimeSpan.FromDays((int)timeLeft.TotalDays));
+    }
+    if (timeLeft.TotalHours >= 1)
+    {
+        result += $"{(int)timeLeft.TotalHours}小时";
+        timeLeft = timeLeft.Subtract(TimeSpan.FromHours((int)timeLeft.TotalHours));
+    }
+    if (timeLeft.TotalMinutes >= 1)
+    {
+        result += $"{(int)timeLeft.TotalMinutes}分";
+        timeLeft = timeLeft.Subtract(TimeSpan.FromMinutes((int)timeLeft.TotalMinutes));
+    }
+    // 总是显示秒，即使是0秒
+    result += $"{(int)timeLeft.TotalSeconds}秒";
+
+    return result;
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
