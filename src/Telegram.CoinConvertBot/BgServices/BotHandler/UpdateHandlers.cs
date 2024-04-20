@@ -146,7 +146,15 @@ public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message 
         await botClient.SendTextMessageAsync(message.Chat.Id, "无效的用户ID。");
         return;
     }
+    // 检查是否为“永久”授权
+    if (parts[2].Equals("永久", StringComparison.OrdinalIgnoreCase))
+    {
+        // 设置用户为永久VIP
+        SetPermanentVip(userIdToAuthorize);
 
+        await botClient.SendTextMessageAsync(message.Chat.Id, $"用户 {userIdToAuthorize} 现在是永久VIP会员。");
+        return;
+    }
     var duration = ParseDuration(parts[2]);
     if (duration == TimeSpan.Zero)
     {
@@ -198,7 +206,18 @@ public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message 
 
     await botClient.SendTextMessageAsync(message.Chat.Id, $"用户 {userIdToAuthorize} 现在是VIP，授权时间累加至：{beijingTime:yyyy/MM/dd HH:mm:ss}。");
 }
+private static void SetPermanentVip(long userId)
+{
+    vipUsers[userId] = true;
+    vipUserExpiryTimes[userId] = DateTime.MaxValue;
 
+    // 如果存在计时器，则取消并移除
+    if (vipUserTimers.TryGetValue(userId, out var existingCts))
+    {
+        existingCts.Cancel();
+        vipUserTimers.TryRemove(userId, out _);
+    }
+}
     private static TimeSpan ParseDuration(string durationText)
     {
         // 使用正则表达式匹配数字和单位
