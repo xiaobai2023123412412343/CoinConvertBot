@@ -13009,7 +13009,7 @@ if (messageText.StartsWith("/bijiacha"))
                 // 用户不是VIP，检查是否在群组中
                 try
                 {
-                    var member = await botClient.GetChatMemberAsync(-1002006327353, userId);
+                    var member = await botClient.GetChatMemberAsync(-1001862069013, userId);
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
@@ -13023,7 +13023,7 @@ if (messageText.StartsWith("/bijiacha"))
                             // 查询次数达到3次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
-                                InlineKeyboardButton.WithCallbackData("立即订阅 FF Pro会员", "作者")
+                                InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
                             });
 
                             await botClient.SendTextMessageAsync(
