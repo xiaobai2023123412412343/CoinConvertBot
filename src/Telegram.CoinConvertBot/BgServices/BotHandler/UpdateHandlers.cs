@@ -12206,7 +12206,7 @@ if (coinInfo != null && coinInfo.Count > 0)
     // 尝试获取币种排名
     if (coinInfo.TryGetValue("rank", out JsonElement rankElement) && rankElement.TryGetInt32(out int rank))
     {
-        rankText = $"<b>No.{rank}</b>"; // 格式化排名信息，加粗显示
+        rankText = $"<b>  |  No.{rank}   </b>"; // 格式化排名信息，加粗显示
     }	
 }
 else
@@ -12257,15 +12257,15 @@ else
 string reply;
 if (riseDays > 2)
 {
-    reply = $"<b> <code>{symbol}</code>/USDT 数据 |   {rankText}   | 连续上涨{riseDays}天！</b>\n\n";
+    reply = $"<b> <code>{symbol}</code>/USDT 数据 {rankText} 连续上涨{riseDays}天！</b>\n\n";
 }
 else if (fallDays > 2)
 {
-    reply = $"<b> <code>{symbol}</code>/USDT 数据 |   {rankText}   | 连续下跌{fallDays}天！</b>\n\n";
+    reply = $"<b> <code>{symbol}</code>/USDT 数据 {rankText} 连续下跌{fallDays}天！</b>\n\n";
 }
 else
 {
-    reply = $"<b> <code>{symbol}</code>/USDT 数据   |   {rankText}   </b>\n\n";
+    reply = $"<b> <code>{symbol}</code>/USDT 数据 {rankText}   </b>\n\n";
 }
 
 // 构建回复消息
