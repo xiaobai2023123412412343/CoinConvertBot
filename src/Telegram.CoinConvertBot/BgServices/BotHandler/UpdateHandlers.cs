@@ -12123,7 +12123,7 @@ if (messageText.Contains("订阅"))
     string subscriptionInfo = "订阅 <b>FF Pro会员</b> 即可无限制使用机器人全部功能！\n\n" +
                               "1个月：10USDT 或 汇旺10USD\n" +
                               "6个月：54USDT 或 汇旺54USD（9折优惠）\n" +
-                              "1年：96USDT 或 汇旺96USD（8折优惠）\n" +
+                              "12个月：96USDT 或 汇旺96USD（8折优惠）\n\n" +
                               "永久会员：200USDT 或 汇旺200USD";
 
     // 创建内联键盘按钮
