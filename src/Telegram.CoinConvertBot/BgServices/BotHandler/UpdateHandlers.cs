@@ -109,7 +109,13 @@ public static class VipAuthorizationHandler
     private static Dictionary<long, bool> vipUsers = new Dictionary<long, bool>();
     private static ConcurrentDictionary<long, DateTime> vipUserExpiryTimes = new ConcurrentDictionary<long, DateTime>();
     private static ConcurrentDictionary<long, CancellationTokenSource> vipUserTimers = new ConcurrentDictionary<long, CancellationTokenSource>();
-
+	
+    // 公共静态方法，用于检查用户的VIP状态和到期时间
+    public static bool TryGetVipExpiryTime(long userId, out DateTime expiryTime)
+    {
+        return vipUserExpiryTimes.TryGetValue(userId, out expiryTime);
+    }
+	
 public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message message, long authorizedById)
 {
     const long authorizingUserId = 1427768220; // 指定可以授权的用户ID
@@ -3480,7 +3486,28 @@ public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient bot
     try
     {
         var userId = message.From.Id;
+	    
+        // 使用新的公共方法检查VIP状态
+        if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime))
+        {
+            // 用户是VIP，处理VIP逻辑...
+            TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+            DateTime beijingTime = TimeZoneInfo.ConvertTimeFromUtc(expiryTime, chinaZone);
 
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"您已是 FF Pro会员，到期时间为：{beijingTime:yyyy/MM/dd HH:mm:ss}。"
+            );
+        }
+        else
+        {
+            // 用户不是VIP
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "您还不是 FF Pro会员，订阅会员即可享受机器人完整功能！"
+            );
+        }
+	    
         // 获取_bindRepository
         var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
         // 查询是否存在一个与当前用户ID匹配的TokenBind对象
