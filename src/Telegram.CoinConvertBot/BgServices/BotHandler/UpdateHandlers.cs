@@ -11906,6 +11906,22 @@ if (messageText.StartsWith("/jisuzhangdie") || messageText.Contains("市场异�
                             return;
                         }
                     }
+                    else
+                    {
+                        // 用户不在群组中，提示加入群组
+                        var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+                        {
+                            InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+                        });
+
+                        await botClient.SendTextMessageAsync(
+                            chatId: message.Chat.Id,
+                            text: "免费查询次数已用光，次日0点恢复！\n\n加入机器人交流群，即可继续查询！",
+                            replyMarkup: keyboard,
+                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+                        );
+                        return;
+                    }
                 }
                 catch (Exception)
                 {
