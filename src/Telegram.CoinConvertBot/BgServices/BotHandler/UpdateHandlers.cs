@@ -11055,6 +11055,10 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
             {
                 InlineKeyboardButton.WithCallbackData("客户地址余额", "ExecuteZjdhMethod"),
 		InlineKeyboardButton.WithCallbackData("承兑账单详情", "chengdui"),  		    	    
+            },
+            new [] // second row
+            {
+                InlineKeyboardButton.WithCallbackData("FF Pro会员", "/huiyuanku"),		    	    
             }
 		
         });
