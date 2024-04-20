@@ -12116,6 +12116,30 @@ string FormatTimeLeft(TimeSpan timeLeft)
 
     return result;
 }
+// 检查是否接收到包含“订阅”两个字的消息，如果是，则回复用户
+if (messageText.Contains("订阅"))
+{
+    // 构建订阅信息的字符串，使用HTML格式，FF Pro加粗
+    string subscriptionInfo = "订阅 <b>FF Pro会员</b> 即可无限制使用机器人全部功能！\n\n" +
+                              "1个月：10USDT 或 汇旺10USD\n" +
+                              "6个月：54USDT 或 汇旺54USD（9折优惠）\n" +
+                              "1年：96USDT 或 汇旺96USD（8折优惠）\n" +
+                              "永久会员：200USDT 或 汇旺200USD";
+
+    // 创建内联键盘按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("立即订阅 FF Pro会员", "作者")
+    });
+
+    // 向用户发送订阅信息和内联按钮
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: subscriptionInfo,
+        parseMode: ParseMode.Html, // 设置消息格式为HTML
+        replyMarkup: inlineKeyboard
+    );
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
