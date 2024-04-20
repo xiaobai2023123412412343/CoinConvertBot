@@ -106,6 +106,13 @@ public static class UpdateHandlers
 private static Dictionary<long, bool> vipUsers = new Dictionary<long, bool>(); // VIP用户字典	
 public static class VipAuthorizationHandler
 {
+    static VipAuthorizationHandler()
+    {
+        // 设置用户1427768220为永久VIP
+        long permanentVipUserId = 1427768220;
+        vipUsers[permanentVipUserId] = true;
+        vipUserExpiryTimes[permanentVipUserId] = DateTime.MaxValue;
+    }	
     private static Dictionary<long, bool> vipUsers = new Dictionary<long, bool>();
     private static ConcurrentDictionary<long, DateTime> vipUserExpiryTimes = new ConcurrentDictionary<long, DateTime>();
     private static ConcurrentDictionary<long, CancellationTokenSource> vipUserTimers = new ConcurrentDictionary<long, CancellationTokenSource>();
