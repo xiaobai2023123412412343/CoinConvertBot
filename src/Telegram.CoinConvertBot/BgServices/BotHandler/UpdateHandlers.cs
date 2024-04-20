@@ -4084,7 +4084,7 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
             // 第一次提醒
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: "请勿频繁发重复指令，否则将被机器人限制！"
+                text: "请勿频繁发送指令，否则将被机器人限制！"
             );
             userBehavior.WarningCount++;
             // 设置提醒倒计时解除
@@ -4101,7 +4101,7 @@ private static async Task CheckUserBehavior(ITelegramBotClient botClient, Messag
                 var timeLeft = userBehavior.UnbanTime.Value - DateTime.UtcNow;
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: $"您已触发反高频行为，请在 <b>{timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00}</b> 后重试！", 
+                    text: $"你已触发反高频行为，请在 <b>{timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00}</b> 后重试！", 
 		            parseMode: ParseMode.Html	
                 );
                 Task.Delay(TimeSpan.FromMinutes(10)).ContinueWith(async _ => // 封禁10分钟，测试用
@@ -9856,7 +9856,7 @@ if (message.Type == MessageType.ChatMembersAdded)
                 // 用户被自动拉黑，回复剩余时间
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: $"您已触发反高频行为，请在 <b>{timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00}</b> 后重试！", 
+                    text: $"你已触发反高频行为，请在 <b>{timeLeft.Hours:00}:{timeLeft.Minutes:00}:{timeLeft.Seconds:00}</b> 后重试！", 
 		    parseMode: ParseMode.Html	
                 );
             }
