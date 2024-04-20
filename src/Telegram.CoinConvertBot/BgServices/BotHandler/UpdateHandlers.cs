@@ -12167,10 +12167,23 @@ if (message.Text.StartsWith("/provip"))
     }
     else
     {
-        // 用户不是VIP
+        // 用户不是VIP，提供订阅选项
+        var subscriptionText = "您还不是 FF Pro会员，订阅会员即可享受机器人完整功能！\n\n" +
+                               "1个月：10USDT 或 汇旺10USD\n" +
+                               "6个月：54USDT 或 汇旺54USD（9折优惠）\n" +
+                               "12个月：96USDT 或 汇旺96USD（8折优惠）\n\n" +
+                               "永久会员：200USDT 或 汇旺200USD";
+
+        // 创建内联键盘按钮
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            InlineKeyboardButton.WithCallbackData("立即订阅 FF Pro会员", "作者")
+        });
+
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: "您还不是 FF Pro会员，订阅会员即可享受机器人完整功能！"
+            text: subscriptionText,
+            replyMarkup: inlineKeyboard
         );
     }
 }
