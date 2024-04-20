@@ -106,7 +106,9 @@ public static class UpdateHandlers
 private static Dictionary<long, bool> vipUsers = new Dictionary<long, bool>(); // VIP用户字典	
 public static class VipAuthorizationHandler
 {
-    private static Dictionary<long, CancellationTokenSource> vipUserTimers = new Dictionary<long, CancellationTokenSource>();
+    private static Dictionary<long, bool> vipUsers = new Dictionary<long, bool>();
+    private static ConcurrentDictionary<long, DateTime> vipUserExpiryTimes = new ConcurrentDictionary<long, DateTime>();
+    private static ConcurrentDictionary<long, CancellationTokenSource> vipUserTimers = new ConcurrentDictionary<long, CancellationTokenSource>();
 
     public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message message, long authorizedById)
     {
@@ -135,38 +137,49 @@ public static class VipAuthorizationHandler
             return;
         }
 
-        // 取消之前的倒计时（如果存在）
+        DateTime newExpiryTime;
+        TimeSpan additionalTime = duration;
+        CancellationTokenSource cts = new CancellationTokenSource();
+
+        if (vipUserExpiryTimes.TryGetValue(userIdToAuthorize, out var existingExpiryTime) && DateTime.UtcNow < existingExpiryTime)
+        {
+            // 用户已是VIP且存在倒计时，累加时间
+            newExpiryTime = existingExpiryTime.Add(additionalTime);
+        }
+        else
+        {
+            // 用户不是VIP或倒计时已结束，设置新的倒计时
+            newExpiryTime = DateTime.UtcNow.Add(additionalTime);
+        }
+
+        // 更新或设置新的倒计时
         if (vipUserTimers.TryGetValue(userIdToAuthorize, out var existingCts))
         {
             existingCts.Cancel();
         }
-
-        // 设置新的倒计时
-        var cts = new CancellationTokenSource();
-        vipUserTimers[userIdToAuthorize] = cts;
-        vipUsers[userIdToAuthorize] = true; // 添加到VIP字典
-
-        _ = RemoveVipUserAfterDelay(userIdToAuthorize, duration, cts.Token);
-
-        await botClient.SendTextMessageAsync(message.Chat.Id, $"用户 {userIdToAuthorize} 现在是VIP，授权时间：{parts[2]}。");
-    }
-
-    private static async Task RemoveVipUserAfterDelay(long userId, TimeSpan delay, CancellationToken token)
-    {
-        try
+        else
         {
-            await Task.Delay(delay, token);
-            if (!token.IsCancellationRequested)
+            existingCts = new CancellationTokenSource();
+            vipUserTimers[userIdToAuthorize] = existingCts;
+        }
+
+        vipUserExpiryTimes[userIdToAuthorize] = newExpiryTime;
+        vipUsers[userIdToAuthorize] = true; // 标记为VIP
+
+        existingCts.CancelAfter(additionalTime);
+        _ = Task.Delay(additionalTime, existingCts.Token).ContinueWith(task =>
+        {
+            if (!task.IsCanceled)
             {
-                vipUsers.Remove(userId);
-                vipUserTimers.Remove(userId);
-                // 这里可以添加代码来通知某人或记录日志
+                vipUsers.Remove(userIdToAuthorize);
+                DateTime removedDateTime;
+                vipUserExpiryTimes.TryRemove(userIdToAuthorize, out removedDateTime);
+                CancellationTokenSource removedCts;
+                vipUserTimers.TryRemove(userIdToAuthorize, out removedCts);
             }
-        }
-        catch (TaskCanceledException)
-        {
-            // 如果任务被取消，则不执行任何操作
-        }
+        }, TaskScheduler.Default);
+
+        await botClient.SendTextMessageAsync(message.Chat.Id, $"用户 {userIdToAuthorize} 现在是VIP，授权时间累加至：{newExpiryTime}。");
     }
 
     private static TimeSpan ParseDuration(string durationText)
@@ -189,7 +202,7 @@ public static class VipAuthorizationHandler
 
         return duration;
     }
-}	
+}
 //统计非小号币种数据
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userShizhiLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>(); //限制用户每日查询次数字典	
 public static class CryptoMarketAnalyzer
