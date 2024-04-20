@@ -608,7 +608,8 @@ public static class CryptoDataFetcher
 
         return string.Join("\n\n", formattedData);
     }
-}	
+}
+//监控用户进出群消息	
 private static async Task HandleUserJoinOrLeave(ITelegramBotClient botClient, Message message)
 {
     try
