@@ -9747,7 +9747,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 英文括号（内容，链接）中文括号（内容，加粗）中文括号（按钮，名称，链接或回调）末尾带置顶，可以尝试置顶；
 机器人可以将用户的操作转发到指定群聊，在群里回复该信息，机器人可直接转发信息给用户。
 授权 ID 时间 可一键授权用户开通 FF Pro 会员，时间可带永久。
-赠送 ID 数字  可赠送用户签到积分
+赠送 ID 数字  可赠送用户签到积分。
 
 启动机器人先：先开启保存群聊资料：<code>/baocunqunliao</code>
 储存之前的用户资料 代绑地址
