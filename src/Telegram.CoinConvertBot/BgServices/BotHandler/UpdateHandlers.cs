@@ -12687,7 +12687,7 @@ if (message.Text.Equals("签到", StringComparison.OrdinalIgnoreCase))
 
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: $"签到成功！ 积分 +1\n当前总积分：<b>{newPoints}</b>\n签到时间：{nowBeijingTime:yyyy/MM/dd HH:mm:ss}",
+                    text: $"签到成功！ 积分 + <b>1</b>\n当前总积分：<b>{newPoints}</b>\n签到时间：{nowBeijingTime:yyyy/MM/dd HH:mm:ss}",
                     parseMode: ParseMode.Html
                 );
             }
@@ -12719,7 +12719,7 @@ else if (message.Text.Equals("签到积分", StringComparison.OrdinalIgnoreCase)
 
             if (consecutiveDays > 3)
             {
-                responseMessage += $"\n您已连续{consecutiveDays}天签到！";
+                responseMessage += $"\n\uD83D\uDD25   您已连续{consecutiveDays}天签到！\uD83D\uDD25";
             }
 
             await botClient.SendTextMessageAsync(
