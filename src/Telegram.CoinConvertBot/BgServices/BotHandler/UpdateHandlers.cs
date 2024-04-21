@@ -423,7 +423,7 @@ public static class CryptoMarketAnalyzer
 
             var filteredAndSortedCoins = coins
                 .Where(coin =>
-                    coin["volume_24h_usd"].GetDecimal() >= coin["market_cap_usd"].GetDecimal() * 0.4m && //24小时成交量占比市值>40%
+                    coin["volume_24h_usd"].GetDecimal() >= coin["market_cap_usd"].GetDecimal() * 0.5m && //24小时成交量占比市值>50%
                     coin["percent_change_24h"].GetDecimal() > 5m && //24小时涨幅大于5%
                     coin["percent_change_24h"].GetDecimal() <= 20m && //24小时涨幅小于20%
                     coin["percent_change_1h"].GetDecimal() > 0m &&  //近1小时涨幅大于0%  不想要比特币数据直接： 0m) //近1小时涨幅大于0%
@@ -458,7 +458,7 @@ public static class CryptoMarketAnalyzer
                 string noDataMessage = "暂未发现财富密码，持续监控中...\n\n" +
                            "判断标准：\n" +
                            "近1小时涨幅大于0%\n" +
-                           "24小时成交量占比市值>40%\n" +
+                           "24小时成交量占比市值>50%\n" +
                            "24小时涨幅大于5%，小于20%\n" +
                            "24小时比特币上涨的话，涨幅大于比特币\n" +
                            "24小时比特币下跌的话，跌幅小于比特币\n\n" +
