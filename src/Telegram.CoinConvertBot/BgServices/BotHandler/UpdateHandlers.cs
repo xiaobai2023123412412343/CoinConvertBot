@@ -9421,6 +9421,8 @@ else if(update.CallbackQuery.Data == "commandList")
 在群里发：<code>关闭翻译</code>/<code>开启翻译</code>（默认开启）
 自动在本群停止翻译，发送外语不再自动翻译成中文！
 
+在任意群组发送：签到 即可获得签到积分，积分可兑换电报会员，FF Pro会员等。
+
 发送 /bijiacha 自动查询币安所有现货/合约价格差
 当价格出现偏差，意味着价格波动大，套利机会来临！
 
