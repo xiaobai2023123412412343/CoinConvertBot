@@ -14593,7 +14593,7 @@ if (existingBindsCount >= 3 && !isVip)
     // 创建内联键盘按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        InlineKeyboardButton.WithCallbackData("订阅 FF Pro 会员", "订阅")
+        InlineKeyboardButton.WithCallbackData("了解 FF Pro 会员", "/provip")
     });
 
     return await botClient.SendTextMessageAsync(
