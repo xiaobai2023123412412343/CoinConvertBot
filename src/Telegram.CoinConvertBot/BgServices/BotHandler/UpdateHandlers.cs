@@ -9136,7 +9136,7 @@ if (isNumberRange)
         // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
         var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
         // 添加新正则表达式以检查输入文本是否包含 "查id"、"查ID" 或 "t.me/"
-        var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|授权|yhk|t\.me/", RegexOptions.IgnoreCase);
+        var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|授权|赠送|yhk|t\.me/", RegexOptions.IgnoreCase);
 
         // 如果输入文本包含 "查id"、"查ID" 或 "t.me/"，则不执行翻译
         if (containsIdOrTme)
@@ -12741,6 +12741,64 @@ else if (message.Text.Equals("签到积分", StringComparison.OrdinalIgnoreCase)
     {
         // 处理发送消息失败的情况
         Console.WriteLine($"发送消息失败: {ex.Message}");
+    }
+}
+// 检查是否接收到了 "赠送" 消息
+if (message.Text.StartsWith("赠送", StringComparison.OrdinalIgnoreCase))
+{
+    try
+    {
+        long adminId = 1427768220; // 指定管理员ID
+        if (message.From.Id == adminId)
+        {
+            string[] parts = message.Text.Split(' ');
+            if (parts.Length == 3 && long.TryParse(parts[1], out long userId) && int.TryParse(parts[2], out int pointsToAdd))
+            {
+                // 检查用户ID是否存在于签到信息字典中
+                if (userSignInInfo.ContainsKey(userId))
+                {
+                    // 增加积分
+                    userSignInInfo.AddOrUpdate(userId, 
+                        (pointsToAdd, DateTime.UtcNow), // 如果用户不存在，添加新条目
+                        (id, oldValue) => (oldValue.Points + pointsToAdd, oldValue.LastSignInTime)); // 如果用户存在，更新积分
+
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: $"成功赠送！用户ID：{userId} 现在的总积分为：<b>{userSignInInfo[userId].Points}</b>",
+                        parseMode: ParseMode.Html
+                    );
+                }
+                else
+                {
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "未找到该用户的签到记录。",
+                        parseMode: ParseMode.Html
+                    );
+                }
+            }
+            else
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "命令格式错误。正确格式为：赠送 [用户ID] [积分数]",
+                    parseMode: ParseMode.Html
+                );
+            }
+        }
+        else
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "您没有权限执行此操作。",
+                parseMode: ParseMode.Html
+            );
+        }
+    }
+    catch (Exception ex)
+    {
+        // 处理发送消息失败的情况
+        Console.WriteLine($"处理赠送积分失败: {ex.Message}");
     }
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
