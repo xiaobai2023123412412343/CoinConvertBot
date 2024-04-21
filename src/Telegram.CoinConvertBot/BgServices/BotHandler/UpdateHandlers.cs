@@ -14578,14 +14578,14 @@ USDT余额： <b>{USDT}</b>
     // 从 message.From 中提取 userId
     var userId = message.From.Id;
 
-    // 获取bindRepository
-    var bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
+// 获取bindRepository
+var bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
 
-    // 查询用户已绑定的地址数量
-    var existingBindsCount = bindRepository.Where(x => x.UserId == userId).Count();
+// 查询用户已绑定的地址数量
+var existingBindsCount = bindRepository.Where(x => x.UserId == userId).Count();
 
-    // 检查用户是否是VIP用户
-    bool isVip = vipUsers.ContainsKey(userId);
+// 检查用户是否是VIP用户
+bool isVip = VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime) && expiryTime > DateTime.UtcNow;
 
 // 如果用户已绑定地址达到3个且不是VIP用户
 if (existingBindsCount >= 3 && !isVip)
