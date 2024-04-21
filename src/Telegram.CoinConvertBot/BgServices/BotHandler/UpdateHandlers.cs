@@ -102,6 +102,55 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 当机器人收到用户发：/duihuandbvip 时的处理逻辑，不扣除积分，只模拟发送"作者"消息
+public static async Task SimulateSendingAuthorMessage(ITelegramBotClient botClient, Message message)
+{
+    long userId = message.From.Id;
+    // 首先查询用户的积分
+    if (userSignInInfo.TryGetValue(userId, out var userInfo))
+    {
+        int userPoints = userInfo.Points;
+        // 如果积分低于99积分，则回复用户
+        if (userPoints < 99)
+        {
+            var inlineKeyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("直接购买电报会员", "作者"));
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"兑换失败，您的积分为：{userPoints}，最低需要99积分方可兑换电报会员！\n" +
+                      "您可以直接订阅电报会员：\n" +
+                      "三个月电报会员 24.99 u\n" +
+                      "六个月电报会员 39.99 u\n" +
+                      "一年电报会员 70.99 u",
+                replyMarkup: inlineKeyboard
+            );
+        }
+else
+{
+    // 如果用户积分大于等于99积分，发送带有联系信息和按钮的消息
+    string contactText = @"双向用户可以直接私聊机器人，作者会第一时间回复您！";
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        // 创建两个按钮：直接联系作者和由作者联系您
+        InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu"),
+        InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest")
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: contactText,
+        replyMarkup: inlineKeyboard
+    );
+}
+    }
+    else
+    {
+        // 如果找不到用户的积分信息，可能是用户未签到
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "兑换失败，找不到您的积分信息，请确保已经通过签到获取积分。"
+        );
+    }
+}
 // 当机器人收到用户发：/duihuanprovip 时的处理逻辑
 public static async Task ExchangeForProVip(ITelegramBotClient botClient, Message message)
 {
@@ -12889,6 +12938,11 @@ if (messageText.StartsWith("/duihuanprovip"))
 {
     await ExchangeForProVip(botClient, message);
 }
+// 在处理消息的地方
+if (messageText.StartsWith("/duihuandbvip"))
+{
+    await SimulateSendingAuthorMessage(botClient, message);
+}	    
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
