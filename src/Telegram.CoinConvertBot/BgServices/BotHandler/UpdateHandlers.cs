@@ -203,8 +203,23 @@ public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message 
             vipUserTimers.TryRemove(userIdToAuthorize, out removedCts);
         }
     }, TaskScheduler.Default);
-
+	
+    // 向作者发送确认消息
     await botClient.SendTextMessageAsync(message.Chat.Id, $"用户 {userIdToAuthorize} 现在是VIP，授权时间累加至：{beijingTime:yyyy/MM/dd HH:mm:ss}。");
+	
+    // 尝试向被授权的用户发送消息
+    try
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: userIdToAuthorize,
+            text: $"您已成功升级vip，到期时间为：{beijingTime:yyyy/MM/dd HH:mm:ss}。"
+        );
+    }
+    catch (Exception ex)
+    {
+        // 发送失败，记录或处理异常
+        //Console.WriteLine($"尝试向用户 {userIdToAuthorize} 发送消息失败: {ex.Message}");
+    }	
 }
 private static void SetPermanentVip(long userId)
 {
