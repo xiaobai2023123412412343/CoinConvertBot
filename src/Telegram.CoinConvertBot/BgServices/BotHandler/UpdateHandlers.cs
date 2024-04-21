@@ -11444,7 +11444,7 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
         {
             InlineKeyboardButton.WithCallbackData("一键签到", "签到"),
             InlineKeyboardButton.WithCallbackData("签到后台", "签到积分"),
-            InlineKeyboardButton.WithCallbackData("积分商城", "abc")
+            InlineKeyboardButton.WithCallbackData("积分商城", "/jifensc")
         },	    
         new [] // 新增第6行按钮
         {	
@@ -12808,6 +12808,39 @@ if (message.Text.StartsWith("赠送", StringComparison.OrdinalIgnoreCase))
         Console.WriteLine($"处理赠送积分失败: {ex.Message}");
     }
 }
+// 检查是否接收到了 "/jifensc" 命令
+if (message.Text.Equals("/jifensc", StringComparison.OrdinalIgnoreCase))
+{
+    try
+    {
+        long userId = message.From.Id;
+        int userPoints = 0; // 默认积分为0
+
+        // 尝试获取用户的积分总额
+        if (userSignInInfo.TryGetValue(userId, out var userInfo))
+        {
+            userPoints = userInfo.Points;
+        }
+
+        string replyMessage = $"您当前积分为：<b>{userPoints}</b> 积分\n\n" +
+                              "兑换3个月电报会员：99积分\n" +
+                              "兑换6个月电报会员：188积分\n" +
+                              "兑换12个月电报会员：300积分\n" +
+                              "兑换 FF Pro 会员：1小时：2积分\n\n" +
+                              "更多精彩即可到来......";
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: replyMessage,
+            parseMode: ParseMode.Html
+        );
+    }
+    catch (Exception ex)
+    {
+        // 处理发送消息失败的情况
+        Console.WriteLine($"发送积分信息失败: {ex.Message}");
+    }
+}	    
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
