@@ -12549,14 +12549,28 @@ if (message.Text.StartsWith("/provip"))
     // 使用新的公共方法检查VIP状态
     if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime))
     {
-        // 用户是VIP，处理VIP逻辑...
+        // 将UTC的当前时间和到期时间都转换为北京时间
         TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
-        DateTime beijingTime = TimeZoneInfo.ConvertTimeFromUtc(expiryTime, chinaZone);
+        DateTime beijingTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaZone);
+        DateTime beijingTimeExpiry = TimeZoneInfo.ConvertTimeFromUtc(expiryTime, chinaZone);
 
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: $"您已是 FF Pro会员，到期时间为：{beijingTime:yyyy/MM/dd HH:mm:ss}。"
-        );
+        // 现在使用北京时间进行比较
+        if (beijingTimeNow <= beijingTimeExpiry)
+        {
+            // 用户是VIP，处理VIP逻辑...
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"您已是 FF Pro会员，到期时间为：{beijingTimeExpiry:yyyy/MM/dd HH:mm:ss}。"
+            );
+        }
+        else
+        {
+            // 如果当前北京时间超过了到期北京时间，提示用户不是VIP
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "您的 FF Pro会员已到期。"
+            );
+        }
     }
     else
     {
@@ -12570,7 +12584,7 @@ if (message.Text.StartsWith("/provip"))
         // 创建内联键盘按钮
         var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-            InlineKeyboardButton.WithCallbackData("立即订阅 FF Pro会员", "作者")
+            InlineKeyboardButton.WithCallbackData("立即订阅 FF Pro会员", "subscribe")
         });
 
         await botClient.SendTextMessageAsync(
