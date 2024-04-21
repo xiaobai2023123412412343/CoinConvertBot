@@ -14617,12 +14617,16 @@ if (UserId != AdminUserId)
     // 创建内联键盘
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
+        new [] // 第0行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("FF Pro会员", "/provip"),	
+        },
         new [] // 第一行按钮
         {
             InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
             InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),
             InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
-        },
+        },	    
         new [] // 第二行按钮
         {
             InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
@@ -14647,8 +14651,14 @@ if (UserId != AdminUserId)
             InlineKeyboardButton.WithCallbackData("新澳门彩", "xinaomen"),
             InlineKeyboardButton.WithCallbackData("香港六合", "xianggang")
         },
-        new [] // 新增第五行按钮
+        new [] // 新增第5行按钮
         {
+            InlineKeyboardButton.WithCallbackData("一键签到", "签到"),
+            InlineKeyboardButton.WithCallbackData("签到后台", "签到积分"),
+            InlineKeyboardButton.WithCallbackData("积分商城", "/jifensc")
+        },	    
+        new [] // 新增第6行按钮
+        {	
             InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo")
         }
     });
