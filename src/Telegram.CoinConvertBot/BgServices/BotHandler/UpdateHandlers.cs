@@ -11440,7 +11440,13 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
             InlineKeyboardButton.WithCallbackData("新澳门彩", "xinaomen"),
             InlineKeyboardButton.WithCallbackData("香港六合", "xianggang")
         },
-        new [] // 新增第五行按钮
+        new [] // 新增第5行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("一键签到", "签到"),
+            InlineKeyboardButton.WithCallbackData("签到后台", "签到积分"),
+            InlineKeyboardButton.WithCallbackData("积分商城", "abc")
+        },	    
+        new [] // 新增第6行按钮
         {	
             InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo")
         }
