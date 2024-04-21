@@ -102,6 +102,49 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 当机器人收到用户发：/duihuanprovip 时的处理逻辑
+public static async Task ExchangeForProVip(ITelegramBotClient botClient, Message message)
+{
+    long userId = message.From.Id;
+    // 首先启动查询用户的积分
+    if (userSignInInfo.TryGetValue(userId, out var userInfo))
+    {
+        int userPoints = userInfo.Points;
+        // 如果积分低于2积分，则回复用户
+        if (userPoints < 2)
+        {
+            await botClient.SendTextMessageAsync(message.Chat.Id, $"兑换失败，您的积分为：{userPoints}，最低需要2积分方可兑换FF Pro会员！");
+            return;
+        }
+
+        // 如果用户积分大于2积分，则计算最大的可被2整除的数字
+        int maxDivisibleByTwo = userPoints - (userPoints % 2);
+        int hoursToAuthorize = maxDivisibleByTwo / 2;
+
+        // 立即扣除用户相应积分
+        userSignInInfo[userId] = (userPoints - maxDivisibleByTwo, userInfo.LastSignInTime);
+
+        // 模拟用户ID：1427768220 发送信息：授权 ***（用户ID） X小时
+        string fakeAuthorizeCommand = $"授权 {userId} {hoursToAuthorize}小时";
+        var fakeMessage = new Message
+        {
+            Chat = new Chat { Id = 1427768220 },
+            From = new Telegram.Bot.Types.User { Id = 1427768220 },
+            Text = fakeAuthorizeCommand
+        };
+
+        // 调用授权方法
+        await VipAuthorizationHandler.AuthorizeVipUser(botClient, fakeMessage, 1427768220);
+
+        // 回复用户兑换成功消息
+        await botClient.SendTextMessageAsync(message.Chat.Id, $"兑换成功，您已获取 {hoursToAuthorize}小时 FF Pro会员！");
+    }
+    else
+    {
+        // 如果找不到用户的积分信息，可能是因为用户从未签到
+        await botClient.SendTextMessageAsync(message.Chat.Id, "兑换失败，未找到您的积分信息，请确保已进行过签到操作。");
+    }
+}	
 // 用户签到信息字典
 private static ConcurrentDictionary<long, (int Points, DateTime LastSignInTime)> userSignInInfo = new ConcurrentDictionary<long, (int, DateTime)>();
 	
@@ -12840,7 +12883,12 @@ if (message.Text.Equals("/jifensc", StringComparison.OrdinalIgnoreCase))
         // 处理发送消息失败的情况
         Console.WriteLine($"发送积分信息失败: {ex.Message}");
     }
-}	    
+}	
+// 检查是否接收到了兑换FF Pro会员的命令
+if (messageText.StartsWith("/duihuanprovip"))
+{
+    await ExchangeForProVip(botClient, message);
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
