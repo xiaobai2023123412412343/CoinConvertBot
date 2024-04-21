@@ -12921,10 +12921,20 @@ if (message.Text.Equals("/jifensc", StringComparison.OrdinalIgnoreCase))
                               "兑换 FF Pro 会员：1小时：2积分\n\n" +
                               "更多精彩即可到来......";
 
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // 第一行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("兑换电报会员", "/duihuandbvip"),
+                InlineKeyboardButton.WithCallbackData("兑换 FF Pro会员", "/duihuanprovip")
+            }
+        });
+
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: replyMessage,
-            parseMode: ParseMode.Html
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
         );
     }
     catch (Exception ex)
@@ -12932,7 +12942,7 @@ if (message.Text.Equals("/jifensc", StringComparison.OrdinalIgnoreCase))
         // 处理发送消息失败的情况
         Console.WriteLine($"发送积分信息失败: {ex.Message}");
     }
-}	
+}
 // 检查是否接收到了兑换FF Pro会员的命令
 if (messageText.StartsWith("/duihuanprovip"))
 {
