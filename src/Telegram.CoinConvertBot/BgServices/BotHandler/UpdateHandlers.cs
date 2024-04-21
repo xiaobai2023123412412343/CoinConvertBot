@@ -12759,7 +12759,8 @@ if (message.Text.Equals("签到", StringComparison.OrdinalIgnoreCase))
                 chatId: message.Chat.Id,
                 text: "签到失败，请在交流群或者任意群组进行签到！",
                 replyMarkup: inlineKeyboard,
-                parseMode: ParseMode.Html
+                parseMode: ParseMode.Html,
+	        replyToMessageId: message.MessageId // 添加此行以回复用户的原始消息   
             );
             return;
         }
@@ -12777,7 +12778,8 @@ if (message.Text.Equals("签到", StringComparison.OrdinalIgnoreCase))
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: $"签到失败，您今日已签到！\n签到时间：{signInInfo.LastSignInTime:yyyy/MM/dd HH:mm:ss}\n当前总积分：<b>{signInInfo.Points}</b> 积分",
-                    parseMode: ParseMode.Html
+                    parseMode: ParseMode.Html,
+		    replyToMessageId: message.MessageId // 添加此行以回复用户的原始消息	
                 );
             }
             else
@@ -12789,7 +12791,8 @@ if (message.Text.Equals("签到", StringComparison.OrdinalIgnoreCase))
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: $"签到成功！ 积分 + <b>1</b>\n当前总积分：<b>{newPoints}</b>\n签到时间：{nowBeijingTime:yyyy/MM/dd HH:mm:ss}",
-                    parseMode: ParseMode.Html
+                    parseMode: ParseMode.Html,
+		    replyToMessageId: message.MessageId // 添加此行以回复用户的原始消息	
                 );
             }
         }
@@ -12826,7 +12829,8 @@ else if (message.Text.Equals("签到积分", StringComparison.OrdinalIgnoreCase)
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: responseMessage,
-                parseMode: ParseMode.Html
+                parseMode: ParseMode.Html,
+		replyToMessageId: message.MessageId // 添加此行以回复用户的原始消息    
             );
         }
         else
@@ -12834,7 +12838,8 @@ else if (message.Text.Equals("签到积分", StringComparison.OrdinalIgnoreCase)
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: "您还没有签到记录。",
-                parseMode: ParseMode.Html
+                parseMode: ParseMode.Html,
+		replyToMessageId: message.MessageId // 添加此行以回复用户的原始消息    
             );
         }
     }
