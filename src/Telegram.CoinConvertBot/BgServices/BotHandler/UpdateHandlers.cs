@@ -102,6 +102,9 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 用户签到信息字典
+private static ConcurrentDictionary<long, (int Points, DateTime LastSignInTime)> userSignInInfo = new ConcurrentDictionary<long, (int, DateTime)>();
+	
 // VIP用户字典		
 private static Dictionary<long, bool> vipUsers = new Dictionary<long, bool>(); // VIP用户字典	
 public static class VipAuthorizationHandler
@@ -12636,6 +12639,108 @@ if (message.Text.StartsWith("/provip"))
 	    parseMode: ParseMode.Html, // 确保消息以HTML格式发送
             replyMarkup: inlineKeyboard
         );
+    }
+}
+// 检查是否接收到了 "签到" 消息
+if (message.Text.Equals("签到", StringComparison.OrdinalIgnoreCase))
+{
+    try
+    {
+        // 如果是私聊
+        if (message.Chat.Type == ChatType.Private)
+        {
+            InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                InlineKeyboardButton.WithUrl("机器人交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+            });
+
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "签到失败，请在交流群或者任意群组进行签到！",
+                replyMarkup: inlineKeyboard,
+                parseMode: ParseMode.Html
+            );
+            return;
+        }
+
+        // 如果消息来自群组
+        if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
+        {
+            long userId = message.From.Id;
+            DateTime nowBeijingTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
+            DateTime todayStart = new DateTime(nowBeijingTime.Year, nowBeijingTime.Month, nowBeijingTime.Day, 0, 0, 0, DateTimeKind.Local);
+
+            if (userSignInInfo.TryGetValue(userId, out var signInInfo) && signInInfo.LastSignInTime >= todayStart)
+            {
+                // 用户今日已签到
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: $"签到失败，您今日已签到！\n签到时间：{signInInfo.LastSignInTime:yyyy/MM/dd HH:mm:ss}\n当前总积分：<b>{signInInfo.Points}</b> 积分",
+                    parseMode: ParseMode.Html
+                );
+            }
+            else
+            {
+                // 用户今日首次签到，增加积分并更新签到时间
+                int newPoints = signInInfo.Points + 1;
+                userSignInInfo[userId] = (newPoints, nowBeijingTime);
+
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: $"签到成功！ 积分 +1\n当前总积分：<b>{newPoints}</b>\n签到时间：{nowBeijingTime:yyyy/MM/dd HH:mm:ss}",
+                    parseMode: ParseMode.Html
+                );
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        // 处理发送消息失败的情况
+        Console.WriteLine($"发送消息失败: {ex.Message}");
+    }
+}
+else if (message.Text.Equals("签到积分", StringComparison.OrdinalIgnoreCase))
+{
+    try
+    {
+        long userId = message.From.Id;
+        if (userSignInInfo.TryGetValue(userId, out var userInfo))
+        {
+            string responseMessage = $"您的总积分为：<b>{userInfo.Points}</b> 积分\n最后签到时间：{userInfo.LastSignInTime:yyyy/MM/dd HH:mm:ss}";
+
+            // 检查连续签到天数
+            DateTime nowBeijingTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
+            DateTime lastSignInTime = userInfo.LastSignInTime;
+            int consecutiveDays = 1;
+            while (lastSignInTime.AddDays(-consecutiveDays) >= nowBeijingTime.AddDays(-consecutiveDays))
+            {
+                consecutiveDays++;
+            }
+
+            if (consecutiveDays > 3)
+            {
+                responseMessage += $"\n您已连续{consecutiveDays}天签到！";
+            }
+
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: responseMessage,
+                parseMode: ParseMode.Html
+            );
+        }
+        else
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "您还没有签到记录。",
+                parseMode: ParseMode.Html
+            );
+        }
+    }
+    catch (Exception ex)
+    {
+        // 处理发送消息失败的情况
+        Console.WriteLine($"发送消息失败: {ex.Message}");
     }
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
