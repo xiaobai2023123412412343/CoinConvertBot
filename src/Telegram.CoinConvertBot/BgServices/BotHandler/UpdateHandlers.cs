@@ -12575,7 +12575,7 @@ if (message.Text.StartsWith("/provip"))
     else
     {
         // 用户不是VIP，提供订阅选项
-        var subscriptionText = "您还不是 FF Pro会员，快来订阅把！\n\n" +
+        var subscriptionText = "您还不是 <b>FF Pro</b>会员，快来订阅把！\n\n" +
                                "1个月：10USDT 或 汇旺10USD\n" +
                                "6个月：54USDT 或 汇旺54USD（9折优惠）\n" +
                                "12个月：96USDT 或 汇旺96USD（8折优惠）\n" +
