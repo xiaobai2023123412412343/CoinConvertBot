@@ -12565,10 +12565,31 @@ if (message.Text.StartsWith("/provip"))
         }
         else
         {
-            // 如果当前北京时间超过了到期北京时间，提示用户不是VIP
+            // 如果当前北京时间超过了到期北京时间，提示用户不是VIP并提供续费选项
+            var renewalText = "您的 FF Pro会员已到期，请重新续费！\n\n" +
+                              "1个月：10USDT 或 汇旺10USD\n" +
+                              "6个月：54USDT 或 汇旺54USD（9折优惠）\n" +
+                              "12个月：96USDT 或 汇旺96USD（8折优惠）\n" +
+                              "永久会员：200USDT 或 汇旺200USD\n\n" + 
+                              "\U00002705FF Pro会员可无限次查询各项数据\n" +
+                              "\U00002705可无限制监听波场地址的交易播报\n" +
+                              "\U00002705开通电报会员，可享受更低的价格\n" +
+                              "3个月电报会员：<del>原价24.99u</del>，现只需20u；\n" +
+                              "6个月电报会员：<del>原价39.99u</del>，现只需35u；\n" +
+                              "1年电报会员：<del>原价70.99u</del>，现只需65u！\n\n" +
+                              "更多 FF Pro会员独家权益即将到来...";
+
+            // 创建内联键盘按钮
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                InlineKeyboardButton.WithCallbackData("立即订阅 FF Pro会员", "作者")
+            });
+
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: "您的 FF Pro会员已到期。"
+                text: renewalText,
+                parseMode: ParseMode.Html, // 确保消息以HTML格式发送
+                replyMarkup: inlineKeyboard
             );
         }
     }
