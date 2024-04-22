@@ -13147,7 +13147,7 @@ if (message.Text.Equals("/jifensc", StringComparison.OrdinalIgnoreCase))
                               "兑换6个月电报会员：188积分\n" +
                               "兑换12个月电报会员：300积分\n" +
                               "兑换 FF Pro 会员： 1小时=2积分\n\n" +
-                              "更多精彩即可到来......";
+                              "更多精彩即将到来......";
 
         var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
