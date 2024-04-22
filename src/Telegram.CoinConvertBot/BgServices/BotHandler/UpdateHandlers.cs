@@ -770,7 +770,7 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
                              $"24小时成交：${volume24hDisplay}\n" +
                              $"1h{change1hSymbol}：{percentChange1h}%\n" +
                              $"24h{change24hSymbol}：{percentChange24h}%\n" +
-                             $"7d{change7dSymbol}：{percentChange7d}%"+
+                             $"7d{change7dSymbol}：{percentChange7d}%\n\n"+
 	                     additionalInfo; // 将额外信息拼接到消息中
 
 var keyboard = new InlineKeyboardMarkup(new[]
