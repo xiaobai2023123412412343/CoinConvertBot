@@ -569,7 +569,7 @@ private static Dictionary<long, (int count, DateTime lastQueryDate)> user24hQuer
 // 用户查询7天数据次数字典
 private static Dictionary<long, (int count, DateTime lastQueryDate)> user7dQueryLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
 	
-//非小号查币    
+//非小号查币  本地缓存系统  
 public static class CoinDataCache
 {
     private static bool _initialized = false; // 用于标记是否已经初始化和开始缓存更新
