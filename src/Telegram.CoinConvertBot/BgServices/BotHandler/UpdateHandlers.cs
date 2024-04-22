@@ -11560,7 +11560,7 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
     {
         new [] // 第0行按钮
         {
-            InlineKeyboardButton.WithCallbackData("FF Pro会员", "/provip"),	
+            InlineKeyboardButton.WithCallbackData("\U0000262A FF Pro会员 \U0000262A", "/provip"),	
         },
         new [] // 第一行按钮
         {
@@ -14805,7 +14805,7 @@ if (UserId != AdminUserId)
     {
         new [] // 第0行按钮
         {
-            InlineKeyboardButton.WithCallbackData("FF Pro会员", "/provip"),	
+            InlineKeyboardButton.WithCallbackData("\U0000262A FF Pro会员 \U0000262A", "/provip"),	
         },
         new [] // 第一行按钮
         {
