@@ -12294,7 +12294,16 @@ if (messageText.StartsWith("/caifu") || messageText.Equals("财富密码"))
 if (messageText.StartsWith("查"))
 {
     string coinSymbol = messageText.Substring(1).Trim(); // 从消息文本中提取币种简称
-    _ = QueryCoinInfoAsync(botClient, message.Chat.Id, coinSymbol);
+
+    // 使用正则表达式检查coinSymbol是否仅包含英文字符或英文字符加数字
+    if (Regex.IsMatch(coinSymbol, @"^[a-zA-Z0-9]+$"))
+    {
+        _ = QueryCoinInfoAsync(botClient, message.Chat.Id, coinSymbol);
+    }
+    else
+    {
+        // 可以在这里添加代码来处理不符合条件的输入，例如发送一条消息告诉用户输入格式不正确
+    }
 }
 //根据时间查询币种数据
 // 在处理消息的地方，当机器人收到 /1hshuju 消息时
