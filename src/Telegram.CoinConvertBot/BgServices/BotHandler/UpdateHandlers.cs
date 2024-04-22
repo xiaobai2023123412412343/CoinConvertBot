@@ -907,7 +907,7 @@ private static async Task HandleUserJoinOrLeave(ITelegramBotClient botClient, Me
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userJisuZhangdieLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
 public class CryptoPriceMonitor
 {
-    private static readonly int MaxMinutes = 30; // 储存30分钟数据
+    private static readonly int MaxMinutes = 1; // 储存30分钟数据
     private static Queue<Dictionary<string, decimal>> priceHistory = new Queue<Dictionary<string, decimal>>(MaxMinutes);
     private static Timer priceUpdateTimer;
     private static bool isMonitoringStarted = false;
@@ -1113,9 +1113,9 @@ int totalLosers = priceChanges.Count(p => p.ChangePercent < 0);
 
 // 组装消息文本
 string message = $"<b>30分钟走势：</b>\n\n比特币{(btcChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {btcChange.ChangePercent:F2}%, ${FormatPrice(btcChange.CurrentPrice.ToString())}\n以太坊{(ethChange.ChangePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9")}: {ethChange.ChangePercent:F2}%, ${FormatPrice(ethChange.CurrentPrice.ToString())}\n\n<b>急速上涨：</b>\n" 
-+ string.Join("\n", finalTopGainers.Select((g, index) => $"{index}️⃣  <code>{g.Symbol}</code> \U0001F4C8：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}").Take(5))
++ string.Join("\n", finalTopGainers.Select((g, index) => $"{index}️⃣  #{g.Symbol} | <code>{g.Symbol}</code> \U0001F4C8：{g.ChangePercent:F2}%，${FormatPrice(g.CurrentPrice.ToString())}").Take(5))
 + "\n\n<b>急速下跌：</b>\n" 
-+ string.Join("\n", finalTopLosers.Select((l, index) => $"{index + 5}️⃣  <code>{l.Symbol}</code> \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}").Take(5))
++ string.Join("\n", finalTopLosers.Select((l, index) => $"{index + 5}️⃣  #{l.Symbol} | <code>{l.Symbol}</code> \U0001F4C9{l.ChangePercent:F2}%，${FormatPrice(l.CurrentPrice.ToString())}").Take(5))
 + $"\n\n\U0001F4C8上涨总数： <b>{totalGainers}</b>\n\U0001F4C9下跌总数： <b>{totalLosers}</b>";
 
 // 构建按钮
