@@ -3550,7 +3550,7 @@ public static class BinancePriceInfo
         // 计算压力位和阻力位
         var result = "";
 
-        var periods = new[] { 7, 30, 90, 200 };
+        var periods = new[] { 10, 30, 90, 200 };
         foreach (var period in periods)
         {
             var recentData = klineData.TakeLast(period);
