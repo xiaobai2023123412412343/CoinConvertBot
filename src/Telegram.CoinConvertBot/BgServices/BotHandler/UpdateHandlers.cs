@@ -756,7 +756,7 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
             decimal percentChange1h = coinInfo["percent_change_1h"].GetDecimal();
             decimal percentChange24h = coinInfo["percent_change_24h"].GetDecimal();
             decimal percentChange7d = coinInfo["percent_change_7d"].GetDecimal();
-            //string additionalInfo = await BinancePriceInfo.GetPriceInfo(coinSymbol);
+            string additionalInfo = await BinancePriceInfo.GetPriceInfo(coinSymbol);
 
             string marketCapDisplay = marketCapUsd >= 100_000_000 ? $"{Math.Round(marketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(marketCapUsd / 1_000_000, 2)}m";
             string volume24hDisplay = volume24hUsd >= 100_000_000 ? $"{Math.Round(volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(volume24hUsd / 1_000_000, 2)}m";
@@ -770,8 +770,8 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
                              $"24小时成交：${volume24hDisplay}\n" +
                              $"1h{change1hSymbol}：{percentChange1h}%\n" +
                              $"24h{change24hSymbol}：{percentChange24h}%\n" +
-                             $"7d{change7dSymbol}：{percentChange7d}%";
-	                     //additionalInfo; // 将额外信息拼接到消息中
+                             $"7d{change7dSymbol}：{percentChange7d}%"+
+	                     additionalInfo; // 将额外信息拼接到消息中
 
 var keyboard = new InlineKeyboardMarkup(new[]
 {
@@ -3567,24 +3567,62 @@ if (!dataFetched)
         {
             var responseString = await okexResponse.Content.ReadAsStringAsync();
             var okexResponseObject = JsonSerializer.Deserialize<OkexResponse>(responseString);
-            if (okexResponseObject != null && okexResponseObject.data != null)
+            // 确保okexResponseObject.data不仅存在，还包含有效数据
+            if (okexResponseObject != null && okexResponseObject.data != null && okexResponseObject.data.Any() && okexResponseObject.data.First().Any())
             {
-                // 将字符串列表转换为JsonElement列表，以匹配ProcessKlineData方法的期望输入
                 var klineDataRaw = okexResponseObject.data.Select(kline => kline.Select(JsonElementFromString).ToList()).ToList();
-
-                klineData = ProcessKlineData(klineDataRaw, isOkex: true); // 直接赋值给klineData
-                dataFetched = true;
-
+                klineData = ProcessKlineData(klineDataRaw, isOkex: true);
+                dataFetched = true; // 只有在确实获取到有效数据时才设置为true
                 Console.WriteLine("数据来自欧易");
-            }        
+            }
+            else
+            {
+                Console.WriteLine("欧易没有返回有效数据。");
+                // 不设置dataFetched = true，以便尝试从抹茶获取数据
+            }
         }
     }
     catch (Exception ex)
     {
         Console.WriteLine($"从欧易获取数据失败: {ex.Message}");
+        // 不设置dataFetched = true，以便尝试从抹茶获取数据
     }
 }
+// 如果从币安和欧易获取数据都失败，尝试从抹茶获取数据
+if (!dataFetched)
+{
+    Console.WriteLine("尝试从抹茶获取数据..."); // 添加调试输出
+    try
+    {
+        var mexcResponse = await httpClient.GetAsync($"https://api.mexc.com/api/v3/klines?symbol={symbol.ToUpper()}USDT&interval=1d&limit=200");
+        if (mexcResponse.IsSuccessStatusCode)
+        {
+            var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await mexcResponse.Content.ReadAsStringAsync());
 
+            klineData = klineDataRaw.Select(item => new KlineDataItem
+            {
+                OpenTime = item[0].GetInt64(),
+                Open = item[1].GetString(),
+                High = item[2].GetString(),
+                Low = item[3].GetString(),
+                Close = item[4].GetString()
+                // 其他字段...
+            }).ToList();
+
+            dataFetched = true;
+
+            Console.WriteLine("数据来自抹茶");
+        }
+        else
+        {
+            Console.WriteLine("抹茶API响应失败"); // 如果响应状态码不是成功状态，添加调试输出
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"从抹茶获取数据失败: {ex.Message}");
+    }
+}
 // 辅助方法，将字符串转换为JsonElement
 JsonElement JsonElementFromString(string value)
 {
