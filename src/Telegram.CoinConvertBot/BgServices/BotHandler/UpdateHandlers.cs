@@ -3528,16 +3528,68 @@ public static class BinancePriceInfo
 
     public static async Task<string> GetPriceInfo(string symbol)
     {
-        // 获取当前价格
-        var response = await httpClient.GetAsync($"https://api.binance.com/api/v3/ticker/price?symbol={symbol.ToUpper()}USDT");
-        var currentPriceData = JsonSerializer.Deserialize<CurrentPrice>(await response.Content.ReadAsStringAsync());
-        decimal currentPrice = decimal.Parse(currentPriceData.price);
+        string result = "";
+        bool dataFetched = false;
 
-        // 获取历史K线数据
-        response = await httpClient.GetAsync($"https://api.binance.com/api/v3/klines?symbol={symbol.ToUpper()}USDT&interval=1d&limit=200");
-        var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await response.Content.ReadAsStringAsync());
+        // 尝试从币安获取数据
+        try
+        {
+            var binanceResponse = await httpClient.GetAsync($"https://api.binance.com/api/v3/ticker/price?symbol={symbol.ToUpper()}USDT");
+            if (binanceResponse.IsSuccessStatusCode)
+            {
+                var currentPriceData = JsonSerializer.Deserialize<CurrentPrice>(await binanceResponse.Content.ReadAsStringAsync());
+                decimal currentPrice = decimal.Parse(currentPriceData.price);
 
-        var klineData = klineDataRaw.Select(item => new KlineDataItem
+                var klineResponse = await httpClient.GetAsync($"https://api.binance.com/api/v3/klines?symbol={symbol.ToUpper()}USDT&interval=1d&limit=200");
+                var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await klineResponse.Content.ReadAsStringAsync());
+
+                var klineData = ProcessKlineData(klineDataRaw);
+                result = CalculateAndFormatResult(klineData);
+                dataFetched = true;
+
+		Console.WriteLine("数据来自币安");    
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"从币安获取数据失败: {ex.Message}");
+        }
+
+        // 如果从币安获取数据失败，尝试从欧易获取数据
+        if (!dataFetched)
+        {
+            try
+            {
+                var okexResponse = await httpClient.GetAsync($"https://www.okx.com/api/v5/market/history-index-candles?instId={symbol.ToUpper()}-USD&bar=1D&limit=200");
+                if (okexResponse.IsSuccessStatusCode)
+                {
+                    var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await okexResponse.Content.ReadAsStringAsync());
+
+                    var klineData = ProcessKlineData(klineDataRaw, isOkex: true);
+                    result = CalculateAndFormatResult(klineData);
+                    dataFetched = true;
+
+	            Console.WriteLine("数据来自欧易");		
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"从欧易获取数据失败: {ex.Message}");
+            }
+        }
+
+        // 如果从币安和欧易都未获取到数据
+        if (!dataFetched)
+        {
+            result = "获取数据失败，请稍后再试。";
+        }
+
+        return result;
+    }
+
+    private static List<KlineDataItem> ProcessKlineData(List<List<JsonElement>> klineDataRaw, bool isOkex = false)
+    {
+        return klineDataRaw.Select(item => new KlineDataItem
         {
             OpenTime = item[0].GetInt64(),
             Open = item[1].GetString(),
@@ -3546,34 +3598,40 @@ public static class BinancePriceInfo
             Close = item[4].GetString()
             // 其他字段...
         }).ToList();
-
-        // 计算压力位和阻力位
-        var result = "";
-
-        var periods = new[] { 10, 30, 90, 200 };
-        foreach (var period in periods)
-        {
-            var recentData = klineData.TakeLast(period);
-            decimal resistance = recentData.Max(x => decimal.Parse(x.High)); // 最高价
-            decimal support = recentData.Min(x => decimal.Parse(x.Low)); // 最低价
-	    decimal movingAverage = recentData.Average(x => decimal.Parse(x.Close)); // 计算平均收盘价作为MA指标	
-
-            string formatResistance = FormatPrice(resistance);
-            string formatSupport = FormatPrice(support);
-	    string formattedMA = FormatPrice(movingAverage); // 格式化MA指标的值	
-
-            result += $"<b>{period}D压力位：</b> {formatSupport}   <b>阻力位：</b> {formatResistance}   <b>m{period}：</b> {formattedMA}\n\n";
-        }
-
-        return result;
     }
+
+private static string CalculateAndFormatResult(List<KlineDataItem> klineData)
+{
+    var result = "";
+    var periods = new[] { 10, 30, 90, 200 };
+    foreach (var period in periods)
+    {
+        var recentData = klineData.TakeLast(period);
+        decimal resistance = recentData.Max(x => decimal.Parse(x.High)); // 最高价
+        decimal support = recentData.Min(x => decimal.Parse(x.Low)); // 最低价
+        decimal movingAverage = recentData.Average(x => decimal.Parse(x.Close)); // 计算平均收盘价作为MA指标
+
+        string formatResistance = FormatPrice(resistance);
+        string formatSupport = FormatPrice(support);
+        string formattedMA = FormatPrice(movingAverage); // 格式化MA指标的值
+
+        result += $"<b>{period}D压力位：</b> {formatSupport}   <b>阻力位：</b> {formatResistance}   <b>m{period}：</b> {formattedMA}\n\n";
+    }
+    // 确保在处理完所有周期后返回结果
+    return result;
 }
 
+static string FormatPrice(decimal price)
+{
+    // 格式化价格，保留两位小数
+    return price.ToString("N2");
+}
+} 
 public class CurrentPrice
 {
     public string symbol { get; set; }
     public string price { get; set; }
-}
+}		
 //合约资金费排行
 public class FundingRate
 {
