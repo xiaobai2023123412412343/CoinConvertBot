@@ -3647,7 +3647,7 @@ JsonElement JsonElementFromString(string value)
         }
         else
         {
-            result = "获取数据失败，请稍后再试。";
+            result = "";  // 修改这里，获取数据失败时返回空字符串
         }
 
         return result;
