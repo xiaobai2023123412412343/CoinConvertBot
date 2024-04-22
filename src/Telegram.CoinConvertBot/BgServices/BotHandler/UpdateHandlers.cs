@@ -756,6 +756,7 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
             decimal percentChange1h = coinInfo["percent_change_1h"].GetDecimal();
             decimal percentChange24h = coinInfo["percent_change_24h"].GetDecimal();
             decimal percentChange7d = coinInfo["percent_change_7d"].GetDecimal();
+            //string additionalInfo = await BinancePriceInfo.GetPriceInfo(coinSymbol);
 
             string marketCapDisplay = marketCapUsd >= 100_000_000 ? $"{Math.Round(marketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(marketCapUsd / 1_000_000, 2)}m";
             string volume24hDisplay = volume24hUsd >= 100_000_000 ? $"{Math.Round(volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(volume24hUsd / 1_000_000, 2)}m";
@@ -770,6 +771,7 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
                              $"1h{change1hSymbol}：{percentChange1h}%\n" +
                              $"24h{change24hSymbol}：{percentChange24h}%\n" +
                              $"7d{change7dSymbol}：{percentChange7d}%";
+	                     //additionalInfo; // 将额外信息拼接到消息中
 
 var keyboard = new InlineKeyboardMarkup(new[]
 {
@@ -3555,27 +3557,42 @@ public static class BinancePriceInfo
             Console.WriteLine($"从币安获取数据失败: {ex.Message}");
         }
 
-        // 如果从币安获取数据失败，尝试从欧易获取数据
-        if (!dataFetched)
+// 如果从币安获取数据失败，尝试从欧易获取数据
+if (!dataFetched)
+{
+    try
+    {
+        var okexResponse = await httpClient.GetAsync($"https://www.okx.com/api/v5/market/history-index-candles?instId={symbol.ToUpper()}-USD&bar=1D&limit=200");
+        if (okexResponse.IsSuccessStatusCode)
         {
-            try
+            var responseString = await okexResponse.Content.ReadAsStringAsync();
+            var okexResponseObject = JsonSerializer.Deserialize<OkexResponse>(responseString);
+            if (okexResponseObject != null && okexResponseObject.data != null)
             {
-                var okexResponse = await httpClient.GetAsync($"https://www.okx.com/api/v5/market/history-index-candles?instId={symbol.ToUpper()}-USD&bar=1D&limit=200");
-                if (okexResponse.IsSuccessStatusCode)
-                {
-                    var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await okexResponse.Content.ReadAsStringAsync());
+                // 将字符串列表转换为JsonElement列表，以匹配ProcessKlineData方法的期望输入
+                var klineDataRaw = okexResponseObject.data.Select(kline => kline.Select(JsonElementFromString).ToList()).ToList();
 
-                    klineData = ProcessKlineData(klineDataRaw, isOkex: true); // 直接赋值给klineData
-                    dataFetched = true;
+                klineData = ProcessKlineData(klineDataRaw, isOkex: true); // 直接赋值给klineData
+                dataFetched = true;
 
-                    Console.WriteLine("数据来自欧易");        
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"从欧易获取数据失败: {ex.Message}");
-            }
+                Console.WriteLine("数据来自欧易");
+            }        
         }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"从欧易获取数据失败: {ex.Message}");
+    }
+}
+
+// 辅助方法，将字符串转换为JsonElement
+JsonElement JsonElementFromString(string value)
+{
+    using (var doc = JsonDocument.Parse($"\"{value}\""))
+    {
+        return doc.RootElement.Clone();
+    }
+}
 
         // 在调用CalculateAndFormatResult之前计算RSI
         if (dataFetched && klineData != null)
@@ -3598,8 +3615,24 @@ public static class BinancePriceInfo
         return result;
     }
 
-    private static List<KlineDataItem> ProcessKlineData(List<List<JsonElement>> klineDataRaw, bool isOkex = false)
+private static List<KlineDataItem> ProcessKlineData(List<List<JsonElement>> klineDataRaw, bool isOkex = false)
+{
+    if (isOkex)
     {
+        // 对于欧易数据，处理字符串到长整型的转换
+        return klineDataRaw.Select(item => new KlineDataItem
+        {
+            OpenTime = long.Parse(item[0].GetString()),
+            Open = item[1].GetString(),
+            High = item[2].GetString(),
+            Low = item[3].GetString(),
+            Close = item[4].GetString()
+            // 其他字段...
+        }).ToList();
+    }
+    else
+    {
+        // 币安数据的处理逻辑保持不变
         return klineDataRaw.Select(item => new KlineDataItem
         {
             OpenTime = item[0].GetInt64(),
@@ -3610,6 +3643,7 @@ public static class BinancePriceInfo
             // 其他字段...
         }).ToList();
     }
+}
 
     private static double CalculateRSI(List<KlineDataItem> klineData, int period = 14)
 {
@@ -3701,6 +3735,12 @@ static string FormatPrice(decimal price)
     return formattedPrice;
 }
 } 
+public class OkexResponse
+{
+    public string code { get; set; }
+    public string msg { get; set; }
+    public List<List<string>> data { get; set; }
+}
 public class CurrentPrice
 {
     public string symbol { get; set; }
