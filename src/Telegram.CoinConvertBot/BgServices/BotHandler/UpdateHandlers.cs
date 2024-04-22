@@ -11892,7 +11892,7 @@ int index = 0; // 用于计数和显示数字
 // 上涨币种
 foreach (var coin in topRise)
 {
-    reply += $"{index}️⃣ <code>{coin.Symbol.Replace("USDT", "")}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+    reply += $"{index}️⃣ #{coin.Symbol.Replace("USDT", "")} | <code>{coin.Symbol.Replace("USDT", "")}</code>/USDT 连涨{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
     row[index % 5] = InlineKeyboardButton.WithCallbackData($"{index}️⃣", $"查{coin.Symbol.ToLower().Replace("usdt", "")}");
     if ((index + 1) % 5 == 0 || index == topRise.Count() - 1)
     {
@@ -11906,7 +11906,7 @@ reply += "\n<b>币安连续下跌TOP5：</b>\n";
 // 下跌币种
 foreach (var coin in topFall)
 {
-    reply += $"{index}️⃣ <code>{coin.Symbol.Replace("USDT", "")}</code>/USDT 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
+    reply += $"{index}️⃣ #{coin.Symbol.Replace("USDT", "")} | <code>{coin.Symbol.Replace("USDT", "")}</code>/USDT 连跌{coin.Days}天   ${coin.Price.ToString("0.####")}\n";
     row[index % 5] = InlineKeyboardButton.WithCallbackData($"{index}️⃣", $"查{coin.Symbol.ToLower().Replace("usdt", "")}");
     if ((index + 1) % 5 == 0 || index == topFall.Count() + topRise.Count() - 1)
     {
