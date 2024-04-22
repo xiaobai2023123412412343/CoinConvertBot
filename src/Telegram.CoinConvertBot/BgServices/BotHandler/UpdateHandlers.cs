@@ -3599,7 +3599,46 @@ public static class BinancePriceInfo
             // 其他字段...
         }).ToList();
     }
+private static double CalculateRSI(List<KlineDataItem> klineData, int period = 14)
+{
+    double? previousGain = null;
+    double? previousLoss = null;
+    double averageGain = 0;
+    double averageLoss = 0;
 
+    for (int i = 1; i < klineData.Count; i++)
+    {
+        var currentClose = decimal.Parse(klineData[i].Close);
+        var previousClose = decimal.Parse(klineData[i - 1].Close);
+        var change = currentClose - previousClose;
+
+        double gain = change > 0 ? (double)change : 0;
+        double loss = change < 0 ? -(double)change : 0;
+
+        if (previousGain == null)
+        {
+            previousGain = gain;
+            previousLoss = loss;
+        }
+        else
+        {
+            // 使用指数移动平均（EMA）计算平均增益和平均损失
+            previousGain = (previousGain * (period - 1) + gain) / period;
+            previousLoss = (previousLoss * (period - 1) + loss) / period;
+        }
+    }
+
+    if (previousGain.HasValue && previousLoss.HasValue)
+    {
+        averageGain = previousGain.Value;
+        averageLoss = previousLoss.Value;
+    }
+
+    double rs = averageLoss == 0 ? double.MaxValue : averageGain / averageLoss;
+    double rsi = 100 - (100 / (1 + rs));
+
+    return rsi;
+}
 private static string CalculateAndFormatResult(List<KlineDataItem> klineData)
 {
     var result = "";
@@ -3614,6 +3653,12 @@ private static string CalculateAndFormatResult(List<KlineDataItem> klineData)
         string formatResistance = FormatPrice(resistance);
         string formatSupport = FormatPrice(support);
         string formattedMA = FormatPrice(movingAverage); // 格式化MA指标的值
+	    
+        // 计算RSI并添加到结果字符串
+        double rsi6 = CalculateRSI(klineData, 6);
+        double rsi14 = CalculateRSI(klineData, 14);
+
+        result += $"<b>相对强弱指数：</b> <b>RSI6:</b> {rsi6:F2}  <b>RSI14:</b> {rsi14:F2}\n\n"; 
 
         result += $"<b>{period}D压力位：</b> {formatSupport}   <b>阻力位：</b> {formatResistance}   <b>m{period}：</b> {formattedMA}\n\n";
     }
