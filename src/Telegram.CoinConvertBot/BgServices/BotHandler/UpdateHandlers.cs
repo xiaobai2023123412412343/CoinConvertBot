@@ -3735,9 +3735,9 @@ private static string CalculateAndFormatResult(List<KlineDataItem> klineData)
     foreach (var period in periods)
     {
         var recentData = klineData.TakeLast(period);
-        decimal resistance = recentData.Max(x => decimal.Parse(x.High)); // 最高价
-        decimal support = recentData.Min(x => decimal.Parse(x.Low)); // 最低价
-        decimal movingAverage = recentData.Average(x => decimal.Parse(x.Close)); // 计算平均收盘价作为MA指标
+        decimal resistance = recentData.Max(x => TryParseDecimal(x.High)); // 最高价
+        decimal support = recentData.Min(x => TryParseDecimal(x.Low)); // 最低价
+        decimal movingAverage = recentData.Average(x => TryParseDecimal(x.Close)); // 计算平均收盘价作为MA指标
 
         string formatResistance = FormatPrice(resistance);
         string formatSupport = FormatPrice(support);
@@ -3747,6 +3747,15 @@ private static string CalculateAndFormatResult(List<KlineDataItem> klineData)
     }
     // 确保在处理完所有周期后返回结果
     return result;
+}
+
+static decimal TryParseDecimal(string value)
+{
+    if(decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal result))
+    {
+        return result;
+    }
+    return 0; // 或者根据您的需要返回一个合理的默认值
 }
 
 static string FormatPrice(decimal price)
