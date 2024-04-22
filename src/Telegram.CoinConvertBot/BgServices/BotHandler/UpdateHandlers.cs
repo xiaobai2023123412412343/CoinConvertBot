@@ -3709,27 +3709,17 @@ private static string CalculateAndFormatResult(List<KlineDataItem> klineData)
 
 static string FormatPrice(decimal price)
 {
-    // 使用 "G29" 保证转换回来的字符串不会使用科学记数法
-    string formattedPrice = price.ToString("G29", CultureInfo.InvariantCulture);
+    string formattedPrice;
 
-    // 确定小数点后最多显示的位数
-    int maxDecimalPlaces = 8;
-    int decimalPointIndex = formattedPrice.IndexOf('.');
-    if (decimalPointIndex != -1) // 如果有小数点
+    if (price >= 1)
     {
-        int decimalPlaces = formattedPrice.Length - decimalPointIndex - 1;
-        if (decimalPlaces > maxDecimalPlaces)
-        {
-            // 如果小数位数超过最大值，则截断
-            formattedPrice = formattedPrice.Substring(0, decimalPointIndex + maxDecimalPlaces + 1);
-        }
+        // 数值大于等于1时，精确到小数点后两位
+        formattedPrice = price.ToString("F2", CultureInfo.InvariantCulture);
     }
-
-    // 使用 "0.#############################" 格式化字符串以去除末尾无用的零
-    decimal tempPrice;
-    if (Decimal.TryParse(formattedPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out tempPrice))
+    else
     {
-        formattedPrice = tempPrice.ToString("0.#############################", CultureInfo.InvariantCulture);
+        // 数值小于1时，保留到小数点后最多8位，避免科学记数法，并去除末尾无用的零
+        formattedPrice = price.ToString("F8", CultureInfo.InvariantCulture).TrimEnd('0').TrimEnd('.');
     }
 
     return formattedPrice;
