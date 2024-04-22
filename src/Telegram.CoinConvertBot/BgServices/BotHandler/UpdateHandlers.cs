@@ -907,7 +907,7 @@ private static async Task HandleUserJoinOrLeave(ITelegramBotClient botClient, Me
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userJisuZhangdieLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
 public class CryptoPriceMonitor
 {
-    private static readonly int MaxMinutes = 1; // 储存30分钟数据
+    private static readonly int MaxMinutes = 30; // 储存30分钟数据
     private static Queue<Dictionary<string, decimal>> priceHistory = new Queue<Dictionary<string, decimal>>(MaxMinutes);
     private static Timer priceUpdateTimer;
     private static bool isMonitoringStarted = false;
