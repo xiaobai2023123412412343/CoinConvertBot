@@ -12888,7 +12888,15 @@ if (message.Text.StartsWith("/provip"))
             // 用户是VIP，处理VIP逻辑...
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: $"您已是 FF Pro会员，到期时间为：{beijingTimeExpiry:yyyy/MM/dd HH:mm:ss}。"
+		parseMode: ParseMode.Html,    
+                text: $"您已是 FF Pro会员，到期时间为：{beijingTimeExpiry:yyyy/MM/dd HH:mm:ss}。\n\n" +
+                              "\U00002705FF Pro会员可无限次查询各项数据\n" +
+                              "\U00002705可无限制监听波场地址的交易播报\n" +
+                              "\U00002705开通电报会员，可享受更低的价格\n" +
+                              "三月电报会员：<del>原价24.99u</del>，现只需20u；\n" +
+                              "六月电报会员：<del>原价39.99u</del>，现只需35u；\n" +
+                              "一年电报会员：<del>原价70.99u</del>，现只需65u！\n\n" +
+                              "更多 FF Pro会员独家权益即将到来..."		               
             );
         }
         else
@@ -12902,9 +12910,9 @@ if (message.Text.StartsWith("/provip"))
                               "\U00002705FF Pro会员可无限次查询各项数据\n" +
                               "\U00002705可无限制监听波场地址的交易播报\n" +
                               "\U00002705开通电报会员，可享受更低的价格\n" +
-                              "3个月电报会员：<del>原价24.99u</del>，现只需20u；\n" +
-                              "6个月电报会员：<del>原价39.99u</del>，现只需35u；\n" +
-                              "1年电报会员：<del>原价70.99u</del>，现只需65u！\n\n" +
+                              "三月电报会员：<del>原价24.99u</del>，现只需20u；\n" +
+                              "六月电报会员：<del>原价39.99u</del>，现只需35u；\n" +
+                              "一年电报会员：<del>原价70.99u</del>，现只需65u！\n\n" +
                               "更多 FF Pro会员独家权益即将到来...";
 
             // 创建内联键盘按钮
@@ -12932,9 +12940,9 @@ if (message.Text.StartsWith("/provip"))
 		               "\U00002705FF Pro会员可无限次查询各项数据\n" +
 		               "\U00002705可无限制监听波场地址的交易播报\n" +
                                "\U00002705开通电报会员，可享受更低的价格\n" +
-                               "3个月电报会员：<del>原价24.99u</del>，现只需20u；\n" +
-                               "6个月电报会员：<del>原价39.99u</del>，现只需35u；\n" +
-                               "1年电报会员：<del>原价70.99u</del>，现只需65u！\n\n" +
+                              "三月电报会员：<del>原价24.99u</del>，现只需20u；\n" +
+                              "六月电报会员：<del>原价39.99u</del>，现只需35u；\n" +
+                              "一年电报会员：<del>原价70.99u</del>，现只需65u！\n\n" +
                                "更多 FF Pro会员独家权益即将到来...";
 		
         // 创建内联键盘按钮
