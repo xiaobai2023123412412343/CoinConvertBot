@@ -3533,6 +3533,7 @@ public static class BinancePriceInfo
         string result = "";
         bool dataFetched = false;
         List<KlineDataItem> klineData = null; // 移动到这里以扩大作用域
+	string dataSource = ""; // 添加数据来源变量    
 
         // 尝试从币安获取数据
         try
@@ -3548,6 +3549,7 @@ public static class BinancePriceInfo
 
                 klineData = ProcessKlineData(klineDataRaw); // 直接赋值给klineData
                 dataFetched = true;
+		dataSource = "币安"; // 设置数据来源为币安    
 
                 Console.WriteLine("数据来自币安");    
             }
@@ -3573,6 +3575,7 @@ if (!dataFetched)
                 var klineDataRaw = okexResponseObject.data.Select(kline => kline.Select(JsonElementFromString).ToList()).ToList();
                 klineData = ProcessKlineData(klineDataRaw, isOkex: true);
                 dataFetched = true; // 只有在确实获取到有效数据时才设置为true
+		dataSource = "欧易"; // 设置数据来源为欧易    
                 Console.WriteLine("数据来自欧易");
             }
             else
@@ -3610,6 +3613,7 @@ if (!dataFetched)
             }).ToList();
 
             dataFetched = true;
+	    dataSource = "抹茶"; // 设置数据来源为抹茶	
 
             Console.WriteLine("数据来自抹茶");
         }
@@ -3637,7 +3641,7 @@ JsonElement JsonElementFromString(string value)
         {
             var rsi6 = CalculateRSI(klineData, 6);
             var rsi14 = CalculateRSI(klineData, 14);
-            var rsiResult = $"<b>相对强弱指数：</b> <b>RSI6:</b> {rsi6:F2}  |  <b>RSI14:</b> {rsi14:F2}\n\n";
+            var rsiResult = $"<b>{dataSource} | 相对强弱指数： RSI6:</b> {rsi6:F2}  |  <b>RSI14:</b> {rsi14:F2}\n\n";
 
             // 调用CalculateAndFormatResult获取压力位和阻力位信息
             var priceInfo = CalculateAndFormatResult(klineData);
