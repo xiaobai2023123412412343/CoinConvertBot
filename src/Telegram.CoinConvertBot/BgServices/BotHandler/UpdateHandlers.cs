@@ -102,6 +102,8 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 通知用户ID字典 以及查询 rsi指数
+private static HashSet<long> notificationUserIds = new HashSet<long> { 1427768220 };	
 public static class CoinDataAnalyzer
 {
     private static readonly Random random = new Random();
@@ -13329,6 +13331,7 @@ if (messageText.StartsWith("/duihuandbvip"))
 {
     await SimulateSendingAuthorMessage(botClient, message);
 }
+//查询rsi值指数
 if (messageText.StartsWith("/charsi"))
 {
     try
@@ -13336,26 +13339,36 @@ if (messageText.StartsWith("/charsi"))
         var oversoldMessages = await CoinDataAnalyzer.GetTopOversoldCoinsAsync();
         if (oversoldMessages.Count > 0) // 检查是否有获取到数据
         {
-            foreach (var oversoldMessage in oversoldMessages)
+            foreach (var userId in notificationUserIds) // 遍历所有需要通知的用户ID
             {
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id, 
-                    text: oversoldMessage, 
-                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
-                // 可选：在消息之间添加短暂延迟，以避免频率限制问题
-                await Task.Delay(500); // 500毫秒延迟
+                foreach (var oversoldMessage in oversoldMessages)
+                {
+                    try
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId: userId, // 向列表中的每个用户ID发送
+                            text: oversoldMessage, 
+                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+                        // 可选：在消息之间添加短暂延迟，以避免频率限制问题
+                        await Task.Delay(500); // 500毫秒延迟
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"向用户{userId}发送消息失败: {ex.Message}");
+                        // 如果发送失败，忽略失败的发送操作，继续向其他用户发送消息
+                        continue;
+                    }
+                }
             }
         }
         // 如果没有获取到数据，这里不执行任何操作，也不返回任何消息
     }
     catch (Exception ex)
     {
-        // 发生异常时，同样不返回任何消息
-        // 如果需要记录异常，可以在这里添加日志记录代码，例如:
+        // 如果在获取数据时发生异常，同样不返回任何消息
         Console.WriteLine($"查询超卖币种时出错: {ex.Message}");
-        // 注意：这里不再发送任何消息给用户
     }
-}	    
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
