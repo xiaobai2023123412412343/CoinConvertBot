@@ -185,7 +185,7 @@ public static class CoinDataAnalyzer
         string change24hSymbol = coin.PercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
         string change7dSymbol = coin.PercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
-        messageBuilder.AppendLine($"#{coin.Symbol}   <code>{coin.Symbol}</code>   |   价格：${coin.Price}   |   <b>No.{coin.Rank}</b>");
+        messageBuilder.AppendLine($"#{coin.Symbol}  |  <code>{coin.Symbol}</code>   |   价格：${coin.Price}   |   <b>No.{coin.Rank}</b>");
         messageBuilder.AppendLine($"流通市值：{marketCapDisplay}  |  24小时交易：{volume24hDisplay}");
         messageBuilder.AppendLine($"1h：{change1hSymbol}{coin.PercentChange1h:F2}%  |  24h：{change24hSymbol}{coin.PercentChange24h:F2}%  |  7d：{change7dSymbol}{coin.PercentChange7d:F2}%");
         messageBuilder.AppendLine($"RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}  |  m10： {coin.M10}");
