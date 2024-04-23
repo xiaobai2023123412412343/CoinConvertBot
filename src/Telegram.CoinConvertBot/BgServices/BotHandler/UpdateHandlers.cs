@@ -112,7 +112,7 @@ public static class CoinDataAnalyzer
         await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
 
         var allCoinsData = CoinDataCache.GetAllCoinsData();
-        var oversoldCoins = new List<(string Symbol, double Price, double PercentChange1h, double PercentChange24h, double PercentChange7d, double Volume24hUsd, double MarketCapUsd, double RSI6, double RSI14, double M10)>();
+        var oversoldCoins = new List<(string Symbol, double Price, double PercentChange1h, double PercentChange24h, double PercentChange7d, double Volume24hUsd, double MarketCapUsd, double RSI6, double RSI14, double M10, int Rank)>();
 
         // 分别获取1小时和24小时和近7天内内下跌的前20名
         var topFallers1h = GetTopFallers(allCoinsData, "percent_change_1h").Take(20).ToDictionary(x => x, x => allCoinsData[x]["percent_change_1h"].GetDouble());
@@ -158,9 +158,10 @@ public static class CoinDataAnalyzer
                     double percentChange7d = coinData["percent_change_7d"].GetDouble();
                     double volume24hUsd = coinData["volume_24h_usd"].GetDouble();
                     double marketCapUsd = coinData["market_cap_usd"].GetDouble();
+		    int rank = coinData["rank"].GetInt32();	
                     if (coinData.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double priceValue))
                     {
-                        oversoldCoins.Add((symbol, priceValue, percentChange1h, percentChange24h, percentChange7d, volume24hUsd, marketCapUsd, rsi6, rsi14, m10));
+                        oversoldCoins.Add((symbol, priceValue, percentChange1h, percentChange24h, percentChange7d, volume24hUsd, marketCapUsd, rsi6, rsi14, m10, rank));
                     }
                 }
             }
@@ -177,7 +178,7 @@ public static class CoinDataAnalyzer
             string marketCapDisplay = coin.MarketCapUsd >= 100_000_000 ? $"{Math.Round(coin.MarketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.MarketCapUsd / 1_000_000, 2)}m";
             string volume24hDisplay = coin.Volume24hUsd >= 100_000_000 ? $"{Math.Round(coin.Volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.Volume24hUsd / 1_000_000, 2)}m";
 
-            messageBuilder.AppendLine($"{coin.Symbol}  价格：${coin.Price}");
+            messageBuilder.AppendLine($"{coin.Symbol}   |   价格：${coin.Price}   |   No.{coin.Rank}");
             messageBuilder.AppendLine($"流通市值：{marketCapDisplay}  |  24小时交易：{volume24hDisplay}");
             messageBuilder.AppendLine($"1h：{coin.PercentChange1h:F2}%  |  24h：{coin.PercentChange24h:F2}%  |  7d：{coin.PercentChange7d:F2}%");
             messageBuilder.AppendLine($"RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}  |  m10： {coin.M10}\n");
