@@ -173,8 +173,14 @@ public static class CoinDataAnalyzer
         }
 
     List<string> messages = new List<string>();
-    StringBuilder messageBuilder = new StringBuilder("发现超卖：\n\n");
+    StringBuilder messageBuilder = new StringBuilder();
     int count = 0;
+
+    if (oversoldCoins.Count > 0)
+    {
+        // 只有当有超卖币种时，才添加标题
+        messageBuilder.Append("发现超卖：\n\n");
+    }
 
     foreach (var coin in oversoldCoins)
     {
@@ -3681,12 +3687,12 @@ public static class BinancePriceInfo
                 dataFetched = true;
 		dataSource = "币安"; // 设置数据来源为币安    
 
-                Console.WriteLine("数据来自币安");    
+                //Console.WriteLine("数据来自币安");    
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"从币安获取数据失败: {ex.Message}");
+            //Console.WriteLine($"从币安获取数据失败: {ex.Message}");
         }
 
 // 如果从币安获取数据失败，尝试从欧易获取数据
@@ -3706,18 +3712,18 @@ if (!dataFetched)
                 klineData = ProcessKlineData(klineDataRaw, isOkex: true);
                 dataFetched = true; // 只有在确实获取到有效数据时才设置为true
 		dataSource = "欧易"; // 设置数据来源为欧易    
-                Console.WriteLine("数据来自欧易");
+                //Console.WriteLine("数据来自欧易");
             }
             else
             {
-                Console.WriteLine("欧易没有返回有效数据。");
+                //Console.WriteLine("欧易没有返回有效数据。");
                 // 不设置dataFetched = true，以便尝试从抹茶获取数据
             }
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"从欧易获取数据失败: {ex.Message}");
+        //Console.WriteLine($"从欧易获取数据失败: {ex.Message}");
         // 不设置dataFetched = true，以便尝试从抹茶获取数据
     }
 }
@@ -3747,17 +3753,17 @@ if (!dataFetched)
             dataFetched = true;
 	    dataSource = "抹茶"; // 设置数据来源为抹茶	
 
-            Console.WriteLine("数据来自抹茶");
+            //Console.WriteLine("数据来自抹茶");
         }
         else
         {
-            Console.WriteLine($"抹茶API响应失败，状态码：{mexcResponse.StatusCode}"); // 如果响应状态码不是成功状态，添加调试输出
+            //Console.WriteLine($"抹茶API响应失败，状态码：{mexcResponse.StatusCode}"); // 如果响应状态码不是成功状态，添加调试输出
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"从抹茶获取数据失败: {ex.Message}");
-	Console.WriteLine($"异常详情: {ex.ToString()}"); // 输出异常的详细信息，以便于调试    
+        //Console.WriteLine($"从抹茶获取数据失败: {ex.Message}");
+	//Console.WriteLine($"异常详情: {ex.ToString()}"); // 输出异常的详细信息，以便于调试    
     }
 }
 // 辅助方法，将字符串转换为JsonElement
