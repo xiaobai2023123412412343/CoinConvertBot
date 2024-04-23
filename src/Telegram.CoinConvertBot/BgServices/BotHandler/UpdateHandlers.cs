@@ -114,12 +114,13 @@ public static class CoinDataAnalyzer
         var allCoinsData = CoinDataCache.GetAllCoinsData();
         var oversoldCoins = new List<(string Symbol, double Price, double PercentChange1h, double PercentChange24h, double PercentChange7d, double Volume24hUsd, double MarketCapUsd, double RSI6, double RSI14, double M10)>();
 
-        // 分别获取1小时和24小时内下跌的前20名
+        // 分别获取1小时和24小时和近7天内内下跌的前20名
         var topFallers1h = GetTopFallers(allCoinsData, "percent_change_1h").Take(20).ToDictionary(x => x, x => allCoinsData[x]["percent_change_1h"].GetDouble());
         var topFallers24h = GetTopFallers(allCoinsData, "percent_change_24h").Take(20).ToDictionary(x => x, x => allCoinsData[x]["percent_change_24h"].GetDouble());
+	var topFallers7d = GetTopFallers(allCoinsData, "percent_change_7d").Take(20).ToDictionary(x => x, x => allCoinsData[x]["percent_change_7d"].GetDouble());   
 
         // 合并并去重
-        var uniqueSymbols = new HashSet<string>(topFallers1h.Keys.Concat(topFallers24h.Keys));
+        var uniqueSymbols = new HashSet<string>(topFallers1h.Keys.Concat(topFallers24h.Keys).Concat(topFallers7d.Keys));
 
         foreach (var symbol in uniqueSymbols)
         {
@@ -176,10 +177,10 @@ public static class CoinDataAnalyzer
             string marketCapDisplay = coin.MarketCapUsd >= 100_000_000 ? $"{Math.Round(coin.MarketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.MarketCapUsd / 1_000_000, 2)}m";
             string volume24hDisplay = coin.Volume24hUsd >= 100_000_000 ? $"{Math.Round(coin.Volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.Volume24hUsd / 1_000_000, 2)}m";
 
-            messageBuilder.AppendLine($"{coin.Symbol} 价格：${coin.Price}");
-            messageBuilder.AppendLine($"流通市值：{marketCapDisplay} | 24小时交易：{volume24hDisplay}");
+            messageBuilder.AppendLine($"{coin.Symbol}  价格：${coin.Price}");
+            messageBuilder.AppendLine($"流通市值：{marketCapDisplay}  |  24小时交易：{volume24hDisplay}");
             messageBuilder.AppendLine($"1h：{coin.PercentChange1h:F2}%  |  24h：{coin.PercentChange24h:F2}%  |  7d：{coin.PercentChange7d:F2}%");
-            messageBuilder.AppendLine($"RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}   |  m10： {coin.M10}\n");
+            messageBuilder.AppendLine($"RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}  |  m10： {coin.M10}\n");
         }
 
         return messageBuilder.ToString();
