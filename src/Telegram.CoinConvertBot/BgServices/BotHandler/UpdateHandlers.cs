@@ -10882,14 +10882,14 @@ if (messageText.StartsWith("/lamzhishu"))
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -10897,7 +10897,7 @@ if (messageText.StartsWith("/lamzhishu"))
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
@@ -11020,14 +11020,14 @@ if (messageText.StartsWith("/xamzhishu"))
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -11035,7 +11035,7 @@ if (messageText.StartsWith("/xamzhishu"))
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
@@ -11155,14 +11155,14 @@ if (messageText.StartsWith("/xgzhishu"))
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -11170,7 +11170,7 @@ if (messageText.StartsWith("/xgzhishu"))
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
@@ -11569,14 +11569,14 @@ if (zijinCommandRegex.IsMatch(message.Text))
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -11584,7 +11584,7 @@ if (zijinCommandRegex.IsMatch(message.Text))
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
@@ -11812,14 +11812,14 @@ if (faxianCommandRegex.IsMatch(message.Text))
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -11827,7 +11827,7 @@ if (faxianCommandRegex.IsMatch(message.Text))
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
@@ -12216,14 +12216,14 @@ if (messageText.StartsWith("/jisuzhangdie") || messageText.Contains("市场异�
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -12231,7 +12231,7 @@ if (messageText.StartsWith("/jisuzhangdie") || messageText.Contains("市场异�
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
@@ -12373,14 +12373,14 @@ if (messageText.StartsWith("/caifu") || messageText.Equals("财富密码"))
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -12388,7 +12388,7 @@ if (messageText.StartsWith("/caifu") || messageText.Equals("财富密码"))
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
@@ -12490,14 +12490,14 @@ if (messageText.StartsWith("/1hshuju"))
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -12505,7 +12505,7 @@ if (messageText.StartsWith("/1hshuju"))
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
@@ -12597,14 +12597,14 @@ if (messageText.StartsWith("/24hshuju"))
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -12612,7 +12612,7 @@ if (messageText.StartsWith("/24hshuju"))
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
@@ -12698,14 +12698,14 @@ else if (messageText.StartsWith("/7dshuju"))
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -12713,7 +12713,7 @@ else if (messageText.StartsWith("/7dshuju"))
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
@@ -14016,14 +14016,14 @@ if (messageText.StartsWith("/bijiacha"))
                     if (member.Status != ChatMemberStatus.Left && member.Status != ChatMemberStatus.Kicked)
                     {
                         // 用户在群组中，检查查询次数
-                        if (count < 3)
+                        if (count < 2)
                         {
                             // 查询次数未达3次，允许查询
                             allowQuery = true;
                         }
                         else
                         {
-                            // 查询次数达到3次，不是VIP，提示订阅
+                            // 查询次数达到2次，不是VIP，提示订阅
                             var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
                             {
                                 InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
@@ -14031,7 +14031,7 @@ if (messageText.StartsWith("/bijiacha"))
 
                             await botClient.SendTextMessageAsync(
                                 chatId: message.Chat.Id,
-                                text: "免费查询3次已用完，订阅 FF Pro会员即可不限制查询！",
+                                text: "免费查询2次已用完，订阅 FF Pro会员即可不限制查询！",
                                 replyMarkup: keyboard,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                             );
