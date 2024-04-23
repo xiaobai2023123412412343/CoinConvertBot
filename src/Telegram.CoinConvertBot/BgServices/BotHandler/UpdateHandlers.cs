@@ -166,7 +166,7 @@ public static class CoinDataAnalyzer
             }
         }
 
-        StringBuilder messageBuilder = new StringBuilder("发现超卖：\n");
+        StringBuilder messageBuilder = new StringBuilder("发现超卖：\n\n");
         foreach (var coin in oversoldCoins.Take(20))
         {
             messageBuilder.AppendLine($"{coin.Symbol} 价格：${coin.Price}  |  1h：{coin.PercentChange1h:F2}%  |  24h：{coin.PercentChange24h:F2}%");
