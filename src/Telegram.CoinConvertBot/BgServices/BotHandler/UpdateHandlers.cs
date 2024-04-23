@@ -104,20 +104,22 @@ public static class UpdateHandlers
     /// <returns></returns>
 public static class CoinDataAnalyzer
 {
+    private static readonly Random random = new Random();
+
     // 获取近1小时和24小时内最多下跌的前20名币种
     public static async Task<string> GetTopOversoldCoinsAsync()
     {
         await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
 
         var allCoinsData = CoinDataCache.GetAllCoinsData();
-        var oversoldCoins = new List<(string Symbol, double Price, double RSI6, double RSI14, double M10)>();
+        var oversoldCoins = new List<(string Symbol, double Price, double PercentChange1h, double PercentChange24h, double RSI6, double RSI14, double M10)>();
 
         // 分别获取1小时和24小时内下跌的前20名
-        var topFallers1h = GetTopFallers(allCoinsData, "percent_change_1h").Take(20);
-        var topFallers24h = GetTopFallers(allCoinsData, "percent_change_24h").Take(20);
+        var topFallers1h = GetTopFallers(allCoinsData, "percent_change_1h").Take(20).ToDictionary(x => x, x => allCoinsData[x]["percent_change_1h"].GetDouble());
+        var topFallers24h = GetTopFallers(allCoinsData, "percent_change_24h").Take(20).ToDictionary(x => x, x => allCoinsData[x]["percent_change_24h"].GetDouble());
 
         // 合并并去重
-        var uniqueSymbols = new HashSet<string>(topFallers1h.Concat(topFallers24h));
+        var uniqueSymbols = new HashSet<string>(topFallers1h.Keys.Concat(topFallers24h.Keys));
 
         foreach (var symbol in uniqueSymbols)
         {
@@ -128,18 +130,18 @@ public static class CoinDataAnalyzer
                 continue;
             }
 
+            // 随机时间间隔，防止API限制
+            await Task.Delay(random.Next(500, 1501));
+
             try
             {
                 string additionalInfo = await BinancePriceInfo.GetPriceInfo(symbol);
-                // 输出调试信息到服务器日志
                 Console.WriteLine($"处理币种: {symbol}, 获取到的数据: {additionalInfo}");
 
-                // 使用正则表达式匹配数据
                 var rsi6Match = Regex.Match(additionalInfo, @"RSI6:</b>\s*(\d+\.?\d*)");
                 var rsi14Match = Regex.Match(additionalInfo, @"RSI14:</b>\s*(\d+\.?\d*)");
                 var m10Match = Regex.Match(additionalInfo, @"m10：</b>\s*(\d+\.?\d*)");
 
-                // 尝试解析匹配到的字符串为double类型
                 if (!double.TryParse(rsi6Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi6) ||
                     !double.TryParse(rsi14Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi14) ||
                     !double.TryParse(m10Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double m10))
@@ -147,39 +149,32 @@ public static class CoinDataAnalyzer
                     throw new FormatException($"解析错误: 无法解析RSI6, RSI14, 或m10的值。币种: {symbol}");
                 }
 
-                // 只有当RSI6的值低于50时，才添加到列表中
-                if (rsi6 < 50)
+                if (rsi6 < 40)
                 {
-                    if (allCoinsData.TryGetValue(symbol, out var coinInfo) && coinInfo.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double priceValue))
+                    topFallers1h.TryGetValue(symbol, out double percentChange1h);
+                    topFallers24h.TryGetValue(symbol, out double percentChange24h);
+                    if (allCoinsData[symbol].TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double priceValue))
                     {
-                        oversoldCoins.Add((symbol, priceValue, rsi6, rsi14, m10));
+                        oversoldCoins.Add((symbol, priceValue, percentChange1h, percentChange24h, rsi6, rsi14, m10));
                     }
                 }
             }
             catch (FormatException ex)
             {
-                // 解析失败时输出错误信息并跳过当前币种
                 Console.WriteLine(ex.Message);
                 continue;
             }
         }
 
-        // 格式化文本输出
         StringBuilder messageBuilder = new StringBuilder("发现超卖：\n");
-        if (oversoldCoins.Count == 0)
+        foreach (var coin in oversoldCoins.Take(20))
         {
-            messageBuilder.AppendLine("没有符合条件的币种。");
-        }
-        else
-        {
-            foreach (var coin in oversoldCoins.Take(20)) // 确保最多输出20个币种
-            {
-                messageBuilder.AppendLine($"{coin.Symbol} 价格：${coin.Price}  |   RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}   |  m10： {coin.M10}");
-            }
+            messageBuilder.AppendLine($"{coin.Symbol} 价格：${coin.Price}  |  1h：{coin.PercentChange1h:F2}%  |  24h：{coin.PercentChange24h:F2}%");
+            messageBuilder.AppendLine($"RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}   |  m10： {coin.M10}\n");
         }
 
         return messageBuilder.ToString();
-    }		
+    }
 
     // 辅助方法：获取下跌的币种
     private static IEnumerable<string> GetTopFallers(Dictionary<string, Dictionary<string, JsonElement>> coinData, string percentChangeKey)
@@ -188,12 +183,17 @@ public static class CoinDataAnalyzer
             .Select(kv => new
             {
                 Symbol = kv.Key,
-                // 尝试获取变化百分比，如果失败则设为double最大值
                 PercentChange = kv.Value.TryGetValue(percentChangeKey, out JsonElement percentChangeElement) && percentChangeElement.TryGetDouble(out double percentChange) ? percentChange : double.MaxValue
             })
             .Where(x => x.PercentChange < 0) // 筛选出下跌的币种
             .OrderBy(x => x.PercentChange) // 按下跌幅度排序
             .Select(x => x.Symbol); // 选择币种符号
+    }
+
+    // 生成随机时间间隔的方法
+    private static Task RandomDelay()
+    {
+        return Task.Delay(random.Next(500, 1501)); // 0.5到1.5秒的随机时间间隔
     }
 }
 
