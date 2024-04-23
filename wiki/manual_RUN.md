@@ -123,6 +123,8 @@ sudo du -sh /var/lib/* 2>/dev/null | sort -h   检查镜像大小
 
 再删除：sudo rm -rf /var/lib/docker   谨慎使用！！！！！谨慎使用！！！！！谨慎使用！！！！！谨慎使用！！！！！
 
+重启Docker服务 liux：  sudo systemctl restart docker
+
 ## 二、通过docker-compose启动
 
 ### 1-3步骤与`通过docker启动`的教程一致
