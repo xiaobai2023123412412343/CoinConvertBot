@@ -169,7 +169,7 @@ public static class CoinDataAnalyzer
             }
             catch (FormatException ex)
             {
-                Console.WriteLine(ex.Message);
+                //Console.WriteLine(ex.Message);
                 continue;
             }
         }
