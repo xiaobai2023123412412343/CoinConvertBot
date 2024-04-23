@@ -147,8 +147,8 @@ public static class CoinDataAnalyzer
                     throw new FormatException($"解析错误: 无法解析RSI6, RSI14, 或m10的值。币种: {symbol}");
                 }
 
-                // 只有当RSI6, RSI14, 和m10的值不全为0时，才添加到列表中
-                if (rsi6 > 0 || rsi14 > 0 || m10 > 0)
+                // 只有当RSI6的值低于50时，才添加到列表中
+                if (rsi6 < 50)
                 {
                     if (allCoinsData.TryGetValue(symbol, out var coinInfo) && coinInfo.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double priceValue))
                     {
@@ -166,13 +166,20 @@ public static class CoinDataAnalyzer
 
         // 格式化文本输出
         StringBuilder messageBuilder = new StringBuilder("发现超卖：\n");
-        foreach (var coin in oversoldCoins.Take(20)) // 确保最多输出20个币种
+        if (oversoldCoins.Count == 0)
         {
-            messageBuilder.AppendLine($"{coin.Symbol} 价格：${coin.Price}  |   RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}   |  m10： {coin.M10}");
+            messageBuilder.AppendLine("没有符合条件的币种。");
+        }
+        else
+        {
+            foreach (var coin in oversoldCoins.Take(20)) // 确保最多输出20个币种
+            {
+                messageBuilder.AppendLine($"{coin.Symbol} 价格：${coin.Price}  |   RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}   |  m10： {coin.M10}");
+            }
         }
 
         return messageBuilder.ToString();
-    }
+    }		
 
     // 辅助方法：获取下跌的币种
     private static IEnumerable<string> GetTopFallers(Dictionary<string, Dictionary<string, JsonElement>> coinData, string percentChangeKey)
