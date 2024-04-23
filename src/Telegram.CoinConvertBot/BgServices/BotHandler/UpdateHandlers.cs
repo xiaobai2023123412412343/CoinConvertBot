@@ -152,11 +152,11 @@ public static class CoinDataAnalyzer
                 if (rsi6 < 40)
                 {
                     var coinData = allCoinsData[symbol];
+		    double percentChange1h = coinData["percent_change_1h"].GetDouble();
+                    double percentChange24h = coinData["percent_change_24h"].GetDouble();	
                     double percentChange7d = coinData["percent_change_7d"].GetDouble();
                     double volume24hUsd = coinData["volume_24h_usd"].GetDouble();
                     double marketCapUsd = coinData["market_cap_usd"].GetDouble();
-                    topFallers1h.TryGetValue(symbol, out double percentChange1h);
-                    topFallers24h.TryGetValue(symbol, out double percentChange24h);
                     if (coinData.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double priceValue))
                     {
                         oversoldCoins.Add((symbol, priceValue, percentChange1h, percentChange24h, percentChange7d, volume24hUsd, marketCapUsd, rsi6, rsi14, m10));
