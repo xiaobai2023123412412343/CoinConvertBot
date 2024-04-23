@@ -102,6 +102,94 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+public static class CoinDataAnalyzer
+{
+    // 获取近1小时和24小时内最多下跌的前20名币种
+    public static async Task<string> GetTopOversoldCoinsAsync()
+    {
+        await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
+
+        var allCoinsData = CoinDataCache.GetAllCoinsData();
+        var oversoldCoins = new List<(string Symbol, double Price, double RSI6, double RSI14, double M10)>();
+
+        // 分别获取1小时和24小时内下跌的前20名
+        var topFallers1h = GetTopFallers(allCoinsData, "percent_change_1h").Take(20);
+        var topFallers24h = GetTopFallers(allCoinsData, "percent_change_24h").Take(20);
+
+        // 合并并去重
+        var uniqueSymbols = new HashSet<string>(topFallers1h.Concat(topFallers24h));
+
+        foreach (var symbol in uniqueSymbols)
+        {
+            // 如果币种是TRX，则跳过不处理
+            if (symbol.Equals("TRX", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"跳过币种: {symbol}");
+                continue;
+            }
+
+            try
+            {
+                string additionalInfo = await BinancePriceInfo.GetPriceInfo(symbol);
+                // 输出调试信息到服务器日志
+                Console.WriteLine($"处理币种: {symbol}, 获取到的数据: {additionalInfo}");
+
+                // 使用正则表达式匹配数据
+                var rsi6Match = Regex.Match(additionalInfo, @"RSI6:</b>\s*(\d+\.?\d*)");
+                var rsi14Match = Regex.Match(additionalInfo, @"RSI14:</b>\s*(\d+\.?\d*)");
+                var m10Match = Regex.Match(additionalInfo, @"m10：</b>\s*(\d+\.?\d*)");
+
+                // 尝试解析匹配到的字符串为double类型
+                if (!double.TryParse(rsi6Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi6) ||
+                    !double.TryParse(rsi14Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi14) ||
+                    !double.TryParse(m10Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double m10))
+                {
+                    throw new FormatException($"解析错误: 无法解析RSI6, RSI14, 或m10的值。币种: {symbol}");
+                }
+
+                // 只有当RSI6, RSI14, 和m10的值不全为0时，才添加到列表中
+                if (rsi6 > 0 || rsi14 > 0 || m10 > 0)
+                {
+                    if (allCoinsData.TryGetValue(symbol, out var coinInfo) && coinInfo.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double priceValue))
+                    {
+                        oversoldCoins.Add((symbol, priceValue, rsi6, rsi14, m10));
+                    }
+                }
+            }
+            catch (FormatException ex)
+            {
+                // 解析失败时输出错误信息并跳过当前币种
+                Console.WriteLine(ex.Message);
+                continue;
+            }
+        }
+
+        // 格式化文本输出
+        StringBuilder messageBuilder = new StringBuilder("发现超卖：\n");
+        foreach (var coin in oversoldCoins.Take(20)) // 确保最多输出20个币种
+        {
+            messageBuilder.AppendLine($"{coin.Symbol} 价格：${coin.Price}  |   RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}   |  m10： {coin.M10}");
+        }
+
+        return messageBuilder.ToString();
+    }
+
+    // 辅助方法：获取下跌的币种
+    private static IEnumerable<string> GetTopFallers(Dictionary<string, Dictionary<string, JsonElement>> coinData, string percentChangeKey)
+    {
+        return coinData
+            .Select(kv => new
+            {
+                Symbol = kv.Key,
+                // 尝试获取变化百分比，如果失败则设为double最大值
+                PercentChange = kv.Value.TryGetValue(percentChangeKey, out JsonElement percentChangeElement) && percentChangeElement.TryGetDouble(out double percentChange) ? percentChange : double.MaxValue
+            })
+            .Where(x => x.PercentChange < 0) // 筛选出下跌的币种
+            .OrderBy(x => x.PercentChange) // 按下跌幅度排序
+            .Select(x => x.Symbol); // 选择币种符号
+    }
+}
+
 // 当机器人收到用户发：/duihuandbvip 时的处理逻辑，不扣除积分，只模拟发送"作者"消息
 public static async Task SimulateSendingAuthorMessage(ITelegramBotClient botClient, Message message)
 {
@@ -3594,12 +3682,14 @@ if (!dataFetched)
 // 如果从币安和欧易获取数据都失败，尝试从抹茶获取数据
 if (!dataFetched)
 {
-    Console.WriteLine("尝试从抹茶获取数据..."); // 添加调试输出
+    //Console.WriteLine("尝试从抹茶获取数据..."); // 添加调试输出
     try
     {
         var mexcResponse = await httpClient.GetAsync($"https://api.mexc.com/api/v3/klines?symbol={symbol.ToUpper()}USDT&interval=1d&limit=200");
         if (mexcResponse.IsSuccessStatusCode)
         {
+	    var responseContent = await mexcResponse.Content.ReadAsStringAsync();
+            //Console.WriteLine($"抹茶API返回的原始数据: {responseContent}"); // 输出API返回的原始数据
             var klineDataRaw = JsonSerializer.Deserialize<List<List<JsonElement>>>(await mexcResponse.Content.ReadAsStringAsync());
 
             klineData = klineDataRaw.Select(item => new KlineDataItem
@@ -3619,12 +3709,13 @@ if (!dataFetched)
         }
         else
         {
-            Console.WriteLine("抹茶API响应失败"); // 如果响应状态码不是成功状态，添加调试输出
+            Console.WriteLine($"抹茶API响应失败，状态码：{mexcResponse.StatusCode}"); // 如果响应状态码不是成功状态，添加调试输出
         }
     }
     catch (Exception ex)
     {
         Console.WriteLine($"从抹茶获取数据失败: {ex.Message}");
+	Console.WriteLine($"异常详情: {ex.ToString()}"); // 输出异常的详细信息，以便于调试    
     }
 }
 // 辅助方法，将字符串转换为JsonElement
@@ -13189,6 +13280,19 @@ if (messageText.StartsWith("/duihuanprovip"))
 if (messageText.StartsWith("/duihuandbvip"))
 {
     await SimulateSendingAuthorMessage(botClient, message);
+}
+if (messageText.StartsWith("/charsi"))
+{
+    try
+    {
+        var oversoldMessage = await CoinDataAnalyzer.GetTopOversoldCoinsAsync();
+        await botClient.SendTextMessageAsync(message.Chat.Id, oversoldMessage);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"查询超卖币种时出错: {ex.Message}");
+        await botClient.SendTextMessageAsync(message.Chat.Id, "查询超卖币种时遇到问题，请稍后再试。");
+    }
 }	    
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
