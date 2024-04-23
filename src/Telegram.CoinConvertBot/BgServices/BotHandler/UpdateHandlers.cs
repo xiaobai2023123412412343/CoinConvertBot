@@ -178,7 +178,7 @@ public static class CoinDataAnalyzer
             string marketCapDisplay = coin.MarketCapUsd >= 100_000_000 ? $"{Math.Round(coin.MarketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.MarketCapUsd / 1_000_000, 2)}m";
             string volume24hDisplay = coin.Volume24hUsd >= 100_000_000 ? $"{Math.Round(coin.Volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.Volume24hUsd / 1_000_000, 2)}m";
 
-            messageBuilder.AppendLine($"{coin.Symbol}   |   价格：${coin.Price}   |   No.{coin.Rank}");
+            messageBuilder.AppendLine($"#{coin.Symbol}   <code>{coin.Symbol}</code>   |   价格：${coin.Price}   |   <b>No.{coin.Rank}</b>");
             messageBuilder.AppendLine($"流通市值：{marketCapDisplay}  |  24小时交易：{volume24hDisplay}");
             messageBuilder.AppendLine($"1h：{coin.PercentChange1h:F2}%  |  24h：{coin.PercentChange24h:F2}%  |  7d：{coin.PercentChange7d:F2}%");
             messageBuilder.AppendLine($"RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}  |  m10： {coin.M10}\n");
@@ -13304,7 +13304,10 @@ if (messageText.StartsWith("/charsi"))
     try
     {
         var oversoldMessage = await CoinDataAnalyzer.GetTopOversoldCoinsAsync();
-        await botClient.SendTextMessageAsync(message.Chat.Id, oversoldMessage);
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id, 
+            text: oversoldMessage, 
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
     }
     catch (Exception ex)
     {
