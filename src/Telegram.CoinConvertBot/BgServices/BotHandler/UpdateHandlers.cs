@@ -127,7 +127,7 @@ public static class CoinDataAnalyzer
             // 如果币种是TRX，则跳过不处理
             if (symbol.Equals("TRX", StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine($"跳过币种: {symbol}");
+                //Console.WriteLine($"跳过币种: {symbol}");
                 continue;
             }
 
@@ -137,7 +137,7 @@ public static class CoinDataAnalyzer
             try
             {
                 string additionalInfo = await BinancePriceInfo.GetPriceInfo(symbol);
-                Console.WriteLine($"处理币种: {symbol}, 获取到的数据: {additionalInfo}");
+                //Console.WriteLine($"处理币种: {symbol}, 获取到的数据: {additionalInfo}");
 
                 var rsi6Match = Regex.Match(additionalInfo, @"RSI6:</b>\s*(\d+\.?\d*)");
                 var rsi14Match = Regex.Match(additionalInfo, @"RSI14:</b>\s*(\d+\.?\d*)");
@@ -13328,20 +13328,26 @@ if (messageText.StartsWith("/charsi"))
     try
     {
         var oversoldMessages = await CoinDataAnalyzer.GetTopOversoldCoinsAsync();
-        foreach (var oversoldMessage in oversoldMessages)
+        if (oversoldMessages.Count > 0) // 检查是否有获取到数据
         {
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id, 
-                text: oversoldMessage, 
-                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
-            // 可选：在消息之间添加短暂延迟，以避免频率限制问题
-            await Task.Delay(500); // 500毫秒延迟
+            foreach (var oversoldMessage in oversoldMessages)
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id, 
+                    text: oversoldMessage, 
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+                // 可选：在消息之间添加短暂延迟，以避免频率限制问题
+                await Task.Delay(500); // 500毫秒延迟
+            }
         }
+        // 如果没有获取到数据，这里不执行任何操作，也不返回任何消息
     }
     catch (Exception ex)
     {
+        // 发生异常时，同样不返回任何消息
+        // 如果需要记录异常，可以在这里添加日志记录代码，例如:
         Console.WriteLine($"查询超卖币种时出错: {ex.Message}");
-        await botClient.SendTextMessageAsync(message.Chat.Id, "查询超卖币种时遇到问题，请稍后再试。");
+        // 注意：这里不再发送任何消息给用户
     }
 }	    
 // 检查是否接收到了 /xuni 消息，收到就启动广告
