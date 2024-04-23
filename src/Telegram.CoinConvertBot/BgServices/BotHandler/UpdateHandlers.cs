@@ -107,7 +107,7 @@ public static class CoinDataAnalyzer
     private static readonly Random random = new Random();
 
     // 获取近1小时和24小时内最多下跌的前20名币种
-    public static async Task<string> GetTopOversoldCoinsAsync()
+    public static async Task<List<string>> GetTopOversoldCoinsAsync()
     {
         await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
 
@@ -172,19 +172,43 @@ public static class CoinDataAnalyzer
             }
         }
 
-        StringBuilder messageBuilder = new StringBuilder("发现超卖：\n\n");
-        foreach (var coin in oversoldCoins.Take(20))
+    List<string> messages = new List<string>();
+    StringBuilder messageBuilder = new StringBuilder("发现超卖：\n\n");
+    int count = 0;
+
+    foreach (var coin in oversoldCoins)
+    {
+        string marketCapDisplay = coin.MarketCapUsd >= 100_000_000 ? $"{Math.Round(coin.MarketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.MarketCapUsd / 1_000_000, 2)}m";
+        string volume24hDisplay = coin.Volume24hUsd >= 100_000_000 ? $"{Math.Round(coin.Volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.Volume24hUsd / 1_000_000, 2)}m";
+
+        string change1hSymbol = coin.PercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+        string change24hSymbol = coin.PercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+        string change7dSymbol = coin.PercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+        messageBuilder.AppendLine($"#{coin.Symbol}   <code>{coin.Symbol}</code>   |   价格：${coin.Price}   |   <b>No.{coin.Rank}</b>");
+        messageBuilder.AppendLine($"流通市值：{marketCapDisplay}  |  24小时交易：{volume24hDisplay}");
+        messageBuilder.AppendLine($"1h：{change1hSymbol}{coin.PercentChange1h:F2}%  |  24h：{change24hSymbol}{coin.PercentChange24h:F2}%  |  7d：{change7dSymbol}{coin.PercentChange7d:F2}%");
+        messageBuilder.AppendLine($"RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}  |  m10： {coin.M10}");
+
+        count++;
+        if (count % 20 == 0 && count < oversoldCoins.Count)
         {
-            string marketCapDisplay = coin.MarketCapUsd >= 100_000_000 ? $"{Math.Round(coin.MarketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.MarketCapUsd / 1_000_000, 2)}m";
-            string volume24hDisplay = coin.Volume24hUsd >= 100_000_000 ? $"{Math.Round(coin.Volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.Volume24hUsd / 1_000_000, 2)}m";
-
-            messageBuilder.AppendLine($"#{coin.Symbol}   <code>{coin.Symbol}</code>   |   价格：${coin.Price}   |   <b>No.{coin.Rank}</b>");
-            messageBuilder.AppendLine($"流通市值：{marketCapDisplay}  |  24小时交易：{volume24hDisplay}");
-            messageBuilder.AppendLine($"1h：{coin.PercentChange1h:F2}%  |  24h：{coin.PercentChange24h:F2}%  |  7d：{coin.PercentChange7d:F2}%");
-            messageBuilder.AppendLine($"RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}  |  m10： {coin.M10}\n");
+            messageBuilder.AppendLine("————————————————————");
+            messages.Add(messageBuilder.ToString());
+            messageBuilder = new StringBuilder(); // 为下一批币种数据开始新的构建
         }
+        else if (count < oversoldCoins.Count)
+        {
+            messageBuilder.AppendLine("————————————————————");
+        }
+    }
 
-        return messageBuilder.ToString();
+    if (messageBuilder.Length > 0)
+    {
+        messages.Add(messageBuilder.ToString()); // 添加最后一批消息
+    }
+
+    return messages;
     }
 
     // 辅助方法：获取下跌的币种
@@ -13303,11 +13327,16 @@ if (messageText.StartsWith("/charsi"))
 {
     try
     {
-        var oversoldMessage = await CoinDataAnalyzer.GetTopOversoldCoinsAsync();
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id, 
-            text: oversoldMessage, 
-            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+        var oversoldMessages = await CoinDataAnalyzer.GetTopOversoldCoinsAsync();
+        foreach (var oversoldMessage in oversoldMessages)
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id, 
+                text: oversoldMessage, 
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+            // 可选：在消息之间添加短暂延迟，以避免频率限制问题
+            await Task.Delay(500); // 500毫秒延迟
+        }
     }
     catch (Exception ex)
     {
