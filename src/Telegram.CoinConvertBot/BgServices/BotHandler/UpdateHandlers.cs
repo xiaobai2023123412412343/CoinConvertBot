@@ -10345,13 +10345,15 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 机器人可以将用户的操作转发到指定群聊，在群里回复该信息，机器人可直接转发信息给用户。
 授权 ID 时间 可一键授权用户开通 FF Pro 会员，时间可带永久。
 赠送 ID 数字  可赠送用户签到积分。
+<code>/zdcrsi</code> 可启动定时查询rsi值  <code>/charsi</code>  直接查rsi
 
 启动机器人先：先开启保存群聊资料：<code>/baocunqunliao</code>
-储存之前的用户资料 代绑地址
+储存之前的用户资料 代绑地址 可以代解
 <code>/qdgg</code> 启动广告
 <code>关闭翻译</code> <code>/xuni</code>
 <code>监控 btc </code>可选
 <code>监控 eth </code>可选
+<code>/zdcrsi</code> 启动定时查询rsi
 
 <code>绑定 TJ4c6esQYEM7jn5s8DD5zk2DBYJTLHnFR3 TRX 备注 安卓比特派</code>
 <code>绑定 TWs6YaFusBbL6UYPjfK9XxpffNGCDu1ApF TRX 备注 安卓抹茶</code>
