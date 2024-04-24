@@ -776,8 +776,9 @@ public static class CryptoMarketAnalyzer
                 var customQueryKeyboard = new InlineKeyboardMarkup(new[]
                 {
 		    InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
-                    InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),
-                    InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding")
+                    //InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),
+                    InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding"),
+                    InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")			    
                 });		    
 		    
                 string noDataMessage = "暂未发现财富密码，持续监控中...\n\n" +
@@ -871,8 +872,9 @@ public static class CryptoMarketAnalyzer
             new[] // 新增第二排按钮
             {
                 InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
-                InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),		    
-                InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding")
+                //InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),		    
+                InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding"),
+		InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")		
             }
         });
 
