@@ -15626,7 +15626,7 @@ USDT余额： <b>{USDT}</b>
 质押 {requiredTRX1} TRX = 31895 能量
 质押 {requiredTRX2} TRX = 64895 能量     
 ——————————————————————    
-今日承兑：<b>{todayIncome} USDT  | {todayTRXOut} TRX</b>
+今日承兑：<b>{todayIncome} USDT  |  {todayTRXOut} TRX</b>
 本月承兑：<b>{monthlyIncome} USDT</b>
 年度承兑：<b>{yearlyIncome} USDT</b>                  
 ";
