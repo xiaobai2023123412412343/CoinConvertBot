@@ -12277,7 +12277,9 @@ foreach (var coin in topFall)
     }
     index++;
 }
-
+	    
+rows.Add(new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi") });
+	    
 var inlineKeyboard = new InlineKeyboardMarkup(rows);
 
 await botClient.SendTextMessageAsync(
