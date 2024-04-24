@@ -8336,6 +8336,10 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
         InlineKeyboardButton.WithCallbackData("资金费率", $"zijinn"),	    
         InlineKeyboardButton.WithCallbackData("信号广场", $"bijiacha"),
     },
+    new [] // 第2行按钮
+    {
+        InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi")		
+    },    
 });
 
     if (editMessage)
