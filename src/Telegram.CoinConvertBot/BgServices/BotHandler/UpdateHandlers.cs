@@ -586,6 +586,20 @@ public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message 
         SetPermanentVip(userIdToAuthorize);
 
         await botClient.SendTextMessageAsync(message.Chat.Id, $"用户 {userIdToAuthorize} 现在是永久VIP会员。");
+        
+        // 向被授权的用户发送永久VIP会员的消息
+        try
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: userIdToAuthorize,
+                text: "您已升级永久VIP会员！"
+            );
+        }
+        catch (Exception ex)
+        {
+            // 发送失败，记录或处理异常
+            //Console.WriteLine($"尝试向用户 {userIdToAuthorize} 发送永久VIP会员消息失败: {ex.Message}");
+        }
         return;
     }
     var duration = ParseDuration(parts[2]);
