@@ -13263,7 +13263,7 @@ if (messageText.Contains("订阅"))
         replyMarkup: inlineKeyboard
     );
 }
-if (message.Text.StartsWith("/provip"))
+if (message.Text.StartsWith("/provip") || message.Text.StartsWith("/start provip"))
 {
     var userId = message.From.Id;
     // 使用新的公共方法检查VIP状态
