@@ -13549,27 +13549,51 @@ if (messageText.StartsWith("/charsi"))
                     Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithCallbackData("取消通知", "/qxdyrsi")
                 });
 
-            foreach (var userId in notificationUserIds) // 遍历所有需要通知的用户ID
+            List<long> userIdsToRemove = new List<long>(); // 确保使用 long 类型
+
+            foreach (var userId in notificationUserIds) // 确保 notificationUserIds 是 long 类型的列表
             {
-                foreach (var oversoldMessage in oversoldMessages)
+                if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime))
                 {
-                    try
+                    TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+                    DateTime beijingTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaZone);
+                    DateTime beijingTimeExpiry = TimeZoneInfo.ConvertTimeFromUtc(expiryTime, chinaZone);
+
+                    if (beijingTimeNow > beijingTimeExpiry)
                     {
-                        await botClient.SendTextMessageAsync(
-                            chatId: userId, // 向列表中的每个用户ID发送
-                            text: oversoldMessage,
-                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-                            replyMarkup: keyboardMarkup); // 添加按钮
-                        // 可选：在消息之间添加短暂延迟，以避免频率限制问题
-                        await Task.Delay(500); // 500毫秒延迟
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"向用户{userId}发送消息失败: {ex.Message}");
-                        // 如果发送失败，忽略失败的发送操作，继续向其他用户发送消息
+                        userIdsToRemove.Add(userId);
+                        Console.WriteLine($"用户{userId}不是会员或会员已到期，将从通知列表中移除。");
                         continue;
                     }
+
+                    foreach (var oversoldMessage in oversoldMessages)
+                    {
+                        try
+                        {
+                            await botClient.SendTextMessageAsync(
+                                chatId: userId, // 确保 chatId 是 long 类型
+                                text: oversoldMessage,
+                                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                                replyMarkup: keyboardMarkup);
+                            await Task.Delay(500); // 500毫秒延迟
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"向用户{userId}发送消息失败: {ex.Message}");
+                            continue;
+                        }
+                    }
                 }
+                else
+                {
+                    userIdsToRemove.Add(userId);
+                    Console.WriteLine($"无法验证用户{userId}的会员状态，将从通知列表中移除。");
+                }
+            }
+
+            foreach (var userId in userIdsToRemove)
+            {
+                notificationUserIds.Remove(userId);
             }
         }
         // 如果没有获取到数据，这里不执行任何操作，也不返回任何消息
