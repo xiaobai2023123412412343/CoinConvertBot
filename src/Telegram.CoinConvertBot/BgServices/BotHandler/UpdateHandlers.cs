@@ -134,7 +134,7 @@ public static class CoinDataAnalyzer
             }
 
             // 随机时间间隔，防止API限制
-            await Task.Delay(random.Next(100, 501));
+            await Task.Delay(random.Next(200, 400));
 
             try
             {
@@ -236,7 +236,7 @@ public static class CoinDataAnalyzer
     // 生成随机时间间隔的方法
     private static Task RandomDelay()
     {
-        return Task.Delay(random.Next(500, 1501)); // 0.5到1.5秒的随机时间间隔
+        return Task.Delay(random.Next(200, 400)); // 设置随机时间间隔在200到400毫秒之间
     }
 }
 
