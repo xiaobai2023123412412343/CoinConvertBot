@@ -13543,6 +13543,12 @@ if (messageText.StartsWith("/charsi"))
         var oversoldMessages = await CoinDataAnalyzer.GetTopOversoldCoinsAsync();
         if (oversoldMessages.Count > 0) // 检查是否有获取到数据
         {
+            var keyboardMarkup = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(
+                new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton[]
+                {
+                    Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithCallbackData("取消通知", "/qxdyrsi")
+                });
+
             foreach (var userId in notificationUserIds) // 遍历所有需要通知的用户ID
             {
                 foreach (var oversoldMessage in oversoldMessages)
@@ -13551,8 +13557,9 @@ if (messageText.StartsWith("/charsi"))
                     {
                         await botClient.SendTextMessageAsync(
                             chatId: userId, // 向列表中的每个用户ID发送
-                            text: oversoldMessage, 
-                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+                            text: oversoldMessage,
+                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                            replyMarkup: keyboardMarkup); // 添加按钮
                         // 可选：在消息之间添加短暂延迟，以避免频率限制问题
                         await Task.Delay(500); // 500毫秒延迟
                     }
