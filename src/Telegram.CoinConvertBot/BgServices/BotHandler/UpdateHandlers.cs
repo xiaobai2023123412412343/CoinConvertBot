@@ -32,6 +32,7 @@ using System.Text.Json.Serialization;
 using System.Numerics;
 using System.Globalization;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 
@@ -102,6 +103,78 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+//定时监控 RSI 值	
+public static class TimerManager
+{
+    private static Timer timerToSendCommand;
+    private static Timer timerToMonitor;
+    private static ITelegramBotClient botClient;
+    private static long userId = 1427768220;
+
+    public static void Initialize(ITelegramBotClient client)
+    {
+        botClient = client;
+        StartOrRestartTimers();
+    }
+
+    private static void StartOrRestartTimers()
+    {
+        if (timerToSendCommand == null)
+        {
+            var timeToNextHour = 3600000 - (DateTime.Now.Minute * 60000 + DateTime.Now.Second * 1000 + DateTime.Now.Millisecond);
+            timerToSendCommand = new Timer(async _ => await SendCommandAsync(), null, timeToNextHour, 3600000);
+            Console.WriteLine($"定时器已启动，具体下一个整点还差{timeToNextHour / 60000}分钟");
+        }
+
+        if (timerToMonitor == null)
+        {
+            timerToMonitor = new Timer(_ => MonitorAndRestartTimer(), null, 0, 60000); //每分钟（60000毫秒）监控一次定时器是否正常
+            Console.WriteLine("定时监控定时器已启动，持续监控中.....");
+        }
+    }
+
+    private static async Task SendCommandAsync()
+    {
+        try
+        {
+            // 构造一个模拟的Message对象
+            var fakeMessage = new Message
+            {
+                Text = "/charsi",
+                Chat = new Chat { Id = userId },
+                From = new Telegram.Bot.Types.User { Id = userId }
+            };
+
+            // 调用BotOnMessageReceived来处理这个模拟的消息
+            await BotOnMessageReceived(botClient, fakeMessage);
+            Console.WriteLine($"已模拟用户ID：{userId} 发送指令：/charsi");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"发送指令失败：{ex.Message}");
+            await HandleErrorAsync("发送指令失败，尝试重启...");
+        }
+    }
+
+    private static void MonitorAndRestartTimer()
+    {
+        if (timerToSendCommand == null)
+        {
+            Console.WriteLine("监控到定时器停止，正在尝试重启...");
+            StartOrRestartTimers();
+        }
+    }
+
+    private static async Task HandleErrorAsync(string errorMessage)
+    {
+        Console.WriteLine(errorMessage);
+        await botClient.SendTextMessageAsync(userId, "自动定时查询RSI值已停止，请检查 /zdcrsi 功能！");
+        timerToSendCommand?.Dispose();
+        timerToSendCommand = null;
+        await Task.Delay(5000); // 等待5秒后重启
+        StartOrRestartTimers();
+    }
+}
 // 通知用户ID字典 以及查询 rsi指数
 private static HashSet<long> notificationUserIds = new HashSet<long> { 1427768220 };	
 public static class CoinDataAnalyzer
@@ -9593,7 +9666,7 @@ if (isNumberRange)
         if (!string.IsNullOrWhiteSpace(inputText))
         {
             // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|qiand|music|provip|huiyuanku|usd|more|usdt|tron|z0|cny|trc|home|jiankong|caifu|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|ucard|jisuzhangdie|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|查询余额|地址监听|加密货币|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
+            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|qiand|music|provip|huiyuanku|zdcrsi|usd|more|usdt|tron|z0|cny|trc|home|jiankong|caifu|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|ucard|jisuzhangdie|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|查询余额|地址监听|加密货币|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
 
             // 检查输入文本是否为数字+货币的组合
             var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
@@ -13368,6 +13441,12 @@ if (messageText.StartsWith("/charsi"))
         // 如果在获取数据时发生异常，同样不返回任何消息
         Console.WriteLine($"查询超卖币种时出错: {ex.Message}");
     }
+}
+//定时监控rsi值
+if (message.Text.Equals("/zdcrsi"))
+{
+    TimerManager.Initialize(botClient);
+    await botClient.SendTextMessageAsync(message.Chat.Id, "定时监控 RSI 值已启动！");	
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
