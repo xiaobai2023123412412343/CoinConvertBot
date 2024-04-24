@@ -134,7 +134,7 @@ public static class CoinDataAnalyzer
             }
 
             // 随机时间间隔，防止API限制
-            await Task.Delay(random.Next(500, 1501));
+            await Task.Delay(random.Next(100, 501));
 
             try
             {
