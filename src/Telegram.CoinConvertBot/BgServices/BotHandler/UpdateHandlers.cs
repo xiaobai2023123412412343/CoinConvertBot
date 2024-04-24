@@ -13731,8 +13731,11 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
             string monitoringListText = "\n\n监控列表：\n\n";
             monitoringListText += $"您当前监控 <b>{monitoredCount}</b> 个加密货币价格变动！\n\n";
 
-            // 获取监控信息列表的最后一个元素的索引
-            int lastIndex = PriceMonitor.monitorInfos[message.Chat.Id].Count - 1;
+	    int lastIndex = PriceMonitor.monitorInfos[message.Chat.Id].Count - 1;
+		
+            int partIndex = 0;
+            int partSize = 10;
+            List<string> messages = new List<string>();
 
             foreach (var monitorInfo in PriceMonitor.monitorInfos[message.Chat.Id].Select((value, index) => new { value, index }))
             {
@@ -13763,20 +13766,33 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
                         }
                     }
                 }
+
+                // 检查是否需要分割消息
+                if ((monitorInfo.index + 1) % partSize == 0 || monitorInfo.index == lastIndex)
+                {
+                    messages.Add(baseResponseText + monitoringListText);
+                    monitoringListText = ""; // 重置文本以用于下一部分
+                }
             }
 
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: baseResponseText + monitoringListText,
-                parseMode: ParseMode.Html
-            );
+            // 发送所有分割的消息
+            foreach (var messagePart in messages)
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: messagePart,
+                    parseMode: ParseMode.Html,
+                    replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi"))
+                );
+            }
         }
         else
         {
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: baseResponseText,
-                parseMode: ParseMode.Html
+                parseMode: ParseMode.Html,
+                replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi"))
             );
         }
     }
