@@ -200,7 +200,7 @@ public static async Task HandleDingYuErSiCommand(ITelegramBotClient botClient, M
                     // 更新字典成功，回复用户
                     await botClient.SendTextMessageAsync(
                         chatId: message.Chat.Id,
-                        text: "订阅成功！\n" +
+                        text: "订阅成功！ \U00002705\n\n" +
                               "您已成功订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
                               "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！",
                         parseMode: ParseMode.Html
@@ -221,7 +221,7 @@ public static async Task HandleDingYuErSiCommand(ITelegramBotClient botClient, M
                 // 用户不是VIP或会员已过期
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "订阅失败！\n" +
+                    text: "订阅失败！ \U0000274C\n\n" +
                           "您还不是 FF Pro会员，请在订阅会员后重试！\n" +
                           "订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
                           "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！",
@@ -234,7 +234,7 @@ public static async Task HandleDingYuErSiCommand(ITelegramBotClient botClient, M
             // 用户不是VIP，提供订阅选项
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: "订阅失败！\n" +
+                text: "订阅失败！ \U0000274C\n\n" +
                       "您还不是 FF Pro会员，请在订阅会员后重试！\n" +
 		      "订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
                       "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！",
