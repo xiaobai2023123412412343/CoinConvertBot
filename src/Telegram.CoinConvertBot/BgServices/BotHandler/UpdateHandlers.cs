@@ -302,7 +302,8 @@ public static async Task HandleCancelDingYuErSiCommand(ITelegramBotClient botCli
             parseMode: ParseMode.Html
         );
     }
-}	
+}
+//查rsi值	
 public static class CoinDataAnalyzer
 {
     private static readonly Random random = new Random();
