@@ -778,7 +778,7 @@ public static class CryptoMarketAnalyzer
 		    InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
                     //InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),
                     InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding"),
-                    InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")			    
+                    InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi")			    
                 });		    
 		    
                 string noDataMessage = "暂未发现财富密码，持续监控中...\n\n" +
@@ -874,7 +874,7 @@ public static class CryptoMarketAnalyzer
                 InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
                 //InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),		    
                 InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding"),
-		InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")		
+		InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi")		
             }
         });
 
