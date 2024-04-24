@@ -2953,7 +2953,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                     new [] // first row
                     {
                         InlineKeyboardButton.WithCallbackData("消费U卡", "energy_introo"), // 新增的按钮				    
-                        InlineKeyboardButton.WithCallbackData("波场能量", "energy_intro"), // 新增的按钮	
+                        InlineKeyboardButton.WithCallbackData("租赁能量", "energy_intro"), // 新增的按钮	
                         InlineKeyboardButton.WithUrl("靓号地址", "https://t.me/lianghaonet")				
                     } 			
                 });                
