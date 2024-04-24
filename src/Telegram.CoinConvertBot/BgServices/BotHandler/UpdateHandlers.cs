@@ -176,7 +176,83 @@ public static class TimerManager
     }
 }
 // 通知用户ID字典 以及查询 rsi指数
-private static HashSet<long> notificationUserIds = new HashSet<long> { 1427768220 };	
+private static HashSet<long> notificationUserIds = new HashSet<long> { 1427768220 };
+// 处理 /dingyuersi 命令
+public static async Task HandleDingYuErSiCommand(ITelegramBotClient botClient, Message message)
+{
+    var userId = message.From.Id;
+    try
+    {
+        // 使用新的公共方法检查VIP状态
+        if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime))
+        {
+            TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+            DateTime beijingTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaZone);
+            DateTime beijingTimeExpiry = TimeZoneInfo.ConvertTimeFromUtc(expiryTime, chinaZone);
+
+            // 现在使用北京时间进行比较
+            if (beijingTimeNow <= beijingTimeExpiry)
+            {
+                // 用户是VIP
+                bool added = notificationUserIds.Add(userId);
+                if (added)
+                {
+                    // 更新字典成功，回复用户
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "订阅成功！\n" +
+                              "您已成功订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
+                              "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！",
+                        parseMode: ParseMode.Html
+                    );
+                }
+                else
+                {
+                    // 用户ID已存在，无需重复添加
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "您已订阅大师选币，无需重复订阅。",
+                        parseMode: ParseMode.Html
+                    );
+                }
+            }
+            else
+            {
+                // 用户不是VIP或会员已过期
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "订阅失败！\n" +
+                          "您还不是 FF Pro会员，请在订阅会员后重试！\n" +
+                          "订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
+                          "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！",
+                    parseMode: ParseMode.Html
+                );
+            }
+        }
+        else
+        {
+            // 用户不是VIP，提供订阅选项
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "订阅失败！\n" +
+                      "您还不是 FF Pro会员，请在订阅会员后重试！\n" +
+		      "订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
+                      "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！",
+                parseMode: ParseMode.Html
+            );
+        }
+    }
+    catch (Exception ex)
+    {
+        // 处理异常
+        Console.WriteLine($"处理 /dingyuersi 命令时发生异常: {ex.Message}");
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "订阅异常，请稍后重试！",
+            parseMode: ParseMode.Html
+        );
+    }
+}	    	
 public static class CoinDataAnalyzer
 {
     private static readonly Random random = new Random();
@@ -13447,6 +13523,11 @@ if (message.Text.Equals("/zdcrsi"))
 {
     TimerManager.Initialize(botClient);
     await botClient.SendTextMessageAsync(message.Chat.Id, "定时监控 RSI 值已启动！");	
+}
+// 检查消息是否以特定命令开始
+ if (message.Text.StartsWith("/dingyuersi"))
+{
+    await HandleDingYuErSiCommand(botClient, message);
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
