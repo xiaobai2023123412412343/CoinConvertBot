@@ -13623,6 +13623,24 @@ else if (message.Text.StartsWith("/qxdyrsi"))
    // 取消订阅通知
   await HandleCancelDingYuErSiCommand(botClient, message);
 }
+if (message.Text.Contains("大师") || message.Text.Contains("选币"))
+{
+    var subscriptionText = "订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
+                           "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！";
+
+    // 创建内联键盘按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi")
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: subscriptionText,
+        parseMode: ParseMode.Html, // 确保消息以HTML格式发送
+        replyMarkup: inlineKeyboard
+    );
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
