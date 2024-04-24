@@ -201,7 +201,7 @@ public static async Task HandleDingYuErSiCommand(ITelegramBotClient botClient, M
                     await botClient.SendTextMessageAsync(
                         chatId: message.Chat.Id,
                         text: "订阅成功！ \U00002705\n\n" +
-                              "您已成功订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
+                              "您已成功订阅超卖信号，当价格出现超卖时，机器人将提前通知您！\n" +
                               "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！",
                         parseMode: ParseMode.Html
                     );
@@ -211,7 +211,7 @@ public static async Task HandleDingYuErSiCommand(ITelegramBotClient botClient, M
                     // 用户ID已存在，无需重复添加
                     await botClient.SendTextMessageAsync(
                         chatId: message.Chat.Id,
-                        text: "您已订阅大师选币，无需重复订阅。",
+                        text: "您已订阅超卖信号，无需重复订阅。",
                         parseMode: ParseMode.Html
                     );
                 }
@@ -228,7 +228,7 @@ public static async Task HandleDingYuErSiCommand(ITelegramBotClient botClient, M
                     chatId: message.Chat.Id,
                     text: "订阅失败！ \U0000274C\n\n" +
                           "您还不是 FF Pro会员，请在订阅会员后重试！\n" +
-                          "订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
+                          "订阅超卖信号，当价格出现超卖时，机器人将提前通知您！\n" +
                           "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！",
                     parseMode: ParseMode.Html,
                     replyMarkup: inlineKeyboard
@@ -247,7 +247,7 @@ public static async Task HandleDingYuErSiCommand(ITelegramBotClient botClient, M
                 chatId: message.Chat.Id,
                 text: "订阅失败！ \U0000274C\n\n" +
                       "您还不是 FF Pro会员，请在订阅会员后重试！\n" +
-                      "订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
+                      "订阅超卖信号，当价格出现超卖时，机器人将提前通知您！\n" +
                       "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！",
                 parseMode: ParseMode.Html,
                 replyMarkup: inlineKeyboard
@@ -791,7 +791,7 @@ public static class CryptoMarketAnalyzer
 		    InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
                     //InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),
                     InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding"),
-                    InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi")			    
+                    InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")			    
                 });		    
 		    
                 string noDataMessage = "暂未发现财富密码，持续监控中...\n\n" +
@@ -887,7 +887,7 @@ public static class CryptoMarketAnalyzer
                 InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
                 //InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),		    
                 InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding"),
-		InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi")		
+		InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")		
             }
         });
 
@@ -1479,7 +1479,7 @@ rows.Add(fallButtons);
 
 // 添加原有的按钮和新按钮
 rows.Add(new InlineKeyboardButton[] {
-    InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi"),
+    InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
     InlineKeyboardButton.WithCallbackData("市值TOP50 大数据", "feixiaohao")
 });
 
@@ -8341,7 +8341,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     },
     new [] // 第2行按钮
     {
-        InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi")		
+        InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")		
     },    
 });
 
@@ -12281,7 +12281,7 @@ foreach (var coin in topFall)
     index++;
 }
 	    
-rows.Add(new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi") });
+rows.Add(new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi") });
 	    
 var inlineKeyboard = new InlineKeyboardMarkup(rows);
 
@@ -13258,7 +13258,7 @@ if (message.Text.StartsWith("/provip"))
 		parseMode: ParseMode.Html,    
                 text: $"您已是 FF Pro会员，到期时间为：{beijingTimeExpiry:yyyy/MM/dd HH:mm:ss}。\n\n" +
                               "\U00002705FF Pro会员可无限次查询各项数据\n" +
-                              "\U00002705可订阅大师选币，交易要快人一步\n" +		    
+                              "\U00002705可订阅超卖信号，交易要快人一步\n" +		    
                               "\U00002705可无限制监听波场地址的交易播报\n" +
                               "\U00002705开通电报会员，可享受更低的价格\n" +
                               "三月电报会员：<del>原价24.99u</del>，现只需20u；\n" +
@@ -13276,7 +13276,7 @@ if (message.Text.StartsWith("/provip"))
                               "12个月：96USDT 或 汇旺96USD（8折优惠）\n" +
                               "永久会员：200USDT 或 汇旺200USD\n\n" + 
                               "\U00002705FF Pro会员可无限次查询各项数据\n" +
-                              "\U00002705可订阅大师选币，交易要快人一步\n" +		    
+                              "\U00002705可订阅超卖信号，交易要快人一步\n" +		    
                               "\U00002705可无限制监听波场地址的交易播报\n" +
                               "\U00002705开通电报会员，可享受更低的价格\n" +
                               "三月电报会员：<del>原价24.99u</del>，现只需20u；\n" +
@@ -13307,7 +13307,7 @@ if (message.Text.StartsWith("/provip"))
                                "12个月：96USDT 或 汇旺96USD（8折优惠）\n" +
                                "永久会员：200USDT 或 汇旺200USD\n\n" + 
 		               "\U00002705FF Pro会员可无限次查询各项数据\n" +
-                               "\U00002705可订阅大师选币，交易要快人一步\n" +		
+                               "\U00002705可订阅超卖信号，交易要快人一步\n" +		
 		               "\U00002705可无限制监听波场地址的交易播报\n" +
                                "\U00002705开通电报会员，可享受更低的价格\n" +
                               "三月电报会员：<del>原价24.99u</del>，现只需20u；\n" +
@@ -13632,15 +13632,15 @@ else if (message.Text.StartsWith("/qxdyrsi"))
    // 取消订阅通知
   await HandleCancelDingYuErSiCommand(botClient, message);
 }
-if (message.Text.Contains("大师") || message.Text.Contains("选币"))
+if (message.Text.Contains("超卖") || message.Text.Contains("信号"))
 {
-    var subscriptionText = "订阅大师选币，当价格出现超卖时，机器人将提前通知您！\n" +
+    var subscriptionText = "订阅超卖信号，当价格出现超卖时，机器人将提前通知您！\n" +
                            "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！";
 
     // 创建内联键盘按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi")
+        InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")
     });
 
     await botClient.SendTextMessageAsync(
@@ -13787,7 +13787,7 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
                     chatId: message.Chat.Id,
                     text: messagePart,
                     parseMode: ParseMode.Html,
-                    replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi"))
+                    replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"))
                 );
             }
         }
@@ -13797,7 +13797,7 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
                 chatId: message.Chat.Id,
                 text: baseResponseText,
                 parseMode: ParseMode.Html,
-                replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi"))
+                replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"))
             );
         }
     }
