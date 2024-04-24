@@ -122,7 +122,7 @@ public static class TimerManager
         if (timerToSendCommand == null)
         {
             var timeToNextHour = 3600000 - (DateTime.Now.Minute * 60000 + DateTime.Now.Second * 1000 + DateTime.Now.Millisecond);
-            timerToSendCommand = new Timer(async _ => await SendCommandAsync(), null, timeToNextHour, 3600000);
+            timerToSendCommand = new Timer(async _ => await SendCommandAsync(), null, timeToNextHour, 3600000); //首次检查差多长时间到下一个整点，后续每小时自动触发
             Console.WriteLine($"定时器已启动，具体下一个整点还差{timeToNextHour / 60000}分钟");
         }
 
