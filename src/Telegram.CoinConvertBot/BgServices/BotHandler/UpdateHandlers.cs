@@ -2917,6 +2917,8 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                  // 判断交易费用是“我方出”还是“对方出”
                  string feePayer = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase) ? "我方出" : "对方出";
 
+		var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";    
+
                 var message = $"<b>新交易   \U0001F4B0  {transactionSign}{amount} USDT</b> \n\n" +
                               $"交易类型：<b>{transactionType}</b>\n" +
                               $"{transactionType}金额：<b>{amount}</b>\n" +
@@ -2928,12 +2930,11 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"对方地址： <code>{(isOutgoing ? transaction.To : transaction.From)}</code>\n" +
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n\n" +    
 			      //$"------------------------------------------------------------------------\n" +
-                              $"交易费用：<b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
+                              $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
 			      $"<a href=\"https://t.me/lianghaonet\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
                               $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
                               $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用最低降至 7.00 TRX！</a>\n"; // 修改后的两行文字
 		    
-                var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
                     new [] // first row
@@ -2941,15 +2942,16 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
 			//InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}"),    
                         //InlineKeyboardButton.WithUrl("交易详情", transactionUrl)
                         InlineKeyboardButton.WithCallbackData("查自己", $"query_self,{address}"),
-                        InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}")				
+                        InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}"), 	
+			InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}") 	
                     },
-                    new [] // first row
-                    {
-                        //InlineKeyboardButton.WithCallbackData("查自己", $"query_self,{address}"),
-                        //InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}")
-			InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}"),    
-                        InlineKeyboardButton.WithUrl("交易详情", transactionUrl)				
-                    },   
+                    //new [] // first row
+                   // {
+                   //     //InlineKeyboardButton.WithCallbackData("查自己", $"query_self,{address}"),
+                  //      //InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}")
+		//	InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}"),    
+                  //      InlineKeyboardButton.WithUrl("交易详情", transactionUrl)				
+                 //   },   
                     new [] // first row
                     {
                         InlineKeyboardButton.WithCallbackData("消费U卡", "energy_introo"), // 新增的按钮				    
