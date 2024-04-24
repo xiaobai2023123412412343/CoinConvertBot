@@ -1477,8 +1477,11 @@ for (int i = 0; i < 5; i++)
 }
 rows.Add(fallButtons);
 
-// 添加原有的按钮
-rows.Add(new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("市值TOP50 大数据", "feixiaohao") });
+// 添加原有的按钮和新按钮
+rows.Add(new InlineKeyboardButton[] {
+    InlineKeyboardButton.WithCallbackData("订阅大师选币", "/dingyuersi"),
+    InlineKeyboardButton.WithCallbackData("市值TOP50 大数据", "feixiaohao")
+});
 
 // 创建键盘
 var inlineKeyboard = new InlineKeyboardMarkup(rows);
