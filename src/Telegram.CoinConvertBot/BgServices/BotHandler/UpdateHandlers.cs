@@ -177,7 +177,7 @@ public static class TimerManager
 }
 // 通知用户ID字典 以及查询 rsi指数
 private static HashSet<long> notificationUserIds = new HashSet<long> { 1427768220 };
-// 处理 /dingyuersi 命令
+// 订阅通知
 public static async Task HandleDingYuErSiCommand(ITelegramBotClient botClient, Message message)
 {
     var userId = message.From.Id;
@@ -252,7 +252,45 @@ public static async Task HandleDingYuErSiCommand(ITelegramBotClient botClient, M
             parseMode: ParseMode.Html
         );
     }
-}	    	
+}
+//取消订阅通知
+public static async Task HandleCancelDingYuErSiCommand(ITelegramBotClient botClient, Message message)
+{
+    var userId = message.From.Id;
+    try
+    {
+        // 尝试从通知字典中移除用户ID
+        if (notificationUserIds.Remove(userId))
+        {
+            // 如果用户ID存在于字典中并成功移除
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "取消成功！",
+                parseMode: ParseMode.Html
+            );
+        }
+        else
+        {
+            // 如果用户ID不在字典中，不需要移除，直接回复取消成功
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "取消成功！",
+                parseMode: ParseMode.Html
+            );
+        }
+    }
+    catch (Exception ex)
+    {
+        // 记录或处理异常
+        Console.WriteLine($"尝试取消订阅时发生异常: {ex.Message}");
+        // 发生异常时回复用户
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "操作失败，请稍后重试...",
+            parseMode: ParseMode.Html
+        );
+    }
+}	
 public static class CoinDataAnalyzer
 {
     private static readonly Random random = new Random();
@@ -13526,10 +13564,15 @@ if (message.Text.Equals("/zdcrsi"))
     TimerManager.Initialize(botClient);
     await botClient.SendTextMessageAsync(message.Chat.Id, "定时监控 RSI 值已启动！");	
 }
-// 检查消息是否以特定命令开始
+// 订阅通知
  if (message.Text.StartsWith("/dingyuersi"))
 {
     await HandleDingYuErSiCommand(botClient, message);
+}
+else if (message.Text.StartsWith("/qxdyrsi"))
+{
+   // 取消订阅通知
+  await HandleCancelDingYuErSiCommand(botClient, message);
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
