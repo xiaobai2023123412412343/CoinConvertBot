@@ -598,15 +598,26 @@ public static async Task AuthorizeVipUser(ITelegramBotClient botClient, Message 
     DateTime newExpiryTime;
     TimeSpan additionalTime = duration;
 
-    if (vipUserExpiryTimes.TryGetValue(userIdToAuthorize, out var existingExpiryTime) && DateTime.UtcNow < existingExpiryTime)
+    try
     {
-        // 用户已是VIP且存在倒计时，累加时间
-        newExpiryTime = existingExpiryTime.Add(additionalTime);
+        if (vipUserExpiryTimes.TryGetValue(userIdToAuthorize, out var existingExpiryTime) && DateTime.UtcNow < existingExpiryTime)
+        {
+            // 用户已是VIP且存在倒计时，累加时间
+            newExpiryTime = existingExpiryTime.Add(additionalTime);
+        }
+        else
+        {
+            // 用户不是VIP或倒计时已结束，设置新的倒计时
+            newExpiryTime = DateTime.UtcNow.Add(additionalTime);
+        }
     }
-    else
+    catch (ArgumentOutOfRangeException)
     {
-        // 用户不是VIP或倒计时已结束，设置新的倒计时
-        newExpiryTime = DateTime.UtcNow.Add(additionalTime);
+        // 如果计算的新到期时间超出范围，则设置为DateTime的最大值
+        newExpiryTime = DateTime.MaxValue;
+        // 向用户发送消息，通知他们VIP状态已设置为最大可能值
+        await botClient.SendTextMessageAsync(message.Chat.Id, "授权时间过长，已调整为最大可能值。");
+        // 注意：这里可以选择直接返回，也可以继续执行后续逻辑
     }
 
     // 使用TimeZoneInfo将UTC时间转换为北京时间（UTC+8）
