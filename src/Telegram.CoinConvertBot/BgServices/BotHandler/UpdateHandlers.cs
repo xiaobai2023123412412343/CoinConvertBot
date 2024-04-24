@@ -13540,7 +13540,7 @@ if (message.Text.Equals("/jifensc", StringComparison.OrdinalIgnoreCase))
             userPoints = userInfo.Points;
         }
 
-        string replyMessage = $"您当前积分为：<b>{userPoints}</b> 积分\n\n" +
+        string replyMessage = $"您当前积分为：<b>{userPoints}</b> 签到积分\n\n" +
                               "兑换3个月电报会员：99积分\n" +
                               "兑换6个月电报会员：188积分\n" +
                               "兑换12个月电报会员：300积分\n" +
