@@ -1194,7 +1194,7 @@ var keyboard = new InlineKeyboardMarkup(new[]
     }
 });
 
-        await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html, replyMarkup: keyboard);
+        await botClient.SendTextMessageAsync(chatId, message, ParseMode.Html,disableWebPagePreview: true,replyMarkup: keyboard);
         
     }
     catch (Exception ex)
@@ -3961,7 +3961,7 @@ public static class BinancePriceInfo
 
                 klineData = ProcessKlineData(klineDataRaw); // 直接赋值给klineData
                 dataFetched = true;
-		dataSource = "币安"; // 设置数据来源为币安    
+		dataSource = $"<a href=\"https://www.binance.com/zh-CN/trade/{symbol.ToUpper()}_USDT?type=spot\">币安</a>"; // 设置数据来源为币安    
 
                 //Console.WriteLine("数据来自币安");    
             }
@@ -3987,7 +3987,7 @@ if (!dataFetched)
                 var klineDataRaw = okexResponseObject.data.Select(kline => kline.Select(JsonElementFromString).ToList()).ToList();
                 klineData = ProcessKlineData(klineDataRaw, isOkex: true);
                 dataFetched = true; // 只有在确实获取到有效数据时才设置为true
-		dataSource = "欧易"; // 设置数据来源为欧易    
+		dataSource = $"<a href=\"https://www.okx.com/zh-hans/trade-spot/{symbol.ToUpper()}-usdt\">欧易</a>"; // 设置数据来源为欧易    
                 //Console.WriteLine("数据来自欧易");
             }
             else
@@ -4027,7 +4027,7 @@ if (!dataFetched)
             }).ToList();
 
             dataFetched = true;
-	    dataSource = "抹茶"; // 设置数据来源为抹茶	
+	    dataSource = $"<a href=\"https://www.mexc.com/zh-CN/exchange/{symbol.ToUpper()}_USDT?_from=header\">抹茶</a>"; // 设置数据来源为抹茶	
 
             //Console.WriteLine("数据来自抹茶");
         }
