@@ -315,7 +315,7 @@ public static class CoinDataAnalyzer
     private static readonly Random random = new Random();
 
     // 获取近1小时和24小时内最多下跌的前20名币种
-    public static async Task<(List<string>, InlineKeyboardMarkup)> GetTopOversoldCoinsAsync()
+    public static async Task<(List<string>, List<InlineKeyboardMarkup>)> GetTopOversoldCoinsAsync()
     {
         await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
 
@@ -358,7 +358,7 @@ public static class CoinDataAnalyzer
                     throw new FormatException($"解析错误: 无法解析RSI6, RSI14, 或m10的值。币种: {symbol}");
                 }
 
-                if (rsi6 < 31)
+                if (rsi6 < 91)
                 {
                     var coinData = allCoinsData[symbol];
 		    double percentChange1h = coinData["percent_change_1h"].GetDouble();
@@ -381,64 +381,72 @@ public static class CoinDataAnalyzer
         }
 
     List<string> messages = new List<string>();
+    List<List<InlineKeyboardButton[]>> allButtonRows = new List<List<InlineKeyboardButton[]>>();
     StringBuilder messageBuilder = new StringBuilder();
     int count = 0;
 
     if (oversoldCoins.Count > 0)
     {
-        // 只有当有超卖币种时，才添加标题
         messageBuilder.Append("发现超卖：\n\n");
     }
-	    
+
     List<InlineKeyboardButton[]> buttonRows = new List<InlineKeyboardButton[]>();
     List<InlineKeyboardButton> currentRow = new List<InlineKeyboardButton>();
-    int coinIndex = 0;  // 初始化币种索引
+    int coinIndex = 0;
 
     foreach (var coin in oversoldCoins)
     {
-        if (count % 20 == 0 && count > 0)  // 每20个币种分割成一个新的文本消息
+        if (count % 20 == 0 && count > 0)
         {
             messages.Add(messageBuilder.ToString());
-            messageBuilder = new StringBuilder();  // 开始新的消息构建
-            messageBuilder.Append("发现超卖：\n\n");  // 为新的消息添加标题
+            allButtonRows.Add(buttonRows);
+            messageBuilder = new StringBuilder();
+            messageBuilder.Append("发现超卖：\n\n");
+            buttonRows = new List<InlineKeyboardButton[]>();
+            currentRow = new List<InlineKeyboardButton>();
         }
 
         string marketCapDisplay = coin.MarketCapUsd >= 100_000_000 ? $"{Math.Round(coin.MarketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.MarketCapUsd / 1_000_000, 2)}m";
         string volume24hDisplay = coin.Volume24hUsd >= 100_000_000 ? $"{Math.Round(coin.Volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.Volume24hUsd / 1_000_000, 2)}m";
 
-        string indexEmoji = GetIndexEmoji(coinIndex); // 使用币种索引获取编号的表情符号
+        string indexEmoji = GetIndexEmoji(coinIndex);
         messageBuilder.AppendLine($"{indexEmoji} #{coin.Symbol}  |  <code>{coin.Symbol}</code>   |   价格：${coin.Price}   |   <b>No.{coin.Rank}</b>");
         messageBuilder.AppendLine($"流通市值：{marketCapDisplay}  |  24小时交易：{volume24hDisplay}");
-        //messageBuilder.AppendLine($"1h：{coin.PercentChange1h:F2}%  |  24h：{coin.PercentChange24h:F2}%  |  7d：{coin.PercentChange7d:F2}%");
+        messageBuilder.AppendLine($"1h：{coin.PercentChange1h:F2}%  |  24h：{coin.PercentChange24h:F2}%  |  7d：{coin.PercentChange7d:F2}%");
         messageBuilder.AppendLine($"RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}  |  m10： {coin.M10}");
 
-        if (coinIndex < oversoldCoins.Count - 1)  // 如果不是最后一个币种，添加横线
+        if (coinIndex < oversoldCoins.Count - 1)
         {
             messageBuilder.AppendLine("————————————————————");
         }
 
         currentRow.Add(InlineKeyboardButton.WithCallbackData(indexEmoji, $"查{coin.Symbol}"));
-        if (currentRow.Count == 5)  // 每行最多5个按钮
+        if (currentRow.Count == 5)
         {
             buttonRows.Add(currentRow.ToArray());
-            currentRow = new List<InlineKeyboardButton>();  // 开始新的一行
+            currentRow = new List<InlineKeyboardButton>();
         }
-        coinIndex++;  // 币种索引递增
-        count++;  // 币种计数递增
+        coinIndex++;
+        count++;
     }
 
-    if (currentRow.Count > 0)  // 添加最后一行按钮（如果有）
+    if (currentRow.Count > 0)
     {
         buttonRows.Add(currentRow.ToArray());
+    }
+    if (buttonRows.Count > 0)
+    {
+        allButtonRows.Add(buttonRows);
     }
 
     if (messageBuilder.Length > 0)
     {
-        messages.Add(messageBuilder.ToString()); // 添加最后一批消息
+        messages.Add(messageBuilder.ToString());
     }
 
-    var inlineKeyboard = new InlineKeyboardMarkup(buttonRows);
-    return (messages, inlineKeyboard); // 返回消息和按钮布局
+    var inlineKeyboards = allButtonRows.Select(rows => new InlineKeyboardMarkup(rows)).ToList();
+
+    return (messages, inlineKeyboards);
     }
 	
 	
@@ -13612,18 +13620,7 @@ if (messageText.StartsWith("/charsi"))
 {
     try
     {
-        var (oversoldMessages, keyboardMarkup) = await CoinDataAnalyzer.GetTopOversoldCoinsAsync(); // 解构元组
-
-        // 添加取消订阅按钮
-        var cancelSubscriptionButton = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton[]
-        {
-            Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithCallbackData("取消通知", "/qxdyrsi")
-        };
-
-        // 将取消订阅按钮添加到现有键盘标记中
-        var customKeyboardMarkup = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(
-            keyboardMarkup.InlineKeyboard.Concat(new[] { cancelSubscriptionButton }).ToArray()
-        );
+        var (oversoldMessages, keyboardMarkups) = await CoinDataAnalyzer.GetTopOversoldCoinsAsync(); // 解构元组
 
         if (oversoldMessages.Count > 0) // 检查是否有获取到数据
         {
@@ -13644,15 +13641,33 @@ if (messageText.StartsWith("/charsi"))
                         continue;
                     }
 
-                    foreach (var oversoldMessage in oversoldMessages) // 正确迭代 List<string>
+                    for (int i = 0; i < oversoldMessages.Count; i++)
                     {
+                        var oversoldMessage = oversoldMessages[i];
+                        var keyboardMarkup = keyboardMarkups[i];
+
+                        // 将多行按钮扁平化
+                        var allButtons = keyboardMarkup.InlineKeyboard.SelectMany(row => row).ToList();
+
+                        // 将按钮重新组织成每行最多5个按钮的行
+                        var buttonRows = new List<InlineKeyboardButton[]>();
+                        for (int j = 0; j < allButtons.Count; j += 5)
+                        {
+                            buttonRows.Add(allButtons.Skip(j).Take(5).ToArray());
+                        }
+
+                        // 添加取消订阅按钮到新的一行
+                        buttonRows.Add(new InlineKeyboardButton[] { Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithCallbackData("取消通知", "/qxdyrsi") });
+
+                        var customKeyboardMarkup = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(buttonRows);
+
                         try
                         {
                             await botClient.SendTextMessageAsync(
-                                chatId: userId, // 确保 chatId 是 long 类型
+                                chatId: userId,
                                 text: oversoldMessage,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-                                replyMarkup: customKeyboardMarkup); // 使用修改后包含取消订阅按钮的键盘标记
+                                replyMarkup: customKeyboardMarkup);
                             await Task.Delay(500); // 500毫秒延迟
                         }
                         catch (Exception ex)
@@ -13674,11 +13689,9 @@ if (messageText.StartsWith("/charsi"))
                 notificationUserIds.Remove(userId);
             }
         }
-        // 如果没有获取到数据，这里不执行任何操作，也不返回任何消息
     }
     catch (Exception ex)
     {
-        // 如果在获取数据时发生异常，同样不返回任何消息
         Console.WriteLine($"查询超卖币种时出错: {ex.Message}");
     }
 }
