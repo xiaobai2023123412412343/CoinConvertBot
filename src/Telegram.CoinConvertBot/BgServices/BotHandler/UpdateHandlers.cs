@@ -358,7 +358,7 @@ public static class CoinDataAnalyzer
                     throw new FormatException($"解析错误: 无法解析RSI6, RSI14, 或m10的值。币种: {symbol}");
                 }
 
-                if (rsi6 < 91)
+                if (rsi6 < 31)
                 {
                     var coinData = allCoinsData[symbol];
 		    double percentChange1h = coinData["percent_change_1h"].GetDouble();
@@ -13622,7 +13622,7 @@ if (messageText.StartsWith("/charsi"))
     {
         var (oversoldMessages, keyboardMarkups) = await CoinDataAnalyzer.GetTopOversoldCoinsAsync(); // 解构元组
 
-        if (oversoldMessages.Count > 0) // 检查是否有获取到数据
+        if (oversoldMessages.Count > 0 && keyboardMarkups.Count > 0) // 确保有获取到数据和按钮
         {
             List<long> userIdsToRemove = new List<long>(); // 确保使用 long 类型
 
@@ -13646,34 +13646,32 @@ if (messageText.StartsWith("/charsi"))
                         var oversoldMessage = oversoldMessages[i];
                         var keyboardMarkup = keyboardMarkups[i];
 
-                        // 将多行按钮扁平化
-                        var allButtons = keyboardMarkup.InlineKeyboard.SelectMany(row => row).ToList();
-
-                        // 将按钮重新组织成每行最多5个按钮的行
-                        var buttonRows = new List<InlineKeyboardButton[]>();
-                        for (int j = 0; j < allButtons.Count; j += 5)
+                        // 检查每个键盘标记是否有元素
+                        if (keyboardMarkup.InlineKeyboard.Any())
                         {
-                            buttonRows.Add(allButtons.Skip(j).Take(5).ToArray());
-                        }
+                            var allButtons = keyboardMarkup.InlineKeyboard.SelectMany(row => row).ToList();
 
-                        // 添加取消订阅按钮到新的一行
-                        buttonRows.Add(new InlineKeyboardButton[] { Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithCallbackData("取消通知", "/qxdyrsi") });
+                            // 确保按钮列表不为空
+                            if (allButtons.Count > 0)
+                            {
+                                var buttonRows = new List<InlineKeyboardButton[]>();
+                                for (int j = 0; j < allButtons.Count; j += 5)
+                                {
+                                    buttonRows.Add(allButtons.Skip(j).Take(5).ToArray());
+                                }
 
-                        var customKeyboardMarkup = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(buttonRows);
+                                // 添加取消订阅按钮到新的一行
+                                buttonRows.Add(new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("取消通知", "/qxdyrsi") });
 
-                        try
-                        {
-                            await botClient.SendTextMessageAsync(
-                                chatId: userId,
-                                text: oversoldMessage,
-                                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-                                replyMarkup: customKeyboardMarkup);
-                            await Task.Delay(500); // 500毫秒延迟
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"向用户{userId}发送消息失败: {ex.Message}");
-                            continue;
+                                var customKeyboardMarkup = new InlineKeyboardMarkup(buttonRows);
+
+                                await botClient.SendTextMessageAsync(
+                                    chatId: userId,
+                                    text: oversoldMessage,
+                                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                                    replyMarkup: customKeyboardMarkup);
+                                await Task.Delay(500); // 500毫秒延迟
+                            }
                         }
                     }
                 }
@@ -13688,6 +13686,10 @@ if (messageText.StartsWith("/charsi"))
             {
                 notificationUserIds.Remove(userId);
             }
+        }
+        else
+        {
+            Console.WriteLine("没有足够的数据来发送消息。");
         }
     }
     catch (Exception ex)
