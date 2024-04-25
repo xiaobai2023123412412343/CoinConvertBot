@@ -315,7 +315,7 @@ public static class CoinDataAnalyzer
     private static readonly Random random = new Random();
 
     // 获取近1小时和24小时内最多下跌的前20名币种
-    public static async Task<List<string>> GetTopOversoldCoinsAsync()
+    public static async Task<(List<string>, InlineKeyboardMarkup)> GetTopOversoldCoinsAsync()
     {
         await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
 
@@ -389,32 +389,47 @@ public static class CoinDataAnalyzer
         // 只有当有超卖币种时，才添加标题
         messageBuilder.Append("发现超卖：\n\n");
     }
+	    
+    List<InlineKeyboardButton[]> buttonRows = new List<InlineKeyboardButton[]>();
+    List<InlineKeyboardButton> currentRow = new List<InlineKeyboardButton>();
+    int coinIndex = 0;  // 初始化币种索引
 
     foreach (var coin in oversoldCoins)
     {
+        if (count % 20 == 0 && count > 0)  // 每20个币种分割成一个新的文本消息
+        {
+            messages.Add(messageBuilder.ToString());
+            messageBuilder = new StringBuilder();  // 开始新的消息构建
+            messageBuilder.Append("发现超卖：\n\n");  // 为新的消息添加标题
+        }
+
         string marketCapDisplay = coin.MarketCapUsd >= 100_000_000 ? $"{Math.Round(coin.MarketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.MarketCapUsd / 1_000_000, 2)}m";
         string volume24hDisplay = coin.Volume24hUsd >= 100_000_000 ? $"{Math.Round(coin.Volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(coin.Volume24hUsd / 1_000_000, 2)}m";
 
-        string change1hSymbol = coin.PercentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-        string change24hSymbol = coin.PercentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-        string change7dSymbol = coin.PercentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-
-        messageBuilder.AppendLine($"#{coin.Symbol}  |  <code>{coin.Symbol}</code>   |   价格：${coin.Price}   |   <b>No.{coin.Rank}</b>");
+        string indexEmoji = GetIndexEmoji(coinIndex); // 使用币种索引获取编号的表情符号
+        messageBuilder.AppendLine($"{indexEmoji} #{coin.Symbol}  |  <code>{coin.Symbol}</code>   |   价格：${coin.Price}   |   <b>No.{coin.Rank}</b>");
         messageBuilder.AppendLine($"流通市值：{marketCapDisplay}  |  24小时交易：{volume24hDisplay}");
-        messageBuilder.AppendLine($"1h：{change1hSymbol}{coin.PercentChange1h:F2}%  |  24h：{change24hSymbol}{coin.PercentChange24h:F2}%  |  7d：{change7dSymbol}{coin.PercentChange7d:F2}%");
+        //messageBuilder.AppendLine($"1h：{coin.PercentChange1h:F2}%  |  24h：{coin.PercentChange24h:F2}%  |  7d：{coin.PercentChange7d:F2}%");
         messageBuilder.AppendLine($"RSI6: {coin.RSI6}  |  RSI14: {coin.RSI14}  |  m10： {coin.M10}");
 
-        count++;
-        if (count % 20 == 0 && count < oversoldCoins.Count)
-        {
-            messageBuilder.AppendLine("————————————————————");
-            messages.Add(messageBuilder.ToString());
-            messageBuilder = new StringBuilder(); // 为下一批币种数据开始新的构建
-        }
-        else if (count < oversoldCoins.Count)
+        if (coinIndex < oversoldCoins.Count - 1)  // 如果不是最后一个币种，添加横线
         {
             messageBuilder.AppendLine("————————————————————");
         }
+
+        currentRow.Add(InlineKeyboardButton.WithCallbackData(indexEmoji, $"查{coin.Symbol}"));
+        if (currentRow.Count == 5)  // 每行最多5个按钮
+        {
+            buttonRows.Add(currentRow.ToArray());
+            currentRow = new List<InlineKeyboardButton>();  // 开始新的一行
+        }
+        coinIndex++;  // 币种索引递增
+        count++;  // 币种计数递增
+    }
+
+    if (currentRow.Count > 0)  // 添加最后一行按钮（如果有）
+    {
+        buttonRows.Add(currentRow.ToArray());
     }
 
     if (messageBuilder.Length > 0)
@@ -422,9 +437,16 @@ public static class CoinDataAnalyzer
         messages.Add(messageBuilder.ToString()); // 添加最后一批消息
     }
 
-    return messages;
+    var inlineKeyboard = new InlineKeyboardMarkup(buttonRows);
+    return (messages, inlineKeyboard); // 返回消息和按钮布局
     }
-
+	
+	
+    private static string GetIndexEmoji(int index)
+    {
+        string[] emojis = { "0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "1️⃣0️⃣", "1️⃣1️⃣", "1️⃣2️⃣", "1️⃣3️⃣", "1️⃣4️⃣", "1️⃣5️⃣", "1️⃣6️⃣", "1️⃣7️⃣", "1️⃣8️⃣", "1️⃣9️⃣" };
+        return emojis[index % 20]; // 循环使用表情符号
+    }	
     // 辅助方法：获取下跌的币种
     private static IEnumerable<string> GetTopFallers(Dictionary<string, Dictionary<string, JsonElement>> coinData, string percentChangeKey)
     {
@@ -13590,15 +13612,21 @@ if (messageText.StartsWith("/charsi"))
 {
     try
     {
-        var oversoldMessages = await CoinDataAnalyzer.GetTopOversoldCoinsAsync();
+        var (oversoldMessages, keyboardMarkup) = await CoinDataAnalyzer.GetTopOversoldCoinsAsync(); // 解构元组
+
+        // 添加取消订阅按钮
+        var cancelSubscriptionButton = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton[]
+        {
+            Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithCallbackData("取消通知", "/qxdyrsi")
+        };
+
+        // 将取消订阅按钮添加到现有键盘标记中
+        var customKeyboardMarkup = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(
+            keyboardMarkup.InlineKeyboard.Concat(new[] { cancelSubscriptionButton }).ToArray()
+        );
+
         if (oversoldMessages.Count > 0) // 检查是否有获取到数据
         {
-            var keyboardMarkup = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(
-                new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton[]
-                {
-                    Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton.WithCallbackData("取消通知", "/qxdyrsi")
-                });
-
             List<long> userIdsToRemove = new List<long>(); // 确保使用 long 类型
 
             foreach (var userId in notificationUserIds) // 确保 notificationUserIds 是 long 类型的列表
@@ -13616,7 +13644,7 @@ if (messageText.StartsWith("/charsi"))
                         continue;
                     }
 
-                    foreach (var oversoldMessage in oversoldMessages)
+                    foreach (var oversoldMessage in oversoldMessages) // 正确迭代 List<string>
                     {
                         try
                         {
@@ -13624,7 +13652,7 @@ if (messageText.StartsWith("/charsi"))
                                 chatId: userId, // 确保 chatId 是 long 类型
                                 text: oversoldMessage,
                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-                                replyMarkup: keyboardMarkup);
+                                replyMarkup: customKeyboardMarkup); // 使用修改后包含取消订阅按钮的键盘标记
                             await Task.Delay(500); // 500毫秒延迟
                         }
                         catch (Exception ex)
