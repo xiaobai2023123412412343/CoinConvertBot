@@ -121,9 +121,15 @@ public static class TimerManager
     {
         if (timerToSendCommand == null)
         {
-            var timeToNextHour = 3600000 - (DateTime.Now.Minute * 60000 + DateTime.Now.Second * 1000 + DateTime.Now.Millisecond);
-            timerToSendCommand = new Timer(async _ => await SendCommandAsync(), null, timeToNextHour, 3600000); //首次检查差多长时间到下一个整点，后续每小时自动触发
-            Console.WriteLine($"定时器已启动，具体下一个整点还差{timeToNextHour / 60000}分钟");
+            var now = DateTime.Now;
+            var nextTargetTime = new DateTime(now.Year, now.Month, now.Day, (now.Hour / 4 + 1) * 4, 0, 0);
+            if (nextTargetTime < now) // 如果计算出的时间已经过去，则加4小时
+            {
+                nextTargetTime = nextTargetTime.AddHours(4);
+            }
+            var timeToNextTarget = (int)(nextTargetTime - now).TotalMilliseconds;
+            timerToSendCommand = new Timer(async _ => await SendCommandAsync(), null, timeToNextTarget, 14400000); // 设置首次触发时间和4小时的周期
+            Console.WriteLine($"定时器已启动，距离下一个目标时间{nextTargetTime}还有{timeToNextTarget / 60000}分钟");
         }
 
         if (timerToMonitor == null)
