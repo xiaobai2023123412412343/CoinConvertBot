@@ -122,7 +122,7 @@ public static class TimerManager
         if (timerToSendCommand == null)
         {
             var now = DateTime.Now;
-            var nextTargetTime = new DateTime(now.Year, now.Month, now.Day, (now.Hour / 4 + 1) * 4, 0, 0);
+            var nextTargetTime = new DateTime(now.Year, now.Month, now.Day, (now.Hour / 4 + 1) * 4, 0, 0); //首先检查距离下一个周期还多久，后续在 0点 4点 8点 12点 16点 20点 启动
             if (nextTargetTime < now) // 如果计算出的时间已经过去，则加4小时
             {
                 nextTargetTime = nextTargetTime.AddHours(4);
