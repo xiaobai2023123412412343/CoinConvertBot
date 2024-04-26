@@ -141,32 +141,57 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
     }
 }
 
-    private static async Task UpdateKLineDataAsync()
+private static int consecutiveUpdateFailures = 0; // 追踪连续更新失败的次数
+
+private static async Task UpdateKLineDataAsync()
+{
+    try
     {
-        try
+        await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
+        var prices = await FetchCurrentPricesAsync(); // 从本地缓存获取当前价格
+        var now = DateTime.UtcNow.AddHours(8); // 北京时间
+
+        Dictionary<string, List<(DateTime, decimal)>> tempData = new Dictionary<string, List<(DateTime, decimal)>>();
+        foreach (var price in prices)
         {
-            await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
-            var prices = await FetchCurrentPricesAsync(); // 从本地缓存获取当前价格
-            var now = DateTime.UtcNow.AddHours(8); // 北京时间
-            foreach (var price in prices)
+            if (!coinKLineData.ContainsKey(price.Key))
             {
-                if (!coinKLineData.ContainsKey(price.Key))
-                {
-                    coinKLineData[price.Key] = new List<(DateTime, decimal)>();
-                }
-                if (coinKLineData[price.Key].Count >= MaxDataPoints)
-                {
-                    coinKLineData[price.Key].RemoveAt(0);
-                }
-                coinKLineData[price.Key].Add((now, price.Value));
+                tempData[price.Key] = new List<(DateTime, decimal)>();
             }
-            Console.WriteLine($"[{DateTime.Now}] K线数据已更新.");
+            else
+            {
+                tempData[price.Key] = new List<(DateTime, decimal)>(coinKLineData[price.Key]);
+            }
+            if (tempData[price.Key].Count >= MaxDataPoints)
+            {
+                tempData[price.Key].RemoveAt(0);
+            }
+            tempData[price.Key].Add((now, price.Value));
         }
-        catch (Exception ex)
+
+        // 更新成功，替换旧数据
+        coinKLineData = tempData;
+        Console.WriteLine($"[{DateTime.Now}] K线数据已更新.");
+        consecutiveUpdateFailures = 0; // 重置失败计数
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[{DateTime.Now}] 更新K线数据失败：{ex.Message}");
+        consecutiveUpdateFailures++; // 增加失败计数
+        if (consecutiveUpdateFailures >= 2)
         {
-            Console.WriteLine($"[{DateTime.Now}] 更新K线数据失败：{ex.Message}");
+            // 连续两次更新失败，清空数据并通知用户
+            coinKLineData.Clear();
+            await SendFailureNotificationAsync(botClient);
+            consecutiveUpdateFailures = 0; // 重置失败计数
         }
     }
+}
+
+private static async Task SendFailureNotificationAsync(ITelegramBotClient botClient)
+{
+    await botClient.SendTextMessageAsync(1427768220, "15分钟k线数据更新失败，请检查！");
+}
 
     private static async Task<Dictionary<string, decimal>> FetchCurrentPricesAsync()
     {
@@ -176,7 +201,6 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
 
 private static async Task SendTopRisingCoinsAsync(ITelegramBotClient botClient, long chatId)
 {
-    var message = new StringBuilder("<b>15分钟连续上涨TOP5：</b>\n\n");
     var currentPrices = await FetchDetailedCurrentPricesAsync(); // 获取最新的详细价格信息
     var topRisingCoins = coinKLineData
         .Where(kvp => kvp.Value.Count == MaxDataPoints && 
@@ -195,25 +219,29 @@ private static async Task SendTopRisingCoinsAsync(ITelegramBotClient botClient, 
                 .ToList()
         })
         .OrderByDescending(kvp => kvp.Increases.Sum())
-        .Take(5);
+        .Take(5)
+        .ToList(); // 确保执行查询并获取结果
 
-    int count = 0;
-    foreach (var coin in topRisingCoins)
+    if (topRisingCoins.Count == 0)
     {
-        count++;
-        message.AppendLine($"<code>{coin.Coin}</code> $：{coin.CurrentPrice:F2} | No.{coin.Rank}");
-        message.AppendLine($"市值: {FormatNumber(coin.MarketCap)} | 24h成交：{FormatNumber(coin.Volume24h)}");
-        for (int i = 1; i < coin.Increases.Count; i++)
+        // 没有数据时发送特定消息
+        await botClient.SendTextMessageAsync(chatId, "没有连续15分钟上涨币种，请稍等重试！", ParseMode.Html);
+    }
+    else
+    {
+        var message = new StringBuilder("<b>15分钟连续上涨TOP5：</b>\n\n");
+        foreach (var coin in topRisingCoins)
         {
-            message.AppendLine($"{coinKLineData[coin.Coin][i].time:yyyy/MM/dd HH:mm} 上涨：{coin.Increases[i]:F2}%");
-        }
-        if (count < topRisingCoins.Count())
-        {
+            message.AppendLine($"<code>{coin.Coin}</code> $：{coin.CurrentPrice:F2} | No.{coin.Rank}");
+            message.AppendLine($"市值: {FormatNumber(coin.MarketCap)} | 24h成交：{FormatNumber(coin.Volume24h)}");
+            for (int i = 1; i < coin.Increases.Count; i++)
+            {
+                message.AppendLine($"{coinKLineData[coin.Coin][i].time:yyyy/MM/dd HH:mm} 上涨：{coin.Increases[i]:F2}%");
+            }
             message.AppendLine("-----------------------------------");
         }
+        await botClient.SendTextMessageAsync(chatId, message.ToString(), ParseMode.Html);
     }
-
-    await botClient.SendTextMessageAsync(chatId, message.ToString(), ParseMode.Html);
 }
 private static string FormatNumber(decimal number)
 {
