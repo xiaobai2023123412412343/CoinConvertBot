@@ -13821,11 +13821,10 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
             string monitoringListText = "\n\n监控列表：\n\n";
             monitoringListText += $"您当前监控 <b>{monitoredCount}</b> 个加密货币价格变动！\n\n";
 
-	    int lastIndex = PriceMonitor.monitorInfos[message.Chat.Id].Count - 1;
-		
-            int partIndex = 0;
+            int lastIndex = PriceMonitor.monitorInfos[message.Chat.Id].Count - 1;
             int partSize = 10;
             List<string> messages = new List<string>();
+            bool isFirstMessage = true; // 标志变量，用于控制消息内容
 
             foreach (var monitorInfo in PriceMonitor.monitorInfos[message.Chat.Id].Select((value, index) => new { value, index }))
             {
@@ -13860,7 +13859,18 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
                 // 检查是否需要分割消息
                 if ((monitorInfo.index + 1) % partSize == 0 || monitorInfo.index == lastIndex)
                 {
-                    messages.Add(baseResponseText + monitoringListText);
+                    string messageContent;
+                    if (isFirstMessage)
+                    {
+                        messageContent = baseResponseText + monitoringListText;
+                        isFirstMessage = false; // 更新标志，表示后续消息不再是第一次发送
+                    }
+                    else
+                    {
+                        messageContent = monitoringListText; // 只包含币种数据
+                    }
+
+                    messages.Add(messageContent);
                     monitoringListText = ""; // 重置文本以用于下一部分
                 }
             }
