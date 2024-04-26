@@ -3530,6 +3530,11 @@ private static async void CheckPrice(object state)
             {
                 monitorInfo.CurrentPrice = price.Value;
 
+                // 获取RSI6值
+                var rsiInfo = await BinancePriceInfo.GetPriceInfo(monitorInfo.Symbol);
+                var rsi6Match = Regex.Match(rsiInfo, @"RSI6:</b>\s*(\d+\.?\d*)");
+                string rsi6 = rsi6Match.Success ? rsi6Match.Groups[1].Value : null;
+		    
                 // 获取合约资金费和多空比
                 var fundingRate = await GetFundingRate(monitorInfo.Symbol);
                 var longShortRatio = await GetLongShortRatio(monitorInfo.Symbol);
@@ -3542,8 +3547,14 @@ private static async void CheckPrice(object state)
                 messageBuilder.AppendLine($"<b>⚠️价格变动提醒</b>：\n");
                 messageBuilder.AppendLine($"<b>监控币种</b>：<code>{monitorInfo.Symbol}</code>");
                 messageBuilder.AppendLine($"<b>当前币价</b>：$ {formattedCurrentPrice}");
-                messageBuilder.AppendLine($"<b>价格变动</b>：{(change > 0 ? "\U0001F4C8" : "\U0001F4C9")}  {change:P}");
+                messageBuilder.AppendLine($"<b>价格变动</b>：{(change > 0 ? "\U0001F4C8" : "\U0001F4C9")}  {change:P}\n");
 
+                // 添加RSI6信息
+                if (rsi6 != null)
+                {
+                    messageBuilder.AppendLine($"<b>RSI6指标</b>：{rsi6}");
+                }
+		    
                 // 根据数据获取情况动态添加资金费和多空比信息
                 if (fundingRate != "数据获取失败")
                 {
