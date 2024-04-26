@@ -103,6 +103,146 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 15分钟K线数据监控
+private static Dictionary<string, List<(DateTime time, decimal price)>> coinKLineData = new Dictionary<string, List<(DateTime time, decimal price)>>();
+
+public class KLineMonitor
+{
+    private static Timer kLineUpdateTimer;
+    private static bool isKLineMonitoringStarted = false;
+    private static readonly int MaxDataPoints = 4; // 最多存储4条数据，用于计算连续3根K线的上涨
+
+public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient, long chatId)
+{
+    if (!isKLineMonitoringStarted)
+    {
+        isKLineMonitoringStarted = true;
+        var now = DateTime.Now;
+        int minutesToNextQuarter = 15 - (now.Minute % 15);
+        var nextTargetTime = now.AddMinutes(minutesToNextQuarter);
+        var timeToNextTarget = (int)(nextTargetTime - now).TotalMilliseconds;
+        kLineUpdateTimer = new Timer(async _ => await UpdateKLineDataAsync(), null, timeToNextTarget, 900000); // 每15分钟更新一次
+        Console.WriteLine($"[{DateTime.Now}] K线数据监控启动，下一次数据获取将在 {timeToNextTarget / 60000} 分钟后.");
+        await botClient.SendTextMessageAsync(chatId, "K线数据监控启动，数据收集中...");
+    }
+    else
+    {
+        // 检查是否有足够的数据点
+        if (coinKLineData.Values.All(list => list.Count >= 3))
+        {
+            Console.WriteLine($"[{DateTime.Now}] 数据已满足条件，正在处理请求.");
+            await SendTopRisingCoinsAsync(botClient, chatId);
+        }
+        else
+        {
+            Console.WriteLine($"[{DateTime.Now}] 数据未储存完成，需要等待更多数据.");
+            await botClient.SendTextMessageAsync(chatId, "数据未储存完成，请稍后重试！");
+        }
+    }
+}
+
+    private static async Task UpdateKLineDataAsync()
+    {
+        try
+        {
+            await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
+            var prices = await FetchCurrentPricesAsync(); // 从本地缓存获取当前价格
+            var now = DateTime.UtcNow.AddHours(8); // 北京时间
+            foreach (var price in prices)
+            {
+                if (!coinKLineData.ContainsKey(price.Key))
+                {
+                    coinKLineData[price.Key] = new List<(DateTime, decimal)>();
+                }
+                if (coinKLineData[price.Key].Count >= MaxDataPoints)
+                {
+                    coinKLineData[price.Key].RemoveAt(0);
+                }
+                coinKLineData[price.Key].Add((now, price.Value));
+            }
+            Console.WriteLine($"[{DateTime.Now}] K线数据已更新.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{DateTime.Now}] 更新K线数据失败：{ex.Message}");
+        }
+    }
+
+    private static async Task<Dictionary<string, decimal>> FetchCurrentPricesAsync()
+    {
+        var allCoinsData = CoinDataCache.GetAllCoinsData();
+        return allCoinsData.ToDictionary(kvp => kvp.Key, kvp => kvp.Value["price_usd"].GetDecimal());
+    }
+
+private static async Task SendTopRisingCoinsAsync(ITelegramBotClient botClient, long chatId)
+{
+    var message = new StringBuilder("<b>15分钟连续上涨TOP5：</b>\n\n");
+    var currentPrices = await FetchDetailedCurrentPricesAsync(); // 获取最新的详细价格信息
+    var topRisingCoins = coinKLineData
+        .Where(kvp => kvp.Value.Count == MaxDataPoints && 
+                      currentPrices[kvp.Key].price > kvp.Value.Last().price && 
+                      kvp.Value.Last().price > kvp.Value[kvp.Value.Count - 2].price && 
+                      kvp.Value[kvp.Value.Count - 2].price > kvp.Value.First().price)
+        .Select(kvp => new
+        {
+            Coin = kvp.Key,
+            CurrentPrice = currentPrices[kvp.Key].price,
+            MarketCap = currentPrices[kvp.Key].MarketCap,
+            Volume24h = currentPrices[kvp.Key].Volume24h,
+            Rank = currentPrices[kvp.Key].Rank,
+            Increases = kvp.Value
+                .Select((data, index) => index == 0 ? 0 : (data.price - kvp.Value[index - 1].price) / kvp.Value[index - 1].price * 100)
+                .ToList()
+        })
+        .OrderByDescending(kvp => kvp.Increases.Sum())
+        .Take(5);
+
+    int count = 0;
+    foreach (var coin in topRisingCoins)
+    {
+        count++;
+        message.AppendLine($"<code>{coin.Coin}</code> $：{coin.CurrentPrice:F2} | No.{coin.Rank}");
+        message.AppendLine($"市值: {FormatNumber(coin.MarketCap)} | 24h成交：{FormatNumber(coin.Volume24h)}");
+        for (int i = 1; i < coin.Increases.Count; i++)
+        {
+            message.AppendLine($"{coinKLineData[coin.Coin][i].time:yyyy/MM/dd HH:mm} 上涨：{coin.Increases[i]:F2}%");
+        }
+        if (count < topRisingCoins.Count())
+        {
+            message.AppendLine("-----------------------------------");
+        }
+    }
+
+    await botClient.SendTextMessageAsync(chatId, message.ToString(), ParseMode.Html);
+}
+private static string FormatNumber(decimal number)
+{
+    if (number >= 100000000)
+    {
+        return $"{number / 100000000:F2}亿";
+    }
+    else if (number >= 1000000)
+    {
+        return $"{number / 1000000:F2}m";
+    }
+    return number.ToString("F2");
+}
+
+private static async Task<Dictionary<string, (decimal price, decimal MarketCap, decimal Volume24h, int Rank)>> FetchDetailedCurrentPricesAsync()
+{
+    // 从本地缓存获取所有币种的数据
+    var allCoinsData = CoinDataCache.GetAllCoinsData();
+
+    // 将获取的数据转换为包含更多详细信息的字典
+    return allCoinsData.ToDictionary(kvp => kvp.Key, kvp => (
+        price: kvp.Value["price_usd"].GetDecimal(), // 获取最新价格
+        MarketCap: kvp.Value["market_cap_usd"].GetDecimal(), // 获取市值
+        Volume24h: kvp.Value["volume_24h_usd"].GetDecimal(), // 获取24小时成交量
+        Rank: int.Parse(kvp.Value["rank"].ToString()) // 获取市值排名
+    ));
+}
+}
+
 //定时监控 RSI 值	
 public static class TimerManager
 {
@@ -13745,6 +13885,11 @@ if (message.Text.Contains("超卖") || message.Text.Contains("信号"))
         parseMode: ParseMode.Html, // 确保消息以HTML格式发送
         replyMarkup: inlineKeyboard
     );
+}
+// 在机器人处理消息的地方，当收到 /shiwukxian 命令时，启动K线监控方法
+if (message.Text.Equals("/shiwukxian"))
+{
+    await KLineMonitor.StartKLineMonitoringAsync(botClient, message.Chat.Id);
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
