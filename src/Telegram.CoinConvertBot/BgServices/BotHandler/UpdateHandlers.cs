@@ -225,9 +225,11 @@ private static async Task SendTopRisingCoinsAsync(ITelegramBotClient botClient, 
             Increases = kvp.Value
                 .Select((data, index) => index == 0 ? 0 : (data.price - kvp.Value[index - 1].price) / kvp.Value[index - 1].price * 100)
                 .ToList(),
-            TotalIncrease = kvp.Value
-                .Select((data, index) => index == 0 ? 0 : (data.price - kvp.Value[index - 1].price) / kvp.Value[index - 1].price * 100)
-                .Sum() // 计算总上涨百分比
+            //TotalIncrease = kvp.Value
+               // .Select((data, index) => index == 0 ? 0 : (data.price - kvp.Value[index - 1].price) / kvp.Value[index - 1].price * 100)
+             //   .Sum() // 计算总上涨百分比 计算每根k线上涨幅度相加
+                TotalIncrease = kvp.Value.Count == MaxDataPoints ?
+                    (kvp.Value.Last().price - kvp.Value.First().price) / kvp.Value.First().price * 100 : 0     // 计算总上涨百分比 最早的k线价格和现在的价格做对比，直接计算涨幅
         })
         .OrderByDescending(kvp => kvp.Increases.Sum())
         .Take(5)
