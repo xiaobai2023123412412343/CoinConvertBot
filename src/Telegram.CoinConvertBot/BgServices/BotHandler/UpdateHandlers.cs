@@ -14172,21 +14172,33 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
             // 发送所有分割的消息
             foreach (var messagePart in messages)
             {
+                var inlineKeyboard = new InlineKeyboardMarkup(new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+                    InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")
+                });
+
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: messagePart,
                     parseMode: ParseMode.Html,
-                    replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"))
+                    replyMarkup: inlineKeyboard
                 );
             }
         }
         else
         {
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+                InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")
+            });
+
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: baseResponseText,
                 parseMode: ParseMode.Html,
-                replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"))
+                replyMarkup: inlineKeyboard
             );
         }
     }
