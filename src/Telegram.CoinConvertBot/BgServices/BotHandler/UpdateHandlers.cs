@@ -1032,10 +1032,17 @@ public static class CryptoMarketAnalyzer
             {
                 var customQueryKeyboard = new InlineKeyboardMarkup(new[]
                 {
-		    InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
-                    //InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),
-                    InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding"),
-                    InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")			    
+                  new[] // 第一排按钮
+                  {
+                      InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
+                      //InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"), // 这行被注释掉了
+                      InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding"),
+                  },
+                  new[] // 第二排按钮
+                  {
+                      InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+                      InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")			      
+                  }		    
                 });		    
 		    
                 string noDataMessage = "暂未发现财富密码，持续监控中...\n\n" +
@@ -1131,8 +1138,13 @@ public static class CryptoMarketAnalyzer
                 InlineKeyboardButton.WithCallbackData("查BTC", "查BTC"),
                 //InlineKeyboardButton.WithCallbackData("查ETH", "查ETH"),		    
                 InlineKeyboardButton.WithCallbackData("自定义查询", "/genjuzhiding"),
-		InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")		
-            }
+		//InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")		
+            },
+            new[] // 第二排按钮
+            {
+                InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+                InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")
+            }		
         });
 
         await botClient.SendTextMessageAsync(chatId, summaryMessage, ParseMode.Html, replyMarkup: summaryInlineKeyboard);
