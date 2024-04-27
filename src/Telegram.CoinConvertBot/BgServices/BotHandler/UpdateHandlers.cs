@@ -224,7 +224,10 @@ private static async Task SendTopRisingCoinsAsync(ITelegramBotClient botClient, 
             Rank = currentPrices[kvp.Key].Rank,
             Increases = kvp.Value
                 .Select((data, index) => index == 0 ? 0 : (data.price - kvp.Value[index - 1].price) / kvp.Value[index - 1].price * 100)
-                .ToList()
+                .ToList(),
+            TotalIncrease = kvp.Value
+                .Select((data, index) => index == 0 ? 0 : (data.price - kvp.Value[index - 1].price) / kvp.Value[index - 1].price * 100)
+                .Sum() // 计算总上涨百分比
         })
         .OrderByDescending(kvp => kvp.Increases.Sum())
         .Take(5)
@@ -240,7 +243,7 @@ private static async Task SendTopRisingCoinsAsync(ITelegramBotClient botClient, 
         for (int i = 0; i < topRisingCoins.Count; i++)
         {
             var coin = topRisingCoins[i];
-            message.AppendLine($"<code>{coin.Coin}</code> $：{coin.CurrentPrice:F2} | No.{coin.Rank}");
+            message.AppendLine($"<code>{coin.Coin}</code> $：{coin.CurrentPrice:F2} | No.{coin.Rank} | 总\U0001F4C8：{coin.TotalIncrease:F2}%");
             message.AppendLine($"市值: {FormatNumber(coin.MarketCap)} | 24h成交：{FormatNumber(coin.Volume24h)}");
             for (int j = 1; j < coin.Increases.Count; j++)
             {
