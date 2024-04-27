@@ -13944,10 +13944,30 @@ if (message.Text.Contains("超卖") || message.Text.Contains("信号"))
         replyMarkup: inlineKeyboard
     );
 }
-// 在机器人处理消息的地方，当收到 /shiwukxian 命令时，启动K线监控方法
+// 在机器人处理消息的地方，当收到 /shiwukxian 命令时，检查用户会员状态并可能启动K线监控方法
 if (message.Text.Equals("/shiwukxian"))
 {
-    await KLineMonitor.StartKLineMonitoringAsync(botClient, message.Chat.Id);
+    var userId = message.From.Id;
+    if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime) && DateTime.UtcNow <= expiryTime)
+    {
+        // 用户是会员且会员未到期，启动K线监控
+        await KLineMonitor.StartKLineMonitoringAsync(botClient, message.Chat.Id);
+    }
+    else
+    {
+        // 用户不是会员或会员已到期，回复用户
+        var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+        {
+            InlineKeyboardButton.WithCallbackData("点击了解 FF Pro会员", "/provip")
+        });
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "查询失败！ \U0000274C\n\n您还不是 FF Pro会员，请订阅会员后重试！",
+            replyMarkup: keyboard,
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+        );
+    }
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
