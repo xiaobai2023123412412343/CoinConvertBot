@@ -12576,7 +12576,10 @@ foreach (var coin in topFall)
     index++;
 }
 	    
-rows.Add(new InlineKeyboardButton[] { InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi") });
+rows.Add(new InlineKeyboardButton[] {
+    InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+    InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")
+});
 	    
 var inlineKeyboard = new InlineKeyboardMarkup(rows);
 
