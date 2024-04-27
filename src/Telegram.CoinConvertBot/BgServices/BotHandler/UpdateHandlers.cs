@@ -135,8 +135,16 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
         }
         else
         {
+            var now = DateTime.Now;
+            int minutesToNextQuarter = 15 - (now.Minute % 15);
+            var nextTargetTime = now.AddMinutes(minutesToNextQuarter);
+            // 计算需要等待的完整周期数（每周期15分钟）
+            int cyclesNeeded = 3 - coinKLineData.Values.Min(list => list.Count); // 需要的周期数
+            var completeStorageTime = nextTargetTime.AddMinutes(15 * cyclesNeeded);
+            var retryTime = completeStorageTime.AddMinutes(1); // 加1分钟确保数据完全更新
+
             Console.WriteLine($"[{DateTime.Now}] 数据未储存完成，需要等待更多数据.");
-            await botClient.SendTextMessageAsync(chatId, "数据未储存完成，请稍后重试！");
+            await botClient.SendTextMessageAsync(chatId, $"数据未储存完成，请在 {retryTime:yyyy/MM/dd HH:mm:ss} 后重试！");
         }
     }
 }
@@ -204,9 +212,8 @@ private static async Task SendTopRisingCoinsAsync(ITelegramBotClient botClient, 
     var currentPrices = await FetchDetailedCurrentPricesAsync(); // 获取最新的详细价格信息
     var topRisingCoins = coinKLineData
         .Where(kvp => kvp.Value.Count == MaxDataPoints && 
-                      currentPrices[kvp.Key].price > kvp.Value.Last().price && 
-                      kvp.Value.Last().price > kvp.Value[kvp.Value.Count - 2].price && 
-                      kvp.Value[kvp.Value.Count - 2].price > kvp.Value.First().price)
+                      kvp.Value.Zip(kvp.Value.Skip(1), (first, second) => second.price > first.price).All(x => x) &&
+                      currentPrices[kvp.Key].price > kvp.Value.Last().price)
         .Select(kvp => new
         {
             Coin = kvp.Key,
@@ -224,21 +231,24 @@ private static async Task SendTopRisingCoinsAsync(ITelegramBotClient botClient, 
 
     if (topRisingCoins.Count == 0)
     {
-        // 没有数据时发送特定消息
         await botClient.SendTextMessageAsync(chatId, "没有连续15分钟上涨币种，请稍等重试！", ParseMode.Html);
     }
     else
     {
         var message = new StringBuilder("<b>15分钟连续上涨TOP5：</b>\n\n");
-        foreach (var coin in topRisingCoins)
+        for (int i = 0; i < topRisingCoins.Count; i++)
         {
+            var coin = topRisingCoins[i];
             message.AppendLine($"<code>{coin.Coin}</code> $：{coin.CurrentPrice:F2} | No.{coin.Rank}");
             message.AppendLine($"市值: {FormatNumber(coin.MarketCap)} | 24h成交：{FormatNumber(coin.Volume24h)}");
-            for (int i = 1; i < coin.Increases.Count; i++)
+            for (int j = 1; j < coin.Increases.Count; j++)
             {
-                message.AppendLine($"{coinKLineData[coin.Coin][i].time:yyyy/MM/dd HH:mm} 上涨：{coin.Increases[i]:F2}%");
+                message.AppendLine($"{coinKLineData[coin.Coin][j].time:yyyy/MM/dd HH:mm} 上涨：{coin.Increases[j]:F2}%");
             }
-            message.AppendLine("-----------------------------------");
+            if (i < topRisingCoins.Count - 1)
+            {
+                message.AppendLine("-----------------------------------");
+            }
         }
         await botClient.SendTextMessageAsync(chatId, message.ToString(), ParseMode.Html);
     }
