@@ -13537,6 +13537,7 @@ if (message.Text.StartsWith("/provip") || message.Text.StartsWith("/start provip
                 text: $"您已是 FF Pro会员，到期时间为：{beijingTimeExpiry:yyyy/MM/dd HH:mm:ss}。\n\n" +
                               "\U00002705FF Pro会员可无限次查询各项数据\n" +
                               "\U00002705可订阅超卖信号，交易要快人一步\n" +	
+                              "\U00002705可查询突破信号，抄底要快人一步\n" +		    
                               "\U00002705靓号频道购买靓号地址享九折优惠\n" +		    
                               "\U00002705可无限制监听波场地址的交易播报\n" +
                               "\U00002705开通电报会员，可享受更低的价格\n" +
@@ -13556,6 +13557,7 @@ if (message.Text.StartsWith("/provip") || message.Text.StartsWith("/start provip
                               "永久会员：200USDT 或 汇旺200USD\n\n" + 
                               "\U00002705FF Pro会员可无限次查询各项数据\n" +
                               "\U00002705可订阅超卖信号，交易要快人一步\n" +
+                              "\U00002705可查询突破信号，抄底要快人一步\n" +		    
                               "\U00002705靓号频道购买靓号地址享九折优惠\n" +		    
                               "\U00002705可无限制监听波场地址的交易播报\n" +
                               "\U00002705开通电报会员，可享受更低的价格\n" +
@@ -13588,6 +13590,7 @@ if (message.Text.StartsWith("/provip") || message.Text.StartsWith("/start provip
                                "永久会员：200USDT 或 汇旺200USD\n\n" + 
 		               "\U00002705FF Pro会员可无限次查询各项数据\n" +
                                "\U00002705可订阅超卖信号，交易要快人一步\n" +
+                               "\U00002705可查询突破信号，抄底要快人一步\n" +		
                                "\U00002705靓号频道购买靓号地址享九折优惠\n" +		
 		               "\U00002705可无限制监听波场地址的交易播报\n" +
                                "\U00002705开通电报会员，可享受更低的价格\n" +
