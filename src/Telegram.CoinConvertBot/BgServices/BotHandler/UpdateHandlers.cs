@@ -8635,7 +8635,8 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     },
     new [] // 第2行按钮
     {
-        InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")		
+        InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),		
+        InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")			
     },    
 });
 
