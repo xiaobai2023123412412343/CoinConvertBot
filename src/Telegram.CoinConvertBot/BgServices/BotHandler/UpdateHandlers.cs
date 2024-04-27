@@ -306,7 +306,18 @@ public static class TimerManager
         if (timerToSendCommand == null)
         {
             var now = DateTime.Now;
-            var nextTargetTime = new DateTime(now.Year, now.Month, now.Day, (now.Hour / 4 + 1) * 4, 0, 0); //首先检查距离下一个周期还多久，后续在 0点 4点 8点 12点 16点 20点 启动
+            // 计算下一个4小时周期的小时数  首先检查距离下一个周期还多久，后续在 0点 4点 8点 12点 16点 20点 启动
+            int nextHour = ((now.Hour / 4) + 1) * 4;
+            DateTime nextTargetTime;
+             
+            // 如果计算的小时数达到或超过24，表示第二天的00:00
+            if (nextHour >= 24) {
+                nextHour -= 24; // 调整小时数为0
+                nextTargetTime = new DateTime(now.Year, now.Month, now.Day + 1, nextHour, 0, 0); // 日期加1
+            } else {
+                nextTargetTime = new DateTime(now.Year, now.Month, now.Day, nextHour, 0, 0);
+            }
+
             if (nextTargetTime < now) // 如果计算出的时间已经过去，则加4小时
             {
                 nextTargetTime = nextTargetTime.AddHours(4);
