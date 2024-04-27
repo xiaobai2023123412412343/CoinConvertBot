@@ -13929,25 +13929,62 @@ else if (message.Text.StartsWith("/qxdyrsi"))
    // 取消订阅通知
   await HandleCancelDingYuErSiCommand(botClient, message);
 }
-if (message.Text.Contains("超卖") || message.Text.Contains("信号"))
+if (message.Text.Contains("超卖"))
 {
     var subscriptionText = "订阅超卖信号，当价格出现超卖时，机器人将提前通知您！\n" +
                            "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！";
 
-    // 创建内联键盘按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi")
+        InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+        InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")
     });
 
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: subscriptionText,
-        parseMode: ParseMode.Html, // 确保消息以HTML格式发送
+        parseMode: ParseMode.Html,
         replyMarkup: inlineKeyboard
     );
 }
-// 在机器人处理消息的地方，当收到 /shiwukxian 命令时，检查用户会员状态并可能启动K线监控方法
+else if (message.Text.Contains("突破"))
+{
+    var breakthroughText = "查询突破信号，通过多维度指标进行币价判断；\n" +
+                           "当币价上升触发指标时可以提前获知，抄底要快人一步！";
+
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+        InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: breakthroughText,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}
+else if (message.Text.Contains("信号"))
+{
+    var signalText = "订阅超卖信号，当价格出现超卖时，机器人将提前通知您！\n" +
+                     "币价出现超卖后，通常短时间内会拉升；提前买入，致富快人一步！\n\n" +
+                     "价格连续上涨时触发突破信号，结合超卖信号：\n" +
+                     "当暴跌后又缓慢拉升时可以提前买入，抄底，要快人一步！";
+
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+        InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: signalText,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard
+    );
+}// 在机器人处理消息的地方，当收到 /shiwukxian 命令时，检查用户会员状态并可能启动K线监控方法
 if (message.Text.Equals("/shiwukxian"))
 {
     var userId = message.From.Id;
