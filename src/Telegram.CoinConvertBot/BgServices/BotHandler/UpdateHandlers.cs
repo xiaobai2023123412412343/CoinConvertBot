@@ -118,11 +118,12 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
     {
         isKLineMonitoringStarted = true;
         var now = DateTime.Now;
-        int minutesToNextQuarter = 15 - (now.Minute % 15);
-        var nextTargetTime = now.AddMinutes(minutesToNextQuarter);
+        // 计算到下一个整15分钟的总秒数（包括秒）
+        int secondsToNextQuarter = (15 - (now.Minute % 15)) * 60 - now.Second;
+        var nextTargetTime = now.AddSeconds(secondsToNextQuarter);
         var timeToNextTarget = (int)(nextTargetTime - now).TotalMilliseconds;
         kLineUpdateTimer = new Timer(async _ => await UpdateKLineDataAsync(), null, timeToNextTarget, 900000); // 每15分钟更新一次
-        Console.WriteLine($"[{DateTime.Now}] K线数据监控启动，下一次数据获取将在 {timeToNextTarget / 60000} 分钟后.");
+        Console.WriteLine($"[{DateTime.Now}] K线数据监控启动，下一次数据获取将在 {secondsToNextQuarter / 60} 分钟 {secondsToNextQuarter % 60} 秒后.");
         await botClient.SendTextMessageAsync(chatId, "K线数据监控启动，数据收集中...");
     }
     else
@@ -136,8 +137,8 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
         else
         {
             var now = DateTime.Now;
-            int minutesToNextQuarter = 15 - (now.Minute % 15);
-            var nextTargetTime = now.AddMinutes(minutesToNextQuarter);
+            int secondsToNextQuarter = (15 - (now.Minute % 15)) * 60 - now.Second;
+            var nextTargetTime = now.AddSeconds(secondsToNextQuarter);
             // 计算需要等待的完整周期数（每周期15分钟）
             int cyclesNeeded = 3 - coinKLineData.Values.Min(list => list.Count); // 需要的周期数
             var completeStorageTime = nextTargetTime.AddMinutes(15 * cyclesNeeded);
