@@ -1736,6 +1736,10 @@ rows.Add(fallButtons);
 // 添加原有的按钮和新按钮
 rows.Add(new InlineKeyboardButton[] {
     InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+    InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")
+});
+
+rows.Add(new InlineKeyboardButton[] {
     InlineKeyboardButton.WithCallbackData("市值TOP50 大数据", "feixiaohao")
 });
 
