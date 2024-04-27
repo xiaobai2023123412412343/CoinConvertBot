@@ -13966,7 +13966,7 @@ if (message.Text.Equals("/shiwukxian"))
 
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: "查询失败！ \U0000274C\n\n您还不是 FF Pro会员，请订阅会员后重试！",
+            text: "查询失败！ \U0000274C\n\n您还不是 FF Pro会员，请订阅会员后重试！\n价格连续上涨时触发突破信号，结合超卖信号：\n当暴跌后又缓慢拉升时可以提前买入，抄底，要快人一步！",
             replyMarkup: keyboard,
             parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
         );
