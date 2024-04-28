@@ -3073,6 +3073,8 @@ private static async Task<decimal> GetTransactionFeeAsync(string transactionId)
         }
     }
 }
+// 定义一个全局变量来存储下一次请求的间隔时间
+private static TimeSpan nextRequestInterval = TimeSpan.FromSeconds(5);	
 private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long userId, string tronAddress)
 {
     try
@@ -3105,11 +3107,11 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
             Console.WriteLine($"地址 {tronAddress} 没有USDT交易记录。将从现在开始监控新的交易。");
         }
 
-    // 启动定时器，每5-10秒随机时间检查新的交易记录
+    // 启动定时器，使用动态时间间隔检查新的交易记录
     Timer timer = new Timer(async _ =>
     {
         await CheckForNewTransactions(botClient, userId, tronAddress);
-    }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(new Random().Next(5, 11)));
+    }, null, nextRequestInterval, nextRequestInterval);
 
     // 存储定时器引用
     if (userMonitoringTimers.ContainsKey((userId, tronAddress)))
@@ -3262,12 +3264,33 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
 
         // 更新用户的最后交易时间戳
         userTronTransactions[(userId, tronAddress)] = (address, maxTimestamp);
+        // 重置请求间隔为默认值
+        nextRequestInterval = TimeSpan.FromSeconds(5);	    
     }
     catch (Exception ex)
     {
         Console.WriteLine($"Error in method {nameof(CheckForNewTransactions)}: {ex.Message}");
+        HandleException(ex);
     }
 }
+private static void HandleException(Exception ex)
+{
+    if (ex.Message.Contains("request rate exceeded"))
+    {
+        var match = Regex.Match(ex.Message, @"suspended for (\d+) s");
+        if (match.Success)
+        {
+            int suspendTime = int.Parse(match.Groups[1].Value);
+            nextRequestInterval = TimeSpan.FromSeconds(suspendTime + 1);
+            Console.WriteLine($"请求频率过高，调整请求间隔为 {nextRequestInterval.TotalSeconds} 秒。");
+        }
+    }
+    else
+    {
+        // 处理其他类型的异常
+        Console.WriteLine($"处理异常时发生错误：{ex.Message}");
+    }
+}	
 // 获取最新的交易记录
 private static async Task<TronTransaction> GetLatestTronTransactionAsync(string tronAddress)
 {
