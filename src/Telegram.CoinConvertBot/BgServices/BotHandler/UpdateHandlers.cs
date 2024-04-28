@@ -5917,6 +5917,7 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
         var language = message.From.LanguageCode;
         var fullName = $"{firstName} {lastName}".Trim();
         var chatName = message.Chat.Title; // 群聊名称
+	var chatType = message.Chat.Type == ChatType.Supergroup ? "超级群组" : "普通群组";    
 
         var responseText = "";
 
@@ -5926,7 +5927,7 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
         }
         else if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
         {
-            responseText = $"群组ID：<code>{chatId}</code>\n群组名：{chatName}\n\n用户ID：<code>{userId}</code>\n用户名：{userName}\n姓名：{fullName}\n语言：{language}";
+            responseText = $"群组ID：<code>{chatId}</code>\n群组名：{chatName}\n群类型：{chatType}\n\n用户ID：<code>{userId}</code>\n用户名：{userName}\n姓名：{fullName}\n语言：{language}";
         }
 
         await botClient.SendTextMessageAsync(
