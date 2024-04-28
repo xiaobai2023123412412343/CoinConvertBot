@@ -14021,7 +14021,8 @@ else if (message.Text.Contains("信号"))
         parseMode: ParseMode.Html,
         replyMarkup: inlineKeyboard
     );
-}// 在机器人处理消息的地方，当收到 /shiwukxian 命令时，检查用户会员状态并可能启动K线监控方法
+}
+// 在机器人处理消息的地方，当收到 /shiwukxian 命令时，检查用户会员状态并可能启动K线监控方法
 if (message.Text.Equals("/shiwukxian"))
 {
     var userId = message.From.Id;
