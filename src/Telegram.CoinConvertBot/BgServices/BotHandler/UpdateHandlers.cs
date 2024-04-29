@@ -10874,6 +10874,8 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 赠送 ID 数字  可赠送用户签到积分。
 <code>/zdcrsi</code> 可启动定时查询rsi值  <code>/charsi</code>  直接查rsi
 <code>/shiwukxian</code> 可启动储存15分钟k线数据
+发现超卖整段发送触发批量监控15分钟k线
+您当前监控整段发送触发批量删除监控k线
 
 启动机器人先：先开启保存群聊资料：<code>/baocunqunliao</code>
 储存之前的用户资料 代绑地址 可以代解
