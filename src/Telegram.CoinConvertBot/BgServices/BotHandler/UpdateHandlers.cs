@@ -375,7 +375,7 @@ private static string FormatNumber(decimal number)
     return number.ToString("F2");
 }
 
-private static async Task<Dictionary<string, (decimal price, decimal MarketCap, decimal Volume24h, int Rank)>> FetchDetailedCurrentPricesAsync()
+public static async Task<Dictionary<string, (decimal price, decimal MarketCap, decimal Volume24h, int Rank)>> FetchDetailedCurrentPricesAsync()
 {
     // 从本地缓存获取所有币种的数据
     var allCoinsData = CoinDataCache.GetAllCoinsData();
@@ -14216,13 +14216,17 @@ if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCas
         int count = monitoredCoins.Count;
         StringBuilder response = new StringBuilder($"您当前监控 {count} 个币种：\n\n");
 
+        // 获取最新的价格信息
+        var currentPrices = await KLineMonitor.FetchDetailedCurrentPricesAsync();
+
         // 分批发送，每批最多20个币种
         for (int i = 0; i < count; i += 20)
         {
             var batch = monitoredCoins.Skip(i).Take(20);
             foreach (var coin in batch)
             {
-                response.AppendLine($"<code>{coin}</code>");
+                decimal latestPrice = currentPrices.ContainsKey(coin) ? currentPrices[coin].price : 0; // 如果没有价格数据，则显示为0
+                response.AppendLine($"<code>{coin}</code> $：{latestPrice:F2}");
             }
             await botClient.SendTextMessageAsync(message.Chat.Id, response.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
             response.Clear(); // 清空StringBuilder以用于下一批
@@ -14232,7 +14236,7 @@ if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCas
     {
         await botClient.SendTextMessageAsync(message.Chat.Id, "您当前还未监控币种！");
     }
-}    
+} 
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
