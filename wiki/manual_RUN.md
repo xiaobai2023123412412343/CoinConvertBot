@@ -115,7 +115,7 @@ rm -r 目录 删除
 
 mkdir 目录 创建
 
-df -hT   检查服务器剩余空间
+df -hT   检查服务器剩余空间  free -h  也可以
 
 sudo du -sh /var/lib/* 2>/dev/null | sort -h   检查镜像大小
 
