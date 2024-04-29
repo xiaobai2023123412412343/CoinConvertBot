@@ -113,6 +113,35 @@ public class KLineMonitor
     private static bool isKLineDataCollectionStarted = false; // 新增字段，用于跟踪K线数据收集定时器是否已启动
     private static readonly int MaxDataPoints = 4; // 最多存储4条数据，用于计算连续3根K线的上涨
 
+public static void BatchStartCoinMonitoring(long userId, string messageText, ITelegramBotClient botClient, long chatId)
+{
+    var lines = messageText.Split('\n');
+    foreach (var line in lines)
+    {
+        var match = Regex.Match(line, @"#\s*([A-Z]+)\s*\|");
+        if (match.Success)
+        {
+            string coin = match.Groups[1].Value.ToUpper();
+            StartCoinMonitoring(userId, coin, botClient, chatId);
+        }
+    }
+    botClient.SendTextMessageAsync(chatId, "批量买入完成，相关币种监控已启动。", Telegram.Bot.Types.Enums.ParseMode.Html);
+}
+public static void BatchStopCoinMonitoring(long userId, string messageText, ITelegramBotClient botClient, long chatId)
+{
+    var lines = messageText.Split('\n');
+    foreach (var line in lines)
+    {
+        var match = Regex.Match(line, @"([A-Z]+)\s*\$");
+        if (match.Success)
+        {
+            string coin = match.Groups[1].Value.ToUpper();
+            StopCoinMonitoring(userId, coin);
+        }
+    }
+    botClient.SendTextMessageAsync(chatId, "批量卖出完成，相关币种监控已停止。", Telegram.Bot.Types.Enums.ParseMode.Html);
+}	
+
 public static bool StopCoinMonitoring(long userId, string coin)
 {
     if (userMonitoredCoins.ContainsKey(userId) && userMonitoredCoins[userId].ContainsKey(coin))
@@ -10196,7 +10225,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
     }        
         var inputText = message.Text.Trim();
         // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
-        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|买入|卖出|群发)");
+        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|买入|卖出|发现超卖|群发)");
 
         // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
         if (isBindOrUnbindCommand)
@@ -14208,6 +14237,14 @@ if (message.Text.StartsWith("卖出", StringComparison.OrdinalIgnoreCase))
         await botClient.SendTextMessageAsync(message.Chat.Id, "请输入正确的币种名称。例如：'卖出 BTC'");
     }
 }
+if (message.Text.Contains("发现超卖："))
+{
+    KLineMonitor.BatchStartCoinMonitoring(message.From.Id, message.Text, botClient, message.Chat.Id);
+}
+else if (message.Text.StartsWith("卖出您当前监控"))
+{
+    KLineMonitor.BatchStopCoinMonitoring(message.From.Id, message.Text, botClient, message.Chat.Id);
+}	    
 if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCase))
 {
     if (KLineMonitor.userMonitoredCoins.ContainsKey(message.From.Id) && KLineMonitor.userMonitoredCoins[message.From.Id].Count > 0)
