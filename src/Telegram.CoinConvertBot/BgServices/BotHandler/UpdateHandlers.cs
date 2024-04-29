@@ -381,7 +381,7 @@ private static async Task SendTopRisingCoinsAsync(ITelegramBotClient botClient, 
             message.AppendLine($"市值: {FormatNumber(coin.MarketCap)} | 24h成交：{FormatNumber(coin.Volume24h)}");
             for (int j = 1; j < coin.Increases.Count; j++)
             {
-                message.AppendLine($"{coinKLineData[coin.Coin][j].time:yyyy/MM/dd HH:mm} 上涨：{coin.Increases[j]:F2}%");
+                message.AppendLine($"{coinKLineData[coin.Coin][i].time:yyyy/MM/dd HH:mm} 上涨：{coin.Increases[i]:F2}% $：{coinKLineData[coin.Coin][i].price}");
             }
             if (i < topRisingCoins.Count - 1)
             {
