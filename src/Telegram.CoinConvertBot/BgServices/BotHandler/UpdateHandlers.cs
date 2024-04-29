@@ -228,11 +228,27 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
             decimal increase = (kLines[i].price - kLines[i - 1].price) / kLines[i - 1].price * 100;
             message.AppendLine($"{kLines[i].time:yyyy/MM/dd HH:mm} 上涨：{increase:F2}% $:{kLines[i].price}");
         }
-        //Console.WriteLine($"准备向用户ID：{userId} 播报！");
-        await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
+//Console.WriteLine($"准备向用户ID：{userId} 播报！");
+try
+{
+    await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
+    lastNotificationTime[coin] = DateTime.Now; // 成功发送后更新通知时间
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"发送消息失败，原因：{ex.Message}。将在5秒后重试。");
+    await Task.Delay(5000); // 等待5秒
 
-        // 更新最后通知时间
-        lastNotificationTime[coin] = DateTime.Now;
+    try
+    {
+        await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
+        lastNotificationTime[coin] = DateTime.Now; // 重试成功后更新通知时间
+    }
+    catch (Exception retryEx)
+    {
+        Console.WriteLine($"重试发送消息失败，原因：{retryEx.Message}。取消本次发送。");
+    }
+}
     }
     else
     {
