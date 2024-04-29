@@ -229,26 +229,32 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
             message.AppendLine($"{kLines[i].time:yyyy/MM/dd HH:mm} 上涨：{increase:F2}% $:{kLines[i].price}");
         }
 //Console.WriteLine($"准备向用户ID：{userId} 播报！");
-try
-{
-    await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
-    lastNotificationTime[coin] = DateTime.Now; // 成功发送后更新通知时间
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"发送消息失败，原因：{ex.Message}。将在5秒后重试。");
-    await Task.Delay(5000); // 等待5秒
+    // 创建内联按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData($"监控 {coin}", $"监控 {coin}")
+    });
 
     try
     {
-        await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
-        lastNotificationTime[coin] = DateTime.Now; // 重试成功后更新通知时间
+        await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html, replyMarkup: inlineKeyboard);
+        lastNotificationTime[coin] = DateTime.Now; // 成功发送后更新通知时间
     }
-    catch (Exception retryEx)
+    catch (Exception ex)
     {
-        Console.WriteLine($"重试发送消息失败，原因：{retryEx.Message}。取消本次发送。");
+        Console.WriteLine($"发送消息失败，原因：{ex.Message}。将在5秒后重试。");
+        await Task.Delay(5000); // 等待5秒
+
+        try
+        {
+            await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html, replyMarkup: inlineKeyboard);
+            lastNotificationTime[coin] = DateTime.Now; // 重试成功后更新通知时间
+        }
+        catch (Exception retryEx)
+        {
+            Console.WriteLine($"重试发送消息失败，原因：{retryEx.Message}。取消本次发送。");
+        }
     }
-}
     }
     else
     {
