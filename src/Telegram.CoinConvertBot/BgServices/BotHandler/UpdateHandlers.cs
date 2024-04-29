@@ -14241,7 +14241,7 @@ if (message.Text.Contains("发现超卖："))
 {
     KLineMonitor.BatchStartCoinMonitoring(message.From.Id, message.Text, botClient, message.Chat.Id);
 }
-else if (message.Text.StartsWith("卖出您当前监控"))
+else if (message.Text.StartsWith("您当前监控"))
 {
     KLineMonitor.BatchStopCoinMonitoring(message.From.Id, message.Text, botClient, message.Chat.Id);
 }	    
