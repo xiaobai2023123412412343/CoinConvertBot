@@ -193,7 +193,7 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
         }
 
         StringBuilder message = new StringBuilder();
-        message.AppendLine($"符合连续上涨：最新价：{currentPrice}，币种：{coin}。");
+        message.AppendLine($"符合连续上涨：最新价：{currentPrice}，币种：{coin}");
         for (int i = 1; i < kLines.Count; i++)
         {
             decimal increase = (kLines[i].price - kLines[i - 1].price) / kLines[i - 1].price * 100;
