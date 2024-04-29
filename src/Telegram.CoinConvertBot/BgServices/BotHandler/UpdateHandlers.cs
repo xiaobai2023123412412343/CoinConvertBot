@@ -110,8 +110,111 @@ public class KLineMonitor
 {
     private static Timer kLineUpdateTimer;
     private static bool isKLineMonitoringStarted = false;
+    private static bool isKLineDataCollectionStarted = false; // 新增字段，用于跟踪K线数据收集定时器是否已启动
     private static readonly int MaxDataPoints = 4; // 最多存储4条数据，用于计算连续3根K线的上涨
 
+public static bool StopCoinMonitoring(long userId, string coin)
+{
+    if (userMonitoredCoins.ContainsKey(userId) && userMonitoredCoins[userId].ContainsKey(coin))
+    {
+        userMonitoredCoins[userId][coin].Dispose(); // 停止定时器
+        userMonitoredCoins[userId].Remove(coin);
+        return true;
+    }
+    return false;
+}
+// 启动特定币种的监控
+public static Dictionary<long, Dictionary<string, Timer>> userMonitoredCoins = new Dictionary<long, Dictionary<string, Timer>>();	
+    public static void StartCoinMonitoring(long userId, string coin, ITelegramBotClient botClient, long chatId)
+    {
+        if (!userMonitoredCoins.ContainsKey(userId))
+        {
+            userMonitoredCoins[userId] = new Dictionary<string, Timer>();
+        }
+
+        if (userMonitoredCoins[userId].ContainsKey(coin))
+        {
+            Console.WriteLine($"用户 {userId} 已经在监控币种 {coin}，无需重复添加。");
+            return; // 如果已经在监控这个币种，就不再添加新的定时器
+        }
+
+        // 检查字典中是否有足够的K线数据，如果没有且定时器未启动，则启动K线数据收集定时器
+        if (!coinKLineData.ContainsKey(coin) || coinKLineData[coin].Count < MaxDataPoints)
+        {
+            if (!isKLineDataCollectionStarted)
+            {
+                Console.WriteLine($"字典中没有足够的K线数据，币种：{coin}，启动K线数据收集定时器。");
+                StartKLineMonitoringAsync(botClient, chatId);
+                isKLineDataCollectionStarted = true; // 标记为已启动
+            }
+        }
+
+        // 设置定时器，首次检查后，如果数据足够，每分钟检查一次
+        Timer timer = new Timer(async _ => await CheckAndNotifyAsync(userId, coin, botClient), null, 0, 60000); // 每分钟检查一次
+        userMonitoredCoins[userId].Add(coin, timer);
+        Console.WriteLine($"接收到监控币种 {coin}，为用户 {userId} 启动查询最新价格。");
+    }
+
+// 检查币种价格并通知用户
+private static Dictionary<string, DateTime> lastNotificationTime = new Dictionary<string, DateTime>();
+
+private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegramBotClient botClient)
+{
+    Console.WriteLine($"启动对比字典里的4根K线数据，币种：{coin}。");
+
+    if (!coinKLineData.ContainsKey(coin) || coinKLineData[coin].Count < MaxDataPoints)
+    {
+        Console.WriteLine($"字典没有足够的K线数据，币种：{coin}，等待下一次数据更新。");
+        return; // 数据不足
+    }
+
+    // 获取最新的价格信息
+    var currentPrices = await FetchDetailedCurrentPricesAsync();
+    if (!currentPrices.ContainsKey(coin))
+    {
+        Console.WriteLine($"无法获取币种 {coin} 的最新价格信息。");
+        return;
+    }
+
+    var currentPrice = currentPrices[coin].price;
+    var kLines = coinKLineData[coin];
+    var lastKLinePrice = kLines.Last().price;
+
+    // 检查是否满足连续上涨且最新价格大于最后一根K线的价格
+    if (kLines.Count == MaxDataPoints &&
+        kLines.Zip(kLines.Skip(1), (first, second) => second.price > first.price).All(x => x) &&
+        currentPrice > lastKLinePrice)
+    {
+        // 检查是否在15分钟内已经发送过通知
+        if (lastNotificationTime.ContainsKey(coin) && (DateTime.Now - lastNotificationTime[coin]).TotalMinutes < 15)
+        {
+            Console.WriteLine($"币种 {coin} 在15分钟内已经发送过通知，跳过此次通知。");
+            return;
+        }
+
+        StringBuilder message = new StringBuilder();
+        message.AppendLine($"符合连续上涨：最新价：{currentPrice}，币种：{coin}。");
+        for (int i = 1; i < kLines.Count; i++)
+        {
+            decimal increase = (kLines[i].price - kLines[i - 1].price) / kLines[i - 1].price * 100;
+            message.AppendLine($"{kLines[i].time:yyyy/MM/dd HH:mm} 上涨：{increase:F2}% $:{kLines[i].price}");
+        }
+        Console.WriteLine($"准备向用户ID：{userId} 播报！");
+        await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Markdown);
+
+        // 更新最后通知时间
+        lastNotificationTime[coin] = DateTime.Now;
+    }
+    else
+    {
+        Console.WriteLine($"没有符合连续上涨的要求：最新价：{currentPrice}，币种：{coin}");
+        Console.WriteLine($"详细K线数据：");
+        for (int i = 0; i < kLines.Count; i++)
+        {
+            Console.WriteLine($"第{i+1}根K线价格：{kLines[i].price}，时间：{kLines[i].time:yyyy/MM/dd HH:mm}");
+        }
+    }
+}
 public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient, long chatId)
 {
     if (!isKLineMonitoringStarted)
@@ -14071,6 +14174,64 @@ if (message.Text.Equals("/shiwukxian"))
         );
     }
 }
+if (message.Text.StartsWith("买入", StringComparison.OrdinalIgnoreCase))
+{
+    var match = Regex.Match(message.Text.Trim(), @"^买入\s*([a-zA-Z0-9]+)$");
+    if (match.Success)
+    {
+        string coin = match.Groups[1].Value.ToUpper(); // 提取币种名称并转换为大写
+        KLineMonitor.StartCoinMonitoring(message.From.Id, coin, botClient, message.Chat.Id);
+    }
+    else
+    {
+        await botClient.SendTextMessageAsync(message.Chat.Id, "请输入正确的币种名称。例如：'买入 BTC'");
+    }
+}
+if (message.Text.StartsWith("卖出", StringComparison.OrdinalIgnoreCase))
+{
+    var match = Regex.Match(message.Text.Trim(), @"^卖出\s*([a-zA-Z0-9]+)$");
+    if (match.Success)
+    {
+        string coin = match.Groups[1].Value.ToUpper(); // 提取币种名称并转换为大写
+        if (KLineMonitor.StopCoinMonitoring(message.From.Id, coin))
+        {
+            await botClient.SendTextMessageAsync(message.Chat.Id, $"卖出{coin}成功，后续不再监控！");
+        }
+        else
+        {
+            await botClient.SendTextMessageAsync(message.Chat.Id, $"您未监控{coin}，无需操作。");
+        }
+    }
+    else
+    {
+        await botClient.SendTextMessageAsync(message.Chat.Id, "请输入正确的币种名称。例如：'卖出 BTC'");
+    }
+}
+if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCase))
+{
+    if (KLineMonitor.userMonitoredCoins.ContainsKey(message.From.Id) && KLineMonitor.userMonitoredCoins[message.From.Id].Count > 0)
+    {
+        var monitoredCoins = KLineMonitor.userMonitoredCoins[message.From.Id].Keys.ToList();
+        int count = monitoredCoins.Count;
+        StringBuilder response = new StringBuilder($"您当前监控 {count} 个币种：\n");
+
+        // 分批发送，每批最多20个币种
+        for (int i = 0; i < count; i += 20)
+        {
+            var batch = monitoredCoins.Skip(i).Take(20);
+            foreach (var coin in batch)
+            {
+                response.AppendLine($"{coin}");
+            }
+            await botClient.SendTextMessageAsync(message.Chat.Id, response.ToString());
+            response.Clear(); // 清空StringBuilder以用于下一批
+        }
+    }
+    else
+    {
+        await botClient.SendTextMessageAsync(message.Chat.Id, "您当前还未监控币种！");
+    }
+}	    
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
