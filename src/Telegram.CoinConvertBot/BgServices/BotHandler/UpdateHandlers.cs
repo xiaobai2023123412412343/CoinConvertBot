@@ -193,14 +193,14 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
         }
 
         StringBuilder message = new StringBuilder();
-        message.AppendLine($"符合连续上涨：最新价：{currentPrice}，币种：{coin}");
+        message.AppendLine($"符合连续上涨：最新价：{currentPrice}，币种：<code>{coin}</code>");
         for (int i = 1; i < kLines.Count; i++)
         {
             decimal increase = (kLines[i].price - kLines[i - 1].price) / kLines[i - 1].price * 100;
             message.AppendLine($"{kLines[i].time:yyyy/MM/dd HH:mm} 上涨：{increase:F2}% $:{kLines[i].price}");
         }
         Console.WriteLine($"准备向用户ID：{userId} 播报！");
-        await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Markdown);
+        await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
 
         // 更新最后通知时间
         lastNotificationTime[coin] = DateTime.Now;
@@ -14181,6 +14181,7 @@ if (message.Text.StartsWith("买入", StringComparison.OrdinalIgnoreCase))
     {
         string coin = match.Groups[1].Value.ToUpper(); // 提取币种名称并转换为大写
         KLineMonitor.StartCoinMonitoring(message.From.Id, coin, botClient, message.Chat.Id);
+        await botClient.SendTextMessageAsync(message.Chat.Id, $"买入成功！开始启动监控 {coin}...", Telegram.Bot.Types.Enums.ParseMode.Html);
     }
     else
     {
@@ -14195,11 +14196,11 @@ if (message.Text.StartsWith("卖出", StringComparison.OrdinalIgnoreCase))
         string coin = match.Groups[1].Value.ToUpper(); // 提取币种名称并转换为大写
         if (KLineMonitor.StopCoinMonitoring(message.From.Id, coin))
         {
-            await botClient.SendTextMessageAsync(message.Chat.Id, $"卖出{coin}成功，后续不再监控！");
+            await botClient.SendTextMessageAsync(message.Chat.Id, $"卖出成功，后续不再监控 <code>{coin}</code>！", Telegram.Bot.Types.Enums.ParseMode.Html);
         }
         else
         {
-            await botClient.SendTextMessageAsync(message.Chat.Id, $"您未监控{coin}，无需操作。");
+            await botClient.SendTextMessageAsync(message.Chat.Id, $"您未监控 <code>{coin}</code>，无需操作。", Telegram.Bot.Types.Enums.ParseMode.Html);
         }
     }
     else
@@ -14213,7 +14214,7 @@ if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCas
     {
         var monitoredCoins = KLineMonitor.userMonitoredCoins[message.From.Id].Keys.ToList();
         int count = monitoredCoins.Count;
-        StringBuilder response = new StringBuilder($"您当前监控 {count} 个币种：\n");
+        StringBuilder response = new StringBuilder($"您当前监控 {count} 个币种：\n\n");
 
         // 分批发送，每批最多20个币种
         for (int i = 0; i < count; i += 20)
@@ -14221,9 +14222,9 @@ if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCas
             var batch = monitoredCoins.Skip(i).Take(20);
             foreach (var coin in batch)
             {
-                response.AppendLine($"{coin}");
+                response.AppendLine($"<code>{coin}</code>");
             }
-            await botClient.SendTextMessageAsync(message.Chat.Id, response.ToString());
+            await botClient.SendTextMessageAsync(message.Chat.Id, response.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
             response.Clear(); // 清空StringBuilder以用于下一批
         }
     }
@@ -14231,7 +14232,7 @@ if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCas
     {
         await botClient.SendTextMessageAsync(message.Chat.Id, "您当前还未监控币种！");
     }
-}	    
+}    
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
