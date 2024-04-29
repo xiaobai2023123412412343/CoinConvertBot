@@ -134,7 +134,7 @@ public static Dictionary<long, Dictionary<string, Timer>> userMonitoredCoins = n
 
         if (userMonitoredCoins[userId].ContainsKey(coin))
         {
-            Console.WriteLine($"用户 {userId} 已经在监控币种 {coin}，无需重复添加。");
+            //Console.WriteLine($"用户 {userId} 已经在监控币种 {coin}，无需重复添加。");
             return; // 如果已经在监控这个币种，就不再添加新的定时器
         }
 
@@ -143,7 +143,7 @@ public static Dictionary<long, Dictionary<string, Timer>> userMonitoredCoins = n
         {
             if (!isKLineDataCollectionStarted)
             {
-                Console.WriteLine($"字典中没有足够的K线数据，币种：{coin}，启动K线数据收集定时器。");
+                //Console.WriteLine($"字典中没有足够的K线数据，币种：{coin}，启动K线数据收集定时器。");
                 StartKLineMonitoringAsync(botClient, chatId);
                 isKLineDataCollectionStarted = true; // 标记为已启动
             }
@@ -152,7 +152,7 @@ public static Dictionary<long, Dictionary<string, Timer>> userMonitoredCoins = n
         // 设置定时器，首次检查后，如果数据足够，每分钟检查一次
         Timer timer = new Timer(async _ => await CheckAndNotifyAsync(userId, coin, botClient), null, 0, 60000); // 每分钟检查一次
         userMonitoredCoins[userId].Add(coin, timer);
-        Console.WriteLine($"接收到监控币种 {coin}，为用户 {userId} 启动查询最新价格。");
+        //Console.WriteLine($"接收到监控币种 {coin}，为用户 {userId} 启动查询最新价格。");
     }
 
 // 检查币种价格并通知用户
@@ -160,11 +160,11 @@ private static Dictionary<string, DateTime> lastNotificationTime = new Dictionar
 
 private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegramBotClient botClient)
 {
-    Console.WriteLine($"启动对比字典里的4根K线数据，币种：{coin}。");
+    //Console.WriteLine($"启动对比字典里的4根K线数据，币种：{coin}。");
 
     if (!coinKLineData.ContainsKey(coin) || coinKLineData[coin].Count < MaxDataPoints)
     {
-        Console.WriteLine($"字典没有足够的K线数据，币种：{coin}，等待下一次数据更新。");
+        //Console.WriteLine($"字典没有足够的K线数据，币种：{coin}，等待下一次数据更新。");
         return; // 数据不足
     }
 
@@ -172,7 +172,7 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
     var currentPrices = await FetchDetailedCurrentPricesAsync();
     if (!currentPrices.ContainsKey(coin))
     {
-        Console.WriteLine($"无法获取币种 {coin} 的最新价格信息。");
+        //Console.WriteLine($"无法获取币种 {coin} 的最新价格信息。");
         return;
     }
 
@@ -188,7 +188,7 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
         // 检查是否在15分钟内已经发送过通知
         if (lastNotificationTime.ContainsKey(coin) && (DateTime.Now - lastNotificationTime[coin]).TotalMinutes < 15)
         {
-            Console.WriteLine($"币种 {coin} 在15分钟内已经发送过通知，跳过此次通知。");
+            //Console.WriteLine($"币种 {coin} 在15分钟内已经发送过通知，跳过此次通知。");
             return;
         }
 
@@ -199,7 +199,7 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
             decimal increase = (kLines[i].price - kLines[i - 1].price) / kLines[i - 1].price * 100;
             message.AppendLine($"{kLines[i].time:yyyy/MM/dd HH:mm} 上涨：{increase:F2}% $:{kLines[i].price}");
         }
-        Console.WriteLine($"准备向用户ID：{userId} 播报！");
+        //Console.WriteLine($"准备向用户ID：{userId} 播报！");
         await botClient.SendTextMessageAsync(userId, message.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
 
         // 更新最后通知时间
@@ -207,11 +207,11 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
     }
     else
     {
-        Console.WriteLine($"没有符合连续上涨的要求：最新价：{currentPrice}，币种：{coin}");
-        Console.WriteLine($"详细K线数据：");
+        //Console.WriteLine($"没有符合连续上涨的要求：最新价：{currentPrice}，币种：{coin}");
+        //Console.WriteLine($"详细K线数据：");
         for (int i = 0; i < kLines.Count; i++)
         {
-            Console.WriteLine($"第{i+1}根K线价格：{kLines[i].price}，时间：{kLines[i].time:yyyy/MM/dd HH:mm}");
+            //Console.WriteLine($"第{i+1}根K线价格：{kLines[i].price}，时间：{kLines[i].time:yyyy/MM/dd HH:mm}");
         }
     }
 }
@@ -226,7 +226,7 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
         var nextTargetTime = now.AddSeconds(secondsToNextQuarter);
         var timeToNextTarget = (int)(nextTargetTime - now).TotalMilliseconds;
         kLineUpdateTimer = new Timer(async _ => await UpdateKLineDataAsync(), null, timeToNextTarget, 900000); // 每15分钟更新一次
-        Console.WriteLine($"[{DateTime.Now}] K线数据监控启动，下一次数据获取将在 {secondsToNextQuarter / 60} 分钟 {secondsToNextQuarter % 60} 秒后.");
+        //Console.WriteLine($"[{DateTime.Now}] K线数据监控启动，下一次数据获取将在 {secondsToNextQuarter / 60} 分钟 {secondsToNextQuarter % 60} 秒后.");
         await botClient.SendTextMessageAsync(chatId, "K线数据监控启动，数据收集中...");
     }
     else
@@ -234,7 +234,7 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
         // 检查是否有足够的数据点
         if (coinKLineData.Values.All(list => list.Count >= 3))
         {
-            Console.WriteLine($"[{DateTime.Now}] 数据已满足条件，正在处理请求.");
+            //Console.WriteLine($"[{DateTime.Now}] 数据已满足条件，正在处理请求.");
             await SendTopRisingCoinsAsync(botClient, chatId);
         }
         else
@@ -247,7 +247,7 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
             var completeStorageTime = nextTargetTime.AddMinutes(15 * cyclesNeeded);
             var retryTime = completeStorageTime.AddMinutes(1); // 加1分钟确保数据完全更新
 
-            Console.WriteLine($"[{DateTime.Now}] 数据未储存完成，需要等待更多数据.");
+            //Console.WriteLine($"[{DateTime.Now}] 数据未储存完成，需要等待更多数据.");
             await botClient.SendTextMessageAsync(chatId, $"数据未储存完成，请在 {retryTime:yyyy/MM/dd HH:mm:ss} 后重试！");
         }
     }
@@ -283,12 +283,12 @@ private static async Task UpdateKLineDataAsync()
 
         // 更新成功，替换旧数据
         coinKLineData = tempData;
-        Console.WriteLine($"[{DateTime.Now}] K线数据已更新.");
+        //Console.WriteLine($"[{DateTime.Now}] K线数据已更新.");
         consecutiveUpdateFailures = 0; // 重置失败计数
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[{DateTime.Now}] 更新K线数据失败：{ex.Message}");
+        //Console.WriteLine($"[{DateTime.Now}] 更新K线数据失败：{ex.Message}");
         consecutiveUpdateFailures++; // 增加失败计数
         if (consecutiveUpdateFailures >= 2)
         {
