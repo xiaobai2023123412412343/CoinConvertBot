@@ -14387,11 +14387,19 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
             // 发送所有分割的消息
             foreach (var messagePart in messages)
             {
-                var inlineKeyboard = new InlineKeyboardMarkup(new[]
+                List<InlineKeyboardButton[]> buttons = new List<InlineKeyboardButton[]>
                 {
-                    InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
-                    InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")
-                });
+                    new[] { InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+                            InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian") }
+                };
+
+                // 如果用户ID是1427768220，添加第三个按钮
+                if (message.Chat.Id == 1427768220)
+                {
+                    buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("监控连涨币种", "/mairumaichu") });
+                }
+
+                var inlineKeyboard = new InlineKeyboardMarkup(buttons);
 
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
@@ -14403,11 +14411,19 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
         }
         else
         {
-            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            List<InlineKeyboardButton[]> buttons = new List<InlineKeyboardButton[]>
             {
-                InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
-                InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian")
-            });
+                new[] { InlineKeyboardButton.WithCallbackData("订阅超卖信号", "/dingyuersi"),
+                        InlineKeyboardButton.WithCallbackData("查询突破信号", "/shiwukxian") }
+            };
+
+            // 如果用户ID是1427768220，添加第三个按钮
+            if (message.Chat.Id == 1427768220)
+            {
+                buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("监控连涨币种", "/mairumaichu") });
+            }
+
+            var inlineKeyboard = new InlineKeyboardMarkup(buttons);
 
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
