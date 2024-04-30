@@ -14295,7 +14295,7 @@ if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCas
                 {
                     // 成功获取价格
                 }
-                response.AppendLine($"<code>{coin}</code> $：{latestPrice:F2}");
+                response.AppendLine($"<code>{coin}</code> $：{latestPrice}");
             }
             await botClient.SendTextMessageAsync(message.Chat.Id, response.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
             response.Clear(); // 清空StringBuilder以用于下一批
