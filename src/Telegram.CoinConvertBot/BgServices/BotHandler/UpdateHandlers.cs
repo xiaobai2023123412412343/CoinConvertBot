@@ -2283,7 +2283,27 @@ public static class IndexDataFetcher//指数行情
     private static readonly List<string> licences = new List<string> { "a8d568553657cff90", "", "" };//可以一直添加秘钥 http://mairui.club/ 申请
     private static readonly string[] indexCodes = { "sh000001", "sz399001", "sh000300" };
     private static readonly string[] indexNames = { "上证指数", "深证指数", "沪深  300" };
-
+	
+public static async Task<Stream> FetchImageAsync(string url)
+{
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            var response = await httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsStreamAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            // 处理异常，可以记录日志或者返回null表示失败
+            Console.WriteLine("Error fetching image: " + ex.Message);
+        }
+    }
+    return null; // 如果请求失败或异常，返回null
+}
 public static async Task<string> FetchIndexDataAsync()
 {
     string resultText = "";
@@ -12085,7 +12105,35 @@ if (messageText.StartsWith("/xgzhishu"))
         );
     }
 }
+// 检查是否接收到了 /hangqingshuju 消息，收到就查询指数图像
+if (messageText.StartsWith("/hangqingshuju"))
+{
+    var imageUrl = "http://image.sinajs.cn/newchart/daily/n/sh000001.gif";
+    var indexImage = await IndexDataFetcher.FetchImageAsync(imageUrl);
 
+    var messageContent = "金十日历：https://rili.jin10.com\n金十数据：https://www.jin10.com\n英为财情：https://m.cn.investing.com/markets\n谷歌财经：https://www.google.com/finance/quote/.IXIC:INDEXNASDAQ";
+
+    if (indexImage != null)
+    {
+        // 如果API请求成功，发送图片和文字说明
+        await botClient.SendPhotoAsync(
+            chatId: message.Chat.Id,
+            photo: new Telegram.Bot.Types.InputFiles.InputOnlineFile(indexImage),
+            caption: messageContent,
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+        );
+    }
+    else
+    {
+        // 如果API请求失败，只发送文字说明
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: messageContent,
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+            disableWebPagePreview: true // 关闭链接预览
+        );
+    }
+}
 // 检查是否接收到了 /zhishu 消息，收到就查询指数数据和沪深两市上涨下跌数概览
 if (messageText.StartsWith("/zhishu"))
 {
@@ -12582,7 +12630,7 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
         },
         new [] // 新增第四行按钮
         {
-            InlineKeyboardButton.WithCallbackData("指数行情", "indexMarket"),
+            InlineKeyboardButton.WithCallbackData("指数行情", "/hangqingshuju"),
             InlineKeyboardButton.WithCallbackData("在线音频", "onlineAudio"),
             InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading")
         },
@@ -16160,7 +16208,7 @@ if (UserId != AdminUserId)
         },
         new [] // 新增第四行按钮
         {
-            InlineKeyboardButton.WithCallbackData("指数行情", "indexMarket"),
+            InlineKeyboardButton.WithCallbackData("指数行情", "/hangqingshuju"),
             InlineKeyboardButton.WithCallbackData("在线音频", "onlineAudio"),
             InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading")
         },
