@@ -232,7 +232,8 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
     // 创建内联按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        InlineKeyboardButton.WithCallbackData($"监控 {coin}", $"监控 {coin}")
+        InlineKeyboardButton.WithCallbackData($"监控 {coin}", $"监控 {coin}"),
+        InlineKeyboardButton.WithCallbackData($"查 {coin} 详情", $"查 {coin}")		
     });
 
     try
