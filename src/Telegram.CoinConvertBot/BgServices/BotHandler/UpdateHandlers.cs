@@ -708,7 +708,7 @@ public static class CoinDataAnalyzer
                     throw new FormatException($"解析错误: 无法解析RSI6, RSI14, 或m10的值。币种: {symbol}");
                 }
 
-                if (rsi6 < 30)
+                if (rsi6 < 30 && rsi14 > 30)
                 {
                     var coinData = allCoinsData[symbol];
 		    double percentChange1h = coinData["percent_change_1h"].GetDouble();
