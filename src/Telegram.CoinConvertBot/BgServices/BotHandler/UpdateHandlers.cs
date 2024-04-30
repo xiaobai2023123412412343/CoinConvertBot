@@ -2293,16 +2293,25 @@ public static async Task<Stream> FetchImageAsync(string url)
             var response = await httpClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadAsStreamAsync();
+                var stream = await response.Content.ReadAsStreamAsync();
+                if (stream.Length == 0)
+                {
+                    Console.WriteLine("Received empty stream from image URL.");
+                    return null;
+                }
+                return stream;
+            }
+            else
+            {
+                Console.WriteLine($"Failed to fetch image. Status code: {response.StatusCode}");
             }
         }
         catch (Exception ex)
         {
-            // 处理异常，可以记录日志或者返回null表示失败
-            Console.WriteLine("Error fetching image: " + ex.Message);
+            Console.WriteLine($"Exception when fetching image: {ex.Message}");
         }
     }
-    return null; // 如果请求失败或异常，返回null
+    return null;
 }
 public static async Task<string> FetchIndexDataAsync()
 {
@@ -12109,28 +12118,28 @@ if (messageText.StartsWith("/xgzhishu"))
 if (messageText.StartsWith("/hangqingshuju"))
 {
     var imageUrl = "http://image.sinajs.cn/newchart/daily/n/sh000001.gif";
-    var indexImage = await IndexDataFetcher.FetchImageAsync(imageUrl);
+    var indexImageStream = await IndexDataFetcher.FetchImageAsync(imageUrl);
 
     var messageContent = "金十日历：https://rili.jin10.com\n金十数据：https://www.jin10.com\n英为财情：https://m.cn.investing.com/markets\n谷歌财经：https://www.google.com/finance/quote/.IXIC:INDEXNASDAQ";
 
-    if (indexImage != null)
+    if (indexImageStream != null && indexImageStream.Length > 0)
     {
         // 如果API请求成功，发送图片和文字说明
         await botClient.SendPhotoAsync(
             chatId: message.Chat.Id,
-            photo: new Telegram.Bot.Types.InputFiles.InputOnlineFile(indexImage),
+            photo: new Telegram.Bot.Types.InputFiles.InputOnlineFile(indexImageStream),
             caption: messageContent,
             parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
         );
     }
     else
     {
-        // 如果API请求失败，只发送文字说明
+        // 如果API请求失败或图片为空，只发送文字说明
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: messageContent,
             parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-            disableWebPagePreview: true // 关闭链接预览
+            disableWebPagePreview: true
         );
     }
 }
