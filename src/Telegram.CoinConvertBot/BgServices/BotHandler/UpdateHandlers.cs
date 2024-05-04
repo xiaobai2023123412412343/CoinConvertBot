@@ -3453,7 +3453,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error in method {nameof(CheckForNewTransactions)}: {ex.Message}");
+        //Console.WriteLine($"Error in method {nameof(CheckForNewTransactions)}: {ex.Message}");
         HandleException(ex);
     }
 }
@@ -3466,7 +3466,7 @@ private static void HandleException(Exception ex)
         {
             int suspendTime = int.Parse(match.Groups[1].Value);
             nextRequestInterval = TimeSpan.FromSeconds(suspendTime + 1);
-            Console.WriteLine($"请求频率过高，调整请求间隔为 {nextRequestInterval.TotalSeconds} 秒。");
+            //Console.WriteLine($"请求频率过高，调整请求间隔为 {nextRequestInterval.TotalSeconds} 秒。");
         }
     }
     else
