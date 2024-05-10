@@ -7959,7 +7959,9 @@ decimal usdtProfit = usdtTotalIncome - usdtTotalOutcome;
 string botUsername = "yifanfubot"; // 你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";    
-string groupExclusiveText = $"<a href=\"{shareLink}\">群内发送地址可查：\n所有收入/支出统计，波场地址授权记录！</a>\n";
+string groupExclusiveText = $"<a href=\"{shareLink}\">群内发地址可查所有收入支出以及授权记录！</a>\n";
+string uxiaofeikaText = $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n"; 
+
 
  // 添加授权列表的信息
 string usdtAuthorizedListText = "";
@@ -7995,8 +7997,9 @@ if (trxBalance < 100)
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     $"累计收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +
     $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>";
-    //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
+    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +
+    //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;   
+    $"{uxiaofeikaText}";	
 }
 else
 {
@@ -8022,8 +8025,9 @@ else
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     $"累计收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +    
     $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>"; 
-    //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
+    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +
+    //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;   
+    $"{uxiaofeikaText}";	
 }
 }  
 else
@@ -8050,7 +8054,8 @@ if (trxBalance < 100)
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
     $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +    
-    $"{groupExclusiveText}"; // 在这里使用 groupExclusiveText
+    $"{groupExclusiveText}" +   // 在这里使用 groupExclusiveText
+    $"{uxiaofeikaText}";	
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
 }
 else
@@ -8075,7 +8080,8 @@ else
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
     $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" + 
-    $"{groupExclusiveText}"; // 在这里使用 groupExclusiveText 
+    $"{groupExclusiveText}" +   // 在这里使用 groupExclusiveText
+    $"{uxiaofeikaText}";	
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
 }
 }    
