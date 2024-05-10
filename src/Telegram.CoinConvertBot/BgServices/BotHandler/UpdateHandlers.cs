@@ -4703,7 +4703,7 @@ public static async Task HandlePersonalCenterCommandAsync(ITelegramBotClient bot
                 {
                     // 正在监控的地址
                     monitoringAddresses.Add(bind.Address);
-                    buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(buttonText, $"query,{bind.Address}") });
+                    buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(buttonText, $"query_again,{bind.Address}") });
                 }
                 else
                 {
