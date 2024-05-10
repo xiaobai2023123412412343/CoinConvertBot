@@ -16944,7 +16944,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
 使用方法：
    点击菜单 选择 <b>U兑TRX</b>
    转账USDT到指定地址，即可秒回TRX！
-   如需了解机器人功能介绍，直接发送：<code>帮助</code> 
+   如需了解机器人功能介绍，直接点击：/help
    
 {groupFunctionText}
 {uCardText}
