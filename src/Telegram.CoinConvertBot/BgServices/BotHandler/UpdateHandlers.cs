@@ -14588,7 +14588,7 @@ if (Regex.IsMatch(messageText, @"^监控\s*\S+", RegexOptions.IgnoreCase))
         var symbol = match.Groups[1].Value.Trim().ToUpper(); // 确保币种名称是大写
         await PriceMonitor.Monitor(botClient, message.Chat.Id, symbol);
 
-        // 检查并移除已存在的监控
+        // 检查并移除已存在的买入币种（监控连续15分钟k线上涨）
         if (KLineMonitor.userMonitoredCoins.ContainsKey(message.From.Id))
         {
             var userCoins = KLineMonitor.userMonitoredCoins[message.From.Id];
