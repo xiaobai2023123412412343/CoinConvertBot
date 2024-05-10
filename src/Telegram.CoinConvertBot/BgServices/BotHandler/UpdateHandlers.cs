@@ -16733,7 +16733,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 实时汇率：<b>1 USDT = {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>
 获得TRX：<b>(10 - 1) * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {10m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
 
-注意：<b>只支持{MinUSDT} USDT以上的金额兑换。</b>
+注意：<b>只支持 {MinUSDT} USDT以上的金额兑换。</b>
 
 转帐前，推荐您使用以下命令来接收入账通知
 <code>绑定 Txxxxxxx</code>(您的钱包地址)
@@ -16751,7 +16751,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 <code>您的优惠汇率：<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>    
 可获得TRX：<b>100 * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {100m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
     
-注意：<b>只支持{MinUSDT} USDT以上的金额兑换！</b>    
+注意：<b>只支持 {MinUSDT} USDT以上的金额兑换！</b>    
 只限钱包转账，自动原地址返TRX，如需兑换到其它地址请{adminText}！
 
 转帐前，推荐您绑定钱包地址来接收交易通知： 
@@ -16849,7 +16849,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
         
 <code>{ReciveAddress}</code>      
     
-<b>注意：只支持{MinUSDT} USDT以上的金额兑换！</b>   
+<b>注意：只支持 {MinUSDT} USDT以上的金额兑换！</b>   
 <b>给机器人收款地址转u自动原地址秒回TRX！</b> 
 ————————————————————    
 转账费用：（浮动）
