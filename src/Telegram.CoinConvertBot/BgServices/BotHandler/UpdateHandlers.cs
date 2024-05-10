@@ -3428,7 +3428,7 @@ catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the
         if (match.Success)
         {
             var retryAfterSeconds = int.Parse(match.Groups[1].Value);
-            Console.WriteLine($"发送通知失败：{ex.Message}. 将在{retryAfterSeconds}秒后重试。");
+            //Console.WriteLine($"发送通知失败：{ex.Message}. 将在{retryAfterSeconds}秒后重试。");
             await Task.Delay(retryAfterSeconds * 1000);
             await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
         }
