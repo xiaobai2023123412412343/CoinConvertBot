@@ -8134,11 +8134,13 @@ else
         new [] // 第三行按钮
         {
             InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
-            InlineKeyboardButton.WithCallbackData("TRX消耗统计\U0001F4F6", $"trx_usage,{tronAddress}"), // 添加新的按钮
+            //InlineKeyboardButton.WithCallbackData("TRX消耗统计\U0001F4F6", $"trx_usage,{tronAddress}"), // 添加新的按钮
+            InlineKeyboardButton.WithCallbackData("完整授权列表", $"authorized_list,{tronAddress}"), // 添加新的按钮		
         },
         new [] // 第四行按钮
         {
-            InlineKeyboardButton.WithCallbackData("完整授权列表", $"authorized_list,{tronAddress}"), // 添加新的按钮
+            InlineKeyboardButton.WithCallbackData("TRX消耗统计\U0001F4F6", $"trx_usage,{tronAddress}"), // 添加新的按钮		
+            //InlineKeyboardButton.WithCallbackData("完整授权列表", $"authorized_list,{tronAddress}"), // 添加新的按钮
             InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin") // 修改为打开链接的按钮      
         }	    
         
