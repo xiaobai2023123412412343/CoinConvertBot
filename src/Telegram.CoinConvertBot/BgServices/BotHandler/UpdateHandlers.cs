@@ -10524,10 +10524,16 @@ else if(update.CallbackQuery.Data == "commandList")
 如发送： <code> 1~2  </code>机器人计算并回复：从1到2，上涨 100%！
 ";
 
+        var keyboard = new InlineKeyboardMarkup(new[]
+        {
+            InlineKeyboardButton.WithCallbackData("关闭", "back")
+        });
+	
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: commandListMessage,
-        parseMode: ParseMode.Html
+        parseMode: ParseMode.Html,
+	replyMarkup: keyboard    
     );
 }	    
 else if(update.CallbackQuery.Data == "smsVerification")
