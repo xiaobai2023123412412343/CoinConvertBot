@@ -14585,8 +14585,19 @@ if (Regex.IsMatch(messageText, @"^监控\s*\S+", RegexOptions.IgnoreCase))
     else
     {
         var match = Regex.Match(messageText, @"^监控\s*(\S+)$", RegexOptions.IgnoreCase);
-        var symbol = match.Groups[1].Value.Trim();
+        var symbol = match.Groups[1].Value.Trim().ToUpper(); // 确保币种名称是大写
         await PriceMonitor.Monitor(botClient, message.Chat.Id, symbol);
+
+        // 检查并移除已存在的监控
+        if (KLineMonitor.userMonitoredCoins.ContainsKey(message.From.Id))
+        {
+            var userCoins = KLineMonitor.userMonitoredCoins[message.From.Id];
+            if (userCoins.ContainsKey(symbol))
+            {
+                userCoins[symbol].Dispose(); // 停止相关的Timer
+                userCoins.Remove(symbol); // 从字典中移除币种
+            }
+        }
     }
 }
 else if (Regex.IsMatch(messageText, @"^取消监控\s*\S+", RegexOptions.IgnoreCase))
