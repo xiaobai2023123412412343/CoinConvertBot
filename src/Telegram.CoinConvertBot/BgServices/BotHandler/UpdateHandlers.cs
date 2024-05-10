@@ -7573,7 +7573,7 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
             // 检查data数组是否为空
             if (result.data == null || result.data.Count == 0 || result.data[0].authorizedList == null)
             {
-                sb.AppendLine("无授权记录。");
+                sb.AppendLine("\U00002705无授权记录。");
             }
             else
             {
@@ -7634,7 +7634,7 @@ return sb.ToString();
     {
         // 捕获并处理异常
         Console.WriteLine($"在获取授权记录时发生异常：{ex.Message}");
-        return "无授权记录\n";
+        return "\U00002705无授权记录\n";
     }
 }
 //// 辅助方法：将长文本分割成指定数量的记录                                                                 
@@ -7728,7 +7728,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
             // 检查data数组是否为空
             if (result.data == null || result.data.Count == 0 || result.data[0].authorizedList == null)
             {
-                sb.AppendLine("无授权记录。");
+                sb.AppendLine("\U00002705无授权记录。");
             }
             else
             {
@@ -7774,7 +7774,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
     {
         // 捕获并处理异常
         Console.WriteLine($"在获取授权记录时发生异常：{ex.Message}");
-        return "无授权记录\n";
+        return "\U00002705无授权记录\n";
     }
 }                                                                 
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
