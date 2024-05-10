@@ -10961,6 +10961,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 <code>绑定 TWs6YaFusBbL6UYPjfK9XxpffNGCDu1ApF TRX 备注 安卓抹茶</code>
 <code>绑定 TLowmih1pMgmeUGTAg3Z7Fdk1CZ5KP5ZgB TRX 备注 iOS抹茶</code>
 
+<code>添加群聊：群名字：24小时营业 群ID：-1001691868771 群链接：https://t.me/+2hxPc3RySbRkNDZl</code>
 ";
 
     await botClient.SendTextMessageAsync(
