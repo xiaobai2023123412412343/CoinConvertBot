@@ -9805,6 +9805,7 @@ if (update.Type == UpdateType.CallbackQuery)
         await HandleQueryCommandAsync(botClient, new Message
         {
             Chat = callbackQuery.Message.Chat,
+            From = callbackQuery.From, // 新增的：设置 From 属性		
             Text = tronAddress
         });
     }
