@@ -6680,11 +6680,17 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
                           "机器人兑换过程公平公正公开，交易记录全开放，发送：<code>兑换记录</code> 自动返回近期USDT收入以及TRX转出记录，欢迎监督！\n\n" +
                           "\U0001F449        本机器人源码出售，如有需要可联系" + adminLinkText + "      \U0001F448";
 
+        var keyboard = new InlineKeyboardMarkup(new[]
+        {
+            InlineKeyboardButton.WithCallbackData("关闭", "back")
+        });
+	    
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: helpText,
             parseMode: ParseMode.Html,
-            disableWebPagePreview: true
+            disableWebPagePreview: true,
+	    replyMarkup: keyboard	
         );
     }
 }
