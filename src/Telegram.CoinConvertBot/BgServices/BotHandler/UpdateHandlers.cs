@@ -8088,7 +8088,7 @@ else
 
 // 创建内联键盘
 InlineKeyboardMarkup inlineKeyboard;
-if (message.Chat.Type == ChatType.Private)
+if (message.Chat.Type == ChatType.Private && message.From.Id != 1427768220)
 {
     inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
