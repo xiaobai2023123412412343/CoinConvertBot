@@ -3191,6 +3191,14 @@ private static void StopUSDTMonitoring(long userId, string tronAddress)
 
     // 移除用户的交易记录
     userTronTransactions.Remove((userId, tronAddress));
+
+    // 移除用户的备注信息
+    userAddressNotes.Remove((userId, tronAddress));
+
+    // 移除失败计数器
+    userNotificationFailures.Remove((userId, tronAddress));
+
+    Console.WriteLine($"已停止监控并清理用户 {userId} 的所有相关数据。");
 }
 // 使用TronGrid API获取特定交易的费用
 private static async Task<decimal> GetTransactionFeeAsync(string transactionId)
@@ -3404,29 +3412,16 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
             // 如果发送成功，重置失败计数器
             userNotificationFailures[(userId, tronAddress)] = 0;
         }
-        catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
-        {
-            Console.WriteLine($"发送通知失败：{ex.Message}. 将在下次检查时重试。");
-            // 增加失败计数器
-            if (userNotificationFailures.TryGetValue((userId, tronAddress), out var failureCount))
-            {
-                failureCount++;
-                userNotificationFailures[(userId, tronAddress)] = failureCount;
-            }
-            else
-            {
-                userNotificationFailures[(userId, tronAddress)] = 1;
-            }
+catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
+{
+    Console.WriteLine($"发送通知失败：{ex.Message}. 用户 {userId} 已阻止机器人，即将停止监控并移除相关数据。");
 
-            // 如果失败次数超过3次，停止监控
-            if (failureCount >= 3)
-            {
-                Console.WriteLine($"用户 {userId} 的通知失败次数超过3次，停止监控地址 {tronAddress}。");
-                StopUSDTMonitoring(userId, tronAddress);
-                // 从失败计数器字典中移除该用户
-                userNotificationFailures.Remove((userId, tronAddress));
-            }
-        }
+    // 停止监控并清理资源
+    StopUSDTMonitoring(userId, tronAddress);
+
+    // 从失败计数器字典中移除该用户
+    userNotificationFailures.Remove((userId, tronAddress));
+}
     catch (ApiRequestException ex) when (ex.Message.Contains("Too Many Requests: retry after"))
     {
         var match = Regex.Match(ex.Message, @"Too Many Requests: retry after (\d+)");
