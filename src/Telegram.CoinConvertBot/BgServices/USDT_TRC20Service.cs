@@ -113,6 +113,7 @@ namespace Telegram.CoinConvertBot.BgServices
                                             new []
                                             {
                                                 Bot.Types.ReplyMarkups.InlineKeyboardButton.WithUrl("查看交易",viewUrl),
+                                                Bot.Types.ReplyMarkups.InlineKeyboardButton.WithCallbackData("地址详情", $"query_again,{record.FromAddress}")
                                             },
                                     });
 
