@@ -8193,7 +8193,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
                 decimal usdtAmount = decimal.Parse((string)transaction["value"]) / 1_000_000;
                 if (usdtAmount >= 0.01m)
                 {
-                    string txType = tronAddress.Equals((string)transaction["from"], StringComparison.OrdinalIgnoreCase) ? "转出" : "转入";
+                    string txType = tronAddress.Equals((string)transaction["from"], StringComparison.OrdinalIgnoreCase) ? "转出\U0001F53A" : "转入\U0001F539";
                     DateTime transactionTime = TimeZoneInfo.ConvertTimeFromUtc(DateTimeOffset.FromUnixTimeMilliseconds((long)transaction["block_timestamp"]).UtcDateTime, chinaZone);
                     string formattedTime = transactionTime.ToString("yyyy-MM-dd HH:mm:ss");
 
