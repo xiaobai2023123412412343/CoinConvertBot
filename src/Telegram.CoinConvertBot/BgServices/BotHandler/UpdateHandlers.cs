@@ -8158,6 +8158,68 @@ else
         replyMarkup: inlineKeyboard // 添加内联键盘
     );
 }
+public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAsync(string tronAddress)
+{
+    int limit = 50; // 获取近50笔记录
+    string tokenId = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT合约地址
+    string url = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_confirmed=true&limit={limit}&token_id={tokenId}";
+
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            HttpResponseMessage response = await httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                return ("<pre>无法获取交易数据，请稍后再试。</pre>", null);
+            }
+
+            string jsonString = await response.Content.ReadAsStringAsync();
+            JObject jsonResponse = JObject.Parse(jsonString);
+            JArray transactions = (JArray)jsonResponse["data"];
+
+            if (transactions == null || !transactions.HasValues)
+            {
+                return ("<pre>没有交易数据。</pre>", null);
+            }
+
+            StringBuilder transactionTextBuilder = new StringBuilder();
+            transactionTextBuilder.AppendLine("|       交易时间       | 类型 | 交易金额   ");
+            transactionTextBuilder.AppendLine("|---------------------|:----:|----------:");
+
+            TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+            foreach (var transaction in transactions)
+            {
+                decimal usdtAmount = decimal.Parse((string)transaction["value"]) / 1_000_000;
+                if (usdtAmount >= 0.01m)
+                {
+                    string txType = tronAddress.Equals((string)transaction["from"], StringComparison.OrdinalIgnoreCase) ? "转出" : "转入";
+                    DateTime transactionTime = TimeZoneInfo.ConvertTimeFromUtc(DateTimeOffset.FromUnixTimeMilliseconds((long)transaction["block_timestamp"]).UtcDateTime, chinaZone);
+                    string formattedTime = transactionTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+                    transactionTextBuilder.AppendLine($"| {formattedTime} | {txType} | {usdtAmount:N2} USDT");
+                }
+            }
+
+            // 添加查询地址和查询时间
+            string queryTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaZone).ToString("yyyy-MM-dd HH:mm:ss");
+            transactionTextBuilder.AppendLine();
+            transactionTextBuilder.AppendLine($"查询地址：{tronAddress}");
+            transactionTextBuilder.AppendLine($"查询时间：{queryTime}");
+
+            // 创建内联按钮
+            InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(
+                InlineKeyboardButton.WithCallbackData("关闭", "back")
+            );
+
+            return ($"<pre>{transactionTextBuilder.ToString()}</pre>", inlineKeyboard);
+        }
+        catch (Exception ex)
+        {
+            return ($"<pre>处理交易数据时发生错误：{ex.Message}</pre>", null);
+        }
+    }
+}
 // 查询带宽消耗
 public static async Task<(decimal, decimal, decimal, decimal, decimal, decimal, decimal, decimal, decimal)> GetBandwidthUsageAsync(string tronAddress)
 {
@@ -14377,6 +14439,47 @@ if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCas
     else
     {
         await botClient.SendTextMessageAsync(message.Chat.Id, "您当前未监控任何币种！");
+    }
+}
+// 检查消息是否包含 "账单详情" 关键词
+if (messageText.Contains("账单详情"))
+{
+    // 提取波场地址，假设地址紧跟在 "账单详情" 后面，且可能有空格
+    int startIndex = messageText.IndexOf("账单详情") + "账单详情".Length;
+    string tronAddress = messageText.Substring(startIndex).Trim(); // 去除前后空格
+
+    // 检查地址是否以 'T' 开头且长度为34
+    if (tronAddress.Length == 34 && tronAddress.StartsWith("T"))
+    {
+        try
+        {
+            // 调用方法查询账单详情
+            var (transactionDetails, inlineKeyboard) = await GetRecentTransactionsAsync(tronAddress);
+
+            // 向用户发送账单详情，包括内联按钮
+            _ = botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: transactionDetails,
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard
+            );
+        }
+        catch (Exception ex)
+        {
+            // 发生异常时向用户发送错误消息
+            _ = botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"查询交易时发生错误：{ex.Message}"
+            );
+        }
+    }
+    else
+    {
+        // 如果地址格式不正确，发送错误消息
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "提供的地址格式不正确，请确保是以 'T' 开头的34位波场地址。"
+        );
     }
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
