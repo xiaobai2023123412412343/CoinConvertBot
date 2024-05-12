@@ -8204,8 +8204,8 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
             // 添加查询地址和查询时间
             string queryTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaZone).ToString("yyyy-MM-dd HH:mm:ss");
             transactionTextBuilder.AppendLine();
+            transactionTextBuilder.AppendLine($"查询时间：{queryTime}");		
             transactionTextBuilder.AppendLine($"查询地址：{tronAddress}");
-            transactionTextBuilder.AppendLine($"查询时间：{queryTime}");
 
             // 创建内联按钮
             InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(
