@@ -8163,6 +8163,7 @@ else
         replyMarkup: inlineKeyboard // 添加内联键盘
     );
 }
+//USDT账单详情
 public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAsync(string tronAddress)
 {
     int limit = 50; // 获取近50笔记录
@@ -8193,13 +8194,21 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
             transactionTextBuilder.AppendLine("| ------------------- | ------ | ≥ 0.01 USDT");
 
             TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+            string lastDate = "";
             foreach (var transaction in transactions)
             {
                 decimal usdtAmount = decimal.Parse((string)transaction["value"]) / 1_000_000;
                 if (usdtAmount >= 0.01m)
                 {
-                    string txType = tronAddress.Equals((string)transaction["from"], StringComparison.OrdinalIgnoreCase) ? "转出\U0001F53A" : "转入\U0001F539";
                     DateTime transactionTime = TimeZoneInfo.ConvertTimeFromUtc(DateTimeOffset.FromUnixTimeMilliseconds((long)transaction["block_timestamp"]).UtcDateTime, chinaZone);
+                    string currentDate = transactionTime.ToString("yyyy-MM-dd");
+                    if (lastDate != "" && lastDate != currentDate)
+                    {
+                        transactionTextBuilder.AppendLine("--------------------------------------------");
+                    }
+                    lastDate = currentDate;
+
+                    string txType = tronAddress.Equals((string)transaction["from"], StringComparison.OrdinalIgnoreCase) ? "转出\U0001F53A" : "转入\U0001F539";
                     string formattedTime = transactionTime.ToString("yyyy-MM-dd HH:mm:ss");
 
                     transactionTextBuilder.AppendLine($"| {formattedTime} | {txType} | {usdtAmount:N2} USDT");
