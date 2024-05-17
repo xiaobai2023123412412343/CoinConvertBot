@@ -14456,6 +14456,12 @@ if (messageText.Contains("账单详情"))
     // 检查地址是否以 'T' 开头且长度为34
     if (tronAddress.Length == 34 && tronAddress.StartsWith("T"))
     {
+        // 先回复用户，正在处理请求
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "正在统计，请稍后..."
+        );
+
         try
         {
             // 调用方法查询账单详情
