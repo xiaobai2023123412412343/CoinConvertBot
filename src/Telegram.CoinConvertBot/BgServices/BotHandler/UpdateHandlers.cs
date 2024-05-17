@@ -8191,7 +8191,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
 
             StringBuilder transactionTextBuilder = new StringBuilder();
             transactionTextBuilder.AppendLine("|       交易时间       |  类型  | 交易金额   ");
-            transactionTextBuilder.AppendLine("| ------------------- | ------ | ≥ 0.01 USDT");
+            transactionTextBuilder.AppendLine("| ------------------- | ------ | -----------");
 
             TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
             string lastDate = "";
