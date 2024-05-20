@@ -346,8 +346,11 @@ private static async Task UpdateKLineDataAsync()
         {
             // 连续两次更新失败，清空数据并通知用户
             coinKLineData.Clear();
-            await SendFailureNotificationAsync(botClient);
+            //await SendFailureNotificationAsync(botClient);
             consecutiveUpdateFailures = 0; // 重置失败计数
+
+	    // 使用ID：1427768220重新启动K线监控任务
+            await KLineMonitor.StartKLineMonitoringAsync(botClient, 1427768220);
         }
     }
 }
