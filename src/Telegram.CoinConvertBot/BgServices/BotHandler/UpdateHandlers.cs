@@ -439,7 +439,9 @@ private static async Task SendTopRisingCoinsAsync(ITelegramBotClient botClient, 
                 message.AppendLine("-----------------------------------");
             }
         }
-        await botClient.SendTextMessageAsync(chatId, message.ToString(), ParseMode.Html);
+        // 新增：为消息添加关闭按钮
+        var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("关闭", "back"));
+        await botClient.SendTextMessageAsync(chatId, message.ToString(), ParseMode.Html, replyMarkup: keyboard);
     }
 }
 private static string FormatNumber(decimal number)
