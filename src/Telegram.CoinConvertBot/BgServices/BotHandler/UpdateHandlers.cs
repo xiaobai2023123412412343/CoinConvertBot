@@ -267,6 +267,7 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
         }
     }
 }
+private static Timer monitoringTimer; // 新增：用于监控K线监控任务的定时器	
 public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient, long chatId)
 {
     if (!isKLineMonitoringStarted)
@@ -279,6 +280,12 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
         var timeToNextTarget = (int)(nextTargetTime - now).TotalMilliseconds;
         kLineUpdateTimer = new Timer(async _ => await UpdateKLineDataAsync(), null, timeToNextTarget, 900000); // 每15分钟更新一次
         //Console.WriteLine($"[{DateTime.Now}] K线数据监控启动，下一次数据获取将在 {secondsToNextQuarter / 60} 分钟 {secondsToNextQuarter % 60} 秒后.");
+
+        // 新增：启动或重置监控定时器
+        monitoringTimer?.Dispose(); // 如果已存在，则先释放
+        monitoringTimer = new Timer(CheckAndRestartMonitoringTask, botClient, 60000, 60000); // 每分钟检查一次
+	Console.WriteLine($"[{DateTime.Now}] 监控定时器启动成功，将每分钟检查一次监控任务状态。");    
+	    
         await botClient.SendTextMessageAsync(chatId, "K线数据监控启动，数据收集中...");
     }
     else
@@ -304,7 +311,28 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
         }
     }
 }
-
+// 新增：定义一个方法来检查和重启监控任务
+private static void CheckAndRestartMonitoringTask(object state)
+{
+    var botClient = (ITelegramBotClient)state;
+    if (!isKLineMonitoringStarted) // 如果监控任务未在运行
+    {
+        Console.WriteLine($"[{DateTime.Now}] 检测到15分钟K线定时器已停止，重新启动中...");
+        try
+        {
+            StartKLineMonitoringAsync(botClient, 1427768220).Wait();
+            Console.WriteLine($"[{DateTime.Now}] 监控任务重新启动成功。");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{DateTime.Now}] 监控任务重新启动失败：{ex.Message}");
+        }
+    }
+    else
+    {
+        Console.WriteLine($"[{DateTime.Now}] 监控任务正在运行。");
+    }
+}
 private static int consecutiveUpdateFailures = 0; // 追踪连续更新失败的次数
 
 private static async Task UpdateKLineDataAsync()
@@ -340,17 +368,14 @@ private static async Task UpdateKLineDataAsync()
     }
     catch (Exception ex)
     {
-        //Console.WriteLine($"[{DateTime.Now}] 更新K线数据失败：{ex.Message}");
-        consecutiveUpdateFailures++; // 增加失败计数
+	Console.WriteLine($"[{DateTime.Now}] 更新K线数据失败：{ex.Message}");    
+        consecutiveUpdateFailures++;  // 增加失败计数
         if (consecutiveUpdateFailures >= 2)
         {
-            // 连续两次更新失败，清空数据并通知用户
             coinKLineData.Clear();
-            //await SendFailureNotificationAsync(botClient);
-            consecutiveUpdateFailures = 0; // 重置失败计数
-
-	    // 使用ID：1427768220重新启动K线监控任务
-            await KLineMonitor.StartKLineMonitoringAsync(botClient, 1427768220);
+            consecutiveUpdateFailures = 0;
+            isKLineMonitoringStarted = false; // 重置监控状态，允许重新启动
+	    Console.WriteLine($"[{DateTime.Now}] 由于连续更新失败，监控任务已停止并清空数据。");	
         }
     }
 }
