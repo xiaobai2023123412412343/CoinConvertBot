@@ -321,16 +321,16 @@ private static void CheckAndRestartMonitoringTask(object state)
         try
         {
             StartKLineMonitoringAsync(botClient, 1427768220).Wait();
-            Console.WriteLine($"[{DateTime.Now}] 监控任务重新启动成功。");
+            Console.WriteLine($"[{DateTime.Now}] k线监控任务重新启动成功。");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[{DateTime.Now}] 监控任务重新启动失败：{ex.Message}");
+            Console.WriteLine($"[{DateTime.Now}] k线监控任务重新启动失败：{ex.Message}");
         }
     }
     else
     {
-        Console.WriteLine($"[{DateTime.Now}] 监控任务正在运行。");
+        Console.WriteLine($"[{DateTime.Now}] k线监控任务正在运行。");
     }
 }
 private static int consecutiveUpdateFailures = 0; // 追踪连续更新失败的次数
