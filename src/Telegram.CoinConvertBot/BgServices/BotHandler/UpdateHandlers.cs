@@ -515,7 +515,7 @@ public static class TimerManager
         if (timerToMonitor == null)
         {
             timerToMonitor = new Timer(_ => MonitorAndRestartTimer(), null, 0, 60000); //每分钟（60000毫秒）监控一次定时器是否正常
-            Console.WriteLine("定时监控定时器已启动，持续监控中.....");
+            //Console.WriteLine("定时监控定时器已启动，持续监控中.....");
         }
     }
 
