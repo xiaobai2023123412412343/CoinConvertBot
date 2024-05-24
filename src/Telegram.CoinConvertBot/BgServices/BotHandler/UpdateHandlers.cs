@@ -284,7 +284,7 @@ public static async Task StartKLineMonitoringAsync(ITelegramBotClient botClient,
         // 新增：启动或重置监控定时器
         monitoringTimer?.Dispose(); // 如果已存在，则先释放
         monitoringTimer = new Timer(CheckAndRestartMonitoringTask, botClient, 60000, 60000); // 每分钟检查一次
-	Console.WriteLine($"[{DateTime.Now}] 监控定时器启动成功，将每分钟检查一次监控任务状态。");    
+	//Console.WriteLine($"[{DateTime.Now}] 监控定时器启动成功，将每分钟检查一次监控任务状态。");    
 	    
         await botClient.SendTextMessageAsync(chatId, "K线数据监控启动，数据收集中...");
     }
@@ -317,20 +317,20 @@ private static void CheckAndRestartMonitoringTask(object state)
     var botClient = (ITelegramBotClient)state;
     if (!isKLineMonitoringStarted) // 如果监控任务未在运行
     {
-        Console.WriteLine($"[{DateTime.Now}] 检测到15分钟K线定时器已停止，重新启动中...");
+        //Console.WriteLine($"[{DateTime.Now}] 检测到15分钟K线定时器已停止，重新启动中...");
         try
         {
             StartKLineMonitoringAsync(botClient, 1427768220).Wait();
-            Console.WriteLine($"[{DateTime.Now}] k线监控任务重新启动成功。");
+            //Console.WriteLine($"[{DateTime.Now}] k线监控任务重新启动成功。");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[{DateTime.Now}] k线监控任务重新启动失败：{ex.Message}");
+            //Console.WriteLine($"[{DateTime.Now}] k线监控任务重新启动失败：{ex.Message}");
         }
     }
     else
     {
-        Console.WriteLine($"[{DateTime.Now}] k线监控任务正在运行。");
+        //Console.WriteLine($"[{DateTime.Now}] k线监控任务正在运行。");
     }
 }
 private static int consecutiveUpdateFailures = 0; // 追踪连续更新失败的次数
