@@ -11501,11 +11501,11 @@ var timestamp = message.Date != default(DateTime)
     string chatOrigin;
     if (chatType == ChatType.Private)
     {
-        chatOrigin = "来自私聊";
+        chatOrigin = "来自私聊\U0001F464 ";
     }
     else if (chatType == ChatType.Group || chatType == ChatType.Supergroup)
     {
-        chatOrigin = "来自群聊";
+        chatOrigin = "来自群聊\U0001F465";
     }
     else if (chatType == ChatType.Channel)
     {
