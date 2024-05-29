@@ -368,14 +368,21 @@ private static async Task UpdateKLineDataAsync()
     }
     catch (Exception ex)
     {
-	//Console.WriteLine($"[{DateTime.Now}] 更新K线数据失败：{ex.Message}");    
+        Console.WriteLine($"[{DateTime.Now}] 更新K线数据失败：{ex.Message}");
         consecutiveUpdateFailures++;  // 增加失败计数
         if (consecutiveUpdateFailures >= 2)
         {
-            coinKLineData.Clear();
-            consecutiveUpdateFailures = 0;
-            isKLineMonitoringStarted = false; // 重置监控状态，允许重新启动
-	    //Console.WriteLine($"[{DateTime.Now}] 由于连续更新失败，监控任务已停止并清空数据。");	
+            consecutiveUpdateFailures = 0;  // 重置失败计数
+            try
+            {
+                await StartKLineMonitoringAsync(botClient, 1427768220);  // 异步重启主任务
+                Console.WriteLine($"[{DateTime.Now}] K线监控任务重新启动成功。");
+                await botClient.SendTextMessageAsync(1427768220, "K线监控任务已自动重启！");
+            }
+            catch (Exception restartEx)
+            {
+                Console.WriteLine($"[{DateTime.Now}] K线监控任务重新启动失败：{restartEx.Message}");
+            }
         }
     }
 }
