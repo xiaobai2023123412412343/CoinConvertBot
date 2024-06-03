@@ -8232,6 +8232,9 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
 
             TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
             string lastDate = "";
+	    // 初始化统计变量	
+            decimal totalIn = 0m, totalOut = 0m;
+            int countIn = 0, countOut = 0;		
             foreach (var transaction in transactions)
             {
                 decimal usdtAmount = decimal.Parse((string)transaction["value"]) / 1_000_000;
@@ -8249,6 +8252,17 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
                     string formattedTime = transactionTime.ToString("yyyy-MM-dd HH:mm:ss");
 
                     transactionTextBuilder.AppendLine($"| {formattedTime} | {txType} | {usdtAmount:N2} USDT");
+
+                    if (txType == "转入\U0001F539")
+                    {
+                        totalIn += usdtAmount;
+                        countIn++;
+                    }
+                    else
+                    {
+                        totalOut += usdtAmount;
+                        countOut++;
+                    }			
                 }
             }
 
@@ -8256,7 +8270,9 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
             string queryTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaZone).ToString("yyyy-MM-dd HH:mm:ss");
             transactionTextBuilder.AppendLine();
             transactionTextBuilder.AppendLine($"查询时间： {queryTime}");		
-            transactionTextBuilder.AppendLine($"查询地址： {tronAddress}");
+	    transactionTextBuilder.AppendLine($"转入\U0001F539：{totalIn:N2} USDT / {countIn}笔");	
+	    transactionTextBuilder.AppendLine($"转出\U0001F53A：{totalOut:N2} USDT / {countOut}笔");	
+            transactionTextBuilder.AppendLine($"查询地址： {tronAddress}");		
 
             // 创建内联按钮
             InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(
