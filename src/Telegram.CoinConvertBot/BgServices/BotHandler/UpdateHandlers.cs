@@ -3413,7 +3413,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n\n" +    
 			      //$"------------------------------------------------------------------------\n" +
                               $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
-			      $"<a href=\"https://t.me/lianghaonet\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
+			      $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
                               $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
                               $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用最低降至 7.00 TRX！</a>\n"; // 修改后的两行文字
 		    
@@ -3438,7 +3438,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                     {
                         InlineKeyboardButton.WithCallbackData("消费U卡", "energy_introo"), // 新增的按钮				    
                         InlineKeyboardButton.WithCallbackData("租赁能量", "energy_intro"), // 新增的按钮	
-                        InlineKeyboardButton.WithUrl("靓号地址", "https://t.me/lianghaonet")				
+                        InlineKeyboardButton.WithUrl("靓号地址", "https://t.me/lianghaonet/8")				
                     } 			
                 });                
 
@@ -7920,7 +7920,7 @@ foreach (char c in tronAddress)
 
 // 当连续相同字符数量大于等于4时，添加“靓号”信息
 string fireEmoji = "\uD83D\uDD25";
-string buyLink = "https://t.me/lianghaonet";
+string buyLink = "https://t.me/lianghaonet/8";
 string userLabelSuffix = $" <a href=\"{buyLink}\">购买靓号</a>";
 
 if (maxConsecutiveIdenticalCharsCount >= 4)
