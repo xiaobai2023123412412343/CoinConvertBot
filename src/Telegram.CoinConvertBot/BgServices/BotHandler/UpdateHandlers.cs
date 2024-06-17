@@ -11200,7 +11200,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 您当前监控整段发送触发批量删除监控k线
 
 启动机器人先：先开启保存群聊资料：<code>/baocunqunliao</code>
-储存之前的用户资料 代绑地址 可以代解
+储存之前的用户资料 代绑地址 可以代解 储存群聊资料
 <code>/qdgg</code> 启动广告
 <code>关闭翻译</code> <code>/xuni</code>
 <code>监控 btc </code>可选
