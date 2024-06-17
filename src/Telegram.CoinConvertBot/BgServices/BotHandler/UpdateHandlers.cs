@@ -8287,7 +8287,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
         }
     }
 }
-// 统计近30天每日的转入转出笔数，处理分页获取所有记录
+// 统计近30天每日的转入转出笔数，处理分页获取所有记录，并添加统计信息
 public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCountAsync(string tronAddress)
 {
     int days = 30; // 统计近30天
@@ -8318,7 +8318,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
 
                 if (transactions == null || !transactions.HasValues)
                 {
-                    break; // No more data to process
+                    break; // 没有更多数据处理
                 }
 
                 foreach (var transaction in transactions)
@@ -8345,31 +8345,49 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
                 string nextUrl = (string)jsonResponse["meta"]?["links"]?["next"];
                 if (!string.IsNullOrEmpty(nextUrl))
                 {
-                    url = nextUrl; // Set URL to the next page
+                    url = nextUrl; // 设置URL到下一页
                 }
                 else
                 {
-                    hasMore = false; // No more pages
+                    hasMore = false; // 没有更多页面
                 }
             }
 
-            // Ensure all dates are covered
+            // 确保所有日期都被覆盖并计算统计数据
             StringBuilder resultBuilder = new StringBuilder();
+            int maxIn = 0, maxOut = 0;
+            string maxInDate = "", maxOutDate = "";
             for (int i = 0; i <= days; i++)
             {
                 string date = nowInChina.AddDays(-i).ToString("yyyy/MM/dd");
                 if (!dailyCounts.ContainsKey(date))
                 {
-                    dailyCounts[date] = (0, 0); // No transactions on this day
+                    dailyCounts[date] = (0, 0); // 当天没有交易
                 }
                 resultBuilder.AppendLine($"{date} 转入：{dailyCounts[date].inCount} 笔 | 转出：{dailyCounts[date].outCount} 笔");
+
+                // 更新最大统计数据
+                if (dailyCounts[date].inCount > maxIn)
+                {
+                    maxIn = dailyCounts[date].inCount;
+                    maxInDate = date;
+                }
+                if (dailyCounts[date].outCount > maxOut)
+                {
+                    maxOut = dailyCounts[date].outCount;
+                    maxOutDate = date;
+                }
             }
+
+            // 添加统计数据到结果
+            resultBuilder.AppendLine();
+            resultBuilder.AppendLine($"最多转出：{maxOutDate} 转出：{maxOut} 笔");
+            resultBuilder.AppendLine($"最多转入：{maxInDate} 转入：{maxIn} 笔");
 
             // 添加查询时间和地址
             string queryTime = nowInChina.ToString("yyyy/MM/dd HH:mm:ss");
-            resultBuilder.AppendLine();
-            resultBuilder.AppendLine($"时间： {queryTime}");
-            resultBuilder.AppendLine($"地址： {tronAddress}");
+            resultBuilder.AppendLine($"统计时间： {queryTime}");
+            resultBuilder.AppendLine($"统计地址： {tronAddress}");
 
             // 创建内联按钮
             InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(
