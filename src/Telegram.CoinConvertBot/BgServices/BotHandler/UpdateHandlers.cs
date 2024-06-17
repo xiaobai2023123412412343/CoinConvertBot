@@ -8276,7 +8276,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
 
             // 创建内联按钮
             InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(
-                InlineKeyboardButton.WithCallbackData("关闭", "back")
+                InlineKeyboardButton.WithCallbackData("转账次数统计", $"统计笔数{tronAddress}")
             );
 
             return ($"<pre>{transactionTextBuilder.ToString()}</pre>", inlineKeyboard);
