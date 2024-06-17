@@ -8287,6 +8287,92 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
         }
     }
 }
+// 统计近30天每日的转入转出笔数，处理分页获取所有记录
+public static async Task<string> GetDailyTransactionsCountAsync(string tronAddress)
+{
+    int days = 30; // 统计近30天
+    string tokenId = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT合约地址
+    DateTime nowInChina = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
+    long startTime = new DateTimeOffset(nowInChina.AddDays(-days)).ToUnixTimeMilliseconds();
+    string url = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_confirmed=true&min_block_timestamp={startTime}&token_id={tokenId}&limit=200";
+
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            Dictionary<string, (int inCount, int outCount)> dailyCounts = new Dictionary<string, (int, int)>();
+            TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+            bool hasMore = true;
+
+            while (hasMore)
+            {
+                HttpResponseMessage response = await httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return "<pre>无法获取交易数据，请稍后再试。</pre>";
+                }
+
+                string jsonString = await response.Content.ReadAsStringAsync();
+                JObject jsonResponse = JObject.Parse(jsonString);
+                JArray transactions = (JArray)jsonResponse["data"];
+
+                if (transactions == null || !transactions.HasValues)
+                {
+                    break; // No more data to process
+                }
+
+                foreach (var transaction in transactions)
+                {
+                    DateTime transactionTime = TimeZoneInfo.ConvertTimeFromUtc(DateTimeOffset.FromUnixTimeMilliseconds((long)transaction["block_timestamp"]).UtcDateTime, chinaZone);
+                    string date = transactionTime.ToString("yyyy/MM/dd");
+
+                    bool isOutgoing = tronAddress.Equals((string)transaction["from"], StringComparison.OrdinalIgnoreCase);
+                    if (!dailyCounts.ContainsKey(date))
+                    {
+                        dailyCounts[date] = (0, 0);
+                    }
+
+                    if (isOutgoing)
+                    {
+                        dailyCounts[date] = (dailyCounts[date].inCount, dailyCounts[date].outCount + 1);
+                    }
+                    else
+                    {
+                        dailyCounts[date] = (dailyCounts[date].inCount + 1, dailyCounts[date].outCount);
+                    }
+                }
+
+                string nextUrl = (string)jsonResponse["meta"]?["links"]?["next"];
+                if (!string.IsNullOrEmpty(nextUrl))
+                {
+                    url = nextUrl; // Set URL to the next page
+                }
+                else
+                {
+                    hasMore = false; // No more pages
+                }
+            }
+
+            // Ensure all dates are covered
+            StringBuilder resultBuilder = new StringBuilder();
+            for (int i = 0; i <= days; i++)
+            {
+                string date = nowInChina.AddDays(-i).ToString("yyyy/MM/dd");
+                if (!dailyCounts.ContainsKey(date))
+                {
+                    dailyCounts[date] = (0, 0); // No transactions on this day
+                }
+                resultBuilder.AppendLine($"{date} 转入：{dailyCounts[date].inCount} 笔 | 转出：{dailyCounts[date].outCount} 笔");
+            }
+
+            return $"<pre>{resultBuilder.ToString()}</pre>";
+        }
+        catch (Exception ex)
+        {
+            return $"<pre>处理交易数据时发生错误：{ex.Message}</pre>";
+        }
+    }
+}
 // 查询带宽消耗
 public static async Task<(decimal, decimal, decimal, decimal, decimal, decimal, decimal, decimal, decimal)> GetBandwidthUsageAsync(string tronAddress)
 {
@@ -14550,6 +14636,44 @@ if (messageText.Contains("账单详情"))
     else
     {
         // 如果地址格式不正确，发送错误消息
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "提供的地址格式不正确，请确保是以 'T' 开头的34位波场地址。"
+        );
+    }
+}
+// 处理消息，启动统计方法
+if (messageText.Contains("统计笔数"))
+{
+    int startIndex = messageText.IndexOf("统计笔数") + "统计笔数".Length;
+    string tronAddress = messageText.Substring(startIndex).Trim();
+
+    if (tronAddress.Length == 34 && tronAddress.StartsWith("T"))
+    {
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "正在统计，请稍后..."
+        );
+
+        try
+        {
+            string transactionCounts = await GetDailyTransactionsCountAsync(tronAddress);
+            _ = botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: transactionCounts,
+                parseMode: ParseMode.Html
+            );
+        }
+        catch (Exception ex)
+        {
+            _ = botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"统计交易笔数时发生错误：{ex.Message}"
+            );
+        }
+    }
+    else
+    {
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: "提供的地址格式不正确，请确保是以 'T' 开头的34位波场地址。"
