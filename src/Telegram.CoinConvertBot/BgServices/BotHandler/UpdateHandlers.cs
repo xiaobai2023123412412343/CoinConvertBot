@@ -8288,7 +8288,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAs
     }
 }
 // 统计近30天每日的转入转出笔数，处理分页获取所有记录
-public static async Task<string> GetDailyTransactionsCountAsync(string tronAddress)
+public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCountAsync(string tronAddress)
 {
     int days = 30; // 统计近30天
     string tokenId = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT合约地址
@@ -8309,7 +8309,7 @@ public static async Task<string> GetDailyTransactionsCountAsync(string tronAddre
                 HttpResponseMessage response = await httpClient.GetAsync(url);
                 if (!response.IsSuccessStatusCode)
                 {
-                    return "<pre>无法获取交易数据，请稍后再试。</pre>";
+                    return ("<pre>无法获取交易数据，请稍后再试。</pre>", null);
                 }
 
                 string jsonString = await response.Content.ReadAsStringAsync();
@@ -8365,11 +8365,22 @@ public static async Task<string> GetDailyTransactionsCountAsync(string tronAddre
                 resultBuilder.AppendLine($"{date} 转入：{dailyCounts[date].inCount} 笔 | 转出：{dailyCounts[date].outCount} 笔");
             }
 
-            return $"<pre>{resultBuilder.ToString()}</pre>";
+            // 添加查询时间和地址
+            string queryTime = nowInChina.ToString("yyyy/MM/dd HH:mm:ss");
+            resultBuilder.AppendLine();
+            resultBuilder.AppendLine($"时间： {queryTime}");
+            resultBuilder.AppendLine($"地址： {tronAddress}");
+
+            // 创建内联按钮
+            InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(
+                InlineKeyboardButton.WithCallbackData("关闭", "back")
+            );
+
+            return ($"<pre>{resultBuilder.ToString()}</pre>", inlineKeyboard);
         }
         catch (Exception ex)
         {
-            return $"<pre>处理交易数据时发生错误：{ex.Message}</pre>";
+            return ($"<pre>处理交易数据时发生错误：{ex.Message}</pre>", null);
         }
     }
 }
@@ -14657,11 +14668,12 @@ if (messageText.Contains("统计笔数"))
 
         try
         {
-            string transactionCounts = await GetDailyTransactionsCountAsync(tronAddress);
+            var (transactionCounts, inlineKeyboard) = await GetDailyTransactionsCountAsync(tronAddress);
             _ = botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: transactionCounts,
-                parseMode: ParseMode.Html
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard
             );
         }
         catch (Exception ex)
