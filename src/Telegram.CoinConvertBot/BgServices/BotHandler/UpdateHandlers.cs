@@ -11183,6 +11183,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 <code>开启兑换通知</code> <code>关闭兑换通知</code> 群内兑换通知开启关闭；
 <code>开启翻译</code> <code>关闭翻译</code> 群内开启或关闭翻译功能；
 添加群聊：群名字： 群ID： 群链接： 指令：开启/关闭 
+（直接发仓库里的群聊数据可以批量添加）
 储存群聊资料到仓库，指令为开启或关闭兑换通知；
 代绑 ID 用户名（不用 @） 地址 备注  帮助用户绑定地址；
 （发送仓库储存的用户地址可以批量代绑）
