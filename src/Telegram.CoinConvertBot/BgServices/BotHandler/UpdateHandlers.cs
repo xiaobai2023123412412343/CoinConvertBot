@@ -13196,6 +13196,60 @@ if (message.Text.StartsWith("/bangdingdizhi") && message.From.Id == 1427768220)
     var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
     await SendAllBindingsInBatches(botClient, message.Chat.Id, _bindRepository);
 }
+// 处理批量添加群聊信息的命令
+try
+{
+    if (message.Type == MessageType.Text && message.Text.Contains("机器人所在") && message.From.Id == 1427768220)
+    {
+        Console.WriteLine($"收到批量添加群聊指令，管理员ID：{message.From.Id}");
+        // 使用正则表达式匹配群聊信息
+        var groupInfoRegex = new Regex(@"群名字：(.+?)\s+群ID：(-?\d+)(\s+进群链接：(\S+))?");
+        var matches = groupInfoRegex.Matches(message.Text);
+
+        foreach (Match match in matches)
+        {
+            string groupName = match.Groups[1].Value.Trim();
+            if (long.TryParse(match.Groups[2].Value.Trim(), out long groupId))
+            {
+                string groupLink = match.Groups[4].Success ? match.Groups[4].Value.Trim() : null;
+
+                // 检查是否已存在该群聊信息
+                var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == groupId);
+                if (existingGroupChat != null)
+                {
+                    // 如果已存在，则更新群聊信息
+                    existingGroupChat.Title = groupName;
+                    existingGroupChat.InviteLink = groupLink;
+                    Console.WriteLine($"更新群聊信息，群ID：{groupId}");
+                }
+                else
+                {
+                    // 如果不存在，则添加新的群聊信息
+                    GroupChats.Add(new GroupChat { Id = groupId, Title = groupName, InviteLink = groupLink });
+                    Console.WriteLine($"保存新的群聊信息，群ID：{groupId}");
+                }
+
+                // 添加群ID到GroupManager中，确保广告可以发送到这个群
+                GroupManager.AddGroupId(groupId);
+                Console.WriteLine($"群ID：{groupId} 已添加到广告群组列表");
+            }
+            else
+            {
+                Console.WriteLine("无法解析群ID");
+            }
+        }
+
+        // 回复管理员确认信息已保存
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "批量群聊资料已添加！"
+        );
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"处理批量添加群聊指令时发生异常：{ex.Message}");
+}
 // 处理添加群聊信息的命令
 try
 {
