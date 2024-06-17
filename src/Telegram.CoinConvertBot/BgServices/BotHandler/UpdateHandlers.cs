@@ -9595,6 +9595,14 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
                     // 如果在尝试发送消息时出现错误，就从 groupIds 列表中移除这个群组
                     GroupManager.RemoveGroupId(groupId);
+			
+                    // 同时从 GroupChats 中移除对应的群聊信息
+                    var groupChatToRemove = GroupChats.FirstOrDefault(gc => gc.Id == groupId);
+                    if (groupChatToRemove != null)
+                    {
+                        GroupChats.Remove(groupChatToRemove);
+                        Console.WriteLine($"群聊信息已从 GroupChats 中移除，群ID：{groupId}");
+                    }			
                     // 然后继续下一个群组，而不是停止整个任务
                     continue;
                 }
