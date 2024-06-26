@@ -8438,9 +8438,14 @@ for (int i = 0; i <= days; i++)
         maxWithoutUBalanceCount = withoutUBalanceCount; // 更新最大无u转账笔数
     }
 
-    // 优化显示，当无u转账笔数为0时，不显示 0*2
+    // 特别处理第一行数据
     string energyDisplay;
-    if (withoutUBalanceCount > 0)
+    if (firstLine)
+    {
+        energyDisplay = $" | x+y注释: 转账对方有u余额+无u余额";
+        firstLine = false; // 更新标记，之后的行不再是第一行
+    }
+    else if (withoutUBalanceCount > 0)
     {
         energyDisplay = totalEnergy > 0 ? $" = 能量消耗: {totalEnergy} ≈ {withUBalanceCount}+{withoutUBalanceCount}*2 ≈ {withUBalanceCount + 2 * withoutUBalanceCount} 笔" : " | 能量消耗: 0";
     }
