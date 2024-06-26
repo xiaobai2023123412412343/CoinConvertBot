@@ -8429,7 +8429,7 @@ for (int i = 0; i <= days; i++)
     }
     else
     {
-        string energyDisplay = totalEnergy > 0 ? $" = 能量消耗: {totalEnergy} ≈ {withUBalanceCount}+{withoutUBalanceCount} ≈ {withUBalanceCount + 2 * withoutUBalanceCount} 笔" : " | 能量消耗: 0";
+        string energyDisplay = totalEnergy > 0 ? $" = 能量消耗: {totalEnergy} ≈ {withUBalanceCount}+{withoutUBalanceCount}*2 ≈ {withUBalanceCount + 2 * withoutUBalanceCount} 笔" : " | 能量消耗: 0";
         resultBuilder.AppendLine($"{date} 转入: {dailyCounts[date].inCount} 笔 | 转出: {dailyCounts[date].outCount} 笔{energyDisplay}");
     }
 
