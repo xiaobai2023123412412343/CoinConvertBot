@@ -8466,7 +8466,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
 
 // 构建结果字符串
 StringBuilder resultBuilder = new StringBuilder();
-resultBuilder.AppendLine("|    时间    |         类型        |能量消耗| 实际笔数");
+resultBuilder.AppendLine("|    时 间    |        类型        |能量消耗| 实际消耗");
 
 int maxIn = 0, maxOut = 0, maxTotalTransactions = 0;
 string maxInDate = "", maxOutDate = "", maxTotalTransactionsDate = "";
@@ -8517,7 +8517,14 @@ for (int i = 0; i <= days; i++)
     }
     else
     {
-        energyDisplay = totalEnergy > 0 ? $" | {totalEnergy} | ≈ {withUBalanceCount}+{withoutUBalanceCount}*2 ≈ {withUBalanceCount + 2 * withoutUBalanceCount} 笔" : " | 0 |";
+        if (withoutUBalanceCount > 0)
+        {
+            energyDisplay = $" | {totalEnergy} | {withUBalanceCount}+{withoutUBalanceCount}*2 ≈ {withUBalanceCount + 2 * withoutUBalanceCount} 笔";
+        }
+        else
+        {
+            energyDisplay = $" | {totalEnergy} | {withUBalanceCount} 笔";
+        }
     }
     resultBuilder.AppendLine($"| {date} | 入: {dailyCounts[date].inCount} 笔 | 出: {dailyCounts[date].outCount} 笔{energyDisplay}");
 }
