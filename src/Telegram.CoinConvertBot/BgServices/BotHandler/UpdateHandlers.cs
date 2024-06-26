@@ -8460,7 +8460,14 @@ for (int i = 0; i <= days; i++)
 resultBuilder.AppendLine();
 resultBuilder.AppendLine($"最多转入：{maxInDate} 转入：{maxIn} 笔");
 resultBuilder.AppendLine($"最多消耗：{maxEnergyDate} 能量消耗: {maxEnergy}");
-resultBuilder.AppendLine($"最多转出：{maxOutDate} 转出：{maxOut} 笔 ≈ {maxWithUBalanceCount}+{maxWithoutUBalanceCount}*2 ≈ {maxWithUBalanceCount + 2 * maxWithoutUBalanceCount} 笔");
+if (maxWithoutUBalanceCount > 0)
+{
+    resultBuilder.AppendLine($"最多转出：{maxOutDate} 转出：{maxOut} 笔 ≈ {maxWithUBalanceCount}+{maxWithoutUBalanceCount}*2 ≈ {maxWithUBalanceCount + 2 * maxWithoutUBalanceCount} 笔");
+}
+else
+{
+    resultBuilder.AppendLine($"最多转出：{maxOutDate} 转出：{maxOut} 笔");
+}
 resultBuilder.AppendLine($"温馨提示：给对方无u余额地址转账需要扣双倍能量！\n");
 
 // 添加查询时间和地址
