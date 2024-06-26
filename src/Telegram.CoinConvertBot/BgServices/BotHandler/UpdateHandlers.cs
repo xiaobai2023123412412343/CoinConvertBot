@@ -4386,6 +4386,7 @@ public class FuturesVolume
 {
     public string quoteVolume { get; set; }
 }
+
 //计算压力位阻力位    
 public class KlineDataItem
 {
@@ -4400,6 +4401,64 @@ public class KlineDataItem
 public static class BinancePriceInfo
 {
     private static readonly HttpClient httpClient = new HttpClient();
+
+// 获取昨日和今日的交易量
+public static async Task<string> GetTradingVolumeInfo(string symbol)
+{
+    string url = $"https://fapi.binance.com/fapi/v1/klines?symbol={symbol.ToUpper()}USDT&interval=1d&limit=2";
+    try
+    {
+        var response = await httpClient.GetAsync(url);
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            var klines = JsonSerializer.Deserialize<List<List<JsonElement>>>(content);
+            if (klines != null && klines.Count == 2)
+            {
+                // 将时间戳和成交量从object转换为适当的类型
+                long yesterdayTimestamp = klines[0][0].GetInt64();
+                decimal yesterdayVolume = decimal.Parse(klines[0][7].GetString());
+                long todayTimestamp = klines[1][0].GetInt64();
+                decimal todayVolume = decimal.Parse(klines[1][7].GetString());
+                decimal changePercent = (todayVolume - yesterdayVolume) / yesterdayVolume * 100;
+
+                // 使用辅助方法格式化输出
+                string formattedYesterdayVolume = FormatLargeNumber(yesterdayVolume);
+                string formattedTodayVolume = FormatLargeNumber(todayVolume);
+
+                // 根据涨幅正负选择表情符号
+                string emoji = changePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+                return $"<b>昨日成交：</b>{formattedYesterdayVolume} | <b>今日成交：</b>{formattedTodayVolume} | <b>涨幅：</b>{emoji}{changePercent.ToString("F2")}%";
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"从币安合约获取数据失败: {ex.Message}");
+    }
+
+    return "无法获取数据"; // 如果API调用失败或数据解析失败
+}
+// 辅助方法，用于格式化大数值
+private static string FormatLargeNumber(decimal number)
+{
+    if (number >= 100000000) // 大于等于1亿
+    {
+        return (number / 100000000).ToString("F2") + "亿";
+    }
+    else if (number >= 10000) // 大于等于1万
+    {
+        return (number / 10000).ToString("F2") + "万";
+    }
+    return number.ToString("F2");
+}
+// 交易量响应类
+public class TradingVolumeResponse
+{
+    public string volume { get; set; } // 昨日交易量
+    public string quoteVolume { get; set; } // 今日交易量
+}	
 
     public static async Task<string> GetPriceInfo(string symbol)
     {
@@ -4512,25 +4571,34 @@ JsonElement JsonElementFromString(string value)
     }
 }
 
-        // 在调用CalculateAndFormatResult之前计算RSI
-        if (dataFetched && klineData != null)
-        {
-            var rsi6 = CalculateRSI(klineData, 6);
-            var rsi14 = CalculateRSI(klineData, 14);
-            var rsiResult = $"<b>{dataSource} | 相对强弱指数： RSI6:</b> {rsi6:F2}  |  <b>RSI14:</b> {rsi14:F2}\n\n";
+// 在调用CalculateAndFormatResult之前计算RSI
+if (dataFetched && klineData != null)
+{
+    var rsi6 = CalculateRSI(klineData, 6);
+    var rsi14 = CalculateRSI(klineData, 14);
+    var rsiResult = $"<b>{dataSource} | 相对强弱指数： RSI6:</b> {rsi6:F2}  |  <b>RSI14:</b> {rsi14:F2}\n\n";
 
-            // 调用CalculateAndFormatResult获取压力位和阻力位信息
-            var priceInfo = CalculateAndFormatResult(klineData);
+    // 获取交易量信息
+    string tradingVolumeInfo = await GetTradingVolumeInfo(symbol);
+    
+    // 如果交易量信息是 "无法获取数据"，则不添加到结果中
+    if (tradingVolumeInfo != "无法获取数据")
+    {
+        result += tradingVolumeInfo + "\n\n";
+    }
+    
+    // 调用CalculateAndFormatResult获取压力位和阻力位信息
+    var priceInfo = CalculateAndFormatResult(klineData);
 
-            // 将RSI结果和压力位阻力位信息拼接后返回
-            result = rsiResult + priceInfo;
-        }
-        else
-        {
-            result = "";  // 修改这里，获取数据失败时返回空字符串
-        }
+    // 将RSI结果和压力位阻力位信息拼接后返回
+    result = rsiResult + result + priceInfo;
+}
+else
+{
+    result = "";  // 修改这里，获取数据失败时返回空字符串
+}
 
-        return result;
+return result;
     }
 
 private static List<KlineDataItem> ProcessKlineData(List<List<JsonElement>> klineDataRaw, bool isOkex = false)
