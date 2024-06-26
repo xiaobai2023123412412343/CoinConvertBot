@@ -8438,7 +8438,16 @@ for (int i = 0; i <= days; i++)
         maxWithoutUBalanceCount = withoutUBalanceCount; // 更新最大无u转账笔数
     }
 
-    string energyDisplay = totalEnergy > 0 ? $" = 能量消耗: {totalEnergy} ≈ {withUBalanceCount}+{withoutUBalanceCount}*2 ≈ {withUBalanceCount + 2 * withoutUBalanceCount} 笔" : " | 能量消耗: 0";
+    // 优化显示，当无u转账笔数为0时，不显示 0*2
+    string energyDisplay;
+    if (withoutUBalanceCount > 0)
+    {
+        energyDisplay = totalEnergy > 0 ? $" = 能量消耗: {totalEnergy} ≈ {withUBalanceCount}+{withoutUBalanceCount}*2 ≈ {withUBalanceCount + 2 * withoutUBalanceCount} 笔" : " | 能量消耗: 0";
+    }
+    else
+    {
+        energyDisplay = totalEnergy > 0 ? $" = 能量消耗: {totalEnergy} ≈ {withUBalanceCount} 笔" : " | 能量消耗: 0";
+    }
     resultBuilder.AppendLine($"{date} 转入: {dailyCounts[date].inCount} 笔 | 转出: {dailyCounts[date].outCount} 笔{energyDisplay}");
 }
 
