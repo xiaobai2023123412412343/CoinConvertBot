@@ -8411,6 +8411,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
             string queryTime = nowInChina.ToString("yyyy/MM/dd HH:mm:ss");
             resultBuilder.AppendLine($"统计时间： {queryTime}");
             resultBuilder.AppendLine($"统计地址： {tronAddress}");
+		
             // 创建内联按钮
             InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(
                 InlineKeyboardButton.WithCallbackData("关闭", "back")
