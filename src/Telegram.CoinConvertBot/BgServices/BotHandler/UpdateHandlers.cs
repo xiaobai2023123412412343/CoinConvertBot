@@ -8296,15 +8296,38 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
     long startTime = new DateTimeOffset(nowInChina.AddDays(-days)).ToUnixTimeMilliseconds();
     string url = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_confirmed=true&min_block_timestamp={startTime}&token_id={tokenId}&limit=200";
 
+    int maxEnergy = 0;
+    string maxEnergyDate = "";
+
+    // 解析每日转账类型的笔数
+(int withUBalanceCount, int withoutUBalanceCount) CalculateTransactionTypes(int totalTransactions, int totalEnergy, int energyWithUBalance, int energyWithoutUBalance)
+{
+    int withoutUBalanceCount = (totalEnergy - totalTransactions * energyWithUBalance) / (energyWithoutUBalance - energyWithUBalance);
+    int withUBalanceCount = totalTransactions - withoutUBalanceCount;
+
+    // 确保计算结果非负
+    if (withoutUBalanceCount < 0)
+    {
+        withoutUBalanceCount = 0;
+        withUBalanceCount = totalTransactions; // 如果无余额计数为负，则假设所有交易都有余额
+    }
+    if (withUBalanceCount < 0)
+    {
+        withUBalanceCount = 0;
+        withoutUBalanceCount = totalTransactions; // 如果有余额计数为负，则假设所有交易都无余额
+    }
+
+    return (withUBalanceCount, withoutUBalanceCount);
+}
+
     using (var httpClient = new HttpClient())
     {
         try
         {
             Dictionary<string, (int inCount, int outCount)> dailyCounts = new Dictionary<string, (int, int)>();
-            TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+            Dictionary<string, int> energyUsage = new Dictionary<string, int>();
             bool hasMore = true;
 
-            // 获取交易数据
             while (hasMore)
             {
                 HttpResponseMessage response = await httpClient.GetAsync(url);
@@ -8324,7 +8347,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
 
                 foreach (var transaction in transactions)
                 {
-                    DateTime transactionTime = TimeZoneInfo.ConvertTimeFromUtc(DateTimeOffset.FromUnixTimeMilliseconds((long)transaction["block_timestamp"]).UtcDateTime, chinaZone);
+                    DateTime transactionTime = TimeZoneInfo.ConvertTimeFromUtc(DateTimeOffset.FromUnixTimeMilliseconds((long)transaction["block_timestamp"]).UtcDateTime, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
                     string date = transactionTime.ToString("yyyy/MM/dd");
 
                     bool isOutgoing = tronAddress.Equals((string)transaction["from"], StringComparison.OrdinalIgnoreCase);
@@ -8355,7 +8378,6 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
             }
 
             // 获取能量消耗数据
-            Dictionary<string, int> energyUsage = new Dictionary<string, int>();
             string energyUrl = $"https://apilist.tronscanapi.com/api/account/analysis?address={tronAddress}&type=2";
             HttpResponseMessage energyResponse = await httpClient.GetAsync(energyUrl);
             if (energyResponse.IsSuccessStatusCode)
@@ -8374,38 +8396,62 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
                 throw new Exception("无法获取能量消耗数据");
             }
 
-            // 构建结果字符串
-            StringBuilder resultBuilder = new StringBuilder();
-            int maxIn = 0, maxOut = 0;
-            string maxInDate = "", maxOutDate = "";
-            for (int i = 0; i <= days; i++)
-            {
-                string date = nowInChina.AddDays(-i).ToString("yyyy/MM/dd");
-                if (!dailyCounts.ContainsKey(date))
-                {
-                    dailyCounts[date] = (0, 0); // 当天没有交易
-                }
+// 构建结果字符串
+StringBuilder resultBuilder = new StringBuilder();
+int maxIn = 0, maxOut = 0;
+string maxInDate = "", maxOutDate = "";
+bool firstLine = true; // 标记是否为第一行
 
-                string energyDisplay = energyUsage.ContainsKey(date) ? $" | 能量消耗：{energyUsage[date]}" : " | 能量消耗：0";
-                resultBuilder.AppendLine($"{date} 转入：{dailyCounts[date].inCount} 笔 | 转出：{dailyCounts[date].outCount} 笔{energyDisplay}");
+for (int i = 0; i <= days; i++)
+{
+    string date = nowInChina.AddDays(-i).ToString("yyyy/MM/dd");
+    if (!dailyCounts.ContainsKey(date))
+    {
+        dailyCounts[date] = (0, 0); // 当天没有交易
+    }
 
-                // 更新最大统计数据
-                if (dailyCounts[date].inCount > maxIn)
-                {
-                    maxIn = dailyCounts[date].inCount;
-                    maxInDate = date;
-                }
-                if (dailyCounts[date].outCount > maxOut)
-                {
-                    maxOut = dailyCounts[date].outCount;
-                    maxOutDate = date;
-                }
-            }
+    int energyWithUBalance = 31895; // 给有余额地址转账的能量消耗
+    int energyWithoutUBalance = 64895; // 给无余额地址转账的能量消耗
+    int totalTransactions = dailyCounts[date].outCount; // 当日总转出笔数
+    int totalEnergy = energyUsage.ContainsKey(date) ? energyUsage[date] : 0; // 当日能量消耗
+    var (withUBalanceCount, withoutUBalanceCount) = CalculateTransactionTypes(totalTransactions, totalEnergy, energyWithUBalance, energyWithoutUBalance);
+	
+    // 更新最大能量消耗
+    if (totalEnergy > maxEnergy)
+    {
+        maxEnergy = totalEnergy;
+        maxEnergyDate = date;
+    }
+    if (firstLine)
+    {
+        resultBuilder.AppendLine($"{date} 转入: {dailyCounts[date].inCount} 笔 | 转出: {dailyCounts[date].outCount} 笔 | x+y注释: 转账对方有u余额+无u余额");
+        firstLine = false; // 更新标记
+    }
+    else
+    {
+        string energyDisplay = totalEnergy > 0 ? $" = 能量消耗: {totalEnergy} ≈ {withUBalanceCount}+{withoutUBalanceCount}" : " | 能量消耗: 0";
+        resultBuilder.AppendLine($"{date} 转入: {dailyCounts[date].inCount} 笔 | 转出: {dailyCounts[date].outCount} 笔{energyDisplay}");
+    }
+
+    // 更新最大统计数据
+    if (dailyCounts[date].inCount > maxIn)
+    {
+        maxIn = dailyCounts[date].inCount;
+        maxInDate = date;
+    }
+    if (dailyCounts[date].outCount > maxOut)
+    {
+        maxOut = dailyCounts[date].outCount;
+        maxOutDate = date;
+    }
+}
 
             // 添加统计数据到结果
             resultBuilder.AppendLine();
             resultBuilder.AppendLine($"最多转出：{maxOutDate} 转出：{maxOut} 笔");
             resultBuilder.AppendLine($"最多转入：{maxInDate} 转入：{maxIn} 笔");
+	    resultBuilder.AppendLine($"最多消耗：{maxEnergyDate} 能量消耗: {maxEnergy}");	
+	    resultBuilder.AppendLine($"温馨提示：给对方无u余额地址转账需要扣双倍能量！\n");
 
             // 添加查询时间和地址
             string queryTime = nowInChina.ToString("yyyy/MM/dd HH:mm:ss");
