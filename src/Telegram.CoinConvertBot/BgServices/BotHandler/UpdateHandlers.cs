@@ -8466,6 +8466,8 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
 
 // 构建结果字符串
 StringBuilder resultBuilder = new StringBuilder();
+resultBuilder.AppendLine("|    时间    |         类型        |能量消耗| 实际笔数");
+
 int maxIn = 0, maxOut = 0, maxTotalTransactions = 0;
 string maxInDate = "", maxOutDate = "", maxTotalTransactionsDate = "";
 int maxWithUBalanceCount = 0, maxWithoutUBalanceCount = 0; // 新增变量记录最大的有u和无u转账笔数
@@ -8484,7 +8486,7 @@ for (int i = 0; i <= days; i++)
     int totalTransactions = dailyCounts[date].outCount; // 当日总转出笔数
     int totalEnergy = energyUsage.ContainsKey(date) ? energyUsage[date] : 0; // 当日能量消耗
     var (withUBalanceCount, withoutUBalanceCount) = CalculateTransactionTypes(totalTransactions, totalEnergy, energyWithUBalance, energyWithoutUBalance);
-	
+
     // 更新最大转入笔数
     if (dailyCounts[date].inCount > maxIn)
     {
@@ -8513,15 +8515,11 @@ for (int i = 0; i <= days; i++)
         energyDisplay = $" | x+y注释: 转账对方有u余额+无u余额";
         firstLine = false; // 更新标记，之后的行不再是第一行
     }
-    else if (withoutUBalanceCount > 0)
-    {
-        energyDisplay = totalEnergy > 0 ? $" = 能量消耗: {totalEnergy} ≈ {withUBalanceCount}+{withoutUBalanceCount}*2 ≈ {withUBalanceCount + 2 * withoutUBalanceCount} 笔" : " | 能量消耗: 0";
-    }
     else
     {
-        energyDisplay = totalEnergy > 0 ? $" = 能量消耗: {totalEnergy} ≈ {withUBalanceCount} 笔" : " | 能量消耗: 0";
+        energyDisplay = totalEnergy > 0 ? $" | {totalEnergy} | ≈ {withUBalanceCount}+{withoutUBalanceCount}*2 ≈ {withUBalanceCount + 2 * withoutUBalanceCount} 笔" : " | 0 |";
     }
-    resultBuilder.AppendLine($"{date} 转入: {dailyCounts[date].inCount} 笔 | 转出: {dailyCounts[date].outCount} 笔{energyDisplay}");
+    resultBuilder.AppendLine($"| {date} | 入: {dailyCounts[date].inCount} 笔 | 出: {dailyCounts[date].outCount} 笔{energyDisplay}");
 }
 
 // 添加统计数据到结果
