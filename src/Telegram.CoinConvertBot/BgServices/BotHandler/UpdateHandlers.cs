@@ -8304,6 +8304,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
             TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
             bool hasMore = true;
 
+            // 获取交易数据
             while (hasMore)
             {
                 HttpResponseMessage response = await httpClient.GetAsync(url);
@@ -8353,7 +8354,27 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
                 }
             }
 
-            // 确保所有日期都被覆盖并计算统计数据
+            // 获取能量消耗数据
+            Dictionary<string, int> energyUsage = new Dictionary<string, int>();
+            string energyUrl = $"https://apilist.tronscanapi.com/api/account/analysis?address={tronAddress}&type=2";
+            HttpResponseMessage energyResponse = await httpClient.GetAsync(energyUrl);
+            if (energyResponse.IsSuccessStatusCode)
+            {
+                string energyJson = await energyResponse.Content.ReadAsStringAsync();
+                JObject energyData = JObject.Parse(energyJson);
+                foreach (var dayData in energyData["data"])
+                {
+                    string day = (string)dayData["day"];
+                    int totalEnergy = (int)dayData["energy_usage_total"];
+                    energyUsage[day.Replace("-", "/")] = totalEnergy; // 将日期格式从"yyyy-MM-dd"转换为"yyyy/MM/dd"
+                }
+            }
+            else
+            {
+                throw new Exception("无法获取能量消耗数据");
+            }
+
+            // 构建结果字符串
             StringBuilder resultBuilder = new StringBuilder();
             int maxIn = 0, maxOut = 0;
             string maxInDate = "", maxOutDate = "";
@@ -8364,7 +8385,9 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
                 {
                     dailyCounts[date] = (0, 0); // 当天没有交易
                 }
-                resultBuilder.AppendLine($"{date} 转入：{dailyCounts[date].inCount} 笔 | 转出：{dailyCounts[date].outCount} 笔");
+
+                string energyDisplay = energyUsage.ContainsKey(date) ? $" | 能量消耗：{energyUsage[date]}" : " | 能量消耗：0";
+                resultBuilder.AppendLine($"{date} 转入：{dailyCounts[date].inCount} 笔 | 转出：{dailyCounts[date].outCount} 笔{energyDisplay}");
 
                 // 更新最大统计数据
                 if (dailyCounts[date].inCount > maxIn)
@@ -8388,7 +8411,6 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
             string queryTime = nowInChina.ToString("yyyy/MM/dd HH:mm:ss");
             resultBuilder.AppendLine($"统计时间： {queryTime}");
             resultBuilder.AppendLine($"统计地址： {tronAddress}");
-
             // 创建内联按钮
             InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(
                 InlineKeyboardButton.WithCallbackData("关闭", "back")
