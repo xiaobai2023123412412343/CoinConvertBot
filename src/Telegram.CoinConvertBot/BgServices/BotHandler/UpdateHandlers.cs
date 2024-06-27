@@ -228,6 +228,18 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
             decimal increase = (kLines[i].price - kLines[i - 1].price) / kLines[i - 1].price * 100;
             message.AppendLine($"{kLines[i].time:yyyy/MM/dd HH:mm} 上涨：{increase:F2}% $:{kLines[i].price}");
         }
+
+        // 获取成交量信息
+        string volumeInfo = await BinancePriceInfo.GetHourlyTradingVolume(coin);
+        if (!string.IsNullOrEmpty(volumeInfo))
+        {
+            message.AppendLine(volumeInfo);
+        }
+        else
+        {
+            message.AppendLine("注意：该币种未上架 币安 | 欧易 交易所！");
+        }
+
 //Console.WriteLine($"准备向用户ID：{userId} 播报！");
     // 创建内联按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
