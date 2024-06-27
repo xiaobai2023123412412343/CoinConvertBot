@@ -4481,19 +4481,33 @@ result.AppendLine($"24h：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 4
 // 获取欧意近48小时的成交量信息
 public static async Task<string> GetOkxHourlyTradingVolume(string symbol)
 {
-    string okxUrl = $"https://www.okx.com/api/v5/market/candles?instId={symbol.ToUpper()}-USDT-SWAP&bar=1H&limit=48";
+    string swapUrl = $"https://www.okx.com/api/v5/market/candles?instId={symbol.ToUpper()}-USDT-SWAP&bar=1H&limit=48";
+    string spotUrl = $"https://www.okx.com/api/v5/market/candles?instId={symbol.ToUpper()}-USDT&bar=1H&limit=48";
     StringBuilder result = new StringBuilder();
     string dataSource = "欧易合约"; // 数据来源
 
     try
     {
-        var response = await httpClient.GetAsync(okxUrl);
+        HttpResponseMessage response = await httpClient.GetAsync(swapUrl);
+        Console.WriteLine($"欧易合约API尝试: {swapUrl}"); // 调试输出
+        string content = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"API响应: {response.StatusCode}"); // 调试输出
+        Console.WriteLine($"欧易合约API返回: {content}"); // 调试输出
+
+        var jsonDoc = JsonDocument.Parse(content);
+        if (jsonDoc.RootElement.GetProperty("code").GetString() == "51001")
+        {
+            Console.WriteLine($"欧易合约查询不到，尝试使用欧意现货API: {spotUrl}"); // 调试输出
+            response = await httpClient.GetAsync(spotUrl);
+            content = await response.Content.ReadAsStringAsync();
+            dataSource = "欧易现货"; // 更新数据来源
+            Console.WriteLine($"欧意现货API返回: {content}"); // 调试输出
+        }
+
         if (response.IsSuccessStatusCode)
         {
-            var content = await response.Content.ReadAsStringAsync();
-            var jsonDoc = JsonDocument.Parse(content);
+            jsonDoc = JsonDocument.Parse(content);
             var elements = jsonDoc.RootElement.GetProperty("data").EnumerateArray();
-            // 将数据转换为列表并逆序处理
             List<List<JsonElement>> klines = elements.Select(element => element.EnumerateArray().Select(x => x).ToList()).Reverse().ToList();
 
             if (klines.Count >= 48) // 确保有足够的数据点
