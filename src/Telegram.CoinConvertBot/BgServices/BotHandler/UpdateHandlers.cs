@@ -4466,7 +4466,7 @@ result.AppendLine($"24h：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 4
 			
                     // 添加数据来源和查询时间
                     string queryTime = DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(8)).ToString("yyyy/MM/dd HH:mm:ss");
-                    result.AppendLine($"数据来源{dataSource} | {queryTime}");
+                    result.AppendLine($"数据来源：{dataSource} | {queryTime}");
                 }
             }
         }
@@ -4543,7 +4543,7 @@ result.AppendLine($"24h：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 4
 
                 // 添加数据来源和查询时间
                 string queryTime = DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(8)).ToString("yyyy/MM/dd HH:mm:ss");
-                result.AppendLine($"数据来源{dataSource} | {queryTime}");
+                result.AppendLine($"数据来源：{dataSource} | {queryTime}");
             }
             else
             {
@@ -15126,18 +15126,29 @@ if (Regex.IsMatch(messageText, @"^成交量\s+\w+$", RegexOptions.IgnoreCase))
     string symbol = Regex.Match(messageText, @"\w+$", RegexOptions.IgnoreCase).Value.ToUpper();
     string tradingVolumeInfo = await BinancePriceInfo.GetHourlyTradingVolume(symbol);
 
+    // 创建内联键盘
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new[] // 第一行按钮
+        {
+            InlineKeyboardButton.WithCallbackData("关闭", "back")
+        }
+    });
+
     if (string.IsNullOrEmpty(tradingVolumeInfo))
     {
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: "未查询到该币种的数据！"
+            text: "未查询到该币种的数据！",
+            replyMarkup: inlineKeyboard
         );
     }
     else
     {
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: tradingVolumeInfo
+            text: tradingVolumeInfo,
+            replyMarkup: inlineKeyboard
         );
     }
 }
