@@ -4426,6 +4426,9 @@ public static class BinancePriceInfo
                 var klines = JsonSerializer.Deserialize<List<List<JsonElement>>>(content);
                 if (klines != null && klines.Count == 48)
                 {
+                    // 添加表头
+                    result.AppendLine(" |            时间            |   成交量  |  涨跌幅");
+
                     for (int i = 47; i >= 36; i--) // 只返回最近12小时的数据
                     {
                         decimal currentVolume = decimal.Parse(klines[i][7].GetString());
@@ -4436,17 +4439,17 @@ public static class BinancePriceInfo
                         string formattedVolume = FormatLargeNumber(currentVolume);
                         string timeLabel = DateTimeOffset.FromUnixTimeMilliseconds(klines[i][0].GetInt64()).AddHours(8).ToString("yyyy/MM/dd HH:mm"); // 转换为北京时间
 
-                        result.AppendLine($"{timeLabel} | 成交：{formattedVolume} | 涨幅 {emoji} {changePercent:F2}%");
+                        result.AppendLine($"{timeLabel} | {formattedVolume} | {emoji} {changePercent:F2}%");
                     }
 
                     // 添加一个空行作为分隔
                     result.AppendLine();
 
                     // 计算4/8/12/24小时的成交量和涨幅
-                    result.AppendLine(CalculatePeriodVolumeChange(klines, 4, 47));
-                    result.AppendLine(CalculatePeriodVolumeChange(klines, 8, 47));
-                    result.AppendLine(CalculatePeriodVolumeChange(klines, 12, 47));
-                    result.AppendLine(CalculatePeriodVolumeChange(klines, 24, 47));
+                    result.AppendLine($"4h：{FormatLargeNumber(CalculatePeriodVolume(klines, 4, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 8, 47))} | {CalculatePeriodChange(klines, 4, 47)}");
+                    result.AppendLine($"8h：{FormatLargeNumber(CalculatePeriodVolume(klines, 8, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 12, 47))} | {CalculatePeriodChange(klines, 8, 47)}");
+                    result.AppendLine($"12h：{FormatLargeNumber(CalculatePeriodVolume(klines, 12, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 47))} | {CalculatePeriodChange(klines, 12, 47)}");
+                    result.AppendLine($"24h：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 48, 47))} | {CalculatePeriodChange(klines, 24, 47)}");
 
                     // 添加一个空行作为分隔
                     result.AppendLine();
@@ -4465,27 +4468,31 @@ public static class BinancePriceInfo
 
         return result.ToString();
     }
-    // 计算指定时间段的成交量和涨幅
-    private static string CalculatePeriodVolumeChange(List<List<JsonElement>> klines, int hours, int endIndex)
+
+    // 计算指定时间段的成交量
+    private static decimal CalculatePeriodVolume(List<List<JsonElement>> klines, int hours, int endIndex)
     {
         int startIndex = endIndex - hours + 1;
         decimal periodVolume = 0;
-        decimal previousPeriodVolume = 0;
 
         for (int i = startIndex; i <= endIndex; i++)
         {
             periodVolume += decimal.Parse(klines[i][7].GetString());
         }
 
-        for (int i = startIndex - hours; i < startIndex; i++)
-        {
-            previousPeriodVolume += decimal.Parse(klines[i][7].GetString());
-        }
+        return periodVolume;
+    }
 
-        decimal changePercent = (periodVolume - previousPeriodVolume) / previousPeriodVolume * 100;
+    // 计算指定时间段的涨跌幅
+    private static string CalculatePeriodChange(List<List<JsonElement>> klines, int hours, int endIndex)
+    {
+        int startIndex = endIndex - hours + 1;
+        decimal startVolume = decimal.Parse(klines[startIndex][7].GetString());
+        decimal endVolume = decimal.Parse(klines[endIndex][7].GetString());
+        decimal changePercent = (endVolume - startVolume) / startVolume * 100;
         string emoji = changePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
-        return $"近{hours}h成交：{FormatLargeNumber(periodVolume)} | 同比：{FormatLargeNumber(previousPeriodVolume)} | 涨幅：{emoji} {changePercent:F2}%";
+        return $"{emoji} {changePercent:F2}%";
     }
 // 获取昨日和今日的交易量
 public static async Task<string> GetTradingVolumeInfo(string symbol)
