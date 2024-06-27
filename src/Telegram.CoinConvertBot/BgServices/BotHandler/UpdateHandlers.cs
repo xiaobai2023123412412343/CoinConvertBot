@@ -4473,7 +4473,7 @@ result.AppendLine($"24h：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 4
         catch (Exception ex)
         {
             Console.WriteLine($"从币安API获取数据失败: {ex.Message}");
-            return "无法获取数据";
+            return "查询失败，该币种暂未上架币安/欧意交易所";
         }
 
         return result.ToString();
@@ -4547,20 +4547,20 @@ result.AppendLine($"24h：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 4
             }
             else
             {
-                Console.WriteLine("数据点不足48个，无法进行完整分析");
-                return "数据点不足，无法进行完整分析";
+                Console.WriteLine("查询失败，该币种暂未上架币安/欧意交易所");
+                return "查询失败，该币种暂未上架币安/欧意交易所";
             }
         }
         else
         {
             Console.WriteLine("API响应失败");
-            return "API响应失败";
+            return "查询失败，该币种暂未上架币安/欧意交易所";
         }
     }
     catch (Exception ex)
     {
         Console.WriteLine($"从欧易API获取数据失败: {ex.Message}");
-        return "无法获取数据";
+        return "查询失败，该币种暂未上架币安/欧意交易所";
     }
 
     return result.ToString();
