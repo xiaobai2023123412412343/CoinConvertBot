@@ -4402,6 +4402,76 @@ public static class BinancePriceInfo
 {
     private static readonly HttpClient httpClient = new HttpClient();
 
+    // 获取近48小时的成交量信息
+    public static async Task<string> GetHourlyTradingVolume(string symbol)
+    {
+        string url = $"https://fapi.binance.com/fapi/v1/klines?symbol={symbol.ToUpper()}USDT&interval=1h&limit=48";
+        StringBuilder result = new StringBuilder();
+
+        try
+        {
+            var response = await httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var klines = JsonSerializer.Deserialize<List<List<JsonElement>>>(content);
+                if (klines != null && klines.Count == 48)
+                {
+                    for (int i = 47; i >= 36; i--) // 只返回最近12小时的数据
+                    {
+                        decimal currentVolume = decimal.Parse(klines[i][7].GetString());
+                        decimal previousVolume = decimal.Parse(klines[i - 1][7].GetString());
+                        decimal changePercent = (currentVolume - previousVolume) / previousVolume * 100;
+                        string emoji = changePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+                        string formattedVolume = FormatLargeNumber(currentVolume);
+                        string timeLabel = DateTimeOffset.FromUnixTimeMilliseconds(klines[i][0].GetInt64()).AddHours(8).ToString("yyyy/MM/dd HH:mm"); // 转换为北京时间
+
+                        result.AppendLine($"{timeLabel} | 成交：{formattedVolume} | 涨幅 {emoji} {changePercent:F2}%");
+                    }
+
+                    // 添加一个空行作为分隔
+                    result.AppendLine();
+
+                    // 计算4/8/12/24小时的成交量和涨幅
+                    result.AppendLine(CalculatePeriodVolumeChange(klines, 4, 47));
+                    result.AppendLine(CalculatePeriodVolumeChange(klines, 8, 47));
+                    result.AppendLine(CalculatePeriodVolumeChange(klines, 12, 47));
+                    result.AppendLine(CalculatePeriodVolumeChange(klines, 24, 47));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"从币安合约获取数据失败: {ex.Message}");
+            return "无法获取数据";
+        }
+
+        return result.ToString();
+    }
+
+    // 计算指定时间段的成交量和涨幅
+    private static string CalculatePeriodVolumeChange(List<List<JsonElement>> klines, int hours, int endIndex)
+    {
+        int startIndex = endIndex - hours + 1;
+        decimal periodVolume = 0;
+        decimal previousPeriodVolume = 0;
+
+        for (int i = startIndex; i <= endIndex; i++)
+        {
+            periodVolume += decimal.Parse(klines[i][7].GetString());
+        }
+
+        for (int i = startIndex - hours; i < startIndex; i++)
+        {
+            previousPeriodVolume += decimal.Parse(klines[i][7].GetString());
+        }
+
+        decimal changePercent = (periodVolume - previousPeriodVolume) / previousPeriodVolume * 100;
+        string emoji = changePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+        return $"近{hours}h成交：{FormatLargeNumber(periodVolume)} | 同比：{FormatLargeNumber(previousPeriodVolume)} | 涨幅：{emoji} {changePercent:F2}%";
+    }
 // 获取昨日和今日的交易量
 public static async Task<string> GetTradingVolumeInfo(string symbol)
 {
@@ -10699,7 +10769,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
     }        
         var inputText = message.Text.Trim();
         // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
-        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|买入|卖出|发现超卖|群发)");
+        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|买入|卖出|成交量|发现超卖|群发)");
 
         // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
         if (isBindOrUnbindCommand)
@@ -14932,6 +15002,17 @@ if (messageText.Contains("统计笔数"))
             text: "提供的地址格式不正确，请确保是以 'T' 开头的34位波场地址。"
         );
     }
+}
+// 机器人处理消息的地方
+if (Regex.IsMatch(messageText, @"^成交量\s*btc$", RegexOptions.IgnoreCase))
+{
+    string symbol = Regex.Match(messageText, @"btc$", RegexOptions.IgnoreCase).Value.ToUpper();
+    string tradingVolumeInfo = await BinancePriceInfo.GetHourlyTradingVolume(symbol);
+
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: tradingVolumeInfo
+    );
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
