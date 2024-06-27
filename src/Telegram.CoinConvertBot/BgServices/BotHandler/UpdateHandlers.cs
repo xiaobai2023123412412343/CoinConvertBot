@@ -4402,7 +4402,7 @@ public static class BinancePriceInfo
 {
     private static readonly HttpClient httpClient = new HttpClient();
 
-    // 获取近48小时的成交量信息
+    // 获取币安近48小时的成交量信息
     public static async Task<string> GetHourlyTradingVolume(string symbol)
     {
         string futuresUrl = $"https://fapi.binance.com/fapi/v1/klines?symbol={symbol.ToUpper()}USDT&interval=1h&limit=48";
@@ -4419,7 +4419,17 @@ public static class BinancePriceInfo
                 response = await httpClient.GetAsync(spotUrl);
                 dataSource = "币安现货"; // 更改数据来源
             }
-
+        if (!response.IsSuccessStatusCode)
+        {
+            // 如果币安合约和现货都无法获取数据，尝试从欧易合约获取
+            string okxResult = await GetOkxHourlyTradingVolume(symbol);
+            if (string.IsNullOrEmpty(okxResult))
+            {
+                Console.WriteLine("从欧易API也未获取到数据");
+                return null; // 确保这里返回null，以便后续处理
+            }
+            return okxResult;
+        }
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
@@ -4445,11 +4455,11 @@ public static class BinancePriceInfo
                     // 添加一个空行作为分隔
                     result.AppendLine();
 
-                    // 计算4/8/12/24小时的成交量和涨幅
-                    result.AppendLine($"4h：{FormatLargeNumber(CalculatePeriodVolume(klines, 4, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 8, 47))} | {CalculatePeriodChange(klines, 4, 47)}");
-                    result.AppendLine($"8h：{FormatLargeNumber(CalculatePeriodVolume(klines, 8, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 12, 47))} | {CalculatePeriodChange(klines, 8, 47)}");
-                    result.AppendLine($"12h：{FormatLargeNumber(CalculatePeriodVolume(klines, 12, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 47))} | {CalculatePeriodChange(klines, 12, 47)}");
-                    result.AppendLine($"24h：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 48, 47))} | {CalculatePeriodChange(klines, 24, 47)}");
+// 添加计算4/8/12/24小时的成交量和涨幅
+result.AppendLine($"4h：{FormatLargeNumber(CalculatePeriodVolume(klines, 4, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 4, 43))} | {CalculatePeriodChange(klines, 4, 47, 43)}");
+result.AppendLine($"8h：{FormatLargeNumber(CalculatePeriodVolume(klines, 8, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 8, 39))} | {CalculatePeriodChange(klines, 8, 47, 39)}");
+result.AppendLine($"12h：{FormatLargeNumber(CalculatePeriodVolume(klines, 12, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 12, 35))} | {CalculatePeriodChange(klines, 12, 47, 35)}");
+result.AppendLine($"24h：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 23))} | {CalculatePeriodChange(klines, 24, 47, 23)}");
 
                     // 添加一个空行作为分隔
                     result.AppendLine();
@@ -4468,32 +4478,103 @@ public static class BinancePriceInfo
 
         return result.ToString();
     }
+// 获取欧意近48小时的成交量信息
+public static async Task<string> GetOkxHourlyTradingVolume(string symbol)
+{
+    string okxUrl = $"https://www.okx.com/api/v5/market/candles?instId={symbol.ToUpper()}-USDT-SWAP&bar=1H&limit=48";
+    StringBuilder result = new StringBuilder();
+    string dataSource = "欧易合约"; // 数据来源
 
-    // 计算指定时间段的成交量
-    private static decimal CalculatePeriodVolume(List<List<JsonElement>> klines, int hours, int endIndex)
+    try
     {
-        int startIndex = endIndex - hours + 1;
-        decimal periodVolume = 0;
-
-        for (int i = startIndex; i <= endIndex; i++)
+        var response = await httpClient.GetAsync(okxUrl);
+        if (response.IsSuccessStatusCode)
         {
-            periodVolume += decimal.Parse(klines[i][7].GetString());
+            var content = await response.Content.ReadAsStringAsync();
+            var jsonDoc = JsonDocument.Parse(content);
+            var elements = jsonDoc.RootElement.GetProperty("data").EnumerateArray();
+            // 将数据转换为列表并逆序处理
+            List<List<JsonElement>> klines = elements.Select(element => element.EnumerateArray().Select(x => x).ToList()).Reverse().ToList();
+
+            if (klines.Count >= 48) // 确保有足够的数据点
+            {
+                // 添加表头
+                result.AppendLine(" |            时间            |   成交量  |  涨跌幅");
+
+                // 只返回最近12小时的数据，倒序输出
+                for (int i = 47; i >= 36; i--)
+                {
+                    decimal currentVolume = decimal.Parse(klines[i][7].ToString());
+                    decimal previousVolume = decimal.Parse(klines[i - 1][7].ToString());
+                    decimal changePercent = (currentVolume - previousVolume) / previousVolume * 100;
+                    string emoji = changePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+                    string formattedVolume = FormatLargeNumber(currentVolume);
+                    string timeLabel = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(klines[i][0].ToString())).AddHours(8).ToString("yyyy/MM/dd HH:mm"); // 转换为北京时间
+
+                    result.AppendLine($"{timeLabel} | {formattedVolume} | {emoji} {changePercent:F2}%");
+                }
+
+                // 添加一个空行作为分隔
+                result.AppendLine();
+
+// 添加计算4/8/12/24小时的成交量和涨幅
+result.AppendLine($"4h：{FormatLargeNumber(CalculatePeriodVolume(klines, 4, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 4, 43))} | {CalculatePeriodChange(klines, 4, 47, 43)}");
+result.AppendLine($"8h：{FormatLargeNumber(CalculatePeriodVolume(klines, 8, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 8, 39))} | {CalculatePeriodChange(klines, 8, 47, 39)}");
+result.AppendLine($"12h：{FormatLargeNumber(CalculatePeriodVolume(klines, 12, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 12, 35))} | {CalculatePeriodChange(klines, 12, 47, 35)}");
+result.AppendLine($"24h：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 47))} | 同比：{FormatLargeNumber(CalculatePeriodVolume(klines, 24, 23))} | {CalculatePeriodChange(klines, 24, 47, 23)}");
+
+                // 添加一个空行作为分隔
+                result.AppendLine();
+
+                // 添加数据来源和查询时间
+                string queryTime = DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(8)).ToString("yyyy/MM/dd HH:mm:ss");
+                result.AppendLine($"数据来源{dataSource} | {queryTime}");
+            }
+            else
+            {
+                Console.WriteLine("数据点不足48个，无法进行完整分析");
+                return "数据点不足，无法进行完整分析";
+            }
         }
-
-        return periodVolume;
+        else
+        {
+            Console.WriteLine("API响应失败");
+            return "API响应失败";
+        }
     }
-
-    // 计算指定时间段的涨跌幅
-    private static string CalculatePeriodChange(List<List<JsonElement>> klines, int hours, int endIndex)
+    catch (Exception ex)
     {
-        int startIndex = endIndex - hours + 1;
-        decimal startVolume = decimal.Parse(klines[startIndex][7].GetString());
-        decimal endVolume = decimal.Parse(klines[endIndex][7].GetString());
-        decimal changePercent = (endVolume - startVolume) / startVolume * 100;
-        string emoji = changePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";
-
-        return $"{emoji} {changePercent:F2}%";
+        Console.WriteLine($"从欧易API获取数据失败: {ex.Message}");
+        return "无法获取数据";
     }
+
+    return result.ToString();
+}
+// 计算指定时间段的成交量
+private static decimal CalculatePeriodVolume(List<List<JsonElement>> klines, int hours, int endIndex)
+{
+    int startIndex = endIndex - hours + 1;
+    decimal periodVolume = 0;
+
+    for (int i = startIndex; i <= endIndex; i++)
+    {
+        periodVolume += decimal.Parse(klines[i][7].GetString());
+    }
+
+    return periodVolume;
+}
+
+// 计算指定时间段的涨跌幅
+private static string CalculatePeriodChange(List<List<JsonElement>> klines, int hours, int currentEndIndex, int previousEndIndex)
+{
+    decimal currentPeriodVolume = CalculatePeriodVolume(klines, hours, currentEndIndex);
+    decimal previousPeriodVolume = CalculatePeriodVolume(klines, hours, previousEndIndex);
+    decimal changePercent = ((currentPeriodVolume - previousPeriodVolume) / previousPeriodVolume) * 100;
+    string emoji = changePercent >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+    return $"{emoji} {changePercent:F2}%";
+}
 // 获取昨日和今日的交易量
 public static async Task<string> GetTradingVolumeInfo(string symbol)
 {
