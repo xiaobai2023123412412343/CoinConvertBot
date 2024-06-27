@@ -4489,19 +4489,19 @@ public static async Task<string> GetOkxHourlyTradingVolume(string symbol)
     try
     {
         HttpResponseMessage response = await httpClient.GetAsync(swapUrl);
-        Console.WriteLine($"欧易合约API尝试: {swapUrl}"); // 调试输出
+        //Console.WriteLine($"欧易合约API尝试: {swapUrl}"); // 调试输出
         string content = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"API响应: {response.StatusCode}"); // 调试输出
-        Console.WriteLine($"欧易合约API返回: {content}"); // 调试输出
+       // Console.WriteLine($"API响应: {response.StatusCode}"); // 调试输出
+        //Console.WriteLine($"欧易合约API返回: {content}"); // 调试输出
 
         var jsonDoc = JsonDocument.Parse(content);
         if (jsonDoc.RootElement.GetProperty("code").GetString() == "51001")
         {
-            Console.WriteLine($"欧易合约查询不到，尝试使用欧意现货API: {spotUrl}"); // 调试输出
+            //Console.WriteLine($"欧易合约查询不到，尝试使用欧意现货API: {spotUrl}"); // 调试输出
             response = await httpClient.GetAsync(spotUrl);
             content = await response.Content.ReadAsStringAsync();
             dataSource = "欧易现货"; // 更新数据来源
-            Console.WriteLine($"欧意现货API返回: {content}"); // 调试输出
+           // Console.WriteLine($"欧意现货API返回: {content}"); // 调试输出
         }
 
         if (response.IsSuccessStatusCode)
