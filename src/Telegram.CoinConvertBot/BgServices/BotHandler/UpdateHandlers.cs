@@ -1588,8 +1588,8 @@ var keyboard = new InlineKeyboardMarkup(new[]
     // 第二排按钮
     new[]
     {
-	InlineKeyboardButton.WithCallbackData("监控", $"监控 {symbol}"), // 添加监控按钮   
-        InlineKeyboardButton.WithCallbackData("关闭", "back")
+	InlineKeyboardButton.WithCallbackData($"监控 {symbol}", $"监控 {symbol}"), // 添加监控按钮   
+	InlineKeyboardButton.WithCallbackData("成交量查询", $"成交量 {symbol}")
     }
 });
 
@@ -2092,7 +2092,8 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
     },
     new[] // 第三行按钮
     {
-        InlineKeyboardButton.WithCallbackData($"订阅 {symbol} 价格变动提醒", $"监控 {symbol}")
+        InlineKeyboardButton.WithCallbackData($"成交量查询", $"成交量 {symbol}"),
+        InlineKeyboardButton.WithCallbackData($"监控 {symbol} ", $"监控 {symbol}")
     }
 });
 
@@ -15793,7 +15794,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
     new [] // 第一行
     {
-        InlineKeyboardButton.WithUrl("技术分析", $"https://cn.tradingview.com/symbols/{symbol}USD/technicals/?exchange=CRYPTO"),
+        InlineKeyboardButton.WithCallbackData("交易查询", $"成交量 {symbol}"),
         InlineKeyboardButton.WithUrl("推特搜索", twitterSearchUrl),
     },
     new [] // 第二行
