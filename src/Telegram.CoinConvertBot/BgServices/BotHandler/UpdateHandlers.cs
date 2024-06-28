@@ -9904,7 +9904,7 @@ string fearGreedDescription = GetFearGreedDescription(today);
             "\U00002705 请勿使用交易所或中心化钱包转账!\n" +
             $"\U00002705 <u>购买能量套餐，单笔转账低至 7TRX！</u>\n" +
             $"\U00002705 有任何问题,请私聊联系<a href=\"{channelLink}\">机器人管理员</a>\n\n" +
-            "<b>另代开TG会员</b>:\n\n" +
+            "<b>另代开TG高级会员</b>:\n\n" +
             "\u2708三月高级会员   24.99 u\n" +
             "\u2708六月高级会员   39.99 u\n" +
             "\u2708一年高级会员   70.99 u\n" +
