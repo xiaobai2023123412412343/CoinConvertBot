@@ -221,16 +221,19 @@ private static async Task CheckAndNotifyAsync(long userId, string coin, ITelegra
             return;
         }
 
-        StringBuilder message = new StringBuilder();
-        message.AppendLine($"符合连续上涨：最新价：{currentPrice}，币种：<code>{coin}</code>");
-        for (int i = 1; i < kLines.Count; i++)
-        {
-            decimal increase = (kLines[i].price - kLines[i - 1].price) / kLines[i - 1].price * 100;
-            message.AppendLine($"{kLines[i].time:yyyy/MM/dd HH:mm} 上涨：{increase:F2}% $:{kLines[i].price}");
-        }
+// 构建消息文本，按照从最新到最旧的顺序显示K线数据
+StringBuilder message = new StringBuilder();
+message.AppendLine($"符合连续上涨：最新价：{currentPrice}，币种：<code>{coin}</code>");
 
-        // 添加一个空行作为分隔
-        message.AppendLine();
+// 从最新到最旧排序K线数据并格式化输出
+for (int i = kLines.Count - 1; i >= 1; i--)
+{
+    decimal increase = (kLines[i].price - kLines[i - 1].price) / kLines[i - 1].price * 100;
+    message.AppendLine($"{kLines[i].time:yyyy/MM/dd HH:mm} | $:{kLines[i].price} | 上涨：{increase:F2}%");
+}
+
+// 添加一个空行作为分隔
+message.AppendLine();
 
         // 获取成交量信息
         string volumeInfo = await BinancePriceInfo.GetHourlyTradingVolume(coin);
