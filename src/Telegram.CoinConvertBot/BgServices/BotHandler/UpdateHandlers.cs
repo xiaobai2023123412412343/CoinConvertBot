@@ -9922,23 +9922,28 @@ string startParameter = ""; // 如果你希望机器人在被添加到群组时�
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
 // 创建 InlineKeyboardButton 并设置文本和回调数据
-var visitButton1 = new InlineKeyboardButton("\U0000267B 更多汇率")
+var visitButton1 = new InlineKeyboardButton("能量套餐")
 {
-    Url = "https://t.me/yifanfubot" // 将此链接替换为你想要跳转的左侧链接
+    CallbackData = "能量" // 当按钮被点击时发送的数据
 };
 
-var visitButton2 = new InlineKeyboardButton("\u2B50 会员代开")
+var visitButton2 = new InlineKeyboardButton("开通会员")
 {
     Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的右侧链接
 };
 
-var shareToGroupButton = InlineKeyboardButton.WithUrl("\U0001F449 分享到群组 \U0001F448", shareLink);
+var visitButton3 = new InlineKeyboardButton("私聊使用")
+{
+    Url = "https://t.me/Yifanfubot" // 将此链接替换为你想要跳转的右侧链接
+};
+
+var shareToGroupButton = InlineKeyboardButton.WithUrl("群聊使用", shareLink);
 
 // 创建 InlineKeyboardMarkup 并添加按钮
 var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
     new[] { visitButton1, visitButton2 }, // 第一行按钮
-    new[] { shareToGroupButton } // 第二行按钮
+    new[] { visitButton3, shareToGroupButton } // 第二行按钮
 });
 
         try
