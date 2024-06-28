@@ -11042,11 +11042,14 @@ if(update.CallbackQuery.Data == "membershipOptions")
         }
     });
 
-    await botClient.SendTextMessageAsync(
-        chatId: update.CallbackQuery.Message.Chat.Id,
-        text: "请选择会员期限：",
-        replyMarkup: membershipKeyboard
-    );
+await botClient.SendTextMessageAsync(
+    chatId: update.CallbackQuery.Message.Chat.Id,
+    text: "请选择会员期限：\n\n" +
+          "3个月电报会员：24.99u\n" +
+          "6个月电报会员：39.99u\n" +
+          "12个月电报会员：70.99u",
+    replyMarkup: membershipKeyboard
+);
 }
         else if (update.CallbackQuery.Data == "3months" || update.CallbackQuery.Data == "6months" || update.CallbackQuery.Data == "1year")
         {
@@ -11089,12 +11092,14 @@ if(update.CallbackQuery.Data == "membershipOptions")
                 }
             });
 
-            await botClient.EditMessageTextAsync(
-                chatId: update.CallbackQuery.Message.Chat.Id,
-                messageId: update.CallbackQuery.Message.MessageId,
-                text: "请选择会员期限：",
-                replyMarkup: membershipKeyboard
-            );
+await botClient.SendTextMessageAsync(
+    chatId: update.CallbackQuery.Message.Chat.Id,
+    text: "请选择会员期限：\n\n" +
+          "3个月电报会员：24.99u\n" +
+          "6个月电报会员：39.99u\n" +
+          "12个月电报会员：70.99u",
+    replyMarkup: membershipKeyboard
+);
         }
 else if(update.CallbackQuery.Data == "back")
 {
