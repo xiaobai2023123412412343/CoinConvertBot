@@ -12018,7 +12018,7 @@ var timestamp = message.Date != default(DateTime)
     }
     else if (chatType == ChatType.Group || chatType == ChatType.Supergroup)
     {
-        chatOrigin = "来自群聊\U0001F465";
+        chatOrigin = "来自群聊\U0001F234";
     }
     else if (chatType == ChatType.Channel)
     {
