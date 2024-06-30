@@ -523,7 +523,7 @@ public static class TimerManager
             // 如果计算的小时数达到或超过24，表示第二天的00:00
             if (nextHour >= 24) {
                 nextHour -= 24; // 调整小时数为0
-                nextTargetTime = new DateTime(now.Year, now.Month, now.Day + 1, nextHour, 0, 0); // 日期加1
+                nextTargetTime = now.AddDays(1).Date.AddHours(nextHour); // 使用AddDays确保日期正确增加
             } else {
                 nextTargetTime = new DateTime(now.Year, now.Month, now.Day, nextHour, 0, 0);
             }
