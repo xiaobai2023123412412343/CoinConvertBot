@@ -132,7 +132,8 @@ public static void BatchStopCoinMonitoring(long userId, string messageText, ITel
     var lines = messageText.Split('\n');
     foreach (var line in lines)
     {
-        var match = Regex.Match(line, @"([A-Z]+)\s*\$");
+        // 更新正则表达式以匹配行首的币种名称，直到 "|" 字符
+        var match = Regex.Match(line, @"^([A-Z]+)\s*\|");
         if (match.Success)
         {
             string coin = match.Groups[1].Value.ToUpper();
@@ -140,8 +141,7 @@ public static void BatchStopCoinMonitoring(long userId, string messageText, ITel
         }
     }
     botClient.SendTextMessageAsync(chatId, "批量卖出完成，相关币种监控已停止。", Telegram.Bot.Types.Enums.ParseMode.Html);
-}	
-
+}
 public static bool StopCoinMonitoring(long userId, string coin)
 {
     if (userMonitoredCoins.ContainsKey(userId) && userMonitoredCoins[userId].ContainsKey(coin))
