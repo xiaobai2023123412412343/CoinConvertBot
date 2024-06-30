@@ -1307,7 +1307,7 @@ public static class CryptoMarketAnalyzer
                     new[] // 第一排按钮
                     {
                         InlineKeyboardButton.WithUrl("合约数据", "https://www.coinglass.com/zh/BitcoinOpenInterest"),
-                        InlineKeyboardButton.WithUrl($"{coin.Symbol}详细数据", $"https://www.feixiaohao.com/currencies/{coin.Id}/")
+                        InlineKeyboardButton.WithCallbackData($"{coin.Symbol}详细数据", $"查 {coin.Symbol}")
                     },
                     new[] // 第二排按钮，增加监控行情波动按钮
                     {
