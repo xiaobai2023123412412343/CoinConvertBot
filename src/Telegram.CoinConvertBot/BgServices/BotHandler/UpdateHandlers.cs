@@ -15044,13 +15044,32 @@ if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCas
             foreach (var coin in batch)
             {
                 decimal latestPrice = 0;
-                if (allCoinsData.ContainsKey(coin) && allCoinsData[coin].TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDecimal(out latestPrice))
+                decimal marketCap = 0;
+                string marketCapDisplay = "";
+                if (allCoinsData.ContainsKey(coin))
                 {
-                    // 成功获取价格
+                    if (allCoinsData[coin].TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDecimal(out latestPrice))
+                    {
+                        // 成功获取价格
+                    }
+                    if (allCoinsData[coin].TryGetValue("market_cap_usd", out JsonElement capElement) && capElement.TryGetDecimal(out marketCap))
+                    {
+                        // 成功获取市值并格式化显示
+                        if (marketCap >= 100000000)
+                        {
+                            marketCapDisplay = $"{marketCap / 100000000:F2}亿";
+                        }
+                        else
+                        {
+                            marketCapDisplay = $"{marketCap / 10000:F2}万";
+                        }
+                    }
                 }
-                response.AppendLine($"<code>{coin}</code> $：{latestPrice}");
+                response.AppendLine($"<code>{coin}</code> | $：{latestPrice} | 市值：{marketCapDisplay}");
             }
-            await botClient.SendTextMessageAsync(message.Chat.Id, response.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html);
+            // 添加关闭按钮
+            var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("关闭", "back"));
+            await botClient.SendTextMessageAsync(message.Chat.Id, response.ToString(), Telegram.Bot.Types.Enums.ParseMode.Html, replyMarkup: keyboard);
             response.Clear(); // 清空StringBuilder以用于下一批
         }
     }
