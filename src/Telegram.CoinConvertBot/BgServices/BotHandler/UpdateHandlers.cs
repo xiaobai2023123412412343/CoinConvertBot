@@ -15473,8 +15473,9 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
                 // 如果用户ID是1427768220，添加第三个按钮
                 if (message.Chat.Id == 1427768220)
                 {
-                      buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("手动查询超卖", "/charsi"),
-                                          InlineKeyboardButton.WithCallbackData("监控连涨币种", "/mairumaichu") });
+                      buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("查询超卖", "/charsi"),
+                                          InlineKeyboardButton.WithCallbackData("超卖榜单", "/rsizuidi"),
+                                          InlineKeyboardButton.WithCallbackData("监控连涨", "/mairumaichu") });
                 }
 
                 var inlineKeyboard = new InlineKeyboardMarkup(buttons);
@@ -15498,8 +15499,9 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
             // 如果用户ID是1427768220，添加第三个按钮
             if (message.Chat.Id == 1427768220)
             {
-                  buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("手动查询超卖", "/charsi"),
-                                      InlineKeyboardButton.WithCallbackData("监控连涨币种", "/mairumaichu") });
+                  buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("查询超卖", "/charsi"),
+                                      InlineKeyboardButton.WithCallbackData("超卖榜单", "/rsizuidi"),
+                                      InlineKeyboardButton.WithCallbackData("监控币种", "/mairumaichu") });
             }
 
             var inlineKeyboard = new InlineKeyboardMarkup(buttons);
