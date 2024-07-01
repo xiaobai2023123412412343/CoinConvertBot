@@ -776,7 +776,7 @@ public static class CoinDataAnalyzer
             double rsi14 = rsi14Values.FirstOrDefault(x => x.Symbol == symbol).RSI14;
 
             string indexEmoji = GetIndexEmoji(coinIndex);
-            messageBuilder.AppendLine($"{indexEmoji} #{symbol} | RSI6: {rsi6:F2} | RSI14: {rsi14:F2}");
+            messageBuilder.AppendLine($"{indexEmoji} #{symbol} | <code>{symbol}</code> | RSI6: {rsi6:F2} | RSI14: {rsi14:F2}");
 
             currentRow.Add(InlineKeyboardButton.WithCallbackData(indexEmoji, $"查{symbol}"));
             if (currentRow.Count == 5)
