@@ -718,7 +718,94 @@ public static async Task HandleCancelDingYuErSiCommand(ITelegramBotClient botCli
 public static class CoinDataAnalyzer
 {
     private static readonly Random random = new Random();
+	
+    // 获取RSI6和RSI14最低的前三个币种，但先筛选出近1小时、24小时和7天内下跌的币种
+    public static async Task<(List<string>, List<InlineKeyboardMarkup>)> GetLowestRSICoinsAsync()
+    {
+        await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
+        var allCoinsData = CoinDataCache.GetAllCoinsData();
 
+        // 分别获取1小时、24小时和7天内下跌的前20名
+        var topFallers1h = GetTopFallers(allCoinsData, "percent_change_1h").Take(20).ToList();
+        var topFallers24h = GetTopFallers(allCoinsData, "percent_change_24h").Take(20).ToList();
+        var topFallers7d = GetTopFallers(allCoinsData, "percent_change_7d").Take(20).ToList();
+
+        // 合并并去重
+        var uniqueSymbols = new HashSet<string>(topFallers1h.Concat(topFallers24h).Concat(topFallers7d));
+
+        var rsi6Values = new List<(string Symbol, double RSI6)>();
+        var rsi14Values = new List<(string Symbol, double RSI14)>();
+
+        foreach (var symbol in uniqueSymbols)
+        {
+            await RandomDelay(); // 随机时间间隔，防止API限制
+            string additionalInfo = await BinancePriceInfo.GetPriceInfo(symbol);
+
+            var rsi6Match = Regex.Match(additionalInfo, @"RSI6:</b>\s*(\d+\.?\d*)");
+            var rsi14Match = Regex.Match(additionalInfo, @"RSI14:</b>\s*(\d+\.?\d*)");
+
+            if (double.TryParse(rsi6Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi6))
+            {
+                rsi6Values.Add((symbol, rsi6));
+            }
+            if (double.TryParse(rsi14Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi14))
+            {
+                rsi14Values.Add((symbol, rsi14));
+            }
+        }
+
+        // 选择RSI6和RSI14最低的前三个
+        var lowestRSI6 = rsi6Values.OrderBy(x => x.RSI6).Take(3).ToList();
+        var lowestRSI14 = rsi14Values.OrderBy(x => x.RSI14).Take(3).ToList();
+
+        // 合并并去重
+        var finalSymbols = new HashSet<string>(lowestRSI6.Select(x => x.Symbol).Concat(lowestRSI14.Select(x => x.Symbol)));
+
+        // 构建消息和键盘标记
+        List<string> messages = new List<string>();
+        List<List<InlineKeyboardButton[]>> allButtonRows = new List<List<InlineKeyboardButton[]>>();
+        StringBuilder messageBuilder = new StringBuilder("⚠️ RSI最低值：\n\n");
+        List<InlineKeyboardButton[]> buttonRows = new List<InlineKeyboardButton[]>();
+        List<InlineKeyboardButton> currentRow = new List<InlineKeyboardButton>();
+        int coinIndex = 0;
+
+        foreach (var symbol in finalSymbols)
+        {
+            var coinData = allCoinsData[symbol];
+            double rsi6 = rsi6Values.FirstOrDefault(x => x.Symbol == symbol).RSI6;
+            double rsi14 = rsi14Values.FirstOrDefault(x => x.Symbol == symbol).RSI14;
+
+            string indexEmoji = GetIndexEmoji(coinIndex);
+            messageBuilder.AppendLine($"{indexEmoji} #{symbol} | RSI6: {rsi6:F2} | RSI14: {rsi14:F2}");
+
+            currentRow.Add(InlineKeyboardButton.WithCallbackData(indexEmoji, $"查{symbol}"));
+            if (currentRow.Count == 5)
+            {
+                buttonRows.Add(currentRow.ToArray());
+                currentRow = new List<InlineKeyboardButton>();
+            }
+            coinIndex++;
+        }
+
+        if (currentRow.Count > 0)
+        {
+            buttonRows.Add(currentRow.ToArray());
+        }
+        if (buttonRows.Count > 0)
+        {
+            allButtonRows.Add(buttonRows);
+        }
+
+        if (messageBuilder.Length > 0)
+        {
+            messages.Add(messageBuilder.ToString());
+        }
+
+        var inlineKeyboards = allButtonRows.Select(rows => new InlineKeyboardMarkup(rows)).ToList();
+
+        return (messages, inlineKeyboards);
+    }
+	
     // 获取近1小时和24小时内最多下跌的前20名币种
     public static async Task<(List<string>, List<InlineKeyboardMarkup>)> GetTopOversoldCoinsAsync()
     {
@@ -15194,6 +15281,44 @@ if (Regex.IsMatch(messageText, @"^成交量\s+\w+$", RegexOptions.IgnoreCase))
             text: tradingVolumeInfo,
             replyMarkup: inlineKeyboard
         );
+    }
+}
+//查询rsi值指数
+if (messageText.StartsWith("/rsizuidi"))
+{
+    try
+    {
+        var (lowRSIMessages, keyboardMarkups) = await CoinDataAnalyzer.GetLowestRSICoinsAsync(); // 解构元组
+
+        if (lowRSIMessages.Count > 0 && keyboardMarkups.Count > 0) // 确保有获取到数据和按钮
+        {
+            foreach (var userId in notificationUserIds) // 确保 notificationUserIds 是 long 类型的列表
+            {
+                for (int i = 0; i < lowRSIMessages.Count; i++)
+                {
+                    var lowRSIMessage = lowRSIMessages[i];
+                    var keyboardMarkup = keyboardMarkups[i];
+
+                    if (keyboardMarkup.InlineKeyboard.Any())
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId: userId,
+                            text: lowRSIMessage,
+                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                            replyMarkup: keyboardMarkup);
+                        await Task.Delay(500); // 500毫秒延迟
+                    }
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("没有足够的数据来发送消息。");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"查询RSI最低值时出错: {ex.Message}");
     }
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
