@@ -7448,11 +7448,8 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
 {
     try
     {
-        string[] apiKeys = new string[] {
-            "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
-            "f49353bd-db65-4719-a56c-064b2eb231bf",
-            "92854974-68da-4fd8-9e50-3948c1e6fa7e"
-        };
+        var apiUrl = $"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20?only_confirmed=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        using var httpClient = new HttpClient();
 
         decimal totalIncome = 0m;
         decimal totalOutcome = 0m;
@@ -7460,150 +7457,100 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
         decimal monthlyOutcome = 0m;
         decimal dailyIncome = 0m;
         decimal dailyOutcome = 0m;
+        string fingerprint = null;
 
-        DateTime nowInBeijing = ConvertToBeijingTime(DateTime.UtcNow);
+        // 获取当月1号和今天的日期
+        DateTime nowInUtc = DateTime.UtcNow;
+        DateTime nowInBeijing = nowInUtc.AddHours(8);
         DateTime firstDayOfMonth = new DateTime(nowInBeijing.Year, nowInBeijing.Month, 1);
         DateTime today = nowInBeijing.Date;
-        DateTime firstDayOfYear = new DateTime(nowInBeijing.Year, 1, 1);
 
-        using var httpClient = new HttpClient();
-        int totalPage = await GetTotalPages(httpClient, address, apiKeys[0]);
-        bool continueFetching = true;
-        int currentPage = 1;
-
-        while (continueFetching && currentPage <= totalPage)
+        while (true)
         {
-            var tasks = new List<Task<JsonDocument>>();
-            for (int i = currentPage; i < currentPage + 20 && i <= totalPage; i++)
+            var currentUrl = apiUrl + (fingerprint != null ? $"&fingerprint={fingerprint}" : "");
+            var response = await httpClient.GetAsync(currentUrl);
+            var json = await response.Content.ReadAsStringAsync();
+            var jsonDocument = JsonDocument.Parse(json);
+
+            if (!jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement))
             {
-                int page = i;
-                tasks.Add(FetchPageData(httpClient, address, page, apiKeys));
+                break;
             }
 
-            var results = await Task.WhenAll(tasks);
-            currentPage += 20;
-
-            foreach (var result in results)
+            foreach (var transactionElement in dataElement.EnumerateArray())
             {
-        if (result == null)
-        {
-            Console.WriteLine("所有API密钥尝试失败，停止后续页面处理。");
-            continueFetching = false; // 停止处理后续页面
-            break;
-        }		    
-                if (result != null)
+                if (!transactionElement.TryGetProperty("type", out var typeElement) || typeElement.GetString() != "Transfer")
                 {
-                    var transactionsData = result.RootElement.GetProperty("data")[0];
-                    foreach (var item in transactionsData.GetProperty("transactionLists").EnumerateArray())
+                    continue;
+                }
+
+                if (!transactionElement.TryGetProperty("value", out var valueElement))
+                {
+                    continue;
+                }
+                var value = valueElement.GetString();
+
+                decimal amount = decimal.Parse(value) / 1_000_000; // 假设USDT有6位小数
+
+                // 获取交易时间
+                DateTime transactionTime = DateTime.MinValue;
+                if (transactionElement.TryGetProperty("block_timestamp", out var timestampElement))
+                {
+                    var timestamp = timestampElement.GetInt64();
+                    DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).UtcDateTime;
+                    transactionTime = transactionTimeUtc.AddHours(8);
+                }
+
+                // 判断是收入还是支出
+                bool isIncome = transactionElement.GetProperty("to").GetString() == address;
+                if (isIncome)
+                {
+                    totalIncome += amount;
+                    if (transactionTime >= firstDayOfMonth)
                     {
-                        decimal amount = decimal.Parse(item.GetProperty("amount").GetString());
-                        DateTime transactionTime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(item.GetProperty("transactionTime").GetString())).UtcDateTime;
-                        transactionTime = ConvertToBeijingTime(transactionTime);
-
-                        if (transactionTime < firstDayOfYear) // 检查是否包含去年的数据
-                        {
-                            continueFetching = false;
-                            break;
-                        }
-
-                        string fromAddress = item.GetProperty("from").GetString();
-                        string toAddress = item.GetProperty("to").GetString();
-
-                        if (toAddress == address)
-                        {
-                            if (transactionTime >= firstDayOfYear)
-                            {
-                                totalIncome += amount;
-                            }
-                            if (transactionTime >= firstDayOfMonth)
-                            {
-                                monthlyIncome += amount;
-                            }
-                            if (transactionTime.Date == today)
-                            {
-                                dailyIncome += amount;
-                            }
-                        }
-                        else if (fromAddress == address)
-                        {
-                            if (transactionTime >= firstDayOfYear)
-                            {
-                                totalOutcome += amount;
-                            }
-                            if (transactionTime >= firstDayOfMonth)
-                            {
-                                monthlyOutcome += amount;
-                            }
-                            if (transactionTime.Date == today)
-                            {
-                                dailyOutcome += amount;
-                            }
-                        }
+                        monthlyIncome += amount;
                     }
-                    if (!continueFetching) break;
+                    if (transactionTime.Date == today)
+                    {
+                        dailyIncome += amount;
+                    }
+                }
+                else
+                {
+                    totalOutcome += amount;
+                    if (transactionTime >= firstDayOfMonth)
+                    {
+                        monthlyOutcome += amount;
+                    }
+                    if (transactionTime.Date == today)
+                    {
+                        dailyOutcome += amount;
+                    }
+                }
+
+                if (transactionElement.TryGetProperty("transaction_hash", out var transactionIdElement))
+                {
+                    fingerprint = transactionIdElement.GetString();
                 }
             }
-            if (!continueFetching) break; // 如果发现去年的数据，停止处理后续页面
+
+            if (!jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) || !hasNextElement.GetBoolean())
+            {
+                break;
+            }
         }
 
+        // 如果没有发生错误，返回结果和IsError=false
         return (totalIncome, totalOutcome, monthlyIncome, monthlyOutcome, dailyIncome, dailyOutcome, false);
     }
     catch (Exception ex)
     {
+        // 发生错误时，返回默认值和IsError=true
         Console.WriteLine($"Error in method {nameof(GetTotalIncomeAsync)}: {ex.Message}");
         return (0m, 0m, 0m, 0m, 0m, 0m, true);
     }
 }
-
-private static async Task<JsonDocument> FetchPageData(HttpClient httpClient, string address, int page, string[] apiKeys)
-{
-    for (int keyIndex = 0; keyIndex < apiKeys.Length; keyIndex++)
-    {
-        string apiKey = apiKeys[keyIndex];
-        httpClient.DefaultRequestHeaders.Clear();
-        httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKey);
-
-        var apiUrl = $"https://oklink.com/api/v5/explorer/address/transaction-list?chainShortName=TRON&address={address}&limit=100&page={page}&tokenContractAddress=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&protocolType=token_20";
-        HttpResponseMessage response;
-        int retryCount = 0;
-
-        do
-        {
-            response = await httpClient.GetAsync(apiUrl);
-            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-            {
-                if (++retryCount > 3) // 尝试次数改为3次
-                {
-                    //Console.WriteLine($"方法 FetchPageData 错误: 多次尝试后因429错误（请求过多）失败。");
-                    break; // 跳出循环，尝试下一个密钥
-                }
-                Random rnd = new Random();
-                await Task.Delay(rnd.Next(500, 1001)); // 随机延迟0.5到1秒
-            }
-            else if (!response.IsSuccessStatusCode)
-            {
-                break; // 尝试下一个API密钥
-            }
-            else
-            {
-                return JsonDocument.Parse(await response.Content.ReadAsStringAsync()); // 成功响应
-            }
-        } while (true);
-    }
-    return null; // 所有密钥尝试失败
-}
-
-private static async Task<int> GetTotalPages(HttpClient httpClient, string address, string apiKey)
-{
-    var firstPageUrl = $"https://oklink.com/api/v5/explorer/address/transaction-list?chainShortName=TRON&address={address}&limit=100&page=1&tokenContractAddress=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&protocolType=token_20";
-    httpClient.DefaultRequestHeaders.Clear();
-    httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKey);
-    var response = await httpClient.GetAsync(firstPageUrl);
-    var json = await response.Content.ReadAsStringAsync();
-    var document = JsonDocument.Parse(json);
-    return int.Parse(document.RootElement.GetProperty("data")[0].GetProperty("totalPage").GetString());
-}
-
+    
 public static DateTime ConvertToBeijingTime(DateTime utcDateTime)
 {
     var timeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
