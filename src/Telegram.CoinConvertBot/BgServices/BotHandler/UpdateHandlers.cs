@@ -8353,7 +8353,7 @@ decimal usdtProfit = usdtTotalIncome - usdtTotalOutcome;
 string botUsername = "yifanfubot"; // 你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";    
-string groupExclusiveText = $"<a href=\"{shareLink}\">群内发地址可查所有收入支出以及授权记录！</a>\n";
+string groupExclusiveText = $"<a href=\"{shareLink}\">群内发送地址可以查该地址的完整授权记录！</a>\n";
 string uxiaofeikaText = $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n"; 
 
 
