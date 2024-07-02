@@ -15321,7 +15321,7 @@ if (message.Text.Trim().Equals("/mairumaichu", StringComparison.OrdinalIgnoreCas
                         }
                     }
                 }
-                response.AppendLine($"<code>{coin}</code> | $：{latestPrice} | 市值：{marketCapDisplay}");
+                response.AppendLine($"#{coin} | <code>{coin}</code> | $：{latestPrice} | 市值：{marketCapDisplay}");
             }
             // 添加关闭按钮
             var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("关闭", "back"));
@@ -15601,7 +15601,7 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
                         string formattedCurrentPrice = currentPrice.Value >= 1 ? currentPrice.Value.ToString("F2") : currentPrice.Value.ToString("0.00000000");
                         decimal priceChangePercent = ((currentPrice.Value - initialPriceRecord.Price) / initialPriceRecord.Price) * 100;
                         string priceChangeDirection = priceChangePercent > 0 ? "\U0001F4C8" : "\U0001F4C9";
-                        monitoringListText += $"<code>{monitorInfo.value.Symbol}</code><b>/USDT</b>   <b>初始价格：</b>$ {formattedInitialPrice}\n<b>最新价格：</b>$ {formattedCurrentPrice}  {priceChangeDirection} {Math.Abs(priceChangePercent).ToString("0.00")}%\n{priceChangeText}";
+                        monitoringListText += $"#{monitorInfo.value.Symbol} | <code>{monitorInfo.value.Symbol}</code><b>/USDT</b>   <b>初始价格：</b>$ {formattedInitialPrice}\n<b>最新价格：</b>$ {formattedCurrentPrice}  {priceChangeDirection} {Math.Abs(priceChangePercent).ToString("0.00")}%\n{priceChangeText}";
 
                         // 如果当前币种不是列表中的最后一个，则在其后添加横线
                         if (monitorInfo.index != lastIndex)
