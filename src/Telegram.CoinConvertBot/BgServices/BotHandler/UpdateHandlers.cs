@@ -7443,6 +7443,174 @@ private static readonly Dictionary<string, string> LanguageCodes = new Dictionar
     { "斯瓦希里语", "sw" },
     { "印尼语", "id" }
 };
+/*  // 年度 本月 今日 收入统计  从oklin获取 太慢 放弃
+public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal MonthlyIncome, decimal MonthlyOutcome, decimal DailyIncome, decimal DailyOutcome, bool IsError)> GetTotalIncomeAsync(string address, bool isTrx)
+{
+    try
+    {
+        string[] apiKeys = new string[] {
+            "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+            "f49353bd-db65-4719-a56c-064b2eb231bf",
+            "92854974-68da-4fd8-9e50-3948c1e6fa7e"
+        };
+
+        decimal totalIncome = 0m;
+        decimal totalOutcome = 0m;
+        decimal monthlyIncome = 0m;
+        decimal monthlyOutcome = 0m;
+        decimal dailyIncome = 0m;
+        decimal dailyOutcome = 0m;
+
+        DateTime nowInBeijing = ConvertToBeijingTime(DateTime.UtcNow);
+        DateTime firstDayOfMonth = new DateTime(nowInBeijing.Year, nowInBeijing.Month, 1);
+        DateTime today = nowInBeijing.Date;
+        DateTime firstDayOfYear = new DateTime(nowInBeijing.Year, 1, 1);
+
+        using var httpClient = new HttpClient();
+        int totalPage = await GetTotalPages(httpClient, address, apiKeys[0]);
+        bool continueFetching = true;
+        int currentPage = 1;
+
+        while (continueFetching && currentPage <= totalPage)
+        {
+            var tasks = new List<Task<JsonDocument>>();
+            for (int i = currentPage; i < currentPage + 20 && i <= totalPage; i++)
+            {
+                int page = i;
+                tasks.Add(FetchPageData(httpClient, address, page, apiKeys));
+            }
+
+            var results = await Task.WhenAll(tasks);
+            currentPage += 20;
+
+            foreach (var result in results)
+            {
+        if (result == null)
+        {
+            Console.WriteLine("所有API密钥尝试失败，停止后续页面处理。");
+            continueFetching = false; // 停止处理后续页面
+            break;
+        }		    
+                if (result != null)
+                {
+                    var transactionsData = result.RootElement.GetProperty("data")[0];
+                    foreach (var item in transactionsData.GetProperty("transactionLists").EnumerateArray())
+                    {
+                        decimal amount = decimal.Parse(item.GetProperty("amount").GetString());
+                        DateTime transactionTime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(item.GetProperty("transactionTime").GetString())).UtcDateTime;
+                        transactionTime = ConvertToBeijingTime(transactionTime);
+
+                        if (transactionTime < firstDayOfYear) // 检查是否包含去年的数据
+                        {
+                            continueFetching = false;
+                            break;
+                        }
+
+                        string fromAddress = item.GetProperty("from").GetString();
+                        string toAddress = item.GetProperty("to").GetString();
+
+                        if (toAddress == address)
+                        {
+                            if (transactionTime >= firstDayOfYear)
+                            {
+                                totalIncome += amount;
+                            }
+                            if (transactionTime >= firstDayOfMonth)
+                            {
+                                monthlyIncome += amount;
+                            }
+                            if (transactionTime.Date == today)
+                            {
+                                dailyIncome += amount;
+                            }
+                        }
+                        else if (fromAddress == address)
+                        {
+                            if (transactionTime >= firstDayOfYear)
+                            {
+                                totalOutcome += amount;
+                            }
+                            if (transactionTime >= firstDayOfMonth)
+                            {
+                                monthlyOutcome += amount;
+                            }
+                            if (transactionTime.Date == today)
+                            {
+                                dailyOutcome += amount;
+                            }
+                        }
+                    }
+                    if (!continueFetching) break;
+                }
+            }
+            if (!continueFetching) break; // 如果发现去年的数据，停止处理后续页面
+        }
+
+        return (totalIncome, totalOutcome, monthlyIncome, monthlyOutcome, dailyIncome, dailyOutcome, false);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error in method {nameof(GetTotalIncomeAsync)}: {ex.Message}");
+        return (0m, 0m, 0m, 0m, 0m, 0m, true);
+    }
+}
+
+private static async Task<JsonDocument> FetchPageData(HttpClient httpClient, string address, int page, string[] apiKeys)
+{
+    for (int keyIndex = 0; keyIndex < apiKeys.Length; keyIndex++)
+    {
+        string apiKey = apiKeys[keyIndex];
+        httpClient.DefaultRequestHeaders.Clear();
+        httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKey);
+
+        var apiUrl = $"https://oklink.com/api/v5/explorer/address/transaction-list?chainShortName=TRON&address={address}&limit=100&page={page}&tokenContractAddress=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&protocolType=token_20";
+        HttpResponseMessage response;
+        int retryCount = 0;
+
+        do
+        {
+            response = await httpClient.GetAsync(apiUrl);
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                if (++retryCount > 3) // 尝试次数改为3次
+                {
+                    //Console.WriteLine($"方法 FetchPageData 错误: 多次尝试后因429错误（请求过多）失败。");
+                    break; // 跳出循环，尝试下一个密钥
+                }
+                Random rnd = new Random();
+                await Task.Delay(rnd.Next(500, 1001)); // 随机延迟0.5到1秒
+            }
+            else if (!response.IsSuccessStatusCode)
+            {
+                break; // 尝试下一个API密钥
+            }
+            else
+            {
+                return JsonDocument.Parse(await response.Content.ReadAsStringAsync()); // 成功响应
+            }
+        } while (true);
+    }
+    return null; // 所有密钥尝试失败
+}
+
+private static async Task<int> GetTotalPages(HttpClient httpClient, string address, string apiKey)
+{
+    var firstPageUrl = $"https://oklink.com/api/v5/explorer/address/transaction-list?chainShortName=TRON&address={address}&limit=100&page=1&tokenContractAddress=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&protocolType=token_20";
+    httpClient.DefaultRequestHeaders.Clear();
+    httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKey);
+    var response = await httpClient.GetAsync(firstPageUrl);
+    var json = await response.Content.ReadAsStringAsync();
+    var document = JsonDocument.Parse(json);
+    return int.Parse(document.RootElement.GetProperty("data")[0].GetProperty("totalPage").GetString());
+}
+
+public static DateTime ConvertToBeijingTime(DateTime utcDateTime)
+{
+    var timeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+    return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, timeZone);
+}
+*/  // 年度 本月 今日 收入统计  从oklin获取 太慢 放弃
+
 
 public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal MonthlyIncome, decimal MonthlyOutcome, decimal DailyIncome, decimal DailyOutcome, bool IsError)> GetTotalIncomeAsync(string address, bool isTrx)
 {
