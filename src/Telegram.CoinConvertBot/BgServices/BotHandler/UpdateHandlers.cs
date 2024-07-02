@@ -8442,7 +8442,7 @@ if (trxBalance < 100)
     $"{lastFiveTransactions}\n"+
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
-    $"累计收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +
+    $"年度收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +
     $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
     $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;   
@@ -8470,7 +8470,7 @@ else
     $"{lastFiveTransactions}\n"+
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
-    $"累计收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +    
+    $"年度收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +    
     $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
     $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;   
