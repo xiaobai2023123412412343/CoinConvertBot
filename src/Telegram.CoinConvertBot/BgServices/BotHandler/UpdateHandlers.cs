@@ -7456,17 +7456,16 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
         decimal monthlyOutcome = 0m;
         decimal dailyIncome = 0m;
         decimal dailyOutcome = 0m;
-        string fingerprint = null;
+        string cursor = null;
 
         // 获取当月1号和今天的日期
-        DateTime nowInUtc = DateTime.UtcNow;
-        DateTime nowInBeijing = nowInUtc.AddHours(8);
+        DateTime nowInBeijing = ConvertToBeijingTime(DateTime.UtcNow);
         DateTime firstDayOfMonth = new DateTime(nowInBeijing.Year, nowInBeijing.Month, 1);
         DateTime today = nowInBeijing.Date;
 
         while (true)
         {
-            var currentUrl = apiUrl + (fingerprint != null ? $"&fingerprint={fingerprint}" : "");
+            var currentUrl = apiUrl + (cursor != null ? $"&cursor={cursor}" : "");
             var response = await httpClient.GetAsync(currentUrl);
             var json = await response.Content.ReadAsStringAsync();
             var jsonDocument = JsonDocument.Parse(json);
@@ -7497,7 +7496,7 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
                 {
                     var timestamp = timestampElement.GetInt64();
                     DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).UtcDateTime;
-                    transactionTime = transactionTimeUtc.AddHours(8);
+                    transactionTime = ConvertToBeijingTime(transactionTimeUtc);
                 }
 
                 // 判断是收入还是支出
@@ -7526,17 +7525,13 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
                         dailyOutcome += amount;
                     }
                 }
-
-                if (transactionElement.TryGetProperty("transaction_hash", out var transactionIdElement))
-                {
-                    fingerprint = transactionIdElement.GetString();
-                }
             }
 
-            if (!jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) || !hasNextElement.GetBoolean())
+            if (!jsonDocument.RootElement.TryGetProperty("meta", out JsonElement metaElement) || !metaElement.TryGetProperty("next_cursor", out JsonElement cursorElement))
             {
                 break;
             }
+            cursor = cursorElement.GetString();
         }
 
         // 如果没有发生错误，返回结果和IsError=false
