@@ -4126,7 +4126,8 @@ private static async void CheckPrice(object state)
                 // 创建内联键盘
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
-                    InlineKeyboardButton.WithCallbackData($"取消监控 {monitorInfo.Symbol}", $"unmonitor_{monitorInfo.Symbol}")
+                    InlineKeyboardButton.WithCallbackData($"取消监控 {monitorInfo.Symbol}", $"unmonitor_{monitorInfo.Symbol}"),
+                    InlineKeyboardButton.WithCallbackData($"详情", $"查 {monitorInfo.Symbol}")			    
                 });
 
                 await monitorInfo.BotClient.SendTextMessageAsync(pair.Key, messageBuilder.ToString(), parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
