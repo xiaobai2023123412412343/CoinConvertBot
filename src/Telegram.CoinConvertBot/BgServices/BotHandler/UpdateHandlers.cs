@@ -1808,7 +1808,8 @@ var keyboard = new InlineKeyboardMarkup(new[]
     new[]
     {
 	InlineKeyboardButton.WithCallbackData($"监控 {symbol}", $"监控 {symbol}"), // 添加监控按钮   
-	InlineKeyboardButton.WithCallbackData("成交量查询", $"成交量 {symbol}")
+	InlineKeyboardButton.WithCallbackData("成交量查询", $"成交量 {symbol}"),
+	InlineKeyboardButton.WithCallbackData("关闭", "back")
     }
 });
 
