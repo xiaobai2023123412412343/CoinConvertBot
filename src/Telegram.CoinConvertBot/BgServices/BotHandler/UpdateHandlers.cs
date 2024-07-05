@@ -3923,14 +3923,22 @@ public static class PriceMonitor
     {
         return await GetPrice(symbol); // 调用私有方法获取价格
     }
-//监控任务启动方法	
+//监控任务启动方法    
 public static async Task Monitor(ITelegramBotClient botClient, long userId, string symbol)
 {
     symbol = symbol.ToUpper();
 
     if (symbol.Equals("TRX", StringComparison.OrdinalIgnoreCase))
     {
-        await botClient.SendTextMessageAsync(userId, "TRX能量价格变动请进群查看！");
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            InlineKeyboardButton.WithUrl("点击加入交流群", "https://t.me/+b4NunT6Vwf0wZWI1")
+        });
+        await botClient.SendTextMessageAsync(
+            chatId: userId,
+            text: "TRX价格变动请进交流群查看！",
+            replyMarkup: inlineKeyboard
+        );
         return;
     }
 
