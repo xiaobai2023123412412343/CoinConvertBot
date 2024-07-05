@@ -718,6 +718,95 @@ public static async Task HandleCancelDingYuErSiCommand(ITelegramBotClient botCli
 public static class CoinDataAnalyzer
 {
     private static readonly Random random = new Random();
+
+// 辅助方法：获取上涨的币种
+private static IEnumerable<string> GetTopRisers(Dictionary<string, Dictionary<string, JsonElement>> coinData, string percentChangeKey)
+{
+    return coinData
+        .Select(kv => new
+        {
+            Symbol = kv.Key,
+            PercentChange = kv.Value.TryGetValue(percentChangeKey, out JsonElement percentChangeElement) && percentChangeElement.TryGetDouble(out double percentChange) ? percentChange : double.MinValue
+        })
+        .Where(x => x.PercentChange > 0) // 筛选出上涨的币种
+        .OrderByDescending(x => x.PercentChange) // 按上涨幅度排序
+        .Select(x => x.Symbol); // 选择币种符号
+}
+
+// 获取近1小时、24小时和7天内上涨幅度最高的币种，并检查是否超买
+public static async Task<(List<string>, List<InlineKeyboardMarkup>)> GetTopOverboughtCoinsAsync()
+{
+    await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
+    var allCoinsData = CoinDataCache.GetAllCoinsData();
+
+    // 获取上涨的前20名
+    var topRisers1h = GetTopRisers(allCoinsData, "percent_change_1h").Take(20).ToList();
+    var topRisers24h = GetTopRisers(allCoinsData, "percent_change_24h").Take(20).ToList();
+    var topRisers7d = GetTopRisers(allCoinsData, "percent_change_7d").Take(20).ToList();
+
+    // 合并并去重
+    var uniqueSymbols = new HashSet<string>(topRisers1h.Concat(topRisers24h).Concat(topRisers7d));
+
+    var overboughtCoins = new List<(string Symbol, double RSI6, double RSI14)>();
+
+    foreach (var symbol in uniqueSymbols)
+    {
+        await RandomDelay(); // 随机时间间隔，防止API限制
+        string additionalInfo = await BinancePriceInfo.GetPriceInfo(symbol);
+
+        var rsi6Match = Regex.Match(additionalInfo, @"RSI6:</b>\s*(\d+\.?\d*)");
+        var rsi14Match = Regex.Match(additionalInfo, @"RSI14:</b>\s*(\d+\.?\d*)");
+
+        if (double.TryParse(rsi6Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi6) &&
+            double.TryParse(rsi14Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi14))
+        {
+            if (rsi6 > 85 && rsi14 > 75)
+            {
+                overboughtCoins.Add((symbol, rsi6, rsi14));
+            }
+        }
+    }
+
+    // 构建消息和键盘标记
+    List<string> messages = new List<string>();
+    List<List<InlineKeyboardButton[]>> allButtonRows = new List<List<InlineKeyboardButton[]>>();
+    StringBuilder messageBuilder = new StringBuilder("发现超买：\n\n");
+    List<InlineKeyboardButton[]> buttonRows = new List<InlineKeyboardButton[]>();
+    List<InlineKeyboardButton> currentRow = new List<InlineKeyboardButton>();
+    int coinIndex = 0;
+
+    foreach (var coin in overboughtCoins)
+    {
+        string indexEmoji = GetIndexEmoji(coinIndex);
+        messageBuilder.AppendLine($"{indexEmoji} #{coin.Symbol} | RSI6: {coin.RSI6:F2} | RSI14: {coin.RSI14:F2}");
+
+        currentRow.Add(InlineKeyboardButton.WithCallbackData(indexEmoji, $"查{coin.Symbol}"));
+        if (currentRow.Count == 5)
+        {
+            buttonRows.Add(currentRow.ToArray());
+            currentRow = new List<InlineKeyboardButton>();
+        }
+        coinIndex++;
+    }
+
+    if (currentRow.Count > 0)
+    {
+        buttonRows.Add(currentRow.ToArray());
+    }
+    if (buttonRows.Count > 0)
+    {
+        allButtonRows.Add(buttonRows);
+    }
+
+    if (messageBuilder.Length > 0)
+    {
+        messages.Add(messageBuilder.ToString());
+    }
+
+    var inlineKeyboards = allButtonRows.Select(rows => new InlineKeyboardMarkup(rows)).ToList();
+
+    return (messages, inlineKeyboards);
+}	
 	
     // 获取RSI6和RSI14最低的前三个币种，但先筛选出近1小时、24小时和7天内下跌的币种
     public static async Task<(List<string>, List<InlineKeyboardMarkup>)> GetLowestRSICoinsAsync()
@@ -15497,6 +15586,44 @@ if (messageText.StartsWith("/rsizuidi"))
     catch (Exception ex)
     {
         Console.WriteLine($"查询RSI最低值时出错: {ex.Message}");
+    }
+}
+// 处理消息
+if (messageText.StartsWith("/chacm"))
+{
+    try
+    {
+        var (overboughtMessages, keyboardMarkups) = await CoinDataAnalyzer.GetTopOverboughtCoinsAsync(); // 解构元组
+
+        if (overboughtMessages.Count > 0 && keyboardMarkups.Count > 0) // 确保有获取到数据和按钮
+        {
+            foreach (var userId in notificationUserIds) // 确保 notificationUserIds 是 long 类型的列表
+            {
+                for (int i = 0; i < overboughtMessages.Count; i++)
+                {
+                    var overboughtMessage = overboughtMessages[i];
+                    var keyboardMarkup = keyboardMarkups[i];
+
+                    if (keyboardMarkup.InlineKeyboard.Any())
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId: userId,
+                            text: overboughtMessage,
+                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                            replyMarkup: keyboardMarkup);
+                        await Task.Delay(500); // 500毫秒延迟
+                    }
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("没有足够的数据来发送消息。");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"查询超买币种时出错: {ex.Message}");
     }
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
