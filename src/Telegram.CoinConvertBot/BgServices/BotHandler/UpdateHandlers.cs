@@ -747,46 +747,71 @@ public static async Task<(List<string>, List<InlineKeyboardMarkup>)> GetTopOverb
     // 合并并去重
     var uniqueSymbols = new HashSet<string>(topRisers1h.Concat(topRisers24h).Concat(topRisers7d));
 
-    var overboughtCoins = new List<(string Symbol, double RSI6, double RSI14)>();
-
-    foreach (var symbol in uniqueSymbols)
-    {
-        await RandomDelay(); // 随机时间间隔，防止API限制
-        string additionalInfo = await BinancePriceInfo.GetPriceInfo(symbol);
-
-        var rsi6Match = Regex.Match(additionalInfo, @"RSI6:</b>\s*(\d+\.?\d*)");
-        var rsi14Match = Regex.Match(additionalInfo, @"RSI14:</b>\s*(\d+\.?\d*)");
-
-        if (double.TryParse(rsi6Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi6) &&
-            double.TryParse(rsi14Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi14))
-        {
-            if (rsi6 > 85 && rsi14 > 75)
-            {
-                overboughtCoins.Add((symbol, rsi6, rsi14));
-            }
-        }
-    }
-
-    // 构建消息和键盘标记
     List<string> messages = new List<string>();
     List<List<InlineKeyboardButton[]>> allButtonRows = new List<List<InlineKeyboardButton[]>>();
     StringBuilder messageBuilder = new StringBuilder("发现超买：\n\n");
     List<InlineKeyboardButton[]> buttonRows = new List<InlineKeyboardButton[]>();
     List<InlineKeyboardButton> currentRow = new List<InlineKeyboardButton>();
     int coinIndex = 0;
+    int messageCount = 0;
 
-    foreach (var coin in overboughtCoins)
+    foreach (var symbol in uniqueSymbols)
     {
-        string indexEmoji = GetIndexEmoji(coinIndex);
-        messageBuilder.AppendLine($"{indexEmoji} #{coin.Symbol} | RSI6: {coin.RSI6:F2} | RSI14: {coin.RSI14:F2}");
-
-        currentRow.Add(InlineKeyboardButton.WithCallbackData(indexEmoji, $"查{coin.Symbol}"));
-        if (currentRow.Count == 5)
+        if (coinIndex % 20 == 0 && coinIndex > 0)
         {
-            buttonRows.Add(currentRow.ToArray());
+            messages.Add(messageBuilder.ToString());
+            allButtonRows.Add(buttonRows);
+            messageBuilder = new StringBuilder("发现超买：\n\n");
+            buttonRows = new List<InlineKeyboardButton[]>();
             currentRow = new List<InlineKeyboardButton>();
+            messageCount++;
         }
-        coinIndex++;
+
+        await RandomDelay(); // 随机时间间隔，防止API限制
+        string additionalInfo = await BinancePriceInfo.GetPriceInfo(symbol);
+        var coinData = allCoinsData[symbol];
+
+        var rsi6Match = Regex.Match(additionalInfo, @"RSI6:</b>\s*(\d+\.?\d*)");
+        var rsi14Match = Regex.Match(additionalInfo, @"RSI14:</b>\s*(\d+\.?\d*)");
+        var m10Match = Regex.Match(additionalInfo, @"m10：</b>\s*(\d+\.?\d*)");
+
+        if (double.TryParse(rsi6Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi6) &&
+            double.TryParse(rsi14Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double rsi14) &&
+            double.TryParse(m10Match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double m10) &&
+            rsi6 > 85 && rsi14 > 75) // 确保RSI值符合超买条件
+        {
+            double price = coinData["price_usd"].GetDouble();
+            double volume24hUsd = coinData["volume_24h_usd"].GetDouble();
+            double marketCapUsd = coinData["market_cap_usd"].GetDouble();
+            int rank = coinData["rank"].GetInt32();
+            double percentChange1h = coinData["percent_change_1h"].GetDouble();
+            double percentChange24h = coinData["percent_change_24h"].GetDouble();
+            double percentChange7d = coinData["percent_change_7d"].GetDouble();
+
+            string marketCapDisplay = marketCapUsd >= 100_000_000 ? $"{Math.Round(marketCapUsd / 100_000_000, 2)}亿" : $"{Math.Round(marketCapUsd / 1_000_000, 2)}m";
+            string volume24hDisplay = volume24hUsd >= 100_000_000 ? $"{Math.Round(volume24hUsd / 100_000_000, 2)}亿" : $"{Math.Round(volume24hUsd / 1_000_000, 2)}m";
+
+            string change1hSymbol = percentChange1h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            string change24hSymbol = percentChange24h >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+            string change7dSymbol = percentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
+
+            string indexEmoji = GetIndexEmoji(coinIndex);
+            messageBuilder.AppendLine($"{indexEmoji} #{symbol}  |  {symbol}   |   价格：${price:F2}   |   No.{rank}");
+            messageBuilder.AppendLine($"流通市值：{marketCapDisplay}  |  24小时交易：{volume24hDisplay}");
+            messageBuilder.AppendLine($"RSI6: {rsi6:F2}  |  RSI14: {rsi14:F2}  |  m10： {m10:F2}");
+            messageBuilder.AppendLine($"1h：{change1hSymbol}{percentChange1h:F2}%  |  24h：{change24hSymbol}{percentChange24h:F2}%  |  7d：{change7dSymbol}{percentChange7d:F2}%");
+            if (coinIndex < uniqueSymbols.Count - 1) {
+                messageBuilder.AppendLine("————————————————————");
+            }
+
+            currentRow.Add(InlineKeyboardButton.WithCallbackData(indexEmoji, $"查{symbol}"));
+            if (currentRow.Count == 5)
+            {
+                buttonRows.Add(currentRow.ToArray());
+                currentRow = new List<InlineKeyboardButton>();
+            }
+            coinIndex++;
+        }
     }
 
     if (currentRow.Count > 0)
@@ -806,7 +831,7 @@ public static async Task<(List<string>, List<InlineKeyboardMarkup>)> GetTopOverb
     var inlineKeyboards = allButtonRows.Select(rows => new InlineKeyboardMarkup(rows)).ToList();
 
     return (messages, inlineKeyboards);
-}	
+}
 	
     // 获取RSI6和RSI14最低的前三个币种，但先筛选出近1小时、24小时和7天内下跌的币种
     public static async Task<(List<string>, List<InlineKeyboardMarkup>)> GetLowestRSICoinsAsync()
