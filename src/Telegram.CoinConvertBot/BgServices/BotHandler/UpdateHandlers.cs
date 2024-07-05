@@ -15780,6 +15780,7 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
                 {
                       buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("查询超卖", "/charsi"),
                                           InlineKeyboardButton.WithCallbackData("超卖榜单", "/rsizuidi"),
+                                          InlineKeyboardButton.WithCallbackData("超买榜单", "/chacm"),
                                           InlineKeyboardButton.WithCallbackData("监控连涨", "/mairumaichu") });
                 }
 
@@ -15806,7 +15807,8 @@ if (messageText.StartsWith("/jkbtc") || messageText.Contains("行情监控"))
             {
                   buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("查询超卖", "/charsi"),
                                       InlineKeyboardButton.WithCallbackData("超卖榜单", "/rsizuidi"),
-                                      InlineKeyboardButton.WithCallbackData("监控币种", "/mairumaichu") });
+                                      InlineKeyboardButton.WithCallbackData("超买榜单", "/chacm"),
+                                      InlineKeyboardButton.WithCallbackData("监控连涨", "/mairumaichu") });
             }
 
             var inlineKeyboard = new InlineKeyboardMarkup(buttons);
