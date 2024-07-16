@@ -7851,34 +7851,58 @@ public static DateTime ConvertToBeijingTime(DateTime utcDateTime)
 */  // 年度 本月 今日 收入统计  从oklin获取 太慢 放弃   
 public static async Task<(DateTime LastTransactionTime, bool IsError)> GetLastTransactionTimeAsync(string address)
 {
-    try
+    string[] apiKeys = new string[] {
+        "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+        "f49353bd-db65-4719-a56c-064b2eb231bf",
+        "92854974-68da-4fd8-9e50-3948c1e6fa7e"
+    };
+
+    using var httpClient = new HttpClient();
+
+    foreach (var apiKey in apiKeys)
     {
-        using var httpClient = new HttpClient();
-        var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{address}/transactions");
-        var json = await response.Content.ReadAsStringAsync();
-
-        var jsonDocument = JsonDocument.Parse(json);
-        var lastTimestamp = 0L;
-
-        if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
+        try
         {
-            var lastElement = dataElement[0];
+            httpClient.DefaultRequestHeaders.Clear();
+            httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKey);
 
-            if (lastElement.TryGetProperty("block_timestamp", out JsonElement lastTimeElement))
+            var response = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/address-summary?chainShortName=tron&address={address}");
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
             {
-                lastTimestamp = lastTimeElement.GetInt64();
+                var jsonDocument = JsonDocument.Parse(json);
+                var lastTransactionTime = 0L;
+
+                if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
+                {
+                    var data = dataElement[0];
+                    if (data.TryGetProperty("lastTransactionTime", out JsonElement lastTimeElement))
+                    {
+                        // 修改这里，从使用 GetInt64() 改为 GetString() 然后转换为 long
+                        var lastTimeString = lastTimeElement.GetString();
+                        lastTransactionTime = long.Parse(lastTimeString);
+                    }
+                }
+
+                var utcDateTime = DateTimeOffset.FromUnixTimeMilliseconds(lastTransactionTime).DateTime;
+                return (ConvertToBeijingTime(utcDateTime), false); // 如果没有发生错误，返回结果和IsError=false
             }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error with API Key {apiKey}: {ex.Message}");
+            // 如果是最后一个密钥，返回错误
+            if (apiKey == apiKeys.Last())
+            {
+                return (DateTime.MinValue, true);
+            }
+        }
+    }
 
-        var utcDateTime = DateTimeOffset.FromUnixTimeMilliseconds(lastTimestamp).DateTime;
-        return (ConvertToBeijingTime(utcDateTime), false); // 如果没有发生错误，返回结果和IsError=false
-    }
-    catch (Exception ex)
-    {
-        // 发生错误时，返回默认值和IsError=true
-        Console.WriteLine($"Error in method {nameof(GetLastTransactionTimeAsync)}: {ex.Message}");
-        return (DateTime.MinValue, true);
-    }
+    // 如果所有密钥都失败，返回错误
+    return (DateTime.MinValue, true);
 }
     
 public static async Task<(DateTime CreationTime, bool IsError)> GetAccountCreationTimeAsync(string address)
