@@ -8103,55 +8103,52 @@ public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddr
     try
     {
         using var httpClient = new HttpClient();
-        var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
+        // 修改API地址
+        var response = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={tronAddress}");
 
         if (response.IsSuccessStatusCode)
         {
             var content = await response.Content.ReadAsStringAsync();
             var json = JObject.Parse(content);
 
-            if (json.ContainsKey("data") && json["data"] is JArray dataArray && dataArray.Count > 0)
+            // 直接检查ownerPermission字段
+            if (json["ownerPermission"] != null && json["ownerPermission"]["keys"] is JArray keysArray && keysArray.Count > 0)
             {
-                var accountData = dataArray[0] as JObject;
-                if (accountData != null && accountData.ContainsKey("owner_permission") &&
-                    accountData["owner_permission"]["keys"] is JArray keysArray && keysArray.Count > 0)
+                string ownerAddress = keysArray[0]["address"].ToString();
+                // 检查控制地址是否为查询地址
+                if (ownerAddress == tronAddress)
                 {
-                    // 获取第一个签名地址
-                    string firstSignAddress = keysArray[0]["address"].ToString();
-                    return (firstSignAddress, false);
+                    return ("当前地址未多签", false);
                 }
                 else
                 {
-                    return ("当前地址未激活", false);
+                    return (ownerAddress, false);
                 }
             }
             else
             {
-                return ("当前地址未激活", false);
+                return ("查询超时或地址未激活！", false);
             }
         }
         else
         {
-            return (string.Empty, true);
+            return ("查询超时或地址未激活！", false);
         }
     }
     catch (HttpRequestException ex)
     {
-        // 当发生 HttpRequestException 时，返回一个指示错误的元组值
         Console.WriteLine($"Error in method {nameof(GetOwnerPermissionAsync)}: {ex.Message}");
-        return (string.Empty, true);
+        return ("查询超时或地址未激活！", true);
     }
     catch (JsonException ex)
     {
-        // 当发生 JsonException 时，返回一个指示错误的元组值
         Console.WriteLine($"Error in method {nameof(GetOwnerPermissionAsync)}: {ex.Message}");
-        return (string.Empty, true);
+        return ("查询超时或地址未激活！", true);
     }
     catch (Exception ex)
     {
-        // 当发生其他异常时，返回一个指示错误的元组值
         Console.WriteLine($"Error in method {nameof(GetOwnerPermissionAsync)}: {ex.Message}");
-        return (string.Empty, true);
+        return ("查询超时或地址未激活！", true);
     }
 }
 // 计算尾数中连续相同字符（忽略大小写）的数量
@@ -8605,11 +8602,11 @@ if (maxConsecutiveIdenticalCharsCount >= 4)
     
 // 添加地址权限的信息
 string addressPermissionText;
-if (string.IsNullOrEmpty(ownerPermissionAddress))
+if (string.IsNullOrEmpty(ownerPermissionAddress) || ownerPermissionAddress == "查询超时或地址未激活！")
 {
-    addressPermissionText = $"<b>当前地址未激活</b>";
+    addressPermissionText = $"<b>查询超时或地址未激活！</b>";
 }
-else if (ownerPermissionAddress.Equals(tronAddress, StringComparison.OrdinalIgnoreCase))
+else if (ownerPermissionAddress == "当前地址未多签")
 {
     addressPermissionText = "当前地址未多签";
 }
