@@ -15669,6 +15669,7 @@ if (messageText.StartsWith("/chacm"))
         Console.WriteLine($"查询超买币种时出错: {ex.Message}");
     }
 }
+/* 
 // 检查是否接收到了 /yi 或 U兑TRX 消息，如果是，则处理
 if (messageText.StartsWith("/yi") || messageText.Contains("U兑TRX"))
 {
@@ -15686,6 +15687,7 @@ if (messageText.StartsWith("/yi") || messageText.Contains("U兑TRX"))
         );
     }
 }
+*/ 
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
