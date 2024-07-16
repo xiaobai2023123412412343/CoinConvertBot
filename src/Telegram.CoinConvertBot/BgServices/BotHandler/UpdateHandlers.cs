@@ -8022,80 +8022,79 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, doub
 }
 public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tronAddress)
 {
-    int limit = 20; // 可以增加 limit 以获取更多的交易记录
-    string tokenId = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT合约地址
-    string url = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_confirmed=true&limit={limit}&token_id={tokenId}";
+    string chainShortName = "tron";
+    string protocolType = "token_20";
+    string tokenContractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+    int limit = 20; // 请求20条记录
+    string[] apiKeys = new string[] {
+        "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+        "f49353bd-db65-4719-a56c-064b2eb231bf",
+        "92854974-68da-4fd8-9e50-3948c1e6fa7e"
+    };
+
+    string url = $"https://www.oklink.com/api/v5/explorer/address/token-transaction-list?chainShortName={chainShortName}&address={tronAddress}&protocolType={protocolType}&tokenContractAddress={tokenContractAddress}&limit={limit}";
 
     using (var httpClient = new HttpClient())
     {
-        try
+        foreach (var apiKey in apiKeys)
         {
-            HttpResponseMessage response = await httpClient.GetAsync(url);
-            if (!response.IsSuccessStatusCode)
+            httpClient.DefaultRequestHeaders.Clear();
+            httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKey);
+
+            try
             {
-                return (string.Empty, false); // 如果没有返回消息或服务器在维护，返回空字符串且IsError=false
-            }
+                HttpResponseMessage response = await httpClient.GetAsync(url);
+                string jsonString = await response.Content.ReadAsStringAsync();
 
-            string jsonString = await response.Content.ReadAsStringAsync();
-            JObject jsonResponse = JObject.Parse(jsonString);
-
-            JArray transactions = (JArray)jsonResponse["data"];
-
-            if (transactions == null || !transactions.HasValues)
-            {
-                return (string.Empty, false); // 如果没有交易数据，返回空字符串且IsError=false
-            }
-
-            // 筛选与Tether相关的交易，并过滤金额小于1USDT的交易
-            transactions = new JArray(transactions.Where(t => (string)t["token_info"]["name"] == "Tether USD" && (string)t["token_info"]["address"] == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" && decimal.Parse((string)t["value"]) >= 1_000_000));
-
-            // 取筛选后的前5笔交易
-            transactions = new JArray(transactions.Take(5));
-
-            StringBuilder transactionTextBuilder = new StringBuilder();
-
-            foreach (var transaction in transactions)
-            {
-                // 获取交易哈希值
-                string txHash = (string)transaction["transaction_id"];
-
-                // 获取交易时间，并转换为北京时间
-                long blockTimestamp = (long)transaction["block_timestamp"];
-                DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(blockTimestamp).UtcDateTime;
-                DateTime transactionTimeBeijing = TimeZoneInfo.ConvertTime(transactionTimeUtc, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
-
-                // 判断交易是收入还是支出
-                string type;
-                string fromAddress = (string)transaction["from"];
-                string toAddress = (string)transaction["to"];
-
-                if (tronAddress.Equals(fromAddress, StringComparison.OrdinalIgnoreCase))
+                if (!response.IsSuccessStatusCode)
                 {
-                    type = "出 ";
-                }
-                else
-                {
-                    type = "入 ";
+                    continue; // 尝试下一个 API 密钥
                 }
 
-                // 获取交易金额，并转换为USDT
-                string value = (string)transaction["value"];
-                decimal usdtAmount = decimal.Parse(value) / 1_000_000;
-                // 输出API返回的数据，在解析JSON响应之后添加
-                //Console.WriteLine(jsonString);
+                JObject jsonResponse = JObject.Parse(jsonString);
 
-                // 构建交易文本并添加链接
-                transactionTextBuilder.AppendLine($"{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}<a href=\"https://tronscan.org/#/transaction/{txHash}\">{usdtAmount:N2} U</a>");
+                if (jsonResponse["code"].ToString() != "0")
+                {
+                    continue; // 尝试下一个 API 密钥
+                }
+
+                JArray data = (JArray)jsonResponse["data"];
+                if (data.Count == 0)
+                {
+                    return (string.Empty, false);
+                }
+
+                JArray transactions = (JArray)data[0]["transactionList"];
+                transactions = new JArray(transactions.Where(t => decimal.Parse((string)t["amount"]) > 1).Take(5)); // 筛选大于1USDT的交易并取前5条
+
+                StringBuilder transactionTextBuilder = new StringBuilder();
+
+                foreach (var transaction in transactions)
+                {
+                    string txHash = (string)transaction["txId"];
+                    long transactionTime = (long)transaction["transactionTime"];
+                    DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(transactionTime).UtcDateTime;
+                    DateTime transactionTimeBeijing = TimeZoneInfo.ConvertTime(transactionTimeUtc, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
+
+                    string fromAddress = (string)transaction["from"];
+                    string toAddress = (string)transaction["to"];
+                    string type = tronAddress.Equals(toAddress, StringComparison.OrdinalIgnoreCase) ? "入 " : "出 ";
+
+                    decimal usdtAmount = decimal.Parse((string)transaction["amount"]); // 直接使用返回的USDT金额
+
+                    transactionTextBuilder.AppendLine($"{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}<a href=\"https://tronscan.org/#/transaction/{txHash}\">{usdtAmount:N2} U</a>");
+                }
+
+                return (transactionTextBuilder.ToString(), false);
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error with API Key {apiKey}: {ex.Message}");
+                continue; // 尝试下一个 API 密钥
+            }
+        }
 
-            return (transactionTextBuilder.ToString(), false); // 如果没有发生错误，返回结果和IsError=false
-        }
-        catch (Exception ex)
-        {
-            // 发生错误时，返回空字符串和IsError=true
-            Console.WriteLine($"Error in method {nameof(GetLastFiveTransactionsAsync)}: {ex.Message}");
-            return (string.Empty, true);
-        }
+        return (string.Empty, true); // 所有密钥都失败
     }
 }
 public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddress)
