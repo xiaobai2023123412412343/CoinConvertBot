@@ -17374,10 +17374,13 @@ async Task<decimal> GetMonthlyUSDTIncomeAsync(string ReciveAddress, string contr
 
     return usdtIncome;
 }
+//获取本年度承兑数据
 async Task<decimal> GetYearlyUSDTIncomeAsync(string ReciveAddress, string contractAddress)
 {
     const int PageSize = 200; // 每页查询的交易记录数量，最大值为 200
     int currentPage = 0;
+    const int MaxRetries = 1; // 最多重试1次
+    int currentRetry = 0;
 
     // 获取今年1月1号零点的时间戳
     var firstDayOfYear = new DateTime(DateTime.Today.Year, 1, 1);
@@ -17388,40 +17391,67 @@ async Task<decimal> GetYearlyUSDTIncomeAsync(string ReciveAddress, string contra
 
     while (hasMoreData)
     {
-        // 调用TronGrid API以获取交易记录
-        var httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{ReciveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={firstDayOfYearMidnight * 1000}&contract_address={contractAddress}&limit={PageSize}&start={(currentPage * PageSize) + 1}";
-        var response = await httpClient.GetAsync(apiEndpoint);
-
-        if (!response.IsSuccessStatusCode)
+        using (var httpClient = new HttpClient())
         {
-            // 请求失败，记录错误原因并返回当前累计的收入
-            Console.WriteLine($"API Request Failed: {response.StatusCode} - {response.ReasonPhrase}");	
-	
-            // 请求失败，返回0
-            return 0;
-        }
-
-        var jsonResponse = await response.Content.ReadAsStringAsync();
-        JObject transactions = JObject.Parse(jsonResponse);
-
-        // 遍历交易记录并累计 USDT 收入
-        foreach (var tx in transactions["data"])
-        {
-            // 只统计 type 为 "Transfer" 的交易
-            if ((string)tx["type"] != "Transfer")
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{ReciveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={firstDayOfYearMidnight * 1000}&contract_address={contractAddress}&limit={PageSize}&start={(currentPage * PageSize) + 1}";
+            try
             {
-                continue;
-            }            
-            
-            var rawAmount = (decimal)tx["value"];
-            usdtIncome += rawAmount / 1_000_000L;
-        }
+                var response = await httpClient.GetAsync(apiEndpoint);
 
-        // 判断是否还有更多数据
-        hasMoreData = transactions["data"].Count() == PageSize;
-        currentPage++;
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"API Request Failed: {response.StatusCode} - {response.ReasonPhrase}");
+                    if (currentRetry < MaxRetries)
+                    {
+                        // 随机暂停0.5到1秒后重试
+                        await Task.Delay(new Random().Next(500, 1001));
+                        currentRetry++;
+                        continue; // 重试当前请求
+                    }
+                    else
+                    {
+                        // 请求失败，返回0
+                        return 0;
+                    }
+                }
+
+                currentRetry = 0; // 重置重试次数
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                JObject transactions = JObject.Parse(jsonResponse);
+
+                // 遍历交易记录并累计 USDT 收入
+                foreach (var tx in transactions["data"])
+                {
+                    if ((string)tx["type"] != "Transfer")
+                    {
+                        continue;
+                    }
+
+                    var rawAmount = (decimal)tx["value"];
+                    usdtIncome += rawAmount / 1_000_000L;
+                }
+
+                hasMoreData = transactions["data"].Count() == PageSize;
+                currentPage++;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while fetching transactions: {ex.Message}");
+                if (currentRetry < MaxRetries)
+                {
+                    // 随机暂停0.5到1秒后重试
+                    await Task.Delay(new Random().Next(500, 1001));
+                    currentRetry++;
+                    continue; // 重试当前请求
+                }
+                else
+                {
+                    // 请求失败，返回0
+                    return 0;
+                }
+            }
+        }
     }
 
     return usdtIncome;
