@@ -796,7 +796,7 @@ public static async Task<(List<string>, List<InlineKeyboardMarkup>)> GetTopOverb
             string change7dSymbol = percentChange7d >= 0 ? "\U0001F4C8" : "\U0001F4C9";
 
             string indexEmoji = GetIndexEmoji(coinIndex);
-            messageBuilder.AppendLine($"{indexEmoji} #{symbol}  |  {symbol}   |   价格：${price:F2}   |   No.{rank}");
+            messageBuilder.AppendLine($"{indexEmoji} #{symbol}  |  <code>{symbol}</code>   |   价格：${price:F2}   |   No.{rank}");
             messageBuilder.AppendLine($"流通市值：{marketCapDisplay}  |  24小时交易：{volume24hDisplay}");
             messageBuilder.AppendLine($"RSI6: {rsi6:F2}  |  RSI14: {rsi14:F2}  |  m10： {m10:F2}");
             messageBuilder.AppendLine($"1h：{change1hSymbol}{percentChange1h:F2}%  |  24h：{change24hSymbol}{percentChange24h:F2}%  |  7d：{change7dSymbol}{percentChange7d:F2}%");
