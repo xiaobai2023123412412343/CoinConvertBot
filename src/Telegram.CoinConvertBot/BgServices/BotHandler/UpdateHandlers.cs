@@ -7942,7 +7942,8 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
     try
     {
         using var httpClient = new HttpClient();
-        var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{address}");
+        // 更新API URL
+        var response = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/account/tokens?address={address}&start=0&limit=20&hidden=0&show=0&sortType=0&sortBy=0&token=");
         var json = await response.Content.ReadAsStringAsync();
 
         var jsonDocument = JsonDocument.Parse(json);
@@ -7952,24 +7953,20 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
 
         if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
         {
-            var firstElement = dataElement[0];
-
-            if (firstElement.TryGetProperty("balance", out JsonElement trxBalanceElement))
+            foreach (var token in dataElement.EnumerateArray())
             {
-                trxBalance = trxBalanceElement.GetDecimal() / 1_000_000;
-            }
-
-            if (firstElement.TryGetProperty("trc20", out JsonElement trc20Element))
-            {
-                foreach (var token in trc20Element.EnumerateArray())
+                if (token.TryGetProperty("tokenName", out JsonElement nameElement) && nameElement.GetString() == "trx")
                 {
-                    foreach (var property in token.EnumerateObject())
+                    if (token.TryGetProperty("balance", out JsonElement balanceElement))
                     {
-                        if (property.Name == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t") //这是USDT合约地址 可以换成任意合约地址
-                        {
-                            usdtBalance = decimal.Parse(property.Value.GetString()) / 1_000_000;
-                            break;
-                        }
+                        trxBalance = decimal.Parse(balanceElement.GetString()) / 1_000_000;
+                    }
+                }
+                else if (token.TryGetProperty("tokenId", out JsonElement idElement) && idElement.GetString() == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
+                {
+                    if (token.TryGetProperty("balance", out JsonElement balanceElement))
+                    {
+                        usdtBalance = decimal.Parse(balanceElement.GetString()) / 1_000_000;
                     }
                 }
             }
