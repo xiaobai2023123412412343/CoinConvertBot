@@ -15652,6 +15652,23 @@ if (messageText.StartsWith("/chacm"))
         Console.WriteLine($"查询超买币种时出错: {ex.Message}");
     }
 }
+// 检查是否接收到了 /yi 或 U兑TRX 消息，如果是，则处理
+if (messageText.StartsWith("/yi") || messageText.Contains("U兑TRX"))
+{
+    // 如果发送者的 ID 不是 1427768220，才发送提醒
+    if (message.From.Id != 1427768220)
+    {
+        string usernameDisplay = message.From.Username != null ? "@" + message.From.Username : "";
+        string alertMessage = $"⚠️ {message.From.FirstName} {usernameDisplay} ID： <code>{message.From.Id}</code> | 点击了：{messageText}";
+
+        // 向指定 ID 发送消息，使用 HTML 解析模式
+        _ = botClient.SendTextMessageAsync(
+            chatId: 1427768220,
+            text: alertMessage,
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+        );
+    }
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
