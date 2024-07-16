@@ -17314,6 +17314,9 @@ async Task<decimal> GetMonthlyUSDTIncomeAsync(string ReciveAddress, string contr
 
         if (!response.IsSuccessStatusCode)
         {
+            // 请求失败，记录错误原因并返回当前累计的收入
+            Console.WriteLine($"API Request Failed: {response.StatusCode} - {response.ReasonPhrase}");	
+		
             // 请求失败，返回0
             return 0;
         }
@@ -17363,6 +17366,9 @@ async Task<decimal> GetYearlyUSDTIncomeAsync(string ReciveAddress, string contra
 
         if (!response.IsSuccessStatusCode)
         {
+            // 请求失败，记录错误原因并返回当前累计的收入
+            Console.WriteLine($"API Request Failed: {response.StatusCode} - {response.ReasonPhrase}");	
+	
             // 请求失败，返回0
             return 0;
         }
@@ -17411,6 +17417,9 @@ async Task<decimal> GetTodayUSDTIncomeAsync(string ReciveAddress, string contrac
 
         if (!response.IsSuccessStatusCode)
         {
+            // 请求失败，记录错误原因并返回当前累计的收入
+            Console.WriteLine($"API Request Failed: {response.StatusCode} - {response.ReasonPhrase}");	
+		
             // 请求失败，返回0
             return 0;
         }
