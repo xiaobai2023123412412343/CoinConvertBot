@@ -1545,8 +1545,8 @@ public static class CryptoMarketAnalyzer
         // 构建汇总消息
         string summaryMessage = $"<b>BTC</b> 1h{btcChange1hSymbol}：{btcPercentChange1h:F2}% | 24h{btcChange24hSymbol}：{btcPercentChange24h:F2}% | 7d{btcChange7dSymbol}：{btcPercentChange7d:F2}%\n" +
                                 $"<b>ETH</b> 1h{ethChange1hSymbol}：{ethPercentChange1h:F2}% | 24h{ethChange24hSymbol}：{ethPercentChange24h:F2}% | 7d{ethChange7dSymbol}：{ethPercentChange7d:F2}%\n\n" +
-                                $"1小时涨幅榜：\n{string.Join(" | ", top3CoinsBy1hChange.Select((coin, index) => $"{index + 1}️⃣ {coin.Symbol} ：{coin.Change:F2}%"))}\n\n" +
-                                $"24小时涨幅榜：\n{string.Join(" | ", top3CoinsBy24hChange.Select((coin, index) => $"{index + 4}️⃣ {coin.Symbol} ：{coin.Change:F2}%"))}";
+                                $"1小时涨幅榜：\n{string.Join(" | ", top3CoinsBy1hChange.Select((coin, index) => $"{index + 1}️⃣ <code>{coin.Symbol}</code> ：{coin.Change:F2}%"))}\n\n" +
+                                $"24小时涨幅榜：\n{string.Join(" | ", top3CoinsBy24hChange.Select((coin, index) => $"{index + 4}️⃣ <code>{coin.Symbol}</code> ：{coin.Change:F2}%"))}";
 
         // 创建内联键盘按钮，横排排列
         var inlineKeyboardButtons = new List<InlineKeyboardButton>();
