@@ -18425,6 +18425,33 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
             disableWebPagePreview: true,
             replyMarkup: keyboard
         );
+
+        //分享按钮
+/*
+        keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+        keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后不会消失。
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: usage,
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true,
+            replyMarkup: keyboard
+        );
+
+        // 发送分享按钮
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            InlineKeyboardButton.WithSwitchInlineQuery("♻️分享机器人给好友，极速兑换TRX！", "")
+        });
+
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "分享机器人",
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
+*/ 	    
     }
     else
     {
