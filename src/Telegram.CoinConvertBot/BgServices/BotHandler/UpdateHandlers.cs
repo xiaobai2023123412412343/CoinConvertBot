@@ -12445,13 +12445,21 @@ if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCom
         }
         catch (Telegram.Bot.Exceptions.ApiRequestException ex)
         {
-            // 这里处理Telegram API请求异常，例如机器人被禁言或没有权限等
-            Console.WriteLine($"消息转发失败，原因：{ex.Message}");
-            // 可以选择将错误消息发送回管理员
-            await botClient.SendTextMessageAsync(
-                chatId: ADMIN_ID,
-                text: $"消息转发失败，原因：{ex.Message}"
-            );
+            // 检查是否因为群聊不存在而导致的错误
+            if (ex.Message.Contains("chat not found"))
+            {
+                Console.WriteLine("目标群聊不存在，消息未发送。");
+            }
+            else
+            {
+                // 处理其他类型的 Telegram API 请求异常，例如机器人被禁言或没有权限等
+                Console.WriteLine($"消息转发失败，原因：{ex.Message}");
+                // 可以选择将错误消息发送回管理员
+                await botClient.SendTextMessageAsync(
+                    chatId: ADMIN_ID,
+                    text: $"消息转发失败，原因：{ex.Message}"
+                );
+            }
         }
         catch (Exception ex)
         {
