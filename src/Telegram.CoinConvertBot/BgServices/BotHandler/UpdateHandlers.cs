@@ -7219,54 +7219,37 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
     try
     {
         string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
-        string outcomeUrl = $"https://apilist.tronscanapi.com/api/transfer/trx?address={outcomeAddress}&start=0&limit=20&direction=0&reverse=true&fee=true&db_version=1&start_timestamp=&end_timestamp=";
-        string usdtUrl = $"https://api.trongrid.io/v1/accounts/TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv/transactions/trc20?limit=30&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        string usdtUrl = $"https://apilist.tronscan.org/api/token_trc20/transfers?relatedAddress={outcomeAddress}&contract=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&direction=to&limit=100&start=0&sort=-timestamp";
 
         using (var httpClient = new HttpClient())
         {
-            //Console.WriteLine("正在获取交易记录...");
-            // 添加User-Agent来模拟浏览器请求
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3");
-
-        var outcomeTransactions = new List<(DateTime timestamp, string token, decimal amount)>();
-        int start = 0;
-        int maxAttempts = 5; // 设置最大尝试次数以避免无限循环
-        while (outcomeTransactions.Count < 8 && maxAttempts > 0)
-        {
-            outcomeUrl = $"https://apilist.tronscanapi.com/api/transfer/trx?address={outcomeAddress}&start={start}&limit=20&direction=0&reverse=true&fee=true&db_version=1&start_timestamp=&end_timestamp=";
-            //Console.WriteLine($"正在访问URL: {outcomeUrl}");
-            var outcomeResponse = await httpClient.GetStringAsync(outcomeUrl);
-            var transactions = ParseTransactions(outcomeResponse, "TRX")
-                .OrderByDescending(t => t.timestamp)
+            var usdtResponse = await httpClient.GetStringAsync(usdtUrl);
+            var usdtTransactions = ParseTransactions(usdtResponse, "USDT")
+                .Where(t => t.amount >= 10)
+                .Take(10)
                 .ToList();
 
-            // 只保留金额大于10的交易记录
-            transactions = transactions.Where(t => t.amount > 10).ToList();
-
-            outcomeTransactions.AddRange(transactions);
-            if (transactions.Count == 0 || outcomeTransactions.Count >= 8) // 如果没有新的符合条件的记录或已经有足够的记录，则停止循环
+            var trxTransactions = new List<(DateTime timestamp, string token, decimal amount)>();
+            int start = 0;
+            int limit = 200;
+            while (trxTransactions.Count < 10)
             {
-                break;
+                string trxUrl = $"https://apilist.tronscan.org/api/transaction?address={outcomeAddress}&direction=from&limit={limit}&start={start}&sort=-timestamp";
+                var trxResponse = await httpClient.GetStringAsync(trxUrl);
+                var newTransactions = ParseTransactions(trxResponse, "TRX")
+                    .Where(t => t.amount > 10)
+                    .ToList();
+                
+                trxTransactions.AddRange(newTransactions);
+                if (newTransactions.Count == 0) break; // 如果没有新的交易，退出循环
+                start += limit;
+                if (start > 1000) break; // 设置一个上限，避免无限循环
             }
-            start += 20;
-            maxAttempts--;
-        }
-// 获取USDT交易记录
-//Console.WriteLine($"正在访问URL: {usdtUrl}");
-var usdtResponse = await httpClient.GetStringAsync(usdtUrl);
-var usdtTransactionsTemp = ParseTransactions(usdtResponse, "USDT")
-    .OrderByDescending(t => t.timestamp)
-    .ToList();
 
-// 只保留金额大于1的交易记录，并限制到前8条
-var usdtTransactions = usdtTransactionsTemp
-    .Where(t => t.amount > 1)
-    .Take(8)
-    .ToList();
-		
-            //Console.WriteLine("已获取所有交易记录，正在格式化...");
+            trxTransactions = trxTransactions.Take(10).ToList();
 
-            var transactionRecords = FormatTransactionRecords(outcomeTransactions.Concat(usdtTransactions).ToList());
+            var transactionRecords = FormatTransactionRecords(usdtTransactions, trxTransactions);
+            //Console.WriteLine($"格式化后的交易记录：{transactionRecords}");  // 调试输出
 
             var inlineKeyboard = new InlineKeyboardMarkup(new[]
             {
@@ -7278,74 +7261,63 @@ var usdtTransactions = usdtTransactionsTemp
 
             try
             {
-                //Console.WriteLine("正在发送消息...");
                 await botClient.EditMessageTextAsync(message.Chat.Id, responseMessageId, transactionRecords, replyMarkup: inlineKeyboard);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"替换消息失败：{ex.Message}");
+                Console.WriteLine($"交易记录内容：{transactionRecords}");  // 调试输出
             }            
 
             return transactionRecords;
         }
     }
-catch (HttpRequestException ex) when (ex.Message.Contains("403"))
-{
-    Console.WriteLine("服务器拒绝访问：403 Forbidden");
-    await botClient.SendTextMessageAsync(message.Chat.Id, "查询超时，请进交易群查看！", replyMarkup: new InlineKeyboardMarkup(new[]
+    catch (HttpRequestException ex) when (ex.Message.Contains("403"))
     {
-        InlineKeyboardButton.WithUrl("点击加入交易群", "https://t.me/+b4NunT6Vwf0wZWI1")
-    }));
-    return "服务器超时，请进交易群查看！";
-}    
-catch (Exception ex)
-{
-    Console.WriteLine($"获取交易记录时发生错误：{ex.Message}");
-    return $"获取交易记录时发生错误：{ex.Message}";
+        Console.WriteLine("服务器拒绝访问：403 Forbidden");
+        await botClient.SendTextMessageAsync(message.Chat.Id, "查询超时，请进交易群查看！", replyMarkup: new InlineKeyboardMarkup(new[]
+        {
+            InlineKeyboardButton.WithUrl("点击加入交易群", "https://t.me/+b4NunT6Vwf0wZWI1")
+        }));
+        return "服务器超时，请进交易群查看！";
+    }    
+    catch (Exception ex)
+    {
+        Console.WriteLine($"获取交易记录时发生错误：{ex.Message}");
+        return $"获取交易记录时发生错误：{ex.Message}";
+    }
 }
-}
+
 private static List<(DateTime timestamp, string token, decimal amount)> ParseTransactions(string jsonResponse, string token)
 {
     var transactions = new List<(DateTime timestamp, string token, decimal amount)>();
 
     var json = JObject.Parse(jsonResponse);
-    var dataArray = json["data"] as JArray;
+    var dataArray = token == "USDT" ? json["token_transfers"] as JArray : json["data"] as JArray;
 
     if (dataArray != null)
     {
         foreach (var data in dataArray)
         {
-if (token == "TRX")
-{
-    // 添加条件，只添加金额大于10的交易记录
-    if (data["contract_type"] != null && data["contract_type"].ToString() == "TransferContract" &&
-        data["from"] != null && data["from"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
-        data["block_timestamp"] != null && data["amount"] != null)
-    {
-        var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["block_timestamp"]).LocalDateTime;
-        var amount = decimal.Parse(data["amount"].ToString()) / 1000000;
-
-        if (amount > 10)
-        {
-            transactions.Add((timestamp, token, amount));
-            //Console.WriteLine($"添加了一条大于10TRX的支出记录：{timestamp:yyyy-MM-dd HH:mm:ss} 支出{token} {amount}");
-        }
-    }
-}
-            else if (token == "USDT")
+            if (token == "USDT")
             {
-                // 添加条件，只添加金额大于1的交易记录
-                if (data["to"] != null && data["to"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
-                    data["block_timestamp"] != null && data["value"] != null)
+                if (data["to_address"] != null && data["to_address"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
+                    data["block_ts"] != null && data["quant"] != null)
                 {
-                    var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["block_timestamp"]).LocalDateTime;
-                    var amount = decimal.Parse(data["value"].ToString()) / 1000000;
-
-                    if (amount > 1)
-                    {
-                        transactions.Add((timestamp, token, amount));
-                        //Console.WriteLine($"添加了一条大于1USDT的收入记录：{timestamp:yyyy-MM-dd HH:mm:ss} 收入{token} {amount}");
-                    }
+                    var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["block_ts"]).LocalDateTime;
+                    var amount = decimal.Parse(data["quant"].ToString()) / 1000000;
+                    transactions.Add((timestamp, token, amount));
+                }
+            }
+            else if (token == "TRX")
+            {
+                if (data["contractType"] != null && data["contractType"].ToString() == "1" &&
+                    data["ownerAddress"] != null && data["ownerAddress"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
+                    data["timestamp"] != null && data["amount"] != null)
+                {
+                    var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["timestamp"]).LocalDateTime;
+                    var amount = decimal.Parse(data["amount"].ToString()) / 1000000;
+                    transactions.Add((timestamp, token, amount));
                 }
             }
         }
@@ -7354,27 +7326,26 @@ if (token == "TRX")
     return transactions;
 }
 
-private static string FormatTransactionRecords(List<(DateTime timestamp, string token, decimal amount)> transactions)
+private static string FormatTransactionRecords(List<(DateTime timestamp, string token, decimal amount)> usdtTransactions, List<(DateTime timestamp, string token, decimal amount)> trxTransactions)
 {
     var sb = new StringBuilder();
-    var incomeTransactions = transactions.Where(t => t.token == "USDT").OrderByDescending(t => t.timestamp).ToList();
-    var outcomeTransactions = transactions.Where(t => t.token == "TRX").OrderByDescending(t => t.timestamp).ToList();
 
-    int totalRecords = Math.Min(incomeTransactions.Count, outcomeTransactions.Count);
-    for (int i = 0; i < totalRecords; i++)
+    int maxCount = Math.Max(usdtTransactions.Count, trxTransactions.Count);
+
+    for (int i = 0; i < maxCount; i++)
     {
-        if (i < incomeTransactions.Count)
+        if (i < usdtTransactions.Count)
         {
-            sb.AppendLine($"{incomeTransactions[i].timestamp:yyyy-MM-dd HH:mm:ss}  收入 {incomeTransactions[i].amount} {incomeTransactions[i].token}");
+            sb.AppendLine($"{usdtTransactions[i].timestamp:yyyy-MM-dd HH:mm:ss}  收入 {usdtTransactions[i].amount:F2} {usdtTransactions[i].token}");
         }
 
-        if (i < outcomeTransactions.Count)
+        if (i < trxTransactions.Count)
         {
-            sb.AppendLine($"{outcomeTransactions[i].timestamp:yyyy-MM-dd HH:mm:ss}  支出 {outcomeTransactions[i].amount} {outcomeTransactions[i].token}");
+            sb.AppendLine($"{trxTransactions[i].timestamp:yyyy-MM-dd HH:mm:ss}  支出 {trxTransactions[i].amount:F2} {trxTransactions[i].token}");
         }
 
         // 只有在不是最后一条记录时才添加横线
-        if (i < totalRecords - 1)
+        if (i < maxCount - 1)
         {
             sb.AppendLine("—————————————————————");
         }
