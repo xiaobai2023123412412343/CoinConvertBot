@@ -4350,7 +4350,7 @@ private static CancellationTokenSource virtualAdCancellationTokenSource = new Ca
 static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
     var random = new Random();
-    var amounts = new decimal[] { 50, 100, 150, 200, 300, 400, 500, 1000 };
+    var amounts = new decimal[] { 50, 80, 100, 150, 200, 250, 300, 400, 500, 800, 1000 };
     var addressChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     bool hasSentAdInQuietHours = false;
     while (!cancellationToken.IsCancellationRequested)
@@ -4411,7 +4411,8 @@ static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, Cancell
     }            
             try
             {
-                await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
+                //await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard); //关闭按钮
+                await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html);
             }
             catch
             {
@@ -4422,7 +4423,7 @@ static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, Cancell
             }
         }
 
-        // 在1-2分钟内随机等待
+        // 在3600-4000秒内随机等待
         await Task.Delay(TimeSpan.FromSeconds(random.Next(3600, 4000)), cancellationToken);
     }
 }
