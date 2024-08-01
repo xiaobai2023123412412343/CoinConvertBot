@@ -79,7 +79,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //代绑 id 地址  可以帮用户绑定地址 代解 id 用户名 （可选）地址 帮用户解绑地址  原理是模仿用户发送 绑定指令/解绑指令
 //添加群聊：群名字： 群ID： 群链接：
 //Console.WriteLine($"API URL: {apiUrl}, Response status code: {response.StatusCode}");//增加调试输出日志输出服务器日志 都可以用这个方法
-//                "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+//                "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
 //                "f49353bd-db65-4719-a56c-064b2eb231bf",
 //                "92854974-68da-4fd8-9e50-3948c1e6fa7e"     ok链api     https://www.oklink.com/cn/account/my-api  注册
 // 指数秘钥  private static readonly List<string> licences = new List<string> { "504ddb535666d9312d", "64345c8caebdd5133d", "94181401476c458453" };  string url = $"http://api.mairui.club/zs/sssj/{indexCode}/{licence}";
@@ -7573,7 +7573,7 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
     try
     {
         string[] apiKeys = new string[] {
-            "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+            "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
             "f49353bd-db65-4719-a56c-064b2eb231bf",
             "92854974-68da-4fd8-9e50-3948c1e6fa7e"
         };
@@ -7852,7 +7852,7 @@ public static DateTime ConvertToBeijingTime(DateTime utcDateTime)
 public static async Task<(DateTime LastTransactionTime, bool IsError)> GetLastTransactionTimeAsync(string address)
 {
     string[] apiKeys = new string[] {
-        "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+        "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
         "f49353bd-db65-4719-a56c-064b2eb231bf",
         "92854974-68da-4fd8-9e50-3948c1e6fa7e"
     };
@@ -8027,7 +8027,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
     string tokenContractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
     int limit = 20; // 请求20条记录
     string[] apiKeys = new string[] {
-        "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+        "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
         "f49353bd-db65-4719-a56c-064b2eb231bf",
         "92854974-68da-4fd8-9e50-3948c1e6fa7e"
     };
@@ -8240,7 +8240,7 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
             // 添加所有的秘钥到列表
             List<string> keys = new List<string>
             {
-                "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+                "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
                 "f49353bd-db65-4719-a56c-064b2eb231bf",
                 "92854974-68da-4fd8-9e50-3948c1e6fa7e"
             };
@@ -8395,7 +8395,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
             // 添加所有的秘钥到列表
             List<string> keys = new List<string>
             {
-                "5090e006-163f-4d61-8fa1-1f41fa70d7f8",
+                "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
                 "f49353bd-db65-4719-a56c-064b2eb231bf",
                 "92854974-68da-4fd8-9e50-3948c1e6fa7e"
             };
