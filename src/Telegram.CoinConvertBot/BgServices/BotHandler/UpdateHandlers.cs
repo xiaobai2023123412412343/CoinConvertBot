@@ -7866,7 +7866,8 @@ public static async Task<(DateTime LastTransactionTime, bool IsError)> GetLastTr
             httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKey);
 
-            var response = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/address-summary?chainShortName=tron&address={address}");
+            // 修改API地址以获取交易列表
+            var response = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/transaction-list?chainShortName=tron&address={address}&limit=1");
 
             var json = await response.Content.ReadAsStringAsync();
 
@@ -7875,19 +7876,29 @@ public static async Task<(DateTime LastTransactionTime, bool IsError)> GetLastTr
                 var jsonDocument = JsonDocument.Parse(json);
                 var lastTransactionTime = 0L;
 
-                if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
+                if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && 
+                    dataElement.GetArrayLength() > 0 &&
+                    dataElement[0].TryGetProperty("transactionLists", out JsonElement transactionListsElement) &&
+                    transactionListsElement.GetArrayLength() > 0)
                 {
-                    var data = dataElement[0];
-                    if (data.TryGetProperty("lastTransactionTime", out JsonElement lastTimeElement))
+                    var transaction = transactionListsElement[0];
+                    if (transaction.TryGetProperty("transactionTime", out JsonElement transactionTimeElement))
                     {
-                        // 修改这里，从使用 GetInt64() 改为 GetString() 然后转换为 long
-                        var lastTimeString = lastTimeElement.GetString();
-                        lastTransactionTime = long.Parse(lastTimeString);
+                        var transactionTimeString = transactionTimeElement.GetString();
+                        lastTransactionTime = long.Parse(transactionTimeString);
                     }
                 }
 
-                var utcDateTime = DateTimeOffset.FromUnixTimeMilliseconds(lastTransactionTime).DateTime;
-                return (ConvertToBeijingTime(utcDateTime), false); // 如果没有发生错误，返回结果和IsError=false
+                if (lastTransactionTime > 0)
+                {
+                    var utcDateTime = DateTimeOffset.FromUnixTimeMilliseconds(lastTransactionTime).DateTime;
+                    return (ConvertToBeijingTime(utcDateTime), false); // 如果没有发生错误，返回结果和IsError=false
+                }
+                else
+                {
+                    // 如果没有找到交易，返回最小时间和错误标志
+                    return (DateTime.MinValue, true);
+                }
             }
         }
         catch (Exception ex)
