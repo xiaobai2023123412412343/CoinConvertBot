@@ -121,7 +121,7 @@ namespace Telegram.CoinConvertBot.BgServices
 兑换时间：<b>{record.ReceiveTime:yyyy-MM-dd HH:mm:ss}</b>
 兑换地址：<code>{record.FromAddress.Substring(0, 5)}****{record.FromAddress.Substring(record.FromAddress.Length - 5, 5)}</code>
 兑换时间：<b>{record.PayTime:yyyy-MM-dd HH:mm:ss}</b>
-", Bot.Types.Enums.ParseMode.Html, replyMarkup: inlineKeyboard);
+", Bot.Types.Enums.ParseMode.Html);  //", Bot.Types.Enums.ParseMode.Html, replyMarkup: inlineKeyboard); //去掉按钮
                             }
                             catch (Exception e)
                             {
