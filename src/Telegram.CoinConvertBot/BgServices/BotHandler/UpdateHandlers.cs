@@ -8097,6 +8097,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
         return (string.Empty, true); // 所有密钥都失败
     }
 }
+//获取多签地址
 public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddress)
 {
     try
@@ -8113,15 +8114,40 @@ public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddr
             // 直接检查ownerPermission字段
             if (json["ownerPermission"] != null && json["ownerPermission"]["keys"] is JArray keysArray && keysArray.Count > 0)
             {
-                string ownerAddress = keysArray[0]["address"].ToString();
-                // 检查控制地址是否为查询地址
-                if (ownerAddress == tronAddress)
+                // 如果只有一个地址
+                if (keysArray.Count == 1)
                 {
-                    return ("当前地址未多签", false);
+                    string ownerAddress = keysArray[0]["address"].ToString();
+                    // 检查控制地址是否为查询地址
+                    if (ownerAddress == tronAddress)
+                    {
+                        return ("当前地址未多签", false);
+                    }
+                    else
+                    {
+                        return (ownerAddress, false);
+                    }
                 }
+                // 如果有多个地址（多签情况）
                 else
                 {
-                    return (ownerAddress, false);
+                    // 按权重降序排序，并排除查询地址
+                    var sortedAddresses = keysArray
+                        .Where(k => k["address"].ToString() != tronAddress)
+                        .OrderByDescending(k => (int)k["weight"])
+                        .Select(k => k["address"].ToString())
+                        .ToList();
+
+                    // 如果存在不同于查询地址的多签地址
+                    if (sortedAddresses.Any())
+                    {
+                        return (sortedAddresses.First(), false);
+                    }
+                    else
+                    {
+                        // 如果所有多签地址都与查询地址相同（极少情况）
+                        return ("当前地址未多签", false);
+                    }
                 }
             }
             else
