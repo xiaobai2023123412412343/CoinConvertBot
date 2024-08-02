@@ -8249,108 +8249,129 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
 
             // 构建请求URI
             string requestUri = $"https://www.oklink.com/api/v5/tracker/contractscanner/token-authorized-list?chainShortName=tron&address={tronAddress}";
-            var response = await httpClient.GetAsync(requestUri);
-            if (!response.IsSuccessStatusCode)
+            
+            // 新增：添加重试逻辑
+            for (int attempt = 0; attempt < 2; attempt++)
             {
-                Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
-
-                // 移除失败的秘钥
-                keys.Remove(key);
-
-                // 如果还有其他秘钥，随机选择一个并重试请求
-                if (keys.Count > 0)
+                var response = await httpClient.GetAsync(requestUri);
+                if (!response.IsSuccessStatusCode)
                 {
-                    index = random.Next(keys.Count);
-                    key = keys[index];
-                    httpClient.DefaultRequestHeaders.Remove("OK-ACCESS-KEY");
-                    httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", key);
-                    response = await httpClient.GetAsync(requestUri);
-                    if (!response.IsSuccessStatusCode)
+                    Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
+
+                    // 新增：检查是否是 API 权限错误
+                    string errorContent = await response.Content.ReadAsStringAsync();
+                    if (errorContent.Contains("No permission to use this API"))
                     {
-                        Console.WriteLine($"重试请求失败，状态码：{response.StatusCode}");
+                        if (attempt == 0)
+                        {
+                            // 第一次失败，等待随机时间后重试
+                            int delay = random.Next(1100, 2001); // 1.1-2秒的随机延迟
+                            await Task.Delay(delay);
+                            continue;
+                        }
+                        else
+                        {
+                            // 第二次失败，返回错误信息
+                            return "No permission to use this API.";
+                        }
+                    }
+
+                    // 原有的错误处理逻辑
+                    keys.Remove(key);
+                    if (keys.Count > 0)
+                    {
+                        index = random.Next(keys.Count);
+                        key = keys[index];
+                        httpClient.DefaultRequestHeaders.Remove("OK-ACCESS-KEY");
+                        httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", key);
+                        response = await httpClient.GetAsync(requestUri);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine($"重试请求失败，状态码：{response.StatusCode}");
+                            return "无法获取授权记录，请稍后再试。";
+                        }
+                    }
+                    else
+                    {
                         return "无法获取授权记录，请稍后再试。";
                     }
                 }
+
+                string responseContent = await response.Content.ReadAsStringAsync();
+                //Console.WriteLine($"响应内容：{responseContent}");
+
+                // 反序列化响应内容
+                var result = System.Text.Json.JsonSerializer.Deserialize<Root>(responseContent);
+                //Console.WriteLine($"解析后的结果：{result}");
+
+                // 检查返回的code是否为"0"
+                if (result.code != "0")
+                {
+                    return $"查询授权记录出错：{result.msg}\n";
+                }
+
+                StringBuilder sb = new StringBuilder();
+                //sb.AppendLine("———————授权列表———————"); // 移动到循环外面
+
+                // 检查data数组是否为空
+                if (result.data == null || result.data.Count == 0 || result.data[0].authorizedList == null)
+                {
+                    sb.AppendLine("\U00002705无授权记录。");
+                }
                 else
                 {
-                    return "无法获取授权记录，请稍后再试。";
+                    // 遍历授权记录
+                    foreach (var dataItem in result.data)
+                    {
+                        // 只处理 Tether USD (USDT) 或 USD Coin (USDC) 的记录
+                        if (dataItem.tokenFullName == "Tether USD" || dataItem.token == "USDT" ||
+                            dataItem.tokenFullName == "USD Coin" || dataItem.token == "USDC")
+                        {
+                            // 只处理第一条记录
+                            var record = dataItem.authorizedList.FirstOrDefault();
+                            if (record != null)
+                            {
+                                string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "点击查看授权详情" : record.approvedProjectName;
+                                string amount = record.approvedAmount == "unlimited" ? "无限" : $"{decimal.Parse(record.approvedAmount):N0}"; // 使用带有逗号的数字格式
+                                string address = record.approvedContractAddress;
+                                // 确保从JsonElement获取字符串表示
+                                string approvedTimeString = record.approvedTime.ToString();
+                                if (!long.TryParse(approvedTimeString, out long approvedTime))
+                                {
+                                    Console.WriteLine($"无法将'{approvedTimeString}'转换为长整型。");
+                                    continue; // 跳过这个记录，继续处理下一个记录
+                                }
+                                // 将Unix时间戳转换为北京时间（UTC+8）
+                                DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
+                                string tokenFullName = dataItem.tokenFullName == "Tether USD" ? "Tether USD (USDT)" : "USD Coin (USDC)";
+
+                                // 创建授权项目的链接
+                                string projectLink = $"https://tronscan.org/#/transaction/{record.approvedTxId}";
+                                string linkedProjectName = $"<a href=\"{projectLink}\">{projectName}</a>";
+
+                                sb.AppendLine($"授权币种： {tokenFullName}");
+                                sb.AppendLine($"授权金额： {amount}");
+                                sb.AppendLine($"授权项目： {linkedProjectName}");
+                                sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
+                                sb.AppendLine($"授权地址： {address}");
+                                sb.AppendLine("------------------");
+                            }
+                            break; // 只处理第一条记录，然后跳出循环
+                        }
+                    }
                 }
+
+                // 移除最后的分隔线
+                if (sb.Length > 0)
+                {
+                    sb.Length -= Environment.NewLine.Length + 18; // "------------------".Length + Environment.NewLine.Length
+                }
+
+                return sb.ToString();
             }
 
-            string content = await response.Content.ReadAsStringAsync();
-            //Console.WriteLine($"响应内容：{content}");
-
-            // 反序列化响应内容
-            var result = System.Text.Json.JsonSerializer.Deserialize<Root>(content);
-            //Console.WriteLine($"解析后的结果：{result}");
-
-            // 检查返回的code是否为"0"
-            if (result.code != "0")
-            {
-                return $"查询授权记录出错：{result.msg}\n";
-            }
-
-            StringBuilder sb = new StringBuilder();
-            //sb.AppendLine("———————授权列表———————"); // 移动到循环外面
-
-            // 检查data数组是否为空
-            if (result.data == null || result.data.Count == 0 || result.data[0].authorizedList == null)
-            {
-                sb.AppendLine("\U00002705无授权记录。");
-            }
-            else
-            {
-// 遍历授权记录
-foreach (var dataItem in result.data)
-{
-    // 只处理 Tether USD (USDT) 或 USD Coin (USDC) 的记录
-    if (dataItem.tokenFullName == "Tether USD" || dataItem.token == "USDT" ||
-        dataItem.tokenFullName == "USD Coin" || dataItem.token == "USDC")
-    {
-        // 只处理第一条记录
-        var record = dataItem.authorizedList.FirstOrDefault();
-        if (record != null)
-        {
-            string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "点击查看授权详情" : record.approvedProjectName;
-            string amount = record.approvedAmount == "unlimited" ? "无限" : $"{decimal.Parse(record.approvedAmount):N0}"; // 使用带有逗号的数字格式
-            string address = record.approvedContractAddress;
-            // 确保从JsonElement获取字符串表示
-            string approvedTimeString = record.approvedTime.ToString();
-            if (!long.TryParse(approvedTimeString, out long approvedTime))
-            {
-                Console.WriteLine($"无法将'{approvedTimeString}'转换为长整型。");
-                continue; // 跳过这个记录，继续处理下一个记录
-            }
-            // 将Unix时间戳转换为北京时间（UTC+8）
-            DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
-            string tokenFullName = dataItem.tokenFullName == "Tether USD" ? "Tether USD (USDT)" : "USD Coin (USDC)";
-
-            // 创建授权项目的链接
-            string projectLink = $"https://tronscan.org/#/transaction/{record.approvedTxId}";
-            string linkedProjectName = $"<a href=\"{projectLink}\">{projectName}</a>";
-
-            sb.AppendLine($"授权币种： {tokenFullName}");
-            sb.AppendLine($"授权金额： {amount}");
-            sb.AppendLine($"授权项目： {linkedProjectName}");
-            //sb.AppendLine($"授权地址： {address}");
-            // 添加时分秒到授权时间
-            sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
-            //sb.AppendLine($"授权项目： {linkedProjectName}");
-            sb.AppendLine($"授权地址： {address}");
-            sb.AppendLine("------------------");
-        }
-        break; // 只处理第一条记录，然后跳出循环
-    }
-}
-            }
-
-// 移除最后的分隔线
-if (sb.Length > 0)
-{
-    sb.Length -= Environment.NewLine.Length + 18; // "------------------".Length + Environment.NewLine.Length
-}
-
-return sb.ToString();
+            // 新增：如果所有尝试都失败
+            return "无法获取授权记录，请稍后再试。";
         }
     }
     catch (Exception ex)
@@ -8379,6 +8400,7 @@ private static IEnumerable<string> SplitIntoChunks(string text, int recordsPerCh
         yield return string.Join(Environment.NewLine, chunk);
     }
 }                                                                 
+                                                               
 //完整授权列表                                                                 
 public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAddress)
 {
@@ -8404,93 +8426,122 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
 
             // 构建请求URI
             string requestUri = $"https://www.oklink.com/api/v5/tracker/contractscanner/token-authorized-list?chainShortName=tron&address={tronAddress}";
-            var response = await httpClient.GetAsync(requestUri);
-            if (!response.IsSuccessStatusCode)
+            
+            // 添加重试逻辑
+            for (int attempt = 0; attempt < 2; attempt++)
             {
-                Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
-
-                // 移除失败的秘钥
-                keys.Remove(key);
-
-                // 如果还有其他秘钥，随机选择一个并重试请求
-                if (keys.Count > 0)
+                var response = await httpClient.GetAsync(requestUri);
+                if (!response.IsSuccessStatusCode)
                 {
-                    index = random.Next(keys.Count);
-                    key = keys[index];
-                    httpClient.DefaultRequestHeaders.Remove("OK-ACCESS-KEY");
-                    httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", key);
-                    response = await httpClient.GetAsync(requestUri);
-                    if (!response.IsSuccessStatusCode)
+                    Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
+
+                    string errorContent = await response.Content.ReadAsStringAsync();
+                    if (errorContent.Contains("No permission to use this API"))
                     {
-                        Console.WriteLine($"重试请求失败，状态码：{response.StatusCode}");
+                        if (attempt == 0)
+                        {
+                            // 第一次失败，等待随机时间后重试
+                            int delay = random.Next(1100, 2001); // 1.1-2秒的随机延迟
+                            await Task.Delay(delay);
+                            continue;
+                        }
+                        else
+                        {
+                            // 第二次失败，返回错误信息
+                            return "No permission to use this API.";
+                        }
+                    }
+
+                    // 移除失败的秘钥
+                    keys.Remove(key);
+
+                    // 如果还有其他秘钥，随机选择一个并重试请求
+                    if (keys.Count > 0)
+                    {
+                        index = random.Next(keys.Count);
+                        key = keys[index];
+                        httpClient.DefaultRequestHeaders.Remove("OK-ACCESS-KEY");
+                        httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", key);
+                        response = await httpClient.GetAsync(requestUri);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine($"重试请求失败，状态码：{response.StatusCode}");
+                            return "无法获取授权记录，请稍后再试。";
+                        }
+                    }
+                    else
+                    {
                         return "无法获取授权记录，请稍后再试。";
                     }
                 }
+
+                string responseContent = await response.Content.ReadAsStringAsync();
+                //Console.WriteLine($"响应内容：{responseContent}");
+
+                // 反序列化响应内容
+                var result = System.Text.Json.JsonSerializer.Deserialize<Root>(responseContent);
+                //Console.WriteLine($"解析后的结果：{result}");
+
+                // 检查返回的code是否为"0"
+                if (result.code != "0")
+                {
+                    return $"查询授权记录出错：{result.msg}\n";
+                }
+
+                StringBuilder sb = new StringBuilder();
+                //sb.AppendLine("———————授权列表———————"); // 移动到循环外面
+
+                // 检查data数组是否为空
+                if (result.data == null || result.data.Count == 0 || result.data[0].authorizedList == null)
+                {
+                    sb.AppendLine("\U00002705无授权记录。");
+                }
                 else
                 {
-                    return "无法获取授权记录，请稍后再试。";
+                    foreach (var dataItem in result.data)
+                    {
+                        // 只处理 Tether USD (USDT) 或 USD Coin (USDC) 的记录
+                        if (dataItem.tokenFullName == "Tether USD" || dataItem.token == "USDT" ||
+                            dataItem.tokenFullName == "USD Coin" || dataItem.token == "USDC")
+                        {
+                            foreach (var record in dataItem.authorizedList)
+                            {
+                                string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "点击查看授权详情" : record.approvedProjectName;
+                                string amount = record.approvedAmount == "unlimited" ? "无限" : $"{decimal.Parse(record.approvedAmount):N0}";
+                                string address = record.approvedContractAddress;
+                                long approvedTime = long.Parse(record.approvedTime);
+                                DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
+                                string tokenFullName = dataItem.tokenFullName == "Tether USD" ? "Tether USD (USDT)" : "USD Coin (USDC)";
+
+                                string projectLink = $"https://tronscan.org/#/transaction/{record.approvedTxId}";
+                                string linkedProjectName = $"<a href=\"{projectLink}\">{projectName}</a>";
+
+                                sb.AppendLine($"授权币种： {tokenFullName}");
+                                sb.AppendLine($"授权金额： {amount}");
+                                sb.AppendLine($"授权项目： {linkedProjectName}");
+                                sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
+                                sb.AppendLine($"授权地址： {address}");
+                                sb.AppendLine("--------------------------------------------------------");
+                            }
+                        }
+                    }
                 }
-            }
 
-            string content = await response.Content.ReadAsStringAsync();
-            //Console.WriteLine($"响应内容：{content}");
-
-            // 反序列化响应内容
-            var result = System.Text.Json.JsonSerializer.Deserialize<Root>(content);
-            //Console.WriteLine($"解析后的结果：{result}");
-
-            // 检查返回的code是否为"0"
-            if (result.code != "0")
-            {
-                return $"查询授权记录出错：{result.msg}\n";
-            }
-
-            StringBuilder sb = new StringBuilder();
-            //sb.AppendLine("———————授权列表———————"); // 移动到循环外面
-
-            // 检查data数组是否为空
-            if (result.data == null || result.data.Count == 0 || result.data[0].authorizedList == null)
-            {
-                sb.AppendLine("\U00002705无授权记录。");
-            }
-            else
-            {
-        foreach (var dataItem in result.data)
-        {
-            // 只处理 Tether USD (USDT) 或 USD Coin (USDC) 的记录
-            if (dataItem.tokenFullName == "Tether USD" || dataItem.token == "USDT" ||
-                dataItem.tokenFullName == "USD Coin" || dataItem.token == "USDC")
-            {
-                foreach (var record in dataItem.authorizedList)
+                // 移除最后一条记录的分隔线
+                if (sb.Length > 0)
                 {
-                    string projectName = string.IsNullOrEmpty(record.approvedProjectName) ? "点击查看授权详情" : record.approvedProjectName;
-                    string amount = record.approvedAmount == "unlimited" ? "无限" : $"{decimal.Parse(record.approvedAmount):N0}";
-                    string address = record.approvedContractAddress;
-                    long approvedTime = long.Parse(record.approvedTime);
-                    DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(approvedTime).DateTime.AddHours(8);
-                    string tokenFullName = dataItem.tokenFullName == "Tether USD" ? "Tether USD (USDT)" : "USD Coin (USDC)";
-
-                    string projectLink = $"https://tronscan.org/#/transaction/{record.approvedTxId}";
-                    string linkedProjectName = $"<a href=\"{projectLink}\">{projectName}</a>";
-
-                    sb.AppendLine($"授权币种： {tokenFullName}");
-                    sb.AppendLine($"授权金额： {amount}");
-                    sb.AppendLine($"授权项目： {linkedProjectName}");
-                    sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
-                    sb.AppendLine($"授权地址： {address}");
-                    sb.AppendLine("--------------------------------------------------------");
+                    int lastNewLineIndex = sb.ToString().LastIndexOf(Environment.NewLine);
+                    if (lastNewLineIndex != -1)
+                    {
+                        sb.Remove(lastNewLineIndex, sb.Length - lastNewLineIndex);
+                    }
                 }
-            }
-        }
+
+                return sb.ToString();
             }
 
-    // 移除最后的分隔线
-    if (sb.Length > 0)
-    {
-        sb.Length -= Environment.NewLine.Length + 18; // "---------------------------------------------------------------------".Length + Environment.NewLine.Length
-    }
-
-    return sb.ToString();
+            // 如果所有尝试都失败
+            return "无法获取授权记录，请稍后再试。";
         }
     }
     catch (Exception ex)
@@ -8499,7 +8550,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
         //Console.WriteLine($"在获取授权记录时发生异常：{ex.Message}");
         return "\U00002705无授权记录\n";
     }
-}                                                                 
+}                                                                
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
