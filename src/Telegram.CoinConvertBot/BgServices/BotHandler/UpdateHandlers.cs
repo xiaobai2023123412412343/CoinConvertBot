@@ -8489,7 +8489,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
                 }
 
                 StringBuilder sb = new StringBuilder();
-                //sb.AppendLine("———————授权列表———————"); // 移动到循环外面
+                int recordCount = 0;
 
                 // 检查data数组是否为空
                 if (result.data == null || result.data.Count == 0 || result.data[0].authorizedList == null)
@@ -8521,23 +8521,26 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
                                 sb.AppendLine($"授权项目： {linkedProjectName}");
                                 sb.AppendLine($"授权时间： {time:yyyy年MM月dd日HH时mm分ss秒}");
                                 sb.AppendLine($"授权地址： {address}");
-                                sb.AppendLine("--------------------------------------------------------");
+
+                                recordCount++;
+
+                                // 如果不是最后一条记录，添加分隔线
+                                if (recordCount < dataItem.authorizedList.Count)
+                                {
+                                    sb.AppendLine("--------------------------------------------------------");
+                                }
+
+                                // 每10条记录后添加一个特殊分隔符
+                                if (recordCount % 10 == 0 && recordCount < dataItem.authorizedList.Count)
+                                {
+                                    sb.AppendLine("========================================================");
+                                }
                             }
                         }
                     }
                 }
 
-                // 移除最后一条记录的分隔线
-                if (sb.Length > 0)
-                {
-                    int lastNewLineIndex = sb.ToString().LastIndexOf(Environment.NewLine);
-                    if (lastNewLineIndex != -1)
-                    {
-                        sb.Remove(lastNewLineIndex, sb.Length - lastNewLineIndex);
-                    }
-                }
-
-                return sb.ToString();
+                return sb.ToString().TrimEnd();
             }
 
             // 如果所有尝试都失败
@@ -8550,7 +8553,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
         //Console.WriteLine($"在获取授权记录时发生异常：{ex.Message}");
         return "\U00002705无授权记录\n";
     }
-}                                                                
+}                                                            
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
