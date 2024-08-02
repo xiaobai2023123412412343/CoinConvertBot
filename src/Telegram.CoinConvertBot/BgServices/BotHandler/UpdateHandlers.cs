@@ -8529,12 +8529,6 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
                                 {
                                     sb.AppendLine("--------------------------------------------------------");
                                 }
-
-                                // 每10条记录后添加一个特殊分隔符
-                                if (recordCount % 10 == 0 && recordCount < dataItem.authorizedList.Count)
-                                {
-                                    sb.AppendLine("========================================================");
-                                }
                             }
                         }
                     }
