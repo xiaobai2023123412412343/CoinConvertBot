@@ -7581,58 +7581,69 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
 
             foreach (var result in results)
             {
-        if (result == null)
-        {
-            Console.WriteLine("所有API密钥尝试失败，停止后续页面处理。");
-            continueFetching = false; // 停止处理后续页面
-            break;
-        }		    
-                if (result != null)
+                if (result == null)
                 {
-                    var transactionsData = result.RootElement.GetProperty("data")[0];
-                    foreach (var item in transactionsData.GetProperty("transactionLists").EnumerateArray())
+                    Console.WriteLine("所有API密钥尝试失败，停止后续页面处理。");
+                    continueFetching = false; // 停止处理后续页面
+                    break;
+                }
+                
+                if (result.RootElement.TryGetProperty("data", out JsonElement dataElement) && 
+                    dataElement.GetArrayLength() > 0)
+                {
+                    var transactionsData = dataElement[0];
+                    if (transactionsData.TryGetProperty("transactionLists", out JsonElement transactionLists))
                     {
-                        decimal amount = decimal.Parse(item.GetProperty("amount").GetString());
-                        DateTime transactionTime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(item.GetProperty("transactionTime").GetString())).UtcDateTime;
-                        transactionTime = ConvertToBeijingTime(transactionTime);
-
-                        if (transactionTime < firstDayOfYear) // 检查是否包含去年的数据
+                        foreach (var item in transactionLists.EnumerateArray())
                         {
-                            continueFetching = false;
-                            break;
-                        }
+                            if (item.TryGetProperty("amount", out JsonElement amountElement) &&
+                                item.TryGetProperty("transactionTime", out JsonElement transactionTimeElement) &&
+                                item.TryGetProperty("from", out JsonElement fromElement) &&
+                                item.TryGetProperty("to", out JsonElement toElement))
+                            {
+                                decimal amount = decimal.Parse(amountElement.GetString());
+                                DateTime transactionTime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(transactionTimeElement.GetString())).UtcDateTime;
+                                transactionTime = ConvertToBeijingTime(transactionTime);
 
-                        string fromAddress = item.GetProperty("from").GetString();
-                        string toAddress = item.GetProperty("to").GetString();
+                                if (transactionTime < firstDayOfYear) // 检查是否包含去年的数据
+                                {
+                                    continueFetching = false;
+                                    break;
+                                }
 
-                        if (toAddress == address)
-                        {
-                            if (transactionTime >= firstDayOfYear)
-                            {
-                                totalIncome += amount;
-                            }
-                            if (transactionTime >= firstDayOfMonth)
-                            {
-                                monthlyIncome += amount;
-                            }
-                            if (transactionTime.Date == today)
-                            {
-                                dailyIncome += amount;
-                            }
-                        }
-                        else if (fromAddress == address)
-                        {
-                            if (transactionTime >= firstDayOfYear)
-                            {
-                                totalOutcome += amount;
-                            }
-                            if (transactionTime >= firstDayOfMonth)
-                            {
-                                monthlyOutcome += amount;
-                            }
-                            if (transactionTime.Date == today)
-                            {
-                                dailyOutcome += amount;
+                                string fromAddress = fromElement.GetString();
+                                string toAddress = toElement.GetString();
+
+                                if (toAddress == address)
+                                {
+                                    if (transactionTime >= firstDayOfYear)
+                                    {
+                                        totalIncome += amount;
+                                    }
+                                    if (transactionTime >= firstDayOfMonth)
+                                    {
+                                        monthlyIncome += amount;
+                                    }
+                                    if (transactionTime.Date == today)
+                                    {
+                                        dailyIncome += amount;
+                                    }
+                                }
+                                else if (fromAddress == address)
+                                {
+                                    if (transactionTime >= firstDayOfYear)
+                                    {
+                                        totalOutcome += amount;
+                                    }
+                                    if (transactionTime >= firstDayOfMonth)
+                                    {
+                                        monthlyOutcome += amount;
+                                    }
+                                    if (transactionTime.Date == today)
+                                    {
+                                        dailyOutcome += amount;
+                                    }
+                                }
                             }
                         }
                     }
