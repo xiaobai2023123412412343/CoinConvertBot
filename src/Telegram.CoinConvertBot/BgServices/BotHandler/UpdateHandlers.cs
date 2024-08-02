@@ -8287,7 +8287,7 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
             // 检查返回的code是否为"0"
             if (result.code != "0")
             {
-                return "查询授权记录出错：" + result.msg;
+                return $"查询授权记录出错：{result.msg}\n";
             }
 
             StringBuilder sb = new StringBuilder();
@@ -8442,7 +8442,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
             // 检查返回的code是否为"0"
             if (result.code != "0")
             {
-                return "查询授权记录出错：" + result.msg;
+                return $"查询授权记录出错：{result.msg}\n";
             }
 
             StringBuilder sb = new StringBuilder();
