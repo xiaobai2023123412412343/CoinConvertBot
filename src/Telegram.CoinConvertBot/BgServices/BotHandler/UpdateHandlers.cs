@@ -8751,11 +8751,18 @@ string groupExclusiveText = $"<a href=\"{shareLink}\">群内发送地址可以�
 string uxiaofeikaText = $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n"; 
 
 
- // 添加授权列表的信息
+// 添加授权列表的信息
 string usdtAuthorizedListText = "";
-if (!string.IsNullOrEmpty(usdtAuthorizedListResult))
+if (!string.IsNullOrEmpty(usdtAuthorizedListResult) && 
+    !usdtAuthorizedListResult.Contains("No permission to use this API") &&
+    !usdtAuthorizedListResult.Contains("无法获取授权记录"))
 {
     usdtAuthorizedListText = "———————<b>授权列表</b>———————\n" + usdtAuthorizedListResult;
+}
+else
+{
+    // 如果包含错误信息，确保不添加任何授权列表信息
+    usdtAuthorizedListText = "";
 }
     
 // 判断 TRX 余额是否小于100
