@@ -15814,7 +15814,7 @@ if (messageText.Equals("注销") || messageText.Equals("冻结"))
     // 构建按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        InlineKeyboardButton.WithUrl("点击打开注销界面！", "https://my.telegram.org/auth?to=delete")
+        InlineKeyboardButton.WithUrl("点击打开电报注销界面", "https://my.telegram.org/auth?to=delete")
     });
 
     try
