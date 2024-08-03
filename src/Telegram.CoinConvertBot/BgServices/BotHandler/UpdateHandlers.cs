@@ -8061,25 +8061,29 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
                 JArray transactions = (JArray)data[0]["transactionList"];
                 transactions = new JArray(transactions.Where(t => decimal.Parse((string)t["amount"]) > 1).Take(5)); // 筛选大于1USDT的交易并取前5条
 
-                StringBuilder transactionTextBuilder = new StringBuilder();
-
-                foreach (var transaction in transactions)
+                if (transactions.Count > 0)
                 {
-                    string txHash = (string)transaction["txId"];
-                    long transactionTime = (long)transaction["transactionTime"];
-                    DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(transactionTime).UtcDateTime;
-                    DateTime transactionTimeBeijing = TimeZoneInfo.ConvertTime(transactionTimeUtc, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
+                    StringBuilder transactionTextBuilder = new StringBuilder();
+                    transactionTextBuilder.AppendLine("———————<b>USDT账单</b>———————"); // 只有当有交易时才添加账单标题
 
-                    string fromAddress = (string)transaction["from"];
-                    string toAddress = (string)transaction["to"];
-                    string type = tronAddress.Equals(toAddress, StringComparison.OrdinalIgnoreCase) ? "入 " : "出 ";
+                    foreach (var transaction in transactions)
+                    {
+                        string txHash = (string)transaction["txId"];
+                        long transactionTime = (long)transaction["transactionTime"];
+                        DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(transactionTime).UtcDateTime;
+                        DateTime transactionTimeBeijing = TimeZoneInfo.ConvertTime(transactionTimeUtc, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
 
-                    decimal usdtAmount = decimal.Parse((string)transaction["amount"]); // 直接使用返回的USDT金额
+                        string fromAddress = (string)transaction["from"];
+                        string toAddress = (string)transaction["to"];
+                        string type = tronAddress.Equals(toAddress, StringComparison.OrdinalIgnoreCase) ? "入 " : "出 ";
 
-                    transactionTextBuilder.AppendLine($"{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}<a href=\"https://tronscan.org/#/transaction/{txHash}\">{usdtAmount:N2} U</a>");
+                        decimal usdtAmount = decimal.Parse((string)transaction["amount"]); // 直接使用返回的USDT金额
+
+                        transactionTextBuilder.AppendLine($"{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}<a href=\"https://tronscan.org/#/transaction/{txHash}\">{usdtAmount:N2} U</a>");
+                    }
+
+                    return (transactionTextBuilder.ToString(), false);
                 }
-
-                return (transactionTextBuilder.ToString(), false);
             }
             catch (Exception ex)
             {
@@ -8762,7 +8766,7 @@ if (trxBalance < 100)
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +  
     usdtAuthorizedListText + // 添加授权列表的信息
-    $"———————<b>USDT账单</b>———————\n" +
+   // $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
@@ -8790,7 +8794,7 @@ else
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +   
     usdtAuthorizedListText + // 添加授权列表的信息        
-    $"———————<b>USDT账单</b>———————\n" +
+   // $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
@@ -8819,7 +8823,7 @@ if (trxBalance < 100)
     $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +   
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
-    $"———————<b>USDT账单</b>———————\n" +
+   // $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
@@ -8845,7 +8849,7 @@ else
     $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +       
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
-    $"———————<b>USDT账单</b>———————\n" +
+  //  $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
