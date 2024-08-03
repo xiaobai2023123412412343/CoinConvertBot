@@ -8704,8 +8704,10 @@ else
     
 string exchangeUrl = "https://t.me/yifanfubot";
 string exchangeLink = $"<a href=\"{exchangeUrl}\">立即兑换</a>";
-decimal monthlyProfit = monthlyIncome - monthlyOutcome;//月盈亏
-decimal dailyProfit = dailyIncome - dailyOutcome; //日盈亏 
+
+//decimal monthlyProfit = monthlyIncome - monthlyOutcome;//月盈亏
+//decimal dailyProfit = dailyIncome - dailyOutcome; //日盈亏 
+//decimal usdtProfit = usdtTotalIncome - usdtTotalOutcome; //计算累计盈亏
 
 //不想要可以把 3301-3315删除    3318-3320删除 $"<b>来自 </b>{userLink}<b>的查询</b>\n\n" +删除即可
 // 获取发送消息的用户信息
@@ -8728,8 +8730,19 @@ if (fromUser != null)
         userLink = $"{fromFirstName} {fromLastName}";
     }
 }
-//计算累计盈亏
-decimal usdtProfit = usdtTotalIncome - usdtTotalOutcome; 
+
+// 计算月盈亏和日盈亏
+decimal monthlyProfit = monthlyIncome - monthlyOutcome;
+decimal dailyProfit = dailyIncome - dailyOutcome;
+
+// 构建结果文本时，根据条件决定是否添加月/日收入支出盈亏信息
+string incomeOutcomeText = "";
+if (monthlyIncome != 0 || monthlyOutcome != 0 || dailyIncome != 0 || dailyOutcome != 0)
+{
+    incomeOutcomeText = $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
+                        $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n";
+}
+
 //私聊广告    
 string botUsername = "yifanfubot"; // 你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
@@ -8768,11 +8781,12 @@ if (trxBalance < 100)
     usdtAuthorizedListText + // 添加授权列表的信息
    // $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
+    incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     //$"年度收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +
-    $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +
+    //$"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
+    //$"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;   
     $"{uxiaofeikaText}";	
 }
@@ -8796,11 +8810,12 @@ else
     usdtAuthorizedListText + // 添加授权列表的信息        
    // $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
+    incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
     //$"年度收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +    
-    $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +
+    //$"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
+    //$"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;   
     $"{uxiaofeikaText}";	
 }
@@ -8825,10 +8840,11 @@ if (trxBalance < 100)
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
    // $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
+    incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息  
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
-    $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +    
+    //$"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
+    //$"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +    
     $"{groupExclusiveText}" +   // 在这里使用 groupExclusiveText
     $"{uxiaofeikaText}";	
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
@@ -8851,10 +8867,11 @@ else
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
   //  $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
+    incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息
     //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
     //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
-    $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" + 
+    //$"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
+    //$"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" + 
     $"{groupExclusiveText}" +   // 在这里使用 groupExclusiveText
     $"{uxiaofeikaText}";	
     //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
