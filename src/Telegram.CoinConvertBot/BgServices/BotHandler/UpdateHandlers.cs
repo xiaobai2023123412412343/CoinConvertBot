@@ -11674,12 +11674,18 @@ else if (update.CallbackQuery.Data == "onlineAudio")
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: @"欧乐网：https://www.olevod.com/
+cn影院：https://cnys.tv/
+星晨影院：https://lmyhgo.com/
+4K影视：https://www.4kvm.net/
+搜片TV：https://soupian.pro/
+小宝影院：https://xiaoxintv.com/
+凌云影视：https://www.lyys8.com/
+奈飞工厂：https://www.netflixgc.com/
 天天视频：https://www.ttsp.tv/index.html
-泥视频：https://www.nivod4.tv/
 fofo影院：https://www.fofoyy.com/
 努努影院：https://nnyy.in/
-爱看：https://www.ikan4k.com/
-cn影院：https://cnys.tv/
+子子影视：https://www.ziziys.com/
+人人影视：https://www.renren.pro/
 茶杯狐电视电影推荐：https://cupfox.love/
 
 在线音乐推荐使用洛雪播放器：https://lxmusic.toside.cn/download",
@@ -12121,12 +12127,20 @@ bbc：https://www.bbc.com/zhongwen/simp
 中国数字时代：https://chinadigitaltimes.net/chinese/404-articles-archive
 
 <b>电影/音乐：</b>
-洛雪：https://lxmusic.toside.cn/download
-清风：https://www.vvvdj.com/
-欧乐电影：https://www.olevod.com/
-天天视频：https://www.ttsp.tv/
-茶杯：https://cupfox.love/
-泥视频：https://www.nivod4.tv/index.html
+洛雪音乐：https://lxmusic.toside.cn/download
+清风DJ：https://www.vvvdj.com/
+cn影院：https://cnys.tv/
+星晨影院：https://lmyhgo.com/
+4K影视：https://www.4kvm.net/
+搜片TV：https://soupian.pro/
+小宝影院：https://xiaoxintv.com/
+凌云影视：https://www.lyys8.com/
+奈飞工厂：https://www.netflixgc.com/
+天天视频：https://www.ttsp.tv/index.html
+fofo影院：https://www.fofoyy.com/
+努努影院：https://nnyy.in/
+子子影视：https://www.ziziys.com/
+人人影视：https://www.renren.pro/
 电视直播软件：https://www.ahhhhfs.com/36457/
 
 <b>短信：</b>
