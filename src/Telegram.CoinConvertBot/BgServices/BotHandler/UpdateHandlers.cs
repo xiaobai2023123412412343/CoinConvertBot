@@ -8489,7 +8489,8 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
                 // 检查返回的code是否为"0"
                 if (result.code != "0")
                 {
-                    return $"查询授权记录出错：{result.msg}\n";
+                    //return $"查询授权记录出错：{result.msg}\n";
+                    return $"查询授权记录出错，请稍后重试！\n";
                 }
 
                 StringBuilder sb = new StringBuilder();
