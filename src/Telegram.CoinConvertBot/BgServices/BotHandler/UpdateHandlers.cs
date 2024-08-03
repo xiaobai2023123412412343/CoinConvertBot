@@ -15830,7 +15830,7 @@ if (messageText.Equals("注销") || messageText.Equals("冻结"))
         // 循环编辑消息
         for (int i = 0; i < 5; i++)
         {
-            await Task.Delay(1000); // 等待1秒
+            await Task.Delay(500); // 等待时间 1000=1秒
             await botClient.EditMessageTextAsync(
                 chatId: message.Chat.Id,
                 messageId: initialMessage.MessageId,
@@ -15839,7 +15839,7 @@ if (messageText.Equals("注销") || messageText.Equals("冻结"))
                 replyMarkup: inlineKeyboard
             );
 
-            await Task.Delay(1000); // 等待1秒
+            await Task.Delay(500); // 等待时间 1000=1秒
             await botClient.EditMessageTextAsync(
                 chatId: message.Chat.Id,
                 messageId: initialMessage.MessageId,
