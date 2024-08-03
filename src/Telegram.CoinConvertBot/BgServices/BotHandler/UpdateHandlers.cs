@@ -15808,6 +15808,53 @@ if (messageText.StartsWith("/yi") || messageText.Contains("U兑TRX"))
     }
 }
 */ 
+// 检查是否接收到了 "注销" 或者 "冻结" 消息，收到就回复用户
+if (messageText.Equals("注销") || messageText.Equals("冻结"))
+{
+    // 构建按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithUrl("点击打开注销界面！", "https://my.telegram.org/auth?to=delete")
+    });
+
+    try
+    {
+        // 发送初始消息
+        var initialMessage = await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "<b>⚠️⚠️⚠️⚠️⚠️ 警告 ⚠️⚠️⚠️⚠️⚠️\n\n注销操作不可逆，请慎重操作！！！</b>",
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
+
+        // 循环编辑消息
+        for (int i = 0; i < 5; i++)
+        {
+            await Task.Delay(1000); // 等待1秒
+            await botClient.EditMessageTextAsync(
+                chatId: message.Chat.Id,
+                messageId: initialMessage.MessageId,
+                text: "<b>⚠️⚠️⚠️⚠️⚠️ ‼️ ⚠️⚠️⚠️⚠️⚠️\n\n注销操作不可逆，请慎重操作！！！</b>",
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard
+            );
+
+            await Task.Delay(1000); // 等待1秒
+            await botClient.EditMessageTextAsync(
+                chatId: message.Chat.Id,
+                messageId: initialMessage.MessageId,
+                text: "<b>⚠️⚠️⚠️⚠️⚠️ 警告 ⚠️⚠️⚠️⚠️⚠️\n\n注销操作不可逆，请慎重操作！！！</b>",
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard
+            );
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred: {ex.Message}");
+        // Optionally, handle the error further or log it as needed.
+    }
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
