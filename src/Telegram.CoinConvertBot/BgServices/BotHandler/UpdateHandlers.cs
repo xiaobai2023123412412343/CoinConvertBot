@@ -18337,6 +18337,29 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 
 ";
             }
+
+    // 发送完整的消息
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: msg,
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        disableWebPagePreview: true
+    );
+
+    // 延迟100毫秒后发送接收地址
+    await Task.Delay(10);  // 延迟0.01秒
+
+    // 单独发送接收地址
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: $"<code>{ReciveAddress}</code>",
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        disableWebPagePreview: true
+    );
+
+    return null; // 返回null或适当的响应
+
+
     // 创建包含三行，每行4个按钮的虚拟键盘
     var keyboard = new ReplyKeyboardMarkup(new[]
     {
