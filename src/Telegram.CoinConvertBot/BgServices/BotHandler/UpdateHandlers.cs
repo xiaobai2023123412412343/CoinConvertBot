@@ -18338,12 +18338,22 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 ";
             }
 
-    // 发送完整的消息
-    await botClient.SendTextMessageAsync(
+   //特别说明，不想单独发地址，下列段落删除，直到  // 创建包含三行，每行4个按钮的虚拟键盘
+
+    // 发送完整的消息 无图片版本
+    // await botClient.SendTextMessageAsync(
+     //    chatId: message.Chat.Id,
+     //    text: msg,
+     //    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+     //    disableWebPagePreview: true
+   //  );
+
+    // 发送图片和原本的文字作为图片说明
+    await botClient.SendPhotoAsync(
         chatId: message.Chat.Id,
-        text: msg,
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-        disableWebPagePreview: true
+        photo: "https://i.postimg.cc/rFj8DtBW/2222-1.png", // 图片链接
+        caption: msg, // 原本要发的文字作为图片说明
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
     );
 
     // 延迟100毫秒后发送接收地址
