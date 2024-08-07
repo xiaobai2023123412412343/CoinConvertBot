@@ -12541,18 +12541,32 @@ var timestamp = message.Date != default(DateTime)
     string forwardedMessage = $"{timestamp}  {userFullName}  @{username} (ID:<code> {userId}</code>)\n\n{chatOrigin}：<code>{text}</code>";
     var isTronAddress = Regex.IsMatch(text, @"^(T[A-Za-z0-9]{33})$");// 新增：检查消息是否是波场地址  新增：检查消息是否是数字+货币的组合
     var isNumberCurrency = Regex.IsMatch(text, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
+    var isQueryAgainWithTronAddress = Regex.IsMatch(text, @"^query_again,(T[A-Za-z0-9]{33})$"); // 新增：检查消息是否符合特定格式
 
-
-if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCommand) || isTronAddress || isNumberCurrency)
+if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCommand) || isTronAddress || isNumberCurrency || isQueryAgainWithTronAddress)
 {
     if (userId != ADMIN_ID)
     {
+        // 解析出波场地址
+        string tronAddress = isTronAddress ? text : (isQueryAgainWithTronAddress ? text.Split(',')[1] : null);
+
+        // 创建内联键盘，如果是波场地址或特定格式的字符串
+        InlineKeyboardMarkup inlineKeyboard = null;
+        if (isTronAddress || isQueryAgainWithTronAddress)
+        {
+            inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                InlineKeyboardButton.WithCallbackData("查该地址", $"query_again,{tronAddress}")
+            });
+        }
+
         try
         {
             await botClient.SendTextMessageAsync(
                 chatId: TARGET_CHAT_ID,
                 text: forwardedMessage,
-                parseMode: ParseMode.Html
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard // 添加内联键盘
             );
         }
         catch (Telegram.Bot.Exceptions.ApiRequestException ex)
@@ -12564,9 +12578,8 @@ if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCom
             }
             else
             {
-                // 处理其他类型的 Telegram API 请求异常，例如机器人被禁言或没有权限等
+                // 处理其他类型的 Telegram API 请求异常
                 Console.WriteLine($"消息转发失败，原因：{ex.Message}");
-                // 可以选择将错误消息发送回管理员
                 await botClient.SendTextMessageAsync(
                     chatId: ADMIN_ID,
                     text: $"消息转发失败，原因：{ex.Message}"
@@ -12575,9 +12588,8 @@ if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCom
         }
         catch (Exception ex)
         {
-            // 这里处理其他类型的异常
+            // 处理其他类型的异常
             Console.WriteLine($"发生异常，原因：{ex.Message}");
-            // 可以选择将错误消息发送回管理员
             await botClient.SendTextMessageAsync(
                 chatId: ADMIN_ID,
                 text: $"发生异常，原因：{ex.Message}"
