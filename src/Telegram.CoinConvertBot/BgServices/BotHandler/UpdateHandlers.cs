@@ -14424,7 +14424,7 @@ if (messageText.StartsWith("/jisuzhangdie") || messageText.Contains("市场异�
 if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || messageText.Contains("yhk") || messageText.Contains("消费卡") || messageText.Contains("信用卡") || messageText.Contains("虚拟"))
 {
     // 首先发送一张图片
-    var imageUrl = "https://i.postimg.cc/GhQHdgVp/Dupay-Card.webp";
+    var imageUrl = "https://i.postimg.cc/mgVmPfrW/photo-2024-06-30-14-06-02.jpg";
     var inlineKeyboard = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(
         new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton[][]
         {
