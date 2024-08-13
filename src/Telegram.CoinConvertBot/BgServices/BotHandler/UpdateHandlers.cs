@@ -10419,7 +10419,7 @@ string startParameter = ""; // 如果你希望机器人在被添加到群组时�
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
 // 创建 InlineKeyboardButton 并设置文本和回调数据
-var visitButton1 = new InlineKeyboardButton("能量详解")
+var visitButton1 = new InlineKeyboardButton("能量详情")
 {
     CallbackData = "能量" // 当按钮被点击时发送的数据
 };
