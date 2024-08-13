@@ -1747,7 +1747,7 @@ public static class CoinDataCache
         }
     }
 }
-public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long chatId, string coinSymbol)
+public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long chatId, string coinSymbol, bool sendNotFoundMessage = true)
 {
     try
     {
@@ -1763,10 +1763,14 @@ public static async Task QueryCoinInfoAsync(ITelegramBotClient botClient, long c
             return;
         }	    
         var coinInfo = await CoinDataCache.GetCoinInfoAsync(coinSymbol);
+	    
         if (coinInfo == null)
         {
-            //Console.WriteLine("No data found for the requested symbol.");
-            await botClient.SendTextMessageAsync(chatId, "未查到该币种的信息！", ParseMode.Html);
+            if (sendNotFoundMessage)
+            {
+		//Console.WriteLine("No data found for the requested symbol.");
+                await botClient.SendTextMessageAsync(chatId, "未查到该币种的信息！", ParseMode.Html);
+            }
             return;
         }
 
@@ -16551,10 +16555,17 @@ else
 }
                 }
             }
+            else
+            {
+                // 如果API没有返回币种信息，尝试调用 QueryCoinInfoAsync 方法查询，不发送未找到币种的信息
+                await QueryCoinInfoAsync(botClient, message.Chat.Id, symbol, false);
+            }		
         }
         catch (Exception ex)
         {
             // 记录错误信息
+            // 如果API调用失败，尝试调用 QueryCoinInfoAsync 方法查询，不发送未找到币种的信息
+            await QueryCoinInfoAsync(botClient, message.Chat.Id, symbol, false);	
             Console.WriteLine($"Error when calling API: {ex.Message}");
         }
     }
