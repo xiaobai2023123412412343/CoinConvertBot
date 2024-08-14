@@ -2328,7 +2328,7 @@ await botClient.SendTextMessageAsync(chatId, reply, ParseMode.Html, replyMarkup:
     catch (Exception ex)
     {
         Console.WriteLine($"查询时发生错误：{ex.Message}");
-        await botClient.SendTextMessageAsync(chatId, $"查询时发生错误：{ex.Message}");
+        //await botClient.SendTextMessageAsync(chatId, $"查询时发生错误：{ex.Message}");
     }
 }
 private static async Task<decimal> GetPriceChangePercentAsync(HttpClient httpClient, string symbol, long startTime, long endTime, bool is24Hours = false)
