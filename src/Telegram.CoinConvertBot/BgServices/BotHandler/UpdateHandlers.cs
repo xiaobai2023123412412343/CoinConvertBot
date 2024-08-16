@@ -6623,17 +6623,21 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
         var language = message.From.LanguageCode;
         var fullName = $"{firstName} {lastName}".Trim();
         var chatName = message.Chat.Title; // 群聊名称
-	var chatType = message.Chat.Type == ChatType.Supergroup ? "超级群组" : "普通群组";    
+        var chatType = message.Chat.Type == ChatType.Supergroup ? "超级群组" : "普通群组";    
+        var dcId = userName != "未设置" ? await FetchDcIdFromUsername(userName.TrimStart('@')) : null;
+        var dcLocation = GetDcLocation(dcId);
 
         var responseText = "";
 
         if (message.Chat.Type == ChatType.Private)
         {
             responseText = $"用户ID：<code>{userId}</code>\n用户名：{userName}\n姓名：{fullName}\n语言：{language}";
+            if (dcLocation != null) responseText += $"\n数据中心：{dcLocation}";
         }
         else if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
         {
             responseText = $"群组ID：<code>{chatId}</code>\n群组名：{chatName}\n群类型：{chatType}\n\n用户ID：<code>{userId}</code>\n用户名：{userName}\n姓名：{fullName}\n语言：{language}";
+            if (dcLocation != null) responseText += $"\n数据中心：{dcLocation}";
         }
 
         await botClient.SendTextMessageAsync(
@@ -6651,6 +6655,54 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
     {
         Console.WriteLine($"发生意外错误: {ex.Message}");
     }
+}
+//dc映射表
+private static string GetDcLocation(string dcId)
+{
+    var dcMap = new Dictionary<string, string>
+    {
+        {"DC1", "美国迈阿密"},
+        {"DC2", "荷兰阿姆斯特丹"},
+        {"DC3", "美国迈阿密"},
+        {"DC4", "荷兰阿姆斯特丹"},
+        {"DC5", "新加坡"}
+    };
+
+    if (dcId != null && dcMap.ContainsKey(dcId))
+    {
+        return $"{dcMap[dcId]}（{dcId}）";
+    }
+    return null;
+}
+//获取注册地区
+private static async Task<string> FetchDcIdFromUsername(string username)
+{
+    var url = $"https://t.me/{username}";
+    using (var httpClient = new HttpClient())
+    {
+        try
+        {
+            var response = await httpClient.GetAsync(url);
+            var pageContent = await response.Content.ReadAsStringAsync();
+
+            var srcIndex = pageContent.IndexOf("src=\"https://cdn");
+            if (srcIndex != -1)
+            {
+                var startIndex = pageContent.IndexOf("cdn", srcIndex) + 3;
+                var endIndex = pageContent.IndexOf('.', startIndex);
+                if (startIndex != -1 && endIndex != -1)
+                {
+                    var dcId = pageContent.Substring(startIndex, endIndex - startIndex);
+                    return $"DC{dcId}";
+                }
+            }
+        }
+        catch (HttpRequestException e)
+        {
+            Console.WriteLine($"请求失败: {e.Message}");
+        }
+    }
+    return null;
 }
 //完整列表
 private static async Task HandleFullListCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
