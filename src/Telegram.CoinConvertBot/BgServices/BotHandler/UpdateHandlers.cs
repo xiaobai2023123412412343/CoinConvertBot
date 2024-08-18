@@ -18643,6 +18643,25 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
         string groupFunctionText = $"<a href=\"{shareLink}\">⚠️ 点击拉我进群，有人修改资料将播报提醒！</a>";
         string uCardText = $"\U0001F4B3 免实名USDT消费卡-享全球消费\U0001F449 /ucard ";
+	    
+        // 检查用户是否已经在关注列表中
+        var user = Followers.FirstOrDefault(u => u.Id == message.From.Id);
+        int userPosition;
+        if (user == null)
+        {
+            // 用户不在列表中，添加用户
+            user = new User { Name = message.From.FirstName, Username = message.From.Username, Id = message.From.Id, FollowTime = DateTime.UtcNow.AddHours(8) };
+            Followers.Add(user);
+            userPosition = Followers.Count; // 新用户的位置是列表的长度
+        }
+        else
+        {
+            // 用户已在列表中，获取位置
+            userPosition = Followers.IndexOf(user) + 1;
+        }
+
+        // 用户编号，加上1000
+        int displayPosition = 1000 + userPosition;	    
 
         string usage = @$"<b>{username}</b> 您好，欢迎使用TRX自助兑换机器人！
 
@@ -18651,6 +18670,8 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
    转账USDT到指定地址，即可秒回TRX！
    如需了解机器人功能介绍，直接点击：/help
 
+{groupFunctionText}
+{uCardText}
 ";
 
         // 创建包含三行，每行4个按钮的虚拟键盘
@@ -18702,7 +18723,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 // 发送分享按钮消息
 return await botClient.SendTextMessageAsync(
     chatId: message.Chat.Id,
-    text: $"{groupFunctionText}\n{uCardText}",
+    text: $"您是第 <b>{displayPosition}</b> 位用户，感谢您的信任和支持！",
     parseMode: ParseMode.Html,
     disableWebPagePreview: true, // 确保禁用链接预览	
     replyMarkup: inlineKeyboard
