@@ -15923,6 +15923,65 @@ if (messageText.Equals("注销") || messageText.Equals("冻结"))
         // Optionally, handle the error further or log it as needed.
     }
 }
+// 检查是否接收到了 /jijianmoshi 消息，收到就发送简单键盘
+if (messageText.StartsWith("/jijianmoshi"))
+{
+    var simpleKeyboard = new ReplyKeyboardMarkup(new[]
+    {
+        new [] // 第一行
+        {
+            new KeyboardButton("U兑TRX"),
+            new KeyboardButton("实时汇率"),
+            new KeyboardButton("查询余额"),
+            new KeyboardButton("能量租赁"),
+        }
+    });
+    simpleKeyboard.ResizeKeyboard = true;
+    simpleKeyboard.OneTimeKeyboard = false;
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "已切换到极简模式，欢迎使用！",
+        replyMarkup: simpleKeyboard
+    );
+}
+
+// 检查是否接收到了 /wanzhengmoshi 消息，收到就发送完整键盘
+if (messageText.StartsWith("/wanzhengmoshi"))
+{
+    var fullKeyboard = new ReplyKeyboardMarkup(new[]
+    {
+        new [] // 第一行
+        {
+            new KeyboardButton("U兑TRX"),
+            new KeyboardButton("实时汇率"),
+            new KeyboardButton("查询余额"),
+            new KeyboardButton("能量租赁"),
+        },
+        new [] // 第二行
+        {
+            new KeyboardButton("外汇助手"),
+            new KeyboardButton("加密货币"),
+            new KeyboardButton("行情监控"),
+            new KeyboardButton("地址监听"),
+        },
+        new [] // 第三行
+        {
+            new KeyboardButton("财富密码"),
+            new KeyboardButton("龙虎榜单"),
+            new KeyboardButton("市场异动"),
+            new KeyboardButton("更多功能"),
+        }
+    });
+    fullKeyboard.ResizeKeyboard = true;
+    fullKeyboard.OneTimeKeyboard = false;
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "已切换到完整模式，欢迎使用！",
+        replyMarkup: fullKeyboard
+    );
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
