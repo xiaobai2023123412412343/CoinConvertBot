@@ -6674,33 +6674,33 @@ private static string GetDcLocation(string dcId)
     }
     return null;
 }
-//获取注册地区
+// 全局HttpClient实例
+private static readonly HttpClient httpClient = new HttpClient();
+
+// 获取注册地区
 private static async Task<string> FetchDcIdFromUsername(string username)
 {
     var url = $"https://t.me/{username}";
-    using (var httpClient = new HttpClient())
+    try
     {
-        try
-        {
-            var response = await httpClient.GetAsync(url);
-            var pageContent = await response.Content.ReadAsStringAsync();
+        var response = await httpClient.GetAsync(url);
+        var pageContent = await response.Content.ReadAsStringAsync();
 
-            var srcIndex = pageContent.IndexOf("src=\"https://cdn");
-            if (srcIndex != -1)
+        var srcIndex = pageContent.IndexOf("src=\"https://cdn");
+        if (srcIndex != -1)
+        {
+            var startIndex = pageContent.IndexOf("cdn", srcIndex) + 3;
+            var endIndex = pageContent.IndexOf('.', startIndex);
+            if (startIndex != -1 && endIndex != -1)
             {
-                var startIndex = pageContent.IndexOf("cdn", srcIndex) + 3;
-                var endIndex = pageContent.IndexOf('.', startIndex);
-                if (startIndex != -1 && endIndex != -1)
-                {
-                    var dcId = pageContent.Substring(startIndex, endIndex - startIndex);
-                    return $"DC{dcId}";
-                }
+                var dcId = pageContent.Substring(startIndex, endIndex - startIndex);
+                return $"DC{dcId}";
             }
         }
-        catch (HttpRequestException e)
-        {
-            Console.WriteLine($"请求失败: {e.Message}");
-        }
+    }
+    catch (HttpRequestException e)
+    {
+        Console.WriteLine($"请求失败: {e.Message}");
     }
     return null;
 }
