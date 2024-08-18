@@ -18644,15 +18644,13 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         string groupFunctionText = $"<a href=\"{shareLink}\">⚠️ 点击拉我进群，有人修改资料将播报提醒！</a>";
         string uCardText = $"\U0001F4B3 免实名USDT消费卡-享全球消费\U0001F449 /ucard ";
 
-        string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
+        string usage = @$"<b>{username}</b> 您好，欢迎使用TRX自助兑换机器人！
 
 使用方法：
    点击菜单 选择 <b>U兑TRX</b>
    转账USDT到指定地址，即可秒回TRX！
    如需了解机器人功能介绍，直接点击：/help
-   
-{groupFunctionText}
-{uCardText}
+
 ";
 
         // 创建包含三行，每行4个按钮的虚拟键盘
@@ -18684,19 +18682,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
         keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后不会消失。
 
-        return await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: usage,
-            parseMode: ParseMode.Html,
-            disableWebPagePreview: true,
-            replyMarkup: keyboard
-        );
-
-        //分享按钮
-/*
-        keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
-        keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后不会消失。
-
+        // 发送欢迎消息
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: usage,
@@ -18705,19 +18691,22 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
             replyMarkup: keyboard
         );
 
-        // 发送分享按钮
-        var inlineKeyboard = new InlineKeyboardMarkup(new[]
-        {
-            InlineKeyboardButton.WithSwitchInlineQuery("♻️分享机器人给好友，极速兑换TRX！", "")
-        });
+// 发送分享按钮
+var inlineKeyboard = new InlineKeyboardMarkup(new[]
+{
+    InlineKeyboardButton.WithCallbackData("简体中文", "中文"),
+    InlineKeyboardButton.WithCallbackData("实时u价", "/usdt"),
+    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "")
+});
 
-        return await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "分享机器人",
-            parseMode: ParseMode.Html,
-            replyMarkup: inlineKeyboard
-        );
-*/ 	    
+// 发送分享按钮消息
+return await botClient.SendTextMessageAsync(
+    chatId: message.Chat.Id,
+    text: $"{groupFunctionText}\n{uCardText}",
+    parseMode: ParseMode.Html,
+    disableWebPagePreview: true, // 确保禁用链接预览	
+    replyMarkup: inlineKeyboard
+);
     }
     else
     {
