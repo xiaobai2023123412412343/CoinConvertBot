@@ -6613,10 +6613,19 @@ public static class GoogleSearchHelper
 //查询用户或群组ID    
 private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Message message)
 {
+    var chatId = message.Chat.Id;
+    var messageId = message.MessageId;
+
+    // 先发送一个正在查询的消息
+    var infoMessage = await botClient.SendTextMessageAsync(
+        chatId: chatId,
+        text: "正在查询，请稍后...",
+        replyToMessageId: messageId
+    );
+
     try
     {
         var userId = message.From.Id;
-        var chatId = message.Chat.Id;
         var userName = message.From.Username != null ? "@" + message.From.Username : "未设置";
         var firstName = message.From.FirstName;
         var lastName = message.From.LastName ?? ""; // 如果没有姓氏，使用空字符串
@@ -6640,20 +6649,32 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
             if (dcLocation != null) responseText += $"\n数据中心：{dcLocation}";
         }
 
-        await botClient.SendTextMessageAsync(
+        // 使用编辑消息功能来更新查询结果
+        await botClient.EditMessageTextAsync(
             chatId: chatId,
+            messageId: infoMessage.MessageId,
             text: responseText,
-            parseMode: ParseMode.Html,
-            replyToMessageId: message.MessageId // 使用触发命令的消息ID
+            parseMode: ParseMode.Html
         );
     }
     catch (ApiRequestException ex)
     {
         Console.WriteLine($"发送消息时发生错误: {ex.Message}");
+        // 如果出错，编辑消息显示错误信息
+        await botClient.EditMessageTextAsync(
+            chatId: chatId,
+            messageId: infoMessage.MessageId,
+            text: $"查询失败: {ex.Message}"
+        );
     }
     catch (Exception ex)
     {
         Console.WriteLine($"发生意外错误: {ex.Message}");
+        await botClient.EditMessageTextAsync(
+            chatId: chatId,
+            messageId: infoMessage.MessageId,
+            text: $"发生意外错误: {ex.Message}"
+        );
     }
 }
 //dc映射表
