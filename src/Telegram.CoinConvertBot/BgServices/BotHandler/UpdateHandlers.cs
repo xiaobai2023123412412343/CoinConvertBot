@@ -6615,6 +6615,7 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
 {
     var chatId = message.Chat.Id;
     var messageId = message.MessageId;
+    var userId = message.From.Id;
 
     // 先发送一个正在查询的消息
     var infoMessage = await botClient.SendTextMessageAsync(
@@ -6625,7 +6626,6 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
 
     try
     {
-        var userId = message.From.Id;
         var userName = message.From.Username != null ? "@" + message.From.Username : "未设置";
         var firstName = message.From.FirstName;
         var lastName = message.From.LastName ?? ""; // 如果没有姓氏，使用空字符串
@@ -6633,7 +6633,7 @@ private static async Task HandleIdCommandAsync(ITelegramBotClient botClient, Mes
         var fullName = $"{firstName} {lastName}".Trim();
         var chatName = message.Chat.Title; // 群聊名称
         var chatType = message.Chat.Type == ChatType.Supergroup ? "超级群组" : "普通群组";    
-        var dcId = userName != "未设置" ? await FetchDcIdFromUsername(userName.TrimStart('@')) : null;
+        var dcId = userName != "未设置" ? await FetchDcIdFromUsername(userName.TrimStart('@'), userId) : null;
         var dcLocation = GetDcLocation(dcId);
 
         var responseText = "";
@@ -6698,9 +6698,18 @@ private static string GetDcLocation(string dcId)
 // 全局HttpClient实例
 private static readonly HttpClient httpClient = new HttpClient();
 
+// 用户ID与数据中心代码的缓存字典
+private static Dictionary<long, string> userDcCache = new Dictionary<long, string>();
+
 // 获取注册地区
-private static async Task<string> FetchDcIdFromUsername(string username)
+private static async Task<string> FetchDcIdFromUsername(string username, long userId)
 {
+    // 检查缓存中是否已有数据中心信息
+    if (userDcCache.TryGetValue(userId, out var cachedDcId))
+    {
+        return cachedDcId;
+    }
+
     var url = $"https://t.me/{username}";
     try
     {
@@ -6715,7 +6724,10 @@ private static async Task<string> FetchDcIdFromUsername(string username)
             if (startIndex != -1 && endIndex != -1)
             {
                 var dcId = pageContent.Substring(startIndex, endIndex - startIndex);
-                return $"DC{dcId}";
+                var result = $"DC{dcId}";
+                // 更新缓存
+                userDcCache[userId] = result;
+                return result;
             }
         }
     }
