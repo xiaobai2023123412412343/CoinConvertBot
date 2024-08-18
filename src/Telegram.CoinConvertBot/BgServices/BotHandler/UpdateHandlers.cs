@@ -18609,7 +18609,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     // 在这里添加一个返回空消息的语句
     return await Task.FromResult<Message>(null);
 }
-//通用回复
+//通用回复 新版
 static async Task<Message> Start(ITelegramBotClient botClient, Message message)
 {
     // 检查消息是否仅为 "/start"，不带任何参数
@@ -18696,7 +18696,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
     InlineKeyboardButton.WithCallbackData("简体中文", "中文"),
     InlineKeyboardButton.WithCallbackData("实时u价", "/usdt"),
-    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "")
+    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n嘎嘎靠谱，快来试试把！\nhttps://t.me/yifanfubot")
 });
 
 // 发送分享按钮消息
@@ -18717,6 +18717,102 @@ return await botClient.SendTextMessageAsync(
     // 如果需要，这里还可以返回一个消息，或者仅仅返回null表示不做任何响应
     return null;
 }
+
+/*	    
+//通用回复  旧版
+static async Task<Message> Start(ITelegramBotClient botClient, Message message)
+{
+    // 检查消息是否仅为 "/start"，不带任何参数
+    if (message.Text.Trim().Equals("/start"))
+    {
+        long userId = message.From.Id;
+        var userProfilePhotos = await botClient.GetUserProfilePhotosAsync(userId);
+        if (userProfilePhotos.Photos.Length > 0 && userProfilePhotos.Photos[0].Length > 0)
+        {
+            // 选择最小尺寸的头像版本
+            var smallestPhotoSize = userProfilePhotos.Photos[0][0];
+            await botClient.SendPhotoAsync(
+                chatId: message.Chat.Id,
+                photo: new InputOnlineFile(smallestPhotoSize.FileId)
+            );
+        }
+        else
+        {
+            // 用户没有头像或无法获取，发送默认GIF
+            string gifUrl = "https://i.postimg.cc/0QKYJ0Cb/333.gif";
+            await botClient.SendAnimationAsync(
+                chatId: message.Chat.Id,
+                animation: gifUrl
+            );
+        }
+
+        // 发送欢迎消息和键盘
+        string username = message.From.FirstName;
+        string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+        string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+        string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
+        string groupFunctionText = $"<a href=\"{shareLink}\">⚠️ 点击拉我进群，有人修改资料将播报提醒！</a>";
+        string uCardText = $"\U0001F4B3 免实名USDT消费卡-享全球消费\U0001F449 /ucard ";
+
+        string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
+
+使用方法：
+   点击菜单 选择 <b>U兑TRX</b>
+   转账USDT到指定地址，即可秒回TRX！
+   如需了解机器人功能介绍，直接点击：/help
+   
+{groupFunctionText}
+{uCardText}
+";
+
+        // 创建包含三行，每行4个按钮的虚拟键盘
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
+            {
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("查询余额"),
+                new KeyboardButton("能量租赁"),
+            },   
+            new [] // 第二行
+            {
+                new KeyboardButton("外汇助手"),
+                new KeyboardButton("加密货币"),
+                new KeyboardButton("行情监控"),
+                new KeyboardButton("地址监听"),
+            },   
+            new [] // 第三行
+            {
+                new KeyboardButton("财富密码"),
+                new KeyboardButton("龙虎榜单"),
+                new KeyboardButton("市场异动"),
+                new KeyboardButton("更多功能"),
+            }
+        });		
+
+        keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
+        keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后不会消失。
+
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: usage,
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true,
+            replyMarkup: keyboard
+        );
+	    
+    }
+    else
+    {
+        // 如果命令是 "/start" 但带有参数，如 "/start provip"，则不发送
+        // 这里可以添加处理 "/start provip" 的逻辑，或者什么也不做
+        // 例如，可以在这里处理深度链接逻辑
+    }
+    // 如果需要，这里还可以返回一个消息，或者仅仅返回null表示不做任何响应
+    return null;
+}
+*/ 	    
         //估价
        static async Task<Message> Valuation(ITelegramBotClient botClient, Message message)
 {
