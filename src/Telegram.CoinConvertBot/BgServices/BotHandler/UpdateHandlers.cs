@@ -6682,10 +6682,10 @@ private static string GetDcLocation(string dcId)
 {
     var dcMap = new Dictionary<string, string>
     {
-        {"DC1", "美国迈阿密"},
-        {"DC2", "荷兰阿姆斯特丹"},
-        {"DC3", "美国迈阿密"},
-        {"DC4", "荷兰阿姆斯特丹"},
+        {"DC1", "美国 迈阿密"},
+        {"DC2", "荷兰 阿姆斯特丹"},
+        {"DC3", "美国 迈阿密"},
+        {"DC4", "荷兰 阿姆斯特丹"},
         {"DC5", "新加坡"}
     };
 
