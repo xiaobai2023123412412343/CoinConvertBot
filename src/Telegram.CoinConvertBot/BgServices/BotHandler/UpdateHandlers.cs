@@ -3910,11 +3910,19 @@ public class OkxPriceFetcher
 {
     private const string BuyApi = "https://www.okx.com/v3/c2c/tradingOrders/books?quoteCurrency=cny&baseCurrency=usdt&side=buy&paymentMethod";
     private const string SellApi = "https://www.okx.com/v3/c2c/tradingOrders/books?quoteCurrency=cny&baseCurrency=usdt&side=sell&paymentMethod";
+    private static Dictionary<string, string> priceCache = new Dictionary<string, string>();
+    private static DateTime lastUpdateTime = DateTime.MinValue;
 
     public static async Task<string> GetUsdtPriceAsync(string userCommand)
     {
         try
         {
+            // 检查缓存是否有效
+            if (DateTime.Now - lastUpdateTime < TimeSpan.FromSeconds(600) && priceCache.ContainsKey("result"))
+            {
+                return priceCache["result"];
+            }
+
             using (var httpClient = new HttpClient())
             {
                 Console.WriteLine("正在获取买入价格...");
@@ -3925,46 +3933,51 @@ public class OkxPriceFetcher
                 var sellResponse = await httpClient.GetStringAsync(SellApi);
                 var sellData = JsonDocument.Parse(sellResponse).RootElement.GetProperty("data").GetProperty("sell").EnumerateArray().Take(5);
 
-            string result = "<b>okx实时U价 TOP5</b> \n\n";
-            result += "<b>buy：</b>\n";
-            string[] emojis = new string[] { "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣" };
-            int count = 0;
-            //foreach (var item in buyData) //买方出价，相当于你卖
-            foreach (var item in sellData)  //卖方出价，相当于你买  
-            {
-                string publicUserId = item.GetProperty("publicUserId").GetString();
-                string merchantUrl = $"https://www.okx.com/cn/p2p/ads-merchant?publicUserId={publicUserId}";
-                result += $"{emojis[count]}：{item.GetProperty("price")}   <a href=\"{merchantUrl}\">{item.GetProperty("nickName")}</a>\n";
-                count++;
-            }
+                string result = "<b>okx实时U价 TOP5</b> \n\n";
+                result += "<b>buy：</b>\n";
+                string[] emojis = new string[] { "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣" };
+                int count = 0;
+                foreach (var item in sellData)  //卖方出价，相当于你买  
+                {
+                    string publicUserId = item.GetProperty("publicUserId").GetString();
+                    string merchantUrl = $"https://www.okx.com/cn/p2p/ads-merchant?publicUserId={publicUserId}";
+                    result += $"{emojis[count]}：{item.GetProperty("price")}   <a href=\"{merchantUrl}\">{item.GetProperty("nickName")}</a>\n";
+                    count++;
+                }
 
-            result += "----------------------------------------\n";
-            result += "<b>sell:</b>\n";
-            count = 0;
-            foreach (var item in buyData)   //买方出价，相当于你卖 
-            //foreach (var item in sellData) //卖方出价，相当于你买
-            {
-                string publicUserId = item.GetProperty("publicUserId").GetString();
-                string merchantUrl = $"https://www.okx.com/cn/p2p/ads-merchant?publicUserId={publicUserId}";
-                result += $"{emojis[count]}：{item.GetProperty("price")}   <a href=\"{merchantUrl}\">{item.GetProperty("nickName")}</a>\n";
-                count++;
-            }
+                result += "----------------------------------------\n";
+                result += "<b>sell:</b>\n";
+                count = 0;
+                foreach (var item in buyData)   //买方出价，相当于你卖 
+                {
+                    string publicUserId = item.GetProperty("publicUserId").GetString();
+                    string merchantUrl = $"https://www.okx.com/cn/p2p/ads-merchant?publicUserId={publicUserId}";
+                    result += $"{emojis[count]}：{item.GetProperty("price")}   <a href=\"{merchantUrl}\">{item.GetProperty("nickName")}</a>\n";
+                    count++;
+                }
 
                 // 添加当前查询时间（北京时间）
                 var beijingTime = DateTimeOffset.Now.ToOffset(TimeSpan.FromHours(8));
                 result += $"\n查询时间：{beijingTime:yyyy-MM-dd HH:mm:ss}";
 
+                // 更新缓存
+                priceCache["result"] = result;
+                lastUpdateTime = DateTime.Now;
+                // 设置随机时间更新缓存
+                Task.Delay(new Random().Next(550000, 600000)).ContinueWith(t => priceCache.Clear());
 
                 return result;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            // 清空缓存并停止倒计时
+            priceCache.Clear();
+            return "api异常，请稍后重试！";
         }
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"An error occurred: {ex.Message}");
-        return "api异常，请稍后重试！";
-    }
-    }
-}    
+}
 //保存群聊资料   
 public static string EscapeHtml(string text)
 {
