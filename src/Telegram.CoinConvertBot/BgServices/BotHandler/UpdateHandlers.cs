@@ -18632,13 +18632,13 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
             
 <b>您的优惠汇率：</b>                
 <b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>            
-————————————————————<code>
-  10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}  TRX ≈ {(5m * 2) * usdtPrice}   CNY
-  50 USDT = {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX ≈ {(5m * 10) * usdtPrice}  CNY
- 100 USDT = {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX ≈ {(5m * 20) * usdtPrice}  CNY
- 300 USDT = {(5m * 60).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX ≈ {(5m * 60) * usdtPrice} CNY		
- 500 USDT = {(5m * 100).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX ≈ {(5m * 100) * usdtPrice} CNY
-1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX ≈ {(5m * 200) * usdtPrice} CNY
+—————————————————<code>
+  10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}  TRX 
+  50 USDT = {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
+ 100 USDT = {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
+ 300 USDT = {(5m * 60).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX 	
+ 500 USDT = {(5m * 100).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX
+1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX
 </code>
 <b>机器人收款地址:(↓点击自动复制↓</b>):
         
@@ -18646,7 +18646,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     
 <b>注意：只支持 {MinUSDT} USDT以上的金额兑换！</b>   
 <b>给机器人收款地址转u自动原地址秒回TRX！</b> 
-————————————————————    
+—————————————————    
 转账费用：（浮动）
 对方地址有u：13.3959 TRX - 13.7409 TRX 
 对方地址无u：27.2559 TRX - 27.6009 TRX 
