@@ -3920,16 +3920,18 @@ public class OkxPriceFetcher
             // 检查缓存是否有效
             if (DateTime.Now - lastUpdateTime < TimeSpan.FromSeconds(600) && priceCache.ContainsKey("result"))
             {
+                //Console.WriteLine("仓库数据有效，使用仓库数据...");
                 return priceCache["result"];
             }
 
+            //Console.WriteLine("仓库无数据，立即从api获取...");
             using (var httpClient = new HttpClient())
             {
-                Console.WriteLine("正在获取买入价格...");
+                //Console.WriteLine("正在获取买入价格...");
                 var buyResponse = await httpClient.GetStringAsync(BuyApi);
                 var buyData = JsonDocument.Parse(buyResponse).RootElement.GetProperty("data").GetProperty("buy").EnumerateArray().Take(5);
 
-                Console.WriteLine("正在获取售出价格...");
+                //Console.WriteLine("正在获取售出价格...");
                 var sellResponse = await httpClient.GetStringAsync(SellApi);
                 var sellData = JsonDocument.Parse(sellResponse).RootElement.GetProperty("data").GetProperty("sell").EnumerateArray().Take(5);
 
@@ -3963,8 +3965,11 @@ public class OkxPriceFetcher
                 // 更新缓存
                 priceCache["result"] = result;
                 lastUpdateTime = DateTime.Now;
+
                 // 设置随机时间更新缓存
-                Task.Delay(new Random().Next(550000, 600000)).ContinueWith(t => priceCache.Clear());
+                int delaySeconds = new Random().Next(550, 600);
+                //Console.WriteLine($"设置倒计时{delaySeconds}秒更新获取数据");
+                Task.Delay(delaySeconds * 1000).ContinueWith(t => priceCache.Clear());
 
                 return result;
             }
