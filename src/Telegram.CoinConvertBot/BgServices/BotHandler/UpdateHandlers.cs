@@ -215,10 +215,15 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                     message += $"<code>{symbol}</code>/USDT    {Math.Round(change.Value * 100, 3)}%\n";
                 }
 
+                // 创建内联按钮
+                var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("取消资金费异常提醒！", "/quxiaozijinfei"));
+
+                // 发送消息并附加按钮
                 botClient.SendTextMessageAsync(
                     chatId: userId,
                     text: message,
-                    parseMode: ParseMode.Html
+                    parseMode: ParseMode.Html,
+                    replyMarkup: keyboard
                 ).Wait(); // 使用Wait确保异步代码在这里同步执行
                 Console.WriteLine($"通知已发送至用户 {userId}。");
             }
