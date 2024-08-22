@@ -216,7 +216,7 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                 }
 
                 // 创建内联按钮
-                var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("取消资金费异常提醒！", "/quxiaozijinfei"));
+                var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("取消资金费异常提醒", "/quxiaozijinfei"));
 
                 // 发送消息并附加按钮
                 botClient.SendTextMessageAsync(
