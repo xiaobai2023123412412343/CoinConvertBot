@@ -5322,17 +5322,33 @@ public static class BinanceFundingRates
 
     public static async Task<string> GetFundingRates()
     {
-        var response = await httpClient.GetAsync("https://fapi.binance.com/fapi/v1/premiumIndex");
-        var data = JsonSerializer.Deserialize<List<FundingRate>>(await response.Content.ReadAsStringAsync());
+        try
+        {
+            // 检查本地缓存是否有数据
+            if (!fundingRates.Any())
+            {
+                //Console.WriteLine("本地缓存无数据，立即获取数据");
+                await FetchAndUpdateFundingRates(); // 从API获取数据并更新本地缓存
+            }
+            else
+            {
+                //Console.WriteLine("从本地缓存获取数据成功！");
+            }
+        }
+        catch (Exception ex)
+        {
+            //Console.WriteLine($"获取资金费数据失败: {ex.Message}");
+            return "获取资金费数据失败，请稍后再试。";
+        }
 
-        var negativeFundingRates = data
-            .Select(x => new { symbol = x.symbol.Replace("USDT", "/USDT"), lastFundingRate = double.Parse(x.lastFundingRate) })
+        var negativeFundingRates = fundingRates
+            .Select(x => new { symbol = x.Key.Replace("USDT", "/USDT"), lastFundingRate = x.Value })
             .Where(x => Math.Abs(x.lastFundingRate) >= 0.00001)
             .OrderBy(x => x.lastFundingRate)
             .Take(5);
 
-        var positiveFundingRates = data
-            .Select(x => new { symbol = x.symbol.Replace("USDT", "/USDT"), lastFundingRate = double.Parse(x.lastFundingRate) })
+        var positiveFundingRates = fundingRates
+            .Select(x => new { symbol = x.Key.Replace("USDT", "/USDT"), lastFundingRate = x.Value })
             .Where(x => x.lastFundingRate >= 0.00001)
             .OrderByDescending(x => x.lastFundingRate)
             .Take(5);
@@ -5352,6 +5368,37 @@ public static class BinanceFundingRates
         }
 
         return result;
+    }
+
+    // 从API获取资金费数据并更新本地缓存
+    private static async Task FetchAndUpdateFundingRates()
+    {
+        try
+        {
+            var response = await httpClient.GetAsync("https://fapi.binance.com/fapi/v1/premiumIndex");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var data = JsonSerializer.Deserialize<List<FundingRate>>(content);
+                foreach (var item in data)
+                {
+                    if (item.symbol != "TRXUSDT") // 排除 TRX/USDT
+                    {
+                        fundingRates[item.symbol] = double.Parse(item.lastFundingRate);
+                    }
+                }
+            }
+            else
+            {
+                //Console.WriteLine($"API调用失败: 状态码 {response.StatusCode}");
+                throw new Exception("API调用失败");
+            }
+        }
+        catch (Exception ex)
+        {
+            //Console.WriteLine($"在更新资金费数据时发生错误: {ex.Message}");
+            throw; // 可选：重新抛出异常，如果需要在调用栈上层进一步处理
+        }
     }
 }
 //地址监听    
