@@ -14002,25 +14002,31 @@ if (zijinCommandRegex.IsMatch(message.Text))
         zijinUserQueries[userId] = (count + 1, today);
     }
 
-    if (allowQuery)
+if (allowQuery)
+{
+    try
     {
-        try
+        var fundingRates = await BinanceFundingRates.GetFundingRates();
+        var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
         {
-            var fundingRates = await BinanceFundingRates.GetFundingRates();
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: fundingRates,
-                parseMode: ParseMode.Html
-            );
-        }
-        catch (Exception ex)
-        {
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: $"获取资金费率时发生错误：{ex.Message}"
-            );
-        }
+            InlineKeyboardButton.WithCallbackData("订阅资金费异常提醒", "/dingyuezijinfei")
+        });
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: fundingRates,
+            replyMarkup: keyboard,
+            parseMode: ParseMode.Html
+        );
     }
+    catch (Exception ex)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"获取资金费率时发生错误：{ex.Message}"
+        );
+    }
+}
 } 
 // 检查是否接收到了 z0 或 /usdt 消息，收到就查询USDT价格
 if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt")| messageText.StartsWith("zo"))
