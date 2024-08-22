@@ -140,7 +140,7 @@ public static void InitializeFundingRateTimer(ITelegramBotClient botClient)
 private static void SetRandomTimerInterval()
 {
     var random = new Random();
-    var interval = random.Next(600000, 1200001); // 随机10-20分钟更新  600-1200秒
+    var interval = random.Next(60000, 120001); // 随机1-2分钟更新  60-120秒
     fundingRateTimer.Interval = interval;
 }
 // 从Binance API获取资金费数据并更新字典
@@ -198,14 +198,29 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
     try
     {
         var now = DateTime.Now;
-        foreach (var userId in fundingRateNotificationUserIds.Keys)
+        List<long> usersToRemove = new List<long>(); // 用于存储需要移除的用户ID
+
+        Console.WriteLine("开始检查用户和发送通知...");
+
+        foreach (var userId in fundingRateNotificationUserIds.Keys.ToList()) // 使用ToList确保在迭代时可以修改原字典
         {
+            Console.WriteLine($"检查用户 {userId} 的VIP状态...");
+
+            // 检查用户是否是VIP
+            if (!VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime) || expiryTime < now)
+            {
+                // 如果用户不是VIP或VIP已过期
+                usersToRemove.Add(userId); // 添加到移除列表
+                Console.WriteLine($"用户 {userId} 不是VIP或VIP已过期，将被移除。");
+                continue; // 跳过当前循环，不通知此用户
+            }
+
             string message = "<b>资金费异常提醒：</b>\n\n";
             bool shouldNotify = false;
 
             foreach (var rate in fundingRates)
             {
-                if (Math.Abs(rate.Value) >= 0.001)
+                if (Math.Abs(rate.Value) >= 0.001) // 检查是否达到通知阈值
                 {
                     var key = (userId, rate.Key);
                     if (!lastNotifiedTimes.ContainsKey(key) || now - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
@@ -214,10 +229,7 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                         message += $"<code>{symbol}</code>/USDT    {Math.Round(rate.Value * 100, 3)}%\n";
                         lastNotifiedTimes[key] = now; // 更新通知时间
                         shouldNotify = true;
-                    }
-                    else
-                    {
-                        //Console.WriteLine($"{rate.Key} 在 {lastNotifiedTimes[key]:HH:mm:ss} 播报过，本次不下发提醒！");
+                        Console.WriteLine($"准备向用户 {userId} 发送关于 {symbol} 的通知。");
                     }
                 }
             }
@@ -231,13 +243,20 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                     parseMode: ParseMode.Html,
                     replyMarkup: keyboard
                 ).Wait();
-                //Console.WriteLine($"通知已发送至用户 {userId}。");
+                Console.WriteLine($"通知已发送给用户 {userId}。");
             }
+        }
+
+        // 从播报字典中移除非VIP或VIP已过期的用户
+        foreach (var user in usersToRemove)
+        {
+            fundingRateNotificationUserIds.Remove(user);
+            Console.WriteLine($"用户 {user} 已从通知字典中移除。");
         }
     }
     catch (Exception ex)
     {
-        //Console.WriteLine($"在发送通知时发生错误: {ex.Message}");
+        Console.WriteLine($"在发送通知时发生错误: {ex.Message}");
     }
 }
 // 15分钟K线数据监控
@@ -13914,6 +13933,7 @@ if (messageText.StartsWith("/dingyuezijinfei"))
         if (!fundingRateNotificationUserIds.ContainsKey(userId))
         {
             fundingRateNotificationUserIds.Add(userId, true);
+            Console.WriteLine($"用户 {userId} 添加到通知字典。");
         }
 
         await botClient.SendTextMessageAsync(
