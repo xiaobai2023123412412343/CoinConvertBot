@@ -216,7 +216,7 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                 {
                     // 如果当前北京时间超过了到期北京时间
                     usersToRemove.Add(userId); // 添加到移除列表
-                   // Console.WriteLine($"用户 {userId} 的VIP已过期，将被移除。");
+                    //Console.WriteLine($"用户 {userId} 的VIP已过期，将被移除。");
                     continue; // 跳过当前循环，不通知此用户
                 }
             }
@@ -228,27 +228,34 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                 continue;
             }
 
-            string message = "<b>资金费异常提醒：</b>\n\n";
-            bool shouldNotify = false;
-
+            List<(string symbol, double rate)> ratesToNotify = new List<(string symbol, double rate)>();
             foreach (var rate in fundingRates)
             {
-                if (Math.Abs(rate.Value) >= 0.005) // 检查是否达到通知阈值
+                if (Math.Abs(rate.Value) >= 0.001) // 检查是否达到通知阈值
                 {
                     var key = (userId, rate.Key);
                     if (!lastNotifiedTimes.ContainsKey(key) || beijingTimeNow - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
                     {
-                        string symbol = rate.Key.Replace("USDT", "");
-                        message += $"<code>{symbol}</code>/USDT    {Math.Round(rate.Value * 100, 3)}%\n";
+                        ratesToNotify.Add((rate.Key.Replace("USDT", ""), rate.Value));
                         lastNotifiedTimes[key] = beijingTimeNow; // 更新通知时间
-                        shouldNotify = true;
-                       // Console.WriteLine($"准备向用户 {userId} 发送关于 {symbol} 的通知。");
                     }
                 }
             }
 
-            if (shouldNotify && !string.IsNullOrWhiteSpace(message))
+            if (ratesToNotify.Count > 0)
             {
+                // 对资金费率进行排序，正数从大到小，负数从大到小
+                var sortedRates = ratesToNotify
+                    .OrderByDescending(r => r.rate > 0)
+                    .ThenByDescending(r => Math.Abs(r.rate))
+                    .ToList();
+
+                string message = "<b>资金费异常提醒：</b>\n\n";
+                foreach (var (symbol, rate) in sortedRates)
+                {
+                    message += $"<code>{symbol}</code>/USDT    {Math.Round(rate * 100, 3)}%\n";
+                }
+
                 var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("取消资金费异常提醒", "/quxiaozijinfei"));
                 botClient.SendTextMessageAsync(
                     chatId: userId,
