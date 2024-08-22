@@ -140,7 +140,7 @@ public static void InitializeFundingRateTimer(ITelegramBotClient botClient)
 private static void SetRandomTimerInterval()
 {
     var random = new Random();
-    var interval = random.Next(60000, 120001); // 随机1-2分钟更新  60-120秒
+    var interval = random.Next(600000, 1200001); // 随机10-20分钟更新  600-1200秒
     fundingRateTimer.Interval = interval;
 }
 // 从Binance API获取资金费数据并更新字典
@@ -233,7 +233,7 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
 
             foreach (var rate in fundingRates)
             {
-                if (Math.Abs(rate.Value) >= 0.001) // 检查是否达到通知阈值
+                if (Math.Abs(rate.Value) >= 0.005) // 检查是否达到通知阈值
                 {
                     var key = (userId, rate.Key);
                     if (!lastNotifiedTimes.ContainsKey(key) || beijingTimeNow - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
