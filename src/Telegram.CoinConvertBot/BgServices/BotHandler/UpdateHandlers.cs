@@ -140,7 +140,7 @@ public static void InitializeFundingRateTimer(ITelegramBotClient botClient)
 private static void SetRandomTimerInterval()
 {
     var random = new Random();
-    var interval = random.Next(600000, 1200001); // 60,000 to 120,000 milliseconds
+    var interval = random.Next(600000, 1200001); // 随机10-20分钟更新  600-1200秒
     fundingRateTimer.Interval = interval;
 }
 // 从Binance API获取资金费数据并更新字典
