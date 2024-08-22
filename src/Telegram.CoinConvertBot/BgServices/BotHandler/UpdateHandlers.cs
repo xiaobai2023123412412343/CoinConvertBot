@@ -13849,7 +13849,57 @@ if (messageText.Contains("作者") || messageText.Contains("管理") || messageT
         replyMarkup: inlineKeyboard // 添加这行代码
     );
 }	
-   
+if (messageText.StartsWith("/dingyuezijinfei"))
+{
+    var userId = message.From.Id;
+
+    // 检查用户是否是VIP
+    if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime) && DateTime.UtcNow <= expiryTime)
+    {
+        // 用户是VIP，添加到通知字典
+        if (!fundingRateNotificationUserIds.ContainsKey(userId))
+        {
+            fundingRateNotificationUserIds.Add(userId, true);
+        }
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "订阅成功！当资金费发生异常时将提醒您！",
+            parseMode: ParseMode.Html
+        );
+    }
+    else
+    {
+        // 用户不是VIP，提醒订阅会员
+        var keyboard = new InlineKeyboardMarkup(new InlineKeyboardButton[]
+        {
+            InlineKeyboardButton.WithCallbackData("立即订阅 FF Pro会员", "/provip")
+        });
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "订阅失败，您还不是 FF Pro会员，请订阅会员后重试！",
+            replyMarkup: keyboard,
+            parseMode: ParseMode.Html
+        );
+    }
+}
+if (messageText.StartsWith("/quxiaozijinfei"))
+{
+    var userId = message.From.Id;
+
+    // 将用户从通知字典中移除
+    if (fundingRateNotificationUserIds.ContainsKey(userId))
+    {
+        fundingRateNotificationUserIds.Remove(userId);
+    }
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "取消成功，您将暂停接收资金费异常提醒！",
+        parseMode: ParseMode.Html
+    );
+}   
 // 修改正则表达式来同时匹配 "/zijin" 命令和 "资金费率" 文本
 var zijinCommandRegex = new Regex(@"^(/zijin(@\w+)?|资金费率)$", RegexOptions.IgnoreCase);
 if (zijinCommandRegex.IsMatch(message.Text))
