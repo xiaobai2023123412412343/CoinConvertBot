@@ -197,22 +197,35 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
 {
     try
     {
-        var now = DateTime.Now;
+        TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+        DateTime beijingTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaZone);
+
         List<long> usersToRemove = new List<long>(); // 用于存储需要移除的用户ID
 
-        Console.WriteLine("开始检查用户和发送通知...");
+        //Console.WriteLine("开始检查用户和发送通知...");
 
         foreach (var userId in fundingRateNotificationUserIds.Keys.ToList()) // 使用ToList确保在迭代时可以修改原字典
         {
-            Console.WriteLine($"检查用户 {userId} 的VIP状态...");
+            //Console.WriteLine($"检查用户 {userId} 的VIP状态...");
 
-            // 检查用户是否是VIP
-            if (!VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime) || expiryTime < now)
+            if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime))
             {
-                // 如果用户不是VIP或VIP已过期
-                usersToRemove.Add(userId); // 添加到移除列表
-                Console.WriteLine($"用户 {userId} 不是VIP或VIP已过期，将被移除。");
-                continue; // 跳过当前循环，不通知此用户
+                DateTime beijingTimeExpiry = TimeZoneInfo.ConvertTimeFromUtc(expiryTime, chinaZone);
+
+                if (beijingTimeNow > beijingTimeExpiry)
+                {
+                    // 如果当前北京时间超过了到期北京时间
+                    usersToRemove.Add(userId); // 添加到移除列表
+                   // Console.WriteLine($"用户 {userId} 的VIP已过期，将被移除。");
+                    continue; // 跳过当前循环，不通知此用户
+                }
+            }
+            else
+            {
+                // 如果无法获取VIP状态或其他原因导致检查失败
+                usersToRemove.Add(userId);
+                //Console.WriteLine($"无法确认用户 {userId} 的VIP状态，将被移除。");
+                continue;
             }
 
             string message = "<b>资金费异常提醒：</b>\n\n";
@@ -223,13 +236,13 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                 if (Math.Abs(rate.Value) >= 0.001) // 检查是否达到通知阈值
                 {
                     var key = (userId, rate.Key);
-                    if (!lastNotifiedTimes.ContainsKey(key) || now - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
+                    if (!lastNotifiedTimes.ContainsKey(key) || beijingTimeNow - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
                     {
                         string symbol = rate.Key.Replace("USDT", "");
                         message += $"<code>{symbol}</code>/USDT    {Math.Round(rate.Value * 100, 3)}%\n";
-                        lastNotifiedTimes[key] = now; // 更新通知时间
+                        lastNotifiedTimes[key] = beijingTimeNow; // 更新通知时间
                         shouldNotify = true;
-                        Console.WriteLine($"准备向用户 {userId} 发送关于 {symbol} 的通知。");
+                       // Console.WriteLine($"准备向用户 {userId} 发送关于 {symbol} 的通知。");
                     }
                 }
             }
@@ -243,7 +256,7 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                     parseMode: ParseMode.Html,
                     replyMarkup: keyboard
                 ).Wait();
-                Console.WriteLine($"通知已发送给用户 {userId}。");
+                //Console.WriteLine($"通知已发送给用户 {userId}。");
             }
         }
 
@@ -251,12 +264,12 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
         foreach (var user in usersToRemove)
         {
             fundingRateNotificationUserIds.Remove(user);
-            Console.WriteLine($"用户 {user} 已从通知字典中移除。");
+            //Console.WriteLine($"用户 {user} 已从通知字典中移除。");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"在发送通知时发生错误: {ex.Message}");
+        //Console.WriteLine($"在发送通知时发生错误: {ex.Message}");
     }
 }
 // 15分钟K线数据监控
