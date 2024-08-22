@@ -120,31 +120,29 @@ public static void InitializeFundingRateTimer(ITelegramBotClient botClient)
 {
     if (fundingRateTimer == null)
     {
-        // 首次启动时立即执行一次数据更新
+        fundingRateTimer = new System.Timers.Timer();
         FetchAndUpdateFundingRates(botClient).Wait();
-
-        // 计算当前时间到下一个整点的时间差
-        var now = DateTime.Now;
-        var nextHour = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0).AddHours(1);
-        var delay = (int)(nextHour - now).TotalMilliseconds;
-
-        // 设置定时器，首次延迟到下一个整点，之后每小时触发一次
-        fundingRateTimer = new System.Timers.Timer(delay);
+        SetRandomTimerInterval();
         fundingRateTimer.Elapsed += async (sender, e) => 
         {
-            // 重置定时器为每小时触发一次
-            fundingRateTimer.Interval = 3600000; // 3600000 milliseconds = 1 hour
+            SetRandomTimerInterval();
             await FetchAndUpdateFundingRates(botClient);
         };
         fundingRateTimer.Start();
-        Console.WriteLine("定时器初始化并启动成功。首次延迟：{0}ms，之后每小时更新一次。", delay);
+        //Console.WriteLine("定时器初始化并启动成功。");
     }
     else
     {
-        Console.WriteLine("定时器已经初始化，不需要重复启动。");
+        //Console.WriteLine("定时器已经初始化，不需要重复启动。");
     }
 }
 
+private static void SetRandomTimerInterval()
+{
+    var random = new Random();
+    var interval = random.Next(600000, 1200001); // 60,000 to 120,000 milliseconds
+    fundingRateTimer.Interval = interval;
+}
 // 从Binance API获取资金费数据并更新字典
 private static async Task FetchAndUpdateFundingRates(ITelegramBotClient botClient)
 {
@@ -156,7 +154,7 @@ private static async Task FetchAndUpdateFundingRates(ITelegramBotClient botClien
         {
             var content = await response.Content.ReadAsStringAsync();
             var data = JsonSerializer.Deserialize<List<FundingRate>>(content);
-            Console.WriteLine("成功获取资金费数据。");
+            //Console.WriteLine("成功获取资金费数据。");
 
             // 更新字典，排除特定币种
             foreach (var item in data)
@@ -172,13 +170,13 @@ private static async Task FetchAndUpdateFundingRates(ITelegramBotClient botClien
         }
         else
         {
-            Console.WriteLine($"API调用失败: 状态码 {response.StatusCode}");
+            //Console.WriteLine($"API调用失败: 状态码 {response.StatusCode}");
             throw new Exception("API调用失败");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"获取资金费数据时发生错误: {ex.Message}");
+        //Console.WriteLine($"获取资金费数据时发生错误: {ex.Message}");
         // 停止定时器并清空字典
         fundingRateTimer.Stop();
         fundingRates.Clear();
@@ -191,51 +189,55 @@ private static async Task FetchAndUpdateFundingRates(ITelegramBotClient botClien
         throw; // 可选：重新抛出异常，如果需要在调用栈上层进一步处理
     }
 }
+// 字典，用于跟踪最后一次通知时间，针对每个用户和币种的组合
+private static Dictionary<(long, string), DateTime> lastNotifiedTimes = new Dictionary<(long, string), DateTime>();
+
 // 检查资金费变化并通知用户
 private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
 {
     try
     {
-        var significantChanges = fundingRates
-            .Where(rate => Math.Abs(rate.Value) >= 0.001)
-            .OrderByDescending(rate => rate.Value >= 0) // 正数在前
-            .ThenByDescending(rate => Math.Abs(rate.Value)) // 按绝对值大小排序
-            .ToList();
-
-        if (significantChanges.Any())
+        var now = DateTime.Now;
+        foreach (var userId in fundingRateNotificationUserIds.Keys)
         {
-            Console.WriteLine("检测到显著的资金费变化，准备发送通知。");
-            foreach (var userId in fundingRateNotificationUserIds.Keys)
+            string message = "<b>资金费异常提醒：</b>\n\n";
+            bool shouldNotify = false;
+
+            foreach (var rate in fundingRates)
             {
-                string message = "<b>资金费异常提醒：</b>\n\n";
-                foreach (var change in significantChanges)
+                if (Math.Abs(rate.Value) >= 0.001)
                 {
-                    // 分割币种和USDT，使币种名称可点击复制
-                    string symbol = change.Key.Replace("USDT", "");
-                    message += $"<code>{symbol}</code>/USDT    {Math.Round(change.Value * 100, 3)}%\n";
+                    var key = (userId, rate.Key);
+                    if (!lastNotifiedTimes.ContainsKey(key) || now - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
+                    {
+                        string symbol = rate.Key.Replace("USDT", "");
+                        message += $"<code>{symbol}</code>/USDT    {Math.Round(rate.Value * 100, 3)}%\n";
+                        lastNotifiedTimes[key] = now; // 更新通知时间
+                        shouldNotify = true;
+                    }
+                    else
+                    {
+                        //Console.WriteLine($"{rate.Key} 在 {lastNotifiedTimes[key]:HH:mm:ss} 播报过，本次不下发提醒！");
+                    }
                 }
+            }
 
-                // 创建内联按钮
+            if (shouldNotify && !string.IsNullOrWhiteSpace(message))
+            {
                 var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("取消资金费异常提醒", "/quxiaozijinfei"));
-
-                // 发送消息并附加按钮
                 botClient.SendTextMessageAsync(
                     chatId: userId,
                     text: message,
                     parseMode: ParseMode.Html,
                     replyMarkup: keyboard
-                ).Wait(); // 使用Wait确保异步代码在这里同步执行
-                Console.WriteLine($"通知已发送至用户 {userId}。");
+                ).Wait();
+                //Console.WriteLine($"通知已发送至用户 {userId}。");
             }
-        }
-        else
-        {
-            Console.WriteLine("未检测到显著的资金费变化。");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"在发送通知时发生错误: {ex.Message}");
+        //Console.WriteLine($"在发送通知时发生错误: {ex.Message}");
     }
 }
 // 15分钟K线数据监控
