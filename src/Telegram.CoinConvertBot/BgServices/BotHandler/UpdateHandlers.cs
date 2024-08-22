@@ -13946,7 +13946,7 @@ if (messageText.StartsWith("/dingyuezijinfei"))
         if (!fundingRateNotificationUserIds.ContainsKey(userId))
         {
             fundingRateNotificationUserIds.Add(userId, true);
-            Console.WriteLine($"用户 {userId} 添加到通知字典。");
+            //Console.WriteLine($"用户 {userId} 添加到通知字典。");
         }
 
         await botClient.SendTextMessageAsync(
