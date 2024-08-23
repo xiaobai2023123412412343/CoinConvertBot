@@ -81,6 +81,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 //Console.WriteLine($"API URL: {apiUrl}, Response status code: {response.StatusCode}");//增加调试输出日志输出服务器日志 都可以用这个方法
 //                "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
 //                "f49353bd-db65-4719-a56c-064b2eb231bf",
+//                 "587f64a1-43d5-40f2-9115-7d3c66b0459a",
 //                "92854974-68da-4fd8-9e50-3948c1e6fa7e"     ok链api     https://www.oklink.com/cn/account/my-api  注册
 // 指数秘钥  private static readonly List<string> licences = new List<string> { "504ddb535666d9312d", "64345c8caebdd5133d", "94181401476c458453" };  string url = $"http://api.mairui.club/zs/sssj/{indexCode}/{licence}";
 
@@ -7877,6 +7878,7 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
         string[] apiKeys = new string[] {
             "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
             "f49353bd-db65-4719-a56c-064b2eb231bf",
+            "587f64a1-43d5-40f2-9115-7d3c66b0459a",		
             "92854974-68da-4fd8-9e50-3948c1e6fa7e"
         };
 
@@ -8167,6 +8169,7 @@ public static async Task<(DateTime LastTransactionTime, bool IsError)> GetLastTr
     string[] apiKeys = new string[] {
         "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
         "f49353bd-db65-4719-a56c-064b2eb231bf",
+        "587f64a1-43d5-40f2-9115-7d3c66b0459a",	    
         "92854974-68da-4fd8-9e50-3948c1e6fa7e"
     };
 
@@ -8353,6 +8356,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
     string[] apiKeys = new string[] {
         "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
         "f49353bd-db65-4719-a56c-064b2eb231bf",
+        "587f64a1-43d5-40f2-9115-7d3c66b0459a",	    
         "92854974-68da-4fd8-9e50-3948c1e6fa7e"
     };
 
@@ -8570,6 +8574,7 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
             {
                 "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
                 "f49353bd-db65-4719-a56c-064b2eb231bf",
+                "587f64a1-43d5-40f2-9115-7d3c66b0459a",		    
                 "92854974-68da-4fd8-9e50-3948c1e6fa7e"
             };
 
@@ -8747,6 +8752,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
             {
                 "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
                 "f49353bd-db65-4719-a56c-064b2eb231bf",
+                "587f64a1-43d5-40f2-9115-7d3c66b0459a",		    
                 "92854974-68da-4fd8-9e50-3948c1e6fa7e"
             };
 
