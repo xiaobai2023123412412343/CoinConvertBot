@@ -38,8 +38,8 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 
 //yifanfu或@yifanfu或t.me/yifanfu为管理员ID
 //yifanfubot或t.me/yifanfubot或@yifanfubot为机器人ID
-//TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv为监控的收款地址
-//TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv为监控的转账地址
+//TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6为监控的收款地址
+//TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6为监控的转账地址
 // 将这个值替换为目标群组的ID
 //const long TARGET_CHAT_ID = -1002006327353;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
@@ -7210,7 +7210,7 @@ public static class TronscanHelper
 
     public async static Task<string> GetTransferHistoryAsync()
     {
-        string apiUrlTemplate = "https://apilist.tronscan.org/api/transfer?address=TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv&token=TRX&only_confirmed=true&limit=50&start={0}";
+        string apiUrlTemplate = "https://apilist.tronscan.org/api/transfer?address=TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6&token=TRX&only_confirmed=true&limit=50&start={0}";
 
         try
         {
@@ -7234,7 +7234,7 @@ public static class TronscanHelper
                     while (uniqueTransfers.Count < 10 && index < transferList.Data.Count)
                     {
                         var transfer = transferList.Data[index];
-                        if (transfer.TransferFromAddress == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
+                        if (transfer.TransferFromAddress == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6" &&
                             !uniqueTransfers.ContainsKey(transfer.TransferToAddress))
                         {
                             uniqueTransfers.Add(transfer.TransferToAddress, transfer);
@@ -7262,7 +7262,7 @@ public static class TronscanHelper
 public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
 {
     string apiUrlTemplate = "https://api.trongrid.io/v1/accounts/{0}";
-    string resultText = $"<b> 承兑地址：</b><code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n";
+    string resultText = $"<b> 承兑地址：</b><code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>\n\n";
 
     try
     {
@@ -7491,7 +7491,7 @@ private static async Task BotOnCallbackQueryReceived(ITelegramBotClient botClien
 
         await botClient.SendTextMessageAsync(
             chatId: callbackQuery.Message.Chat.Id,
-            text: "<code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>",
+            text: "<code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>",
             parseMode: ParseMode.Html
         );
     }
@@ -7549,7 +7549,7 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
     
     try
     {
-        string outcomeAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
+        string outcomeAddress = "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6";
         string usdtUrl = $"https://apilist.tronscan.org/api/token_trc20/transfers?relatedAddress={outcomeAddress}&contract=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&direction=to&limit=100&start=0&sort=-timestamp";
 
         using (var httpClient = new HttpClient())
@@ -7632,7 +7632,7 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
         {
             if (token == "USDT")
             {
-                if (data["to_address"] != null && data["to_address"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
+                if (data["to_address"] != null && data["to_address"].ToString() == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6" &&
                     data["block_ts"] != null && data["quant"] != null)
                 {
                     var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["block_ts"]).LocalDateTime;
@@ -7643,7 +7643,7 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
             else if (token == "TRX")
             {
                 if (data["contractType"] != null && data["contractType"].ToString() == "1" &&
-                    data["ownerAddress"] != null && data["ownerAddress"].ToString() == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv" &&
+                    data["ownerAddress"] != null && data["ownerAddress"].ToString() == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6" &&
                     data["timestamp"] != null && data["amount"] != null)
                 {
                     var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["timestamp"]).LocalDateTime;
@@ -8894,8 +8894,8 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     }
     var tronAddress = match.Groups[1].Value;
 
-    // 如果查询的地址是TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv，直接返回错误信息
-    if (tronAddress == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
+    // 如果查询的地址是TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6，直接返回错误信息
+    if (tronAddress == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6")
     {
         await botClient.SendTextMessageAsync(message.Chat.Id, "此为机器人收款地址，转账USDT自动返回TRX！");
         return;
@@ -8909,7 +8909,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     await botClient.SendTextMessageAsync(message.Chat.Id, "正在查询，请稍后...");
 
 // 同时启动所有任务
-var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv");
+var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6");
 var getBalancesTask = GetBalancesAsync(tronAddress);
 var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
 var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
@@ -10726,7 +10726,7 @@ string fearGreedDescription = GetFearGreedDescription(today);
         
         string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
         string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
-            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>\n\n" + //手动输入地址
+            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>\n\n" + //手动输入地址
             "\U00002705 转U自动原地址返TRX,10U起兑!\n" +
             "\U00002705 请勿使用交易所或中心化钱包转账!\n" +
             $"\U00002705 <u>购买能量套餐，单笔转账低至 7TRX！</u>\n" +
@@ -16615,7 +16615,7 @@ if (messageText.Equals("TRX", StringComparison.OrdinalIgnoreCase) || messageText
     // 如果消息是"TRX"或"trx"，则返回特殊的消息
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: "<b>TRX能量兑换地址</b>：\n\n<code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>",
+        text: "<b>TRX能量兑换地址</b>：\n\n<code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>",
         parseMode: ParseMode.Html
     );
 }
@@ -17739,7 +17739,7 @@ if (messageText.StartsWith("/zjdh"))
     {
         new[] // 第一行按钮
         {
-            InlineKeyboardButton.WithUrl("承兑地址详情", "https://www.oklink.com/cn/trx/address/TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
+            InlineKeyboardButton.WithUrl("承兑地址详情", "https://www.oklink.com/cn/trx/address/TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6")
         }
     });
 
@@ -18335,7 +18335,7 @@ var Address = _myTronConfig.Value.Address;
 var addr = _wallet.ParseAddress(Address);
 
 // 这两个变量需要在使用它们的任务之前声明
-string targetReciveAddress = "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv";
+string targetReciveAddress = "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6";
 var contractAddress = _myTronConfig.Value.USDTContractAddress;            
 
 // 同时运行获取账户资源和账户信息的任务
@@ -18516,8 +18516,8 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
             
             if (address.StartsWith("T") && address.Length == 34)
             {
-        // 检查地址是否为"TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv"
-        if (address == "TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
+        // 检查地址是否为"TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6"
+        if (address == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6")
         {
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "此为机器人收款地址，绑定失败，请绑定您的钱包地址！");
         }                
@@ -19345,7 +19345,7 @@ static async Task<Message> ExecuteZjdhMethodAsync(ITelegramBotClient botClient, 
     {
         new[] // 第一行按钮
         {
-            InlineKeyboardButton.WithUrl("承兑地址详情", "https://www.oklink.com/cn/trx/address/TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv")
+            InlineKeyboardButton.WithUrl("承兑地址详情", "https://www.oklink.com/cn/trx/address/TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6")
         }
     });
 
