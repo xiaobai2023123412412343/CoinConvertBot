@@ -18827,7 +18827,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
     // 发送图片和原本的文字作为图片说明
     await botClient.SendPhotoAsync(
         chatId: message.Chat.Id,
-        photo: "https://i.postimg.cc/rFj8DtBW/2222-1.png", // 图片链接
+        photo: "https://i.postimg.cc/sgF9Jd9g/Untitled.png", // 图片链接
         caption: msg, // 原本要发的文字作为图片说明
         parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
     );
