@@ -3103,7 +3103,7 @@ public static async Task<string> FetchHongKongLotteryResultAsync()
         var response = await client.GetAsync("https://kclm.site/api/trial/drawResult?code=hk6&format=json&rows=50");
         if (!response.IsSuccessStatusCode)
         {
-            return "获取香港六合彩开奖信息失败，请稍后再试。";
+            return "error_hk"; // 统一返回错误标识
         }
 
             var jsonString = await response.Content.ReadAsStringAsync();
@@ -3135,7 +3135,7 @@ public static async Task<string> FetchHongKongLotteryResultAsync()
     }
     catch (Exception ex)
     {
-        return $"获取香港六合彩开奖信息时发生错误：{ex.Message}";
+        return "error_hk"; // 统一返回错误标识
     }
 }
 }
@@ -13533,21 +13533,45 @@ if (messageText.StartsWith("/xianggang"))
 {
     var lotteryResult = await LotteryFetcherr.FetchHongKongLotteryResultAsync();
 
-    // 定义内联键盘，添加历史记录按钮
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    if (lotteryResult == "error_hk")
     {
-        InlineKeyboardButton.WithCallbackData("开奖规律", "xgzhishu"),	    
-        InlineKeyboardButton.WithCallbackData("历史开奖", "historyy")
-    });
+        // 定义错误时的内联键盘
+        var errorInlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // 错误时的按钮
+            {
+                InlineKeyboardButton.WithUrl("调用谷歌搜索", "https://www.google.com/search?q=香港六合彩开奖")
+            }
+        });
 
-    // 发送文本和内联键盘作为一个消息
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: lotteryResult, // 将开奖结果作为文本发送
-        parseMode: ParseMode.Html, // 使用HTML解析模式以支持文本加粗
-        replyMarkup: inlineKeyboard // 包含内联键盘
-    );
-}  
+        // 发送错误消息和内联键盘
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "查询失败，请稍后重试！", // 错误消息
+            replyMarkup: errorInlineKeyboard // 包含错误时的内联键盘
+        );
+    }
+    else
+    {
+        // 定义正常情况下的内联键盘
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // 第一行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("开奖规律", "xgzhishu"),
+                InlineKeyboardButton.WithCallbackData("历史开奖", "historyy")
+            }
+        });
+
+        // 发送正常的开奖结果和内联键盘
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: lotteryResult,
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
+    }
+}
 // 检查是否接收到了 /xgzhishu 消息，收到就查询香港六合彩特码统计
 if (messageText.StartsWith("/xgzhishu"))
 {
