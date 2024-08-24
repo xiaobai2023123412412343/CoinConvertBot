@@ -3462,7 +3462,7 @@ public static class LotteryFetcher // 老澳门六合彩
                 var response = await client.GetAsync("https://api.macaumarksix.com/api/macaujc.com");
                 if (!response.IsSuccessStatusCode)
                 {
-                    return "获取开奖信息失败，请稍后再试。";
+                    return "error"; 
                 }
 
                 var jsonString = await response.Content.ReadAsStringAsync();
@@ -3495,7 +3495,7 @@ public static class LotteryFetcher // 老澳门六合彩
             }
             catch (Exception ex)
             {
-                return $"获取开奖信息时发生错误：{ex.Message}";
+                return "error"; 
             }
         }
     }
@@ -13216,23 +13216,44 @@ if (messageText.StartsWith("/laoaomen"))
 {
     var lotteryResult = await LotteryFetcher.FetchLotteryResultAsync();
 
-    // 定义内联键盘
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    if (lotteryResult == "error")
     {
-        new [] // 第一行按钮
+        // 定义错误时的内联键盘
+        var errorInlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-            InlineKeyboardButton.WithCallbackData("开奖规律", "lamzhishu"),
-            InlineKeyboardButton.WithCallbackData("历史开奖", "history")
-        }
-    });
+            new [] // 错误时的按钮
+            {
+                InlineKeyboardButton.WithUrl("调用谷歌搜索", "https://www.google.com/search?q=老澳门六合彩开奖")
+            }
+        });
 
-    // 发送文本和内联键盘作为一个消息
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: lotteryResult, // 将开奖结果作为文本发送
-        parseMode: ParseMode.Html, // 使用HTML解析模式以支持文本加粗
-        replyMarkup: inlineKeyboard // 包含内联键盘
-    );
+        // 发送错误消息和内联键盘
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "查询失败，请稍后重试！", // 错误消息
+            replyMarkup: errorInlineKeyboard // 包含错误时的内联键盘
+        );
+    }
+    else
+    {
+        // 正常情况下的内联键盘
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // 第一行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("开奖规律", "lamzhishu"),
+                InlineKeyboardButton.WithCallbackData("历史开奖", "history")
+            }
+        });
+
+        // 发送正常的开奖结果和内联键盘
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: lotteryResult,
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
+    }
 }
 // 检查是否接收到了 /lamzhishu 消息，收到就查询老澳门六合彩特码统计
 if (messageText.StartsWith("/lamzhishu"))
