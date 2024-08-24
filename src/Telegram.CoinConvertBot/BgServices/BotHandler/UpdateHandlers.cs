@@ -12102,8 +12102,8 @@ else if (update.CallbackQuery.Data == "historyy")
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
 	InlineKeyboardButton.WithCallbackData("返回", "back"),    
-	InlineKeyboardButton.WithCallbackData("按生肖查询", "queryByZodiacc")  ,  
-        InlineKeyboardButton.WithCallbackData("按波色查询", "queryByColor")
+        InlineKeyboardButton.WithCallbackData("按波色查询", "queryByColor")  , 
+	InlineKeyboardButton.WithCallbackData("按生肖查询", "queryByZodiacc") 
     });
 
 await botClient.SendTextMessageAsync(
