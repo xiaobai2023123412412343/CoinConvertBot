@@ -19010,8 +19010,8 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 对方地址无u：27.2559 TRX - 27.6009 TRX 
 
 {adminText} 租赁能量更划算：
-对方地址有u：仅需8.00 TRX，节省 6.39 TRX (节省约48%)
-对方地址无u：仅需13.00 TRX，节省 14.25 TRX (节省约53%)            
+对方地址有u：仅需 8.00 TRX，节省  6.00 TRX (节省约43%)
+对方地址无u：仅需14.00 TRX，节省 14.00 TRX (节省约50%)            
 
 
 ";
