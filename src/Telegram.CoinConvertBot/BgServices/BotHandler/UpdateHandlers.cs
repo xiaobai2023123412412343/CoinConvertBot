@@ -10735,7 +10735,7 @@ string fearGreedDescription = GetFearGreedDescription(today);
             "机器人收款地址:\n (<b>点击自动复制</b>):<code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>\n\n" + //手动输入地址
             "\U00002705 转U自动原地址返TRX,10U起兑!\n" +
             "\U00002705 请勿使用交易所或中心化钱包转账!\n" +
-            $"\U00002705 <u>购买能量套餐，单笔转账低至 7TRX！</u>\n" +
+            $"\U00002705 <u>购买能量套餐，单笔转账低至 8TRX！</u>\n" +
             $"\U00002705 有任何问题,请私聊联系<a href=\"{channelLink}\">机器人管理员</a>\n\n" +
             "<b>另代开TG高级会员</b>:\n\n" +
             "\u2708三月高级会员：24.99 u\n" +
