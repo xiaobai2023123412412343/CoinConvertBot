@@ -19006,8 +19006,8 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 <b>给机器人收款地址转u自动原地址秒回TRX！</b> 
 —————————————————    
 转账费用：（浮动）
-对方地址有u：13.3959 TRX - 13.7409 TRX 
-对方地址无u：27.2559 TRX - 27.6009 TRX 
+对方地址有u：13.39 TRX - 14.00 TRX 
+对方地址无u：27.25 TRX - 28.00 TRX 
 
 {adminText} 租赁能量更划算：
 对方地址有u：仅需  8.00 TRX，节省  6.00 TRX (节省约43%)
