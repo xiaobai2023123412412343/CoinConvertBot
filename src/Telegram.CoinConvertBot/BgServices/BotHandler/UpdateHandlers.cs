@@ -17884,10 +17884,24 @@ else
         }
 
         // 根据结果是否为整数选择适当的格式字符串
-        string formatString = (result == (int)result) ? "{0:n0}" : "{0:n" + maxDecimalPlaces + "}";
+        string formatString;
+        string formattedResult;
 
-        // 将结果转换为包含逗号分隔符的字符串
-        string formattedResult = string.Format(CultureInfo.InvariantCulture, formatString, result);
+        if (result >= 1)
+        {
+            formatString = (result == (int)result) ? "{0:n0}" : "{0:n" + maxDecimalPlaces + "}";
+            formattedResult = string.Format(CultureInfo.InvariantCulture, formatString, result);
+        }
+        else if (result < 0)
+        {
+            // 对负数结果进行特殊处理，保留到小数点后8位，去除末尾无用的0
+            formattedResult = result.ToString("0.########", CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            // 对其他情况使用默认格式
+            formattedResult = result.ToString(CultureInfo.InvariantCulture);
+        }
 
         // 发送最终计算结果
         await botClient.SendTextMessageAsync(
