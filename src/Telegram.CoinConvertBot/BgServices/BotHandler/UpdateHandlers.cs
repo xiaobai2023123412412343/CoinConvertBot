@@ -15640,6 +15640,55 @@ if (message.Text.Equals("签到", StringComparison.OrdinalIgnoreCase) || message
         Console.WriteLine($"发送消息失败: {ex.Message}");
     }
 }
+// 检查是否接收到了 "/yonghujifen" 命令
+if (message.Text.Equals("/yonghujifen", StringComparison.OrdinalIgnoreCase))
+{
+    long adminId = 1427768220; // 指定管理员ID
+    if (message.From.Id == adminId)
+    {
+        try
+        {
+            var allUsers = userSignInInfo.ToList(); // 将字典转换为列表
+            int count = 0;
+            StringBuilder responseMessage = new StringBuilder();
+
+            foreach (var user in allUsers)
+            {
+                responseMessage.AppendLine($"ID： {user.Key} | 积分总数: {user.Value.Points}");
+                count++;
+                if (count % 50 == 0) // 每50条数据发送一次
+                {
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: responseMessage.ToString(),
+                        parseMode: ParseMode.Markdown
+                    );
+                    responseMessage.Clear(); // 清空StringBuilder以便重新使用
+                }
+            }
+
+            if (responseMessage.Length > 0) // 发送剩余的数据
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: responseMessage.ToString(),
+                    parseMode: ParseMode.Markdown
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            // 处理发送消息失败的情况
+            Console.WriteLine($"处理查询用户积分失败: {ex.Message}");
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "处理查询用户积分时发生错误。",
+                parseMode: ParseMode.Html
+            );
+        }
+    }
+    // 如果不是管理员，不做任何回应
+}
 else if (message.Text.Equals("签到积分", StringComparison.OrdinalIgnoreCase))
 {
     try
