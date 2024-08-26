@@ -15650,31 +15650,42 @@ if (message.Text.Equals("/yonghujifen", StringComparison.OrdinalIgnoreCase))
         try
         {
             var allUsers = userSignInInfo.ToList(); // 将字典转换为列表
-            int count = 0;
-            StringBuilder responseMessage = new StringBuilder();
-
-            foreach (var user in allUsers)
+            if (allUsers.Count == 0) // 检查是否有用户数据
             {
-                responseMessage.AppendLine($"ID： {user.Key} | 积分总数: {user.Value.Points}");
-                count++;
-                if (count % 50 == 0) // 每50条数据发送一次
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "未发现用户签到数据！",
+                    parseMode: ParseMode.Html
+                );
+            }
+            else
+            {
+                int count = 0;
+                StringBuilder responseMessage = new StringBuilder();
+
+                foreach (var user in allUsers)
+                {
+                    responseMessage.AppendLine($"ID： {user.Key} | 积分总数: {user.Value.Points}");
+                    count++;
+                    if (count % 50 == 0) // 每50条数据发送一次
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId: message.Chat.Id,
+                            text: responseMessage.ToString(),
+                            parseMode: ParseMode.Markdown
+                        );
+                        responseMessage.Clear(); // 清空StringBuilder以便重新使用
+                    }
+                }
+
+                if (responseMessage.Length > 0) // 发送剩余的数据
                 {
                     await botClient.SendTextMessageAsync(
                         chatId: message.Chat.Id,
                         text: responseMessage.ToString(),
                         parseMode: ParseMode.Markdown
                     );
-                    responseMessage.Clear(); // 清空StringBuilder以便重新使用
                 }
-            }
-
-            if (responseMessage.Length > 0) // 发送剩余的数据
-            {
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: responseMessage.ToString(),
-                    parseMode: ParseMode.Markdown
-                );
             }
         }
         catch (Exception ex)
