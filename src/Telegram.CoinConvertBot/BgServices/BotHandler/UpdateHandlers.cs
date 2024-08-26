@@ -17870,47 +17870,58 @@ else
     var calculatorPattern = @"^[-+]?\d+(\.\d+)?\s*([-+*/]\s*[-+]?\d+(\.\d+)?)+$";
     if (Regex.IsMatch(messageText, calculatorPattern) && messageText.IndexOfAny(new[] { '+', '-', '*', '/' }) != -1)
     {
-        // 原始问题备份
-        var originalQuestion = messageText;
-
-        // 使用自定义的 EvaluateExpression 方法计算表达式
-        double result = EvaluateExpression(messageText);
-
-        // 获取用户发送的最大小数点位数
-        var decimalMatches = Regex.Matches(messageText, @"\.\d+");
-        int maxDecimalPlaces = 2;
-        foreach (Match match in decimalMatches)
+        try
         {
-            maxDecimalPlaces = Math.Max(maxDecimalPlaces, match.Value.Length - 1);
-        }
+            // 原始问题备份
+            var originalQuestion = messageText;
 
-        // 根据结果是否为整数选择适当的格式字符串
-        string formatString;
-        string formattedResult;
+            // 使用自定义的 EvaluateExpression 方法计算表达式
+            double result = EvaluateExpression(messageText);
 
-        if (result >= 1)
-        {
-            formatString = (result == (int)result) ? "{0:n0}" : "{0:n" + maxDecimalPlaces + "}";
-            formattedResult = string.Format(CultureInfo.InvariantCulture, formatString, result);
-        }
-        else if (result < 0)
-        {
-            // 对负数结果进行特殊处理，保留到小数点后8位，去除末尾无用的0
-            formattedResult = result.ToString("0.########", CultureInfo.InvariantCulture);
-        }
-        else
-        {
-            // 对其他情况使用默认格式
-            formattedResult = result.ToString(CultureInfo.InvariantCulture);
-        }
+            // 获取用户发送的最大小数点位数
+            var decimalMatches = Regex.Matches(messageText, @"\.\d+");
+            int maxDecimalPlaces = 2;
+            foreach (Match match in decimalMatches)
+            {
+                maxDecimalPlaces = Math.Max(maxDecimalPlaces, match.Value.Length - 1);
+            }
 
-        // 发送最终计算结果
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            // 使用 HTML 语法加粗结果，并附带原始问题
-            text: $"<code>{System.Net.WebUtility.HtmlEncode(originalQuestion)}={formattedResult}</code>",
-            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
-        );
+            // 根据结果是否为整数选择适当的格式字符串
+            string formatString;
+            string formattedResult;
+
+            if (result >= 1)
+            {
+                formatString = (result == (int)result) ? "{0:n0}" : "{0:n" + maxDecimalPlaces + "}";
+                formattedResult = string.Format(CultureInfo.InvariantCulture, formatString, result);
+            }
+            else if (result < 0)
+            {
+                // 对负数结果进行特殊处理，保留到小数点后8位，去除末尾无用的0
+                formattedResult = result.ToString("0.########", CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                // 对其他情况使用默认格式
+                formattedResult = result.ToString(CultureInfo.InvariantCulture);
+            }
+
+            // 发送最终计算结果
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                // 使用 HTML 语法加粗结果，并附带原始问题
+                text: $"<code>{System.Net.WebUtility.HtmlEncode(originalQuestion)}={formattedResult}</code>",
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+            );
+        }
+        catch (Exception ex)
+        {
+            // 处理异常，例如记录日志或发送错误消息
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"计算器发生错误：{ex.Message}"
+            );
+        }
     }
 }
 // 使用正则表达式来匹配命令，允许命令后面跟随 "@机器人用户名"
