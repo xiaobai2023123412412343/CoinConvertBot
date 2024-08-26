@@ -13047,10 +13047,11 @@ if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClien
 
         try
         {
-            // 尝试向该用户发送新的消息
+            // 尝试向该用户发送新的消息，使用HTML格式
             await botClient.SendTextMessageAsync(
                 chatId: userId,
-                text: message.Text
+                text: message.Text,
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html // 设置消息格式为HTML
             );
 
             // 如果消息发送成功，向当前用户发送成功消息
@@ -13068,7 +13069,7 @@ if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClien
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: errorMsg,
-                parseMode: ParseMode.Html
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html // 设置错误消息格式为HTML
             );
         }
     }
