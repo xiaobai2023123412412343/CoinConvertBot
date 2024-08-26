@@ -13982,6 +13982,7 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
             },
             new [] // second row
             {
+		InlineKeyboardButton.WithCallbackData("用户积分总览", "/yonghujifen"),  
                 InlineKeyboardButton.WithCallbackData("FF Pro会员", "/huiyuanku"),		    	    
             }
 		
