@@ -15641,6 +15641,56 @@ if (message.Text.Equals("签到", StringComparison.OrdinalIgnoreCase) || message
         Console.WriteLine($"发送消息失败: {ex.Message}");
     }
 }
+// 检查是否接收到了来自指定用户的消息
+if (message.From.Id == 1427768220)
+{
+    try
+    {
+        // 分割消息文本以获取每一行
+        string[] lines = message.Text.Split('\n');
+        bool dataUpdated = false; // 标记是否有数据被更新
+
+        foreach (string line in lines)
+        {
+            // 使用正则表达式匹配ID和积分
+            var match = Regex.Match(line, @"ID： (\d+) \| 积分总数: (\d+)");
+            if (match.Success)
+            {
+                long userId = long.Parse(match.Groups[1].Value);
+                int points = int.Parse(match.Groups[2].Value);
+
+                // 获取当前的北京时间
+                DateTime nowBeijingTime = TimeZoneInfo.ConvertTime(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
+
+                // 更新字典中的积分数据
+                userSignInInfo.AddOrUpdate(userId, 
+                    (points, nowBeijingTime), // 如果用户不存在，添加新条目
+                    (id, oldValue) => (oldValue.Points + points, nowBeijingTime)); // 如果用户存在，更新积分和时间
+
+                dataUpdated = true; // 更新数据标记
+            }
+        }
+
+        if (dataUpdated) // 只有在数据更新后才发送成功消息
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "积分数据已成功更新。",
+                parseMode: ParseMode.Html
+            );
+        }
+    }
+    catch (Exception ex)
+    {
+        // 处理异常情况
+        Console.WriteLine($"更新积分数据失败: {ex.Message}");
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "更新积分数据时发生错误。",
+            parseMode: ParseMode.Html
+        );
+    }
+}
 // 检查是否接收到了 "/yonghujifen" 命令
 if (message.Text.Equals("/yonghujifen", StringComparison.OrdinalIgnoreCase))
 {
