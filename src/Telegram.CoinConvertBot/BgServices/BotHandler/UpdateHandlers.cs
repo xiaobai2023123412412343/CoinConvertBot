@@ -11774,7 +11774,7 @@ if (isNumberRange)
         // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
         var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
         // 添加新正则表达式以检查输入文本是否包含 "查id"、"查ID" 或 "t.me/"
-        var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|授权|赠送|yhk|t\.me/", RegexOptions.IgnoreCase);
+        var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|授权|赠送|yhk|TRX|t\.me/", RegexOptions.IgnoreCase);
 
         // 如果输入文本包含 "查id"、"查ID" 或 "t.me/"，则不执行翻译
         if (containsIdOrTme)
