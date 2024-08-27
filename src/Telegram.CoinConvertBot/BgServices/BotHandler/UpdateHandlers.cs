@@ -17182,7 +17182,8 @@ else
         chatId: message.Chat.Id,
         text: reply,
         parseMode: ParseMode.Html,
-        replyMarkup: inlineKeyboard
+        replyMarkup: inlineKeyboard,
+	disableWebPagePreview: true  // 关闭链接预览    
     );
 }
                 }
