@@ -13967,23 +13967,22 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
             new [] // second row
             {
                 InlineKeyboardButton.WithCallbackData("操作指令", "mingling"),	
-		InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info"), 		    
+                InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info"),	    
             },
             new [] // second row
             {
-		    
-                InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info"),
+		InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info"), 			    
                 InlineKeyboardButton.WithCallbackData("关注列表", "shiyong"),		    
             },
             new [] // second row
             {
-                InlineKeyboardButton.WithCallbackData("客户地址余额", "ExecuteZjdhMethod"),
-		InlineKeyboardButton.WithCallbackData("承兑账单详情", "chengdui"),  		    	    
+		InlineKeyboardButton.WithCallbackData("用户积分", "/yonghujifen"),  
+                InlineKeyboardButton.WithCallbackData("客户余额", "ExecuteZjdhMethod"),		    	    
             },
             new [] // second row
             {
-		InlineKeyboardButton.WithCallbackData("用户积分总览", "/yonghujifen"),  
-                InlineKeyboardButton.WithCallbackData("FF Pro会员", "/huiyuanku"),		    	    
+                InlineKeyboardButton.WithCallbackData("会员列表", "/huiyuanku"),	
+		InlineKeyboardButton.WithCallbackData("承兑详情", "chengdui"),  	    	    
             }
 		
         });
