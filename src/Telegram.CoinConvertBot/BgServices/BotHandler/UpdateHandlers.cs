@@ -7222,31 +7222,33 @@ public static class TronscanHelper
 
             Dictionary<string, TransferRecord> uniqueTransfers = new Dictionary<string, TransferRecord>();
 
-            while (uniqueTransfers.Count < 10 && attempt < maxAttempts)
+    while (uniqueTransfers.Count < 10 && attempt < maxAttempts)
+    {
+        string recentTransfersApiUrl = string.Format(apiUrlTemplate, start);
+        var response = await httpClient.GetAsync(recentTransfersApiUrl);
+        if (response.IsSuccessStatusCode)
+        {
+            string jsonResult = await response.Content.ReadAsStringAsync();
+            var transferList = JsonSerializer.Deserialize<TransferList>(jsonResult);
+
+            int index = 0;
+            while (uniqueTransfers.Count < 10 && index < transferList.Data.Count)
             {
-                string recentTransfersApiUrl = string.Format(apiUrlTemplate, start);
-                var response = await httpClient.GetAsync(recentTransfersApiUrl);
-                if (response.IsSuccessStatusCode)
+                var transfer = transferList.Data[index];
+                // 检查转账金额是否大于10 TRX（这里假设API返回的金额单位是最小单位，即sun，1 TRX = 1,000,000 sun）
+                if (transfer.TransferFromAddress == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6" &&
+                    !uniqueTransfers.ContainsKey(transfer.TransferToAddress) &&
+                    transfer.Amount > 10_000_000) // 10 TRX
                 {
-                    string jsonResult = await response.Content.ReadAsStringAsync();
-                    var transferList = JsonSerializer.Deserialize<TransferList>(jsonResult);
-
-                    int index = 0;
-                    while (uniqueTransfers.Count < 10 && index < transferList.Data.Count)
-                    {
-                        var transfer = transferList.Data[index];
-                        if (transfer.TransferFromAddress == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6" &&
-                            !uniqueTransfers.ContainsKey(transfer.TransferToAddress))
-                        {
-                            uniqueTransfers.Add(transfer.TransferToAddress, transfer);
-                        }
-                        index++;
-                    }
-
-                    start += transferList.Data.Count; // 更新下一次API调用的起始索引
+                    uniqueTransfers.Add(transfer.TransferToAddress, transfer);
                 }
-                attempt++; // 增加尝试次数
+                index++;
             }
+
+            start += transferList.Data.Count; // 更新下一次API调用的起始索引
+        }
+        attempt++; // 增加尝试次数
+    }
 
             List<TransferRecord> recentTransfers = uniqueTransfers.Values.ToList();
 
