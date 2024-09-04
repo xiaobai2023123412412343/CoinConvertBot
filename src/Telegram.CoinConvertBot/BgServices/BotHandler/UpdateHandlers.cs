@@ -12707,7 +12707,7 @@ if (message.Type == MessageType.ChatMembersAdded)
             // 发送欢迎消息
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: "进群成功！设置管理权限将自动删除用户进出群消息！"
+                text: "进群成功！请给予管理员权限以体验机器人完整功能！"
             );
 
             var chat = await botClient.GetChatAsync(message.Chat.Id);
@@ -12730,7 +12730,7 @@ if (message.Type == MessageType.ChatMembersAdded)
             }
                 // 自动将群组ID添加到兑换通知黑名单
                 GroupManager.BlacklistedGroupIds.Add(chat.Id);
-                await botClient.SendTextMessageAsync(chat.Id, "强烈推荐设置本机器人为管理员，方便体验完整功能！");
+                await botClient.SendTextMessageAsync(chat.Id, "升级管理员后机器人将自动删除群成员进出消息提醒！");
 		
             // 发送带有链接的文本消息
             string adminLink = "t.me/yifanfu"; // 管理员的Telegram链接
