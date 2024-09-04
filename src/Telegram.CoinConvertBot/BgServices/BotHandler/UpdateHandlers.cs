@@ -2079,7 +2079,7 @@ private static async Task HandleUserJoinOrLeave(ITelegramBotClient botClient, Me
                     string usernameOrId = newUser.Username != null ? "@" + newUser.Username : "ID:" + newUser.Id.ToString();
                     string msg = $"{displayName} {usernameOrId} 欢迎进群！";
                     var sentMessage = await botClient.SendTextMessageAsync(message.Chat.Id, msg);
-                    await Task.Delay(3000); // 等待3秒
+                    await Task.Delay(1000); // 等待1秒
                     await botClient.DeleteMessageAsync(message.Chat.Id, sentMessage.MessageId); // 尝试撤回消息
                 }
             }
@@ -2093,7 +2093,7 @@ private static async Task HandleUserJoinOrLeave(ITelegramBotClient botClient, Me
                 string usernameOrId = leftUser.Username != null ? "@" + leftUser.Username : "ID:" + leftUser.Id.ToString();
                 string msg = $"{displayName} {usernameOrId} 离开群组！";
                 var sentMessage = await botClient.SendTextMessageAsync(message.Chat.Id, msg);
-                await Task.Delay(3000); // 等待3秒
+                await Task.Delay(1000); // 等待1秒
                 await botClient.DeleteMessageAsync(message.Chat.Id, sentMessage.MessageId); // 尝试撤回消息
             }
         }
