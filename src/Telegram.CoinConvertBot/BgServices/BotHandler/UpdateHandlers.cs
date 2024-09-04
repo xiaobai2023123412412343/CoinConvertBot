@@ -2076,10 +2076,11 @@ private static async Task HandleUserJoinOrLeave(ITelegramBotClient botClient, Me
                 if (!newUser.IsBot) // 确保不是机器人加入
                 {
                     string displayName = newUser.FirstName + (newUser.LastName != null ? " " + newUser.LastName : "");
-                    // 如果没有用户名，添加 "ID:" 前缀
                     string usernameOrId = newUser.Username != null ? "@" + newUser.Username : "ID:" + newUser.Id.ToString();
                     string msg = $"{displayName} {usernameOrId} 欢迎进群！";
-                    await botClient.SendTextMessageAsync(message.Chat.Id, msg);
+                    var sentMessage = await botClient.SendTextMessageAsync(message.Chat.Id, msg);
+                    await Task.Delay(3000); // 等待3秒
+                    await botClient.DeleteMessageAsync(message.Chat.Id, sentMessage.MessageId); // 尝试撤回消息
                 }
             }
         }
@@ -2089,24 +2090,23 @@ private static async Task HandleUserJoinOrLeave(ITelegramBotClient botClient, Me
             if (leftUser != null && !leftUser.IsBot) // 确保不是机器人离开
             {
                 string displayName = leftUser.FirstName + (leftUser.LastName != null ? " " + leftUser.LastName : "");
-                // 如果没有用户名，添加 "ID:" 前缀
                 string usernameOrId = leftUser.Username != null ? "@" + leftUser.Username : "ID:" + leftUser.Id.ToString();
                 string msg = $"{displayName} {usernameOrId} 离开群组！";
-                await botClient.SendTextMessageAsync(message.Chat.Id, msg);
+                var sentMessage = await botClient.SendTextMessageAsync(message.Chat.Id, msg);
+                await Task.Delay(3000); // 等待3秒
+                await botClient.DeleteMessageAsync(message.Chat.Id, sentMessage.MessageId); // 尝试撤回消息
             }
         }
     }
     catch (Telegram.Bot.Exceptions.ApiRequestException ex)
     {
-        // 处理没有发送消息权限的情况或其他API请求异常
-        Console.WriteLine($"无法发送消息: {ex.Message}");
+        Console.WriteLine($"无法发送或撤回消息: {ex.Message}");
     }
     catch (Exception ex)
     {
-        // 处理其他异常
         Console.WriteLine($"发生异常: {ex.Message}");
     }
-}	
+}
 //短期30分钟涨跌数据
 // 为 /jisuzhangdie 命令创建一个新的字典来跟踪用户查询限制
 private static Dictionary<long, (int count, DateTime lastQueryDate)> userJisuZhangdieLimits = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
