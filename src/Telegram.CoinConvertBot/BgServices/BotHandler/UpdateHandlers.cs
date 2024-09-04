@@ -12627,12 +12627,29 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         await HandleBlacklistAndWhitelistCommands(botClient, message);
         Log.Information($"Receive message type: {message.Type}");
 
+    // 检查消息是否为加入群组的系统消息
+    if (message.Type == MessageType.ChatMembersAdded)
+    {
+        // 检查是否有新成员加入
+        if (message.NewChatMembers != null && message.NewChatMembers.Length > 0)
+        {
+            try
+            {
+                // 删除加入群组的系统消息
+                await botClient.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+            }
+            catch (Telegram.Bot.Exceptions.ApiRequestException ex)
+            {
+                Console.WriteLine($"无法删除消息: {ex.Message}");
+            }
+        }
+    }	
+
     // 处理用户加入或离开群组的事件
     if (message.Type == MessageType.ChatMembersAdded || message.Type == MessageType.ChatMemberLeft)
     {
         await HandleUserJoinOrLeave(botClient, message);
-    }
-	    
+    }    
     // 检查消息是否为图片类型
     if (message.Type == MessageType.Photo)
     {
