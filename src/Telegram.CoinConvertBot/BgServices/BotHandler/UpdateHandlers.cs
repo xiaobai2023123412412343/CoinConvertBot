@@ -12707,7 +12707,7 @@ if (message.Type == MessageType.ChatMembersAdded)
             // 发送欢迎消息
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: "进群成功！请给予管理员权限以体验机器人完整功能！"
+                text: "进群成功！设置管理权限将自动删除用户进出群消息！"
             );
 
             var chat = await botClient.GetChatAsync(message.Chat.Id);
