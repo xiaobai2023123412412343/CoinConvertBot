@@ -12730,7 +12730,7 @@ if (message.Type == MessageType.ChatMembersAdded)
             }
                 // 自动将群组ID添加到兑换通知黑名单
                 GroupManager.BlacklistedGroupIds.Add(chat.Id);
-                await botClient.SendTextMessageAsync(chat.Id, "兑换通知已关闭。如需开启发送指令： 开启兑换通知");
+                await botClient.SendTextMessageAsync(chat.Id, "强烈推荐设置本机器人为管理员，方便体验完整功能！");
 		
             // 发送带有链接的文本消息
             string adminLink = "t.me/yifanfu"; // 管理员的Telegram链接
