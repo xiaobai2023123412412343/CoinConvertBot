@@ -230,6 +230,8 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
             }
 
             List<(string symbol, double rate)> ratesToNotify = new List<(string symbol, double rate)>();
+            List<InlineKeyboardButton[]> buttons = new List<InlineKeyboardButton[]>(); // 在这里初始化buttons
+		
             foreach (var rate in fundingRates)
             {
                 if (Math.Abs(rate.Value) >= 0.005) // 检查是否达到通知阈值
@@ -255,9 +257,14 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                 foreach (var (symbol, rate) in sortedRates)
                 {
                     message += $"<code>{symbol}</code>/USDT    {Math.Round(rate * 100, 3)}%\n";
+                    buttons.Add(new InlineKeyboardButton[] {
+                        InlineKeyboardButton.WithCallbackData("取消异常提醒", "/quxiaozijinfei"),
+                        InlineKeyboardButton.WithCallbackData(symbol, $"查{symbol}")
+
+                    });
                 }
 
-                var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("取消资金费异常提醒", "/quxiaozijinfei"));
+                var keyboard = new InlineKeyboardMarkup(buttons.ToArray());
                 botClient.SendTextMessageAsync(
                     chatId: userId,
                     text: message,
