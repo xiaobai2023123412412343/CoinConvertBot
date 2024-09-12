@@ -106,6 +106,11 @@ public static class UpdateHandlers
     /// <returns></returns>
 // 定义全局变量
 public static decimal TransactionFee = 7.00m;
+// 对方地址有u的费用计算
+static decimal fixedCost = 14.00m;
+static decimal savings = fixedCost - TransactionFee;
+static decimal savingsPercentage = (savings / fixedCost) * 100;
+	
 // 通知字典，用于资金费异常通知
 private static Dictionary<long, bool> fundingRateNotificationUserIds = new Dictionary<long, bool>
 {
@@ -19191,7 +19196,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 对方地址无u：27.25 TRX - 28.00 TRX 
 
 {adminText} 租赁能量更划算：
-对方地址有u：仅需  7.00 TRX，节省  7.00 TRX (节省约50%)
+对方地址有u：仅需  {TransactionFee} TRX，节省  {savings} TRX (节省约{savingsPercentage:#.##}%) 
 对方地址无u：仅需13.00 TRX，节省 15.00 TRX (节省约55%)            
 
 
