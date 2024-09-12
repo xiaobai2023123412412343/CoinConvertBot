@@ -12355,23 +12355,23 @@ else if(update.CallbackQuery.Data == "memberEmojis")
 }
 else if(update.CallbackQuery.Data == "energyComparison")
 {
-    string comparisonText = @"<b>TRX/能量 消耗对比</b>
+    string comparisonText = @$"<b>TRX/能量 消耗对比</b>
 <code>
 日转账10笔：
-燃烧TRX：10*14=140 TRX消耗；
-租赁能量：10*8=80 TRX消耗，立省60TRX！
+燃烧TRX：10*{(int)fixedCost}= {(int)(10 * fixedCost)} TRX消耗；
+租赁能量：10*{(int)TransactionFee}= {(int)(10 * TransactionFee)} TRX消耗，立省 {(int)(10 * (fixedCost - TransactionFee))} TRX！
 
 日转账20笔：
-燃烧TRX：20*14=280 TRX消耗；
-租赁能量：20*8=160 TRX消耗，立省120TRX！
+燃烧TRX：20*{(int)fixedCost}= {(int)(20 * fixedCost)} TRX消耗；
+租赁能量：20*{(int)TransactionFee}= {(int)(20 * TransactionFee)} TRX消耗，立省 {(int)(20 * (fixedCost - TransactionFee))} TRX！
 
 日转账50笔：
-燃烧TRX：50*14=700 TRX消耗；
-租赁能量：50*8=400 TRX消耗，立省300TRX！
+燃烧TRX：50*{(int)fixedCost}= {(int)(50 * fixedCost)} TRX消耗；
+租赁能量：50*{(int)TransactionFee}= {(int)(50 * TransactionFee)} TRX消耗，立省 {(int)(50 * (fixedCost - TransactionFee))} TRX！
 
 日转账100笔：
-燃烧TRX：100*14=1400 TRX消耗；
-租赁能量：100*8=800 TRX消耗，立省600TRX！
+燃烧TRX：100*{(int)fixedCost}= {(int)(100 * fixedCost)} TRX消耗；
+租赁能量：100*{(int)TransactionFee}= {(int)(100 * TransactionFee)} TRX消耗，立省 {(int)(100 * (fixedCost - TransactionFee))} TRX！
 </code>
 <b>通过对比可以看出，每日转账次数越多，提前租赁能量就更划算！</b>
 	    ";
