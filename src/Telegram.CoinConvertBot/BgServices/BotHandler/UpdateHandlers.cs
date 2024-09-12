@@ -104,6 +104,8 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+// 定义全局变量
+public static decimal TransactionFee = 7.00m;
 // 通知字典，用于资金费异常通知
 private static Dictionary<long, bool> fundingRateNotificationUserIds = new Dictionary<long, bool>
 {
@@ -3824,7 +3826,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
 			      $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
                               $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
-                              $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用最低降至 7.00 TRX！</a>\n"; // 修改后的两行文字
+                              $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用最低降至 {TransactionFee} TRX！</a>\n"; // 修改后的两行文字
 		    
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
