@@ -7590,8 +7590,9 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
             int limit = 200;
             while (trxTransactions.Count < 10)
             {
-                string trxUrl = $"https://apilist.tronscan.org/api/transaction?address={outcomeAddress}&direction=from&limit={limit}&start={start}&sort=-timestamp";
+                string trxUrl = $"https://apilist.tronscanapi.com/api/transfer?sort=-timestamp&count=true&limit={limit}&start={start}&address={outcomeAddress}&filterTokenValue=10000000"; // 10 TRX in sun
                 var trxResponse = await httpClient.GetStringAsync(trxUrl);
+                //Console.WriteLine($"API Response: {trxResponse}"); // 调试输出API响应
                 var newTransactions = ParseTransactions(trxResponse, "TRX")
                     .Where(t => t.amount > 10)
                     .ToList();
@@ -7605,7 +7606,6 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
             trxTransactions = trxTransactions.Take(10).ToList();
 
             var transactionRecords = FormatTransactionRecords(usdtTransactions, trxTransactions);
-            //Console.WriteLine($"格式化后的交易记录：{transactionRecords}");  // 调试输出
 
             var inlineKeyboard = new InlineKeyboardMarkup(new[]
             {
@@ -7667,13 +7667,12 @@ private static List<(DateTime timestamp, string token, decimal amount)> ParseTra
             }
             else if (token == "TRX")
             {
-                if (data["contractType"] != null && data["contractType"].ToString() == "1" &&
-                    data["ownerAddress"] != null && data["ownerAddress"].ToString() == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6" &&
+                if (data["transferFromAddress"] != null && data["transferFromAddress"].ToString() == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6" &&
                     data["timestamp"] != null && data["amount"] != null)
                 {
                     var timestamp = DateTimeOffset.FromUnixTimeMilliseconds((long)data["timestamp"]).LocalDateTime;
-                    var amount = decimal.Parse(data["amount"].ToString()) / 1000000;
-                    transactions.Add((timestamp, token, amount));
+                    var amount = decimal.Parse(data["amount"].ToString()) / 1000000; // 确保这里的转换逻辑正确
+                    transactions.Add((timestamp, "TRX", amount));
                 }
             }
         }
