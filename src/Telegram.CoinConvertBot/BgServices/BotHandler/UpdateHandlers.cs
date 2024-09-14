@@ -17071,13 +17071,13 @@ string priceChangeSymbol = priceChangePercent >= 0 ? upSymbol : downSymbol;
 string priceChangeSign = priceChangePercent > 0 ? "+" : ""; // 如果涨跌幅大于0，添加+号
 
 reply += $"<b>\U0001F4B0现货价格：</b>{lastPrice}\n" +  
-        $"<b>\U0001F4B0合约价格：</b>{futuresPrice}\n";
+        $"<b>\U0001F536合约价格：</b>{futuresPrice}\n";
 
 // 尝试从Coinbase获取价格
 string coinbasePrice = null;
 try
 {
-    var coinbaseUrl = $"https://api.pro.coinbase.com/products/{symbol}-USD/ticker";
+    var coinbaseUrl = $"https://api.exchange.coinbase.com/products/{symbol}-USDT/ticker"; 
     var coinbaseResponse = await httpClient.GetStringAsync(coinbaseUrl);
     var coinbaseJson = JObject.Parse(coinbaseResponse);
     coinbasePrice = coinbaseJson["price"]?.ToString();
@@ -17091,9 +17091,31 @@ catch (Exception ex)
 // 根据是否获取到Coinbase的价格动态添加到消息中
 if (!string.IsNullOrEmpty(coinbasePrice))
 {
-    reply += $"<b>\U0001F4B0coinbase：</b>{coinbasePrice}\n";
+    reply += $"<b>\U0001F1FA\U0001F1F8Coinbase：</b>{coinbasePrice}\n";
+}
+// 尝试从Upbit获取现货交易价格
+string upbitPrice = null;
+try
+{
+    var upbitUrl = $"https://api.upbit.com/v1/ticker?markets=USDT-{symbol}";
+    var upbitResponse = await httpClient.GetStringAsync(upbitUrl);
+    var upbitJson = JArray.Parse(upbitResponse);
+    if (upbitJson.Count > 0 && upbitJson[0]["trade_price"] != null)
+    {
+        upbitPrice = upbitJson[0]["trade_price"].ToString();
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error when calling Upbit API: {ex.Message}");
+    // 如果获取失败，upbitPrice保持为null
 }
 
+// 根据是否获取到Upbit的价格动态添加到消息中
+if (!string.IsNullOrEmpty(upbitPrice))
+{
+    reply += $"<b>\U0001F1F0\U0001F1F7    Upbit   ：</b>{upbitPrice}\n";
+}
 // 继续构建剩余的回复消息...
 reply += $"<b>⬆️今日最高价：</b>{highPrice}\n" +
          $"<b>⬇️今日最低价：</b>{lowPrice}\n" +
