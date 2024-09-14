@@ -105,10 +105,10 @@ public static class UpdateHandlers
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
 	
-// 定义全局变量
+// 定义全局变量  租能量价格
 public static decimal TransactionFee = 7.00m;
 
-// 对方地址有u的费用计算
+// 对方地址有u的费用计算，这里固定14TRX
 static decimal fixedCost = 14.00m;
 static decimal savings = fixedCost - TransactionFee;
 static decimal savingsPercentage = Math.Ceiling((savings / fixedCost) * 100);
