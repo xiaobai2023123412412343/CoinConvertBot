@@ -8289,37 +8289,42 @@ public static async Task<(DateTime CreationTime, bool IsError)> GetAccountCreati
    
 public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)> GetBalancesAsync(string address)
 {
+    // 定义API密钥，如果一个失效就换下一个
+    string[] apiKeys = new string[] {
+        "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
+        "f49353bd-db65-4719-a56c-064b2eb231bf",
+        "587f64a1-43d5-40f2-9115-7d3c66b0459a",
+        "92854974-68da-4fd8-9e50-3948c1e6fa7e"
+    };
+
     try
     {
         using var httpClient = new HttpClient();
-        // 更新API URL
-        var response = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/account/tokens?address={address}&start=0&limit=20&hidden=0&show=0&sortType=0&sortBy=0&token=");
-        var json = await response.Content.ReadAsStringAsync();
+        // 设置请求头部，使用第一个有效的API密钥
+        httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKeys[0]);
 
-        var jsonDocument = JsonDocument.Parse(json);
+        // 获取TRX余额
+        var trxResponse = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/address-summary?chainShortName=tron&address={address}");
+        var trxJson = await trxResponse.Content.ReadAsStringAsync();
+        //Console.WriteLine($"TRX API Response: {trxJson}");  // 调试输出TRX API返回的JSON
+        var trxJsonDocument = JsonDocument.Parse(trxJson);
 
-        var usdtBalance = 0m;
-        var trxBalance = 0m;
-
-        if (jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) && dataElement.GetArrayLength() > 0)
+        decimal trxBalance = 0m;
+        if (trxJsonDocument.RootElement.GetProperty("code").GetString() == "0" && trxJsonDocument.RootElement.GetProperty("data").GetArrayLength() > 0)
         {
-            foreach (var token in dataElement.EnumerateArray())
-            {
-                if (token.TryGetProperty("tokenName", out JsonElement nameElement) && nameElement.GetString() == "trx")
-                {
-                    if (token.TryGetProperty("balance", out JsonElement balanceElement))
-                    {
-                        trxBalance = decimal.Parse(balanceElement.GetString()) / 1_000_000;
-                    }
-                }
-                else if (token.TryGetProperty("tokenId", out JsonElement idElement) && idElement.GetString() == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
-                {
-                    if (token.TryGetProperty("balance", out JsonElement balanceElement))
-                    {
-                        usdtBalance = decimal.Parse(balanceElement.GetString()) / 1_000_000;
-                    }
-                }
-            }
+            trxBalance = decimal.Parse(trxJsonDocument.RootElement.GetProperty("data")[0].GetProperty("balance").GetString());
+        }
+
+        // 获取USDT余额
+        var usdtResponse = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/address-balance-fills?chainShortName=tron&address={address}&tokenContractAddress=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=1");
+        var usdtJson = await usdtResponse.Content.ReadAsStringAsync();
+        //Console.WriteLine($"USDT API Response: {usdtJson}");  // 调试输出USDT API返回的JSON
+        var usdtJsonDocument = JsonDocument.Parse(usdtJson);
+
+        decimal usdtBalance = 0m;
+        if (usdtJsonDocument.RootElement.GetProperty("code").GetString() == "0" && usdtJsonDocument.RootElement.GetProperty("data").GetArrayLength() > 0 && usdtJsonDocument.RootElement.GetProperty("data")[0].GetProperty("tokenList").GetArrayLength() > 0)
+        {
+            usdtBalance = decimal.Parse(usdtJsonDocument.RootElement.GetProperty("data")[0].GetProperty("tokenList")[0].GetProperty("holdingAmount").GetString());
         }
 
         return (usdtBalance, trxBalance, false); // 如果没有发生错误，返回结果和IsError=false
