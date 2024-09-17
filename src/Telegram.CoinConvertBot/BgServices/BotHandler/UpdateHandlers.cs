@@ -17315,10 +17315,18 @@ else
         }
         catch (Exception ex)
         {
-            // 记录错误信息
-            // 如果API调用失败，尝试调用 QueryCoinInfoAsync 方法查询，不发送未找到币种的信息
-            await QueryCoinInfoAsync(botClient, message.Chat.Id, symbol, false);	
-            Console.WriteLine($"Error when calling API: {ex.Message}");
+            if (ex is HttpRequestException httpRequestException && 
+                httpRequestException.Message.Contains("Response status code does not indicate success: 400 (Bad Request)"))
+            {
+                // 如果是特定的400错误，不记录错误信息，只调用 QueryCoinInfoAsync 方法
+                await QueryCoinInfoAsync(botClient, message.Chat.Id, symbol, false);
+            }
+            else
+            {
+                // 记录其他类型的错误信息
+                Console.WriteLine($"Error when calling API: {ex.Message}");
+                await QueryCoinInfoAsync(botClient, message.Chat.Id, symbol, false);	
+            }
         }
     }
 }       
