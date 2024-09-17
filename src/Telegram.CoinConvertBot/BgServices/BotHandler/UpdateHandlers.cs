@@ -8346,32 +8346,46 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, doub
 
         if (!response.IsSuccessStatusCode)
         {
+            //Console.WriteLine("主API失败，尝试副API...");
             // 新API失败，尝试旧API
             response = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
-        }
-
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            var jsonResult = JObject.Parse(content);
-
-            if (jsonResult.HasValues)
+            if (response.IsSuccessStatusCode)
             {
-                double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
-                double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
-                double netRemaining = jsonResult["bandwidth"]["netRemaining"].ToObject<double>();
-                double netLimit = jsonResult["bandwidth"]["netLimit"].ToObject<double>();
-                double energyRemaining = jsonResult["bandwidth"]["energyRemaining"].ToObject<double>();
-                double energyLimit = jsonResult["bandwidth"]["energyLimit"].ToObject<double>();
-                int transactions = jsonResult["transactions"].ToObject<int>();
-                int transactionsIn = jsonResult["transactions_in"].ToObject<int>();
-                int transactionsOut = jsonResult["transactions_out"].ToObject<int>();
-
-                return (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, false);
+                //Console.WriteLine("数据来自副API");
+            }
+            else
+            {
+                //Console.WriteLine("两条API都失效了...");
+                return (0, 0, 0, 0, 0, 0, 0, 0, 0, true);
             }
         }
-        // 如果两个API都失败，返回默认值
-        return (0, 0, 0, 0, 0, 0, 0, 0, 0, true);
+        else
+        {
+            //Console.WriteLine("数据来自主API");
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        var jsonResult = JObject.Parse(content);
+
+        if (jsonResult.HasValues)
+        {
+            double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
+            double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
+            double netRemaining = jsonResult["bandwidth"]["netRemaining"].ToObject<double>();
+            double netLimit = jsonResult["bandwidth"]["netLimit"].ToObject<double>();
+            double energyRemaining = jsonResult["bandwidth"]["energyRemaining"].ToObject<double>();
+            double energyLimit = jsonResult["bandwidth"]["energyLimit"].ToObject<double>();
+            int transactions = jsonResult["transactions"].ToObject<int>();
+            int transactionsIn = jsonResult["transactions_in"].ToObject<int>();
+            int transactionsOut = jsonResult["transactions_out"].ToObject<int>();
+
+            return (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, false);
+        }
+        else
+        {
+            Console.WriteLine("API响应有效但无数据...");
+            return (0, 0, 0, 0, 0, 0, 0, 0, 0, true);
+        }
     }
     catch (Exception ex)
     {
