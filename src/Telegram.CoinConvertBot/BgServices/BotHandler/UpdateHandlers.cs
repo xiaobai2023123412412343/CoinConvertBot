@@ -8464,8 +8464,14 @@ public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddr
     try
     {
         using var httpClient = new HttpClient();
-        // 修改API地址
+        // 主API地址
         var response = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={tronAddress}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // 如果主API失败，尝试备用API
+            response = await httpClient.GetAsync($"https://apilist.tronscan.org/api/account?address={tronAddress}");
+        }
 
         if (response.IsSuccessStatusCode)
         {
