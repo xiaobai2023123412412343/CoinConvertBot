@@ -9130,7 +9130,13 @@ else
     // 如果包含错误信息，确保不添加任何授权列表信息
     usdtAuthorizedListText = "";
 }
-    
+	
+// 构建结果文本时，根据条件决定是否添加交易次数信息
+string transactionsText = "";
+if (transactions > 0) {
+    transactionsText = $"交易次数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n";
+} 
+	
 // 判断 TRX 余额是否小于100
 if (message.Chat.Type != ChatType.Private)
 {
@@ -9143,7 +9149,7 @@ if (trxBalance < 100)
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
-    $"交易次数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +        
+    transactionsText + // 添加或省略交易次数信息       
     $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}  |  TRX能量不足，请{exchangeLink}</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
@@ -9172,7 +9178,7 @@ else
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
-    $"交易次数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
+    transactionsText + // 添加或省略交易次数信息
     $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}  |  可供转账{availableTransferCount}次</b> \n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
@@ -9203,7 +9209,7 @@ if (trxBalance < 100)
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
-    $"交易次数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +        
+    transactionsText + // 添加或省略交易次数信息    
     $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}  |  TRX能量不足，请{exchangeLink}</b>\n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
@@ -9230,7 +9236,7 @@ else
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
-    $"交易次数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n" +    
+    transactionsText + // 添加或省略交易次数信息  
     $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}  |  可供转账{availableTransferCount}次</b> \n" +
     $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
