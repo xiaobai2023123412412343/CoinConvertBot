@@ -8486,57 +8486,64 @@ public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddr
 
         if (!response.IsSuccessStatusCode)
         {
+            //Console.WriteLine("主API失败，尝试副API...");
             // 如果主API失败，尝试备用API
             response = await httpClient.GetAsync($"https://apilist.tronscan.org/api/account?address={tronAddress}");
-        }
-
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            var json = JObject.Parse(content);
-
-            // 直接检查ownerPermission字段
-            if (json["ownerPermission"] != null && json["ownerPermission"]["keys"] is JArray keysArray && keysArray.Count > 0)
+            if (response.IsSuccessStatusCode)
             {
-                // 如果只有一个地址
-                if (keysArray.Count == 1)
-                {
-                    string ownerAddress = keysArray[0]["address"].ToString();
-                    // 检查控制地址是否为查询地址
-                    if (ownerAddress == tronAddress)
-                    {
-                        return ("当前地址未多签", false);
-                    }
-                    else
-                    {
-                        return (ownerAddress, false);
-                    }
-                }
-                // 如果有多个地址（多签情况）
-                else
-                {
-                    // 按权重降序排序，并排除查询地址
-                    var sortedAddresses = keysArray
-                        .Where(k => k["address"].ToString() != tronAddress)
-                        .OrderByDescending(k => (int)k["weight"])
-                        .Select(k => k["address"].ToString())
-                        .ToList();
-
-                    // 如果存在不同于查询地址的多签地址
-                    if (sortedAddresses.Any())
-                    {
-                        return (sortedAddresses.First(), false);
-                    }
-                    else
-                    {
-                        // 如果所有多签地址都与查询地址相同（极少情况）
-                        return ("当前地址未多签", false);
-                    }
-                }
+               // Console.WriteLine("数据来自副API");
             }
             else
             {
-                return ("查询超时或地址未激活！", false);
+               // Console.WriteLine("两条API都失效了...");
+                return ("查询超时或地址未激活！", true);
+            }
+        }
+        else
+        {
+           // Console.WriteLine("数据来自主API");
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        var json = JObject.Parse(content);
+
+        // 直接检查ownerPermission字段
+        if (json["ownerPermission"] != null && json["ownerPermission"]["keys"] is JArray keysArray && keysArray.Count > 0)
+        {
+            // 如果只有一个地址
+            if (keysArray.Count == 1)
+            {
+                string ownerAddress = keysArray[0]["address"].ToString();
+                // 检查控制地址是否为查询地址
+                if (ownerAddress == tronAddress)
+                {
+                    return ("当前地址未多签", false);
+                }
+                else
+                {
+                    return (ownerAddress, false);
+                }
+            }
+            // 如果有多个地址（多签情况）
+            else
+            {
+                // 按权重降序排序，并排除查询地址
+                var sortedAddresses = keysArray
+                    .Where(k => k["address"].ToString() != tronAddress)
+                    .OrderByDescending(k => (int)k["weight"])
+                    .Select(k => k["address"].ToString())
+                    .ToList();
+
+                // 如果存在不同于查询地址的多签地址
+                if (sortedAddresses.Any())
+                {
+                    return (sortedAddresses.First(), false);
+                }
+                else
+                {
+                    // 如果所有多签地址都与查询地址相同（极少情况）
+                    return ("当前地址未多签", false);
+                }
             }
         }
         else
