@@ -8340,38 +8340,41 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, doub
 {
     try
     {
-        // 更新API URL
-        string url = $"https://apilist.tronscan.org/api/account?address={address}";
         using var httpClient = new HttpClient();
-        // 发送请求并获取结果
-        var result = await httpClient.GetStringAsync(url);
+        // 尝试新API
+        var response = await httpClient.GetAsync($"https://apilist.tronscan.org/api/account?address={address}");
 
-        // 解析返回的JSON数据
-        var jsonResult = JObject.Parse(result);
-
-        // 检查JSON对象是否为空
-        if (!jsonResult.HasValues)
+        if (!response.IsSuccessStatusCode)
         {
-            // 如果为空，则返回默认值
-            return (0, 0, 0, 0, 0, 0, 0, 0, 0, false);
+            // 新API失败，尝试旧API
+            response = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
         }
 
-        // 解析带宽和能量数据
-        double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
-        double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
-        double netRemaining = jsonResult["bandwidth"]["netRemaining"].ToObject<double>();
-        double netLimit = jsonResult["bandwidth"]["netLimit"].ToObject<double>();
-        double energyRemaining = jsonResult["bandwidth"]["energyRemaining"].ToObject<double>();
-        double energyLimit = jsonResult["bandwidth"]["energyLimit"].ToObject<double>();
-        int transactions = jsonResult["transactions"].ToObject<int>();
-        int transactionsIn = jsonResult["transactions_in"].ToObject<int>();
-        int transactionsOut = jsonResult["transactions_out"].ToObject<int>();
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            var jsonResult = JObject.Parse(content);
 
-        return (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, false);
+            if (jsonResult.HasValues)
+            {
+                double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
+                double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
+                double netRemaining = jsonResult["bandwidth"]["netRemaining"].ToObject<double>();
+                double netLimit = jsonResult["bandwidth"]["netLimit"].ToObject<double>();
+                double energyRemaining = jsonResult["bandwidth"]["energyRemaining"].ToObject<double>();
+                double energyLimit = jsonResult["bandwidth"]["energyLimit"].ToObject<double>();
+                int transactions = jsonResult["transactions"].ToObject<int>();
+                int transactionsIn = jsonResult["transactions_in"].ToObject<int>();
+                int transactionsOut = jsonResult["transactions_out"].ToObject<int>();
+
+                return (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, false);
+            }
+        }
+        // 如果两个API都失败，返回默认值
+        return (0, 0, 0, 0, 0, 0, 0, 0, 0, true);
     }
     catch (Exception ex)
     {
-        // 如果发生异常，返回一个特殊的元组值
         Console.WriteLine($"Error in method {nameof(GetBandwidthAsync)}: {ex.Message}");
         return (0, 0, 0, 0, 0, 0, 0, 0, 0, true);
     }
