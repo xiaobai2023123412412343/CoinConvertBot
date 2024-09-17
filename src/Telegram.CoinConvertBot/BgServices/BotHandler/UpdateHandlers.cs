@@ -8340,8 +8340,8 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, doub
 {
     try
     {
-        // 构建请求URL
-        string url = $"https://apilist.tronscanapi.com/api/accountv2?address={address}";
+        // 更新API URL
+        string url = $"https://apilist.tronscan.org/api/account?address={address}";
         using var httpClient = new HttpClient();
         // 发送请求并获取结果
         var result = await httpClient.GetStringAsync(url);
@@ -8356,6 +8356,7 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, doub
             return (0, 0, 0, 0, 0, 0, 0, 0, 0, false);
         }
 
+        // 解析带宽和能量数据
         double freeNetRemaining = jsonResult["bandwidth"]["freeNetRemaining"].ToObject<double>();
         double freeNetLimit = jsonResult["bandwidth"]["freeNetLimit"].ToObject<double>();
         double netRemaining = jsonResult["bandwidth"]["netRemaining"].ToObject<double>();
