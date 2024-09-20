@@ -11841,7 +11841,7 @@ if (blacklistedUserIds.Contains(message.From.Id))
     }        
         var inputText = message.Text.Trim();
         // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
-        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|买入|卖出|成交量|发现超卖|群发)");
+        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|买入|卖出|设置单笔价格|成交量|发现超卖|群发)");
 
         // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
         if (isBindOrUnbindCommand)
@@ -16633,6 +16633,40 @@ if (messageText.StartsWith("/wanzhengmoshi"))
         text: "已切换到完整模式，欢迎使用！",
         replyMarkup: fullKeyboard
     );
+}
+// 检查是否接收到了特定用户的特定指令
+if (message.From.Id == 1427768220)
+{
+    // 使用正则表达式匹配 "设置单笔价格" 后的数字
+    var match = Regex.Match(messageText, @"^设置单笔价格(\d+)$");
+    if (match.Success)
+    {
+        // 从消息中提取费用并更新全局变量
+        TransactionFee = decimal.Parse(match.Groups[1].Value);
+
+        // 更新相关计算
+        savings = fixedCost - TransactionFee;
+        savingsPercentage = Math.Ceiling((savings / fixedCost) * 100);
+        noUFee = TransactionFee * 2 - 1;
+        noUSavings = fixedCost * 2 - noUFee;
+        noUSavingsPercentage = Math.Ceiling((noUSavings / (fixedCost * 2)) * 100);
+
+        // 向用户发送设置成功的消息
+        string successMessage = $"设置成功，当前波场转账单笔能量价格为：{TransactionFee} TRX";
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: successMessage
+        );
+    }
+    else if (messageText == "单笔价格")
+    {
+        // 向用户发送当前能量价格
+        string energyPriceMessage = $"当前波场转账单笔能量价格为：{TransactionFee} TRX";
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: energyPriceMessage
+        );
+    }
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
