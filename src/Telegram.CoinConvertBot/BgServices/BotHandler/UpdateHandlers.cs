@@ -8304,8 +8304,25 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
         httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKeys[0]);
 
         // 获取TRX余额
-        var trxResponse = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/address-summary?chainShortName=tron&address={address}");
-        var trxJson = await trxResponse.Content.ReadAsStringAsync();
+        HttpResponseMessage trxResponse;
+        string trxJson;
+        int retryCount = 0;
+        do
+        {
+            trxResponse = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/address-summary?chainShortName=tron&address={address}");
+            trxJson = await trxResponse.Content.ReadAsStringAsync();
+            if (trxJson.Contains("\"code\":\"50011\"") && retryCount < 2) // 检查是否达到API速率限制
+            {
+                Console.WriteLine("Rate limit exceeded. Retrying after delay...");
+                await Task.Delay(new Random().Next(1000, 1500)); // 随机延迟1到1.5秒
+                retryCount++;
+            }
+            else
+            {
+                break;
+            }
+        } while (true);
+
         //Console.WriteLine($"TRX API Response: {trxJson}");  // 调试输出TRX API返回的JSON
         var trxJsonDocument = JsonDocument.Parse(trxJson);
 
@@ -8316,8 +8333,25 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
         }
 
         // 获取USDT余额
-        var usdtResponse = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/address-balance-fills?chainShortName=tron&address={address}&tokenContractAddress=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=1");
-        var usdtJson = await usdtResponse.Content.ReadAsStringAsync();
+        HttpResponseMessage usdtResponse;
+        string usdtJson;
+        retryCount = 0; // 重置重试计数器
+        do
+        {
+            usdtResponse = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/address-balance-fills?chainShortName=tron&address={address}&tokenContractAddress=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=1");
+            usdtJson = await usdtResponse.Content.ReadAsStringAsync();
+            if (usdtJson.Contains("\"code\":\"50011\"") && retryCount < 2) // 检查是否达到API速率限制
+            {
+                Console.WriteLine("Rate limit exceeded. Retrying after delay...");
+                await Task.Delay(new Random().Next(1000, 1500)); // 随机延迟1到1.5秒
+                retryCount++;
+            }
+            else
+            {
+                break;
+            }
+        } while (true);
+
         //Console.WriteLine($"USDT API Response: {usdtJson}");  // 调试输出USDT API返回的JSON
         var usdtJsonDocument = JsonDocument.Parse(usdtJson);
 
