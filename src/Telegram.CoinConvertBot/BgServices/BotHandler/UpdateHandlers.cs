@@ -9616,8 +9616,8 @@ for (int i = 0; i <= days; i++)
         dailyCounts[date] = (0, 0); // 当天没有交易
     }
 
-    int energyWithUBalance = 31895; // 给有余额地址转账的能量消耗
-    int energyWithoutUBalance = 64895; // 给无余额地址转账的能量消耗
+    int energyWithUBalance = 64285; // 给有余额地址转账的能量消耗
+    int energyWithoutUBalance = 130285; // 给无余额地址转账的能量消耗
     int totalTransactions = dailyCounts[date].outCount; // 当日总转出笔数
     int totalEnergy = energyUsage.ContainsKey(date) ? energyUsage[date] : 0; // 当日能量消耗
     var (withUBalanceCount, withoutUBalanceCount) = CalculateTransactionTypes(totalTransactions, totalEnergy, energyWithUBalance, energyWithoutUBalance);
@@ -11020,7 +11020,7 @@ var totalBurnedTrxLastWeek = burnEnergyCost * lastWeekEnergyBurn + burnNetCost *
 var totalBurnedTrxLastMonth = burnEnergyCost * lastMonthEnergyBurn + burnNetCost * lastMonthNetBurn;
 		
 // 定义固定能量单价
-decimal fixedEnergyPrice = Math.Round(TransactionFee / 31895, 8);
+decimal fixedEnergyPrice = Math.Round(TransactionFee / 64285, 8);
 
 // 计算现在的价格，为燃烧TRX获得的能量乘以优惠汇率，加上获得带宽燃烧了多少TRX
 var currentPriceYesterday = Math.Round(fixedEnergyPrice * yesterdayEnergyBurn + burnNetCost * yesterdayNetBurn, 2);
@@ -18785,8 +18785,8 @@ decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
 //decimal totalIncome = Math.Round(totalIncomeTask.Result - 42632, 2); 累计收入注释掉了
 decimal yearlyIncome = Math.Round(yearlyIncomeTask.Result, 2); // 新增年度收入结果            
 
-decimal requiredEnergy1 = 31895;
-decimal requiredEnergy2 = 64895;
+decimal requiredEnergy1 = 64285;
+decimal requiredEnergy2 = 130285;
 decimal energyPer100TRX = resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100;
 decimal requiredTRX1 = Math.Floor(requiredEnergy1 / (energyPer100TRX / 100)) + 1;
 decimal requiredTRX2 = Math.Floor(requiredEnergy2 / (energyPer100TRX / 100)) + 1;  
@@ -18827,8 +18827,8 @@ USDT余额： <b>{USDT}</b>
 能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>       
  
 质押 {requiredTRXForBandwidth} TRX = 345 带宽   
-质押 {requiredTRX1} TRX = 31895 能量
-质押 {requiredTRX2} TRX = 64895 能量     
+质押 {requiredTRX1} TRX = 64285 能量
+质押 {requiredTRX2} TRX = 130285 能量     
 ——————————————————————    
 今日承兑：<b>{todayIncome} USDT  |  {todayTRXOut} TRX</b>
 本月承兑：<b>{monthlyIncome} USDT</b>
