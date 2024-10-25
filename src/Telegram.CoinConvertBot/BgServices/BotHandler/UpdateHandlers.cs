@@ -3838,7 +3838,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
 			      $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
                               $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
-                              $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用最低降至 {TransactionFee} TRX！</a>\n"; // 修改后的两行文字
+                              $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用立即降至 {TransactionFee} TRX！</a>\n"; // 修改后的两行文字
 		    
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
