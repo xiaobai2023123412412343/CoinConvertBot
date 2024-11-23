@@ -248,7 +248,7 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
 		
             foreach (var rate in fundingRates)
             {
-                if (Math.Abs(rate.Value) >= 0.005) // 检查是否达到通知阈值
+                if (Math.Abs(rate.Value) >= 0.015) // 检查是否达到通知阈值  资金费正负 1.5% 播报提醒
                 {
                     var key = (userId, rate.Key);
                     if (!lastNotifiedTimes.ContainsKey(key) || beijingTimeNow - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
