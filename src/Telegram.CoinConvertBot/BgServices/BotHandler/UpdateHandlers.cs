@@ -8981,7 +8981,35 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
         //Console.WriteLine($"在获取授权记录时发生异常：{ex.Message}");
         return "\U00002705无授权记录\n";
     }
-}                                                            
+}   
+// 更新查询统计的方法
+private static void UpdateQueryStats(long userId, string address)
+{
+    if (!addressQueryStats.ContainsKey(address))
+    {
+        addressQueryStats[address] = new Dictionary<long, int>();
+    }
+
+    if (!addressQueryStats[address].ContainsKey(userId))
+    {
+        addressQueryStats[address][userId] = 0;
+    }
+
+    addressQueryStats[address][userId]++;
+}
+
+// 获取查询统计的方法
+private static Dictionary<long, int> GetQueryStats(string address)
+{
+    if (addressQueryStats.ContainsKey(address))
+    {
+        return addressQueryStats[address];
+    }
+
+    return new Dictionary<long, int>();
+}
+// 在类的顶部定义字典来存储地址和查询统计
+private static Dictionary<string, Dictionary<long, int>> addressQueryStats = new Dictionary<string, Dictionary<long, int>>();	                                                         
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
@@ -9090,7 +9118,13 @@ foreach (char c in tronAddress)
         previousChar = c;
     }
 }
-
+    // 更新查询统计
+    UpdateQueryStats(message.From.Id, tronAddress);
+    // 在构建结果文本之前，获取查询统计
+    var stats = GetQueryStats(tronAddress);
+    int totalQueries = stats.Values.Sum();
+    int uniqueUsers = stats.Count;
+	
 // 当连续相同字符数量大于等于4时，添加“靓号”信息
 string fireEmoji = "\uD83D\uDD25";
 string buyLink = "https://t.me/lianghaonet/8";
@@ -9211,6 +9245,7 @@ if (trxBalance < 100)
     $"多签地址：<b>{addressPermissionText}</b>\n" +    
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +	    
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
     transactionsText + // 添加或省略交易次数信息       
@@ -9240,6 +9275,7 @@ else
     $"多签地址：<b>{addressPermissionText}</b>\n" +    
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +	
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
     transactionsText + // 添加或省略交易次数信息
@@ -9271,6 +9307,7 @@ if (trxBalance < 100)
     $"多签地址：<b>{addressPermissionText}</b>\n" +    
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +		
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
     transactionsText + // 添加或省略交易次数信息    
@@ -9298,6 +9335,7 @@ else
     $"多签地址：<b>{addressPermissionText}</b>\n" +    
     $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
     $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+    $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +		
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
     transactionsText + // 添加或省略交易次数信息  
