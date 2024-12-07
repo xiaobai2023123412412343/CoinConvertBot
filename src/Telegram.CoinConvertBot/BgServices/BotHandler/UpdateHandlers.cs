@@ -8985,31 +8985,21 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
 // 更新查询统计的方法
 private static void UpdateQueryStats(long userId, string address)
 {
-    if (!addressQueryStats.ContainsKey(address))
-    {
-        addressQueryStats[address] = new Dictionary<long, int>();
-    }
-
-    if (!addressQueryStats[address].ContainsKey(userId))
-    {
-        addressQueryStats[address][userId] = 0;
-    }
-
-    addressQueryStats[address][userId]++;
+    var userStats = addressQueryStats.GetOrAdd(address, _ => new ConcurrentDictionary<long, int>());
+    userStats.AddOrUpdate(userId, 1, (id, count) => count + 1);
 }
 
 // 获取查询统计的方法
-private static Dictionary<long, int> GetQueryStats(string address)
+private static ConcurrentDictionary<long, int> GetQueryStats(string address)
 {
-    if (addressQueryStats.ContainsKey(address))
+    if (addressQueryStats.TryGetValue(address, out var stats))
     {
-        return addressQueryStats[address];
+        return stats;
     }
-
-    return new Dictionary<long, int>();
+    return new ConcurrentDictionary<long, int>();
 }
-// 在类的顶部定义字典来存储地址和查询统计
-private static Dictionary<string, Dictionary<long, int>> addressQueryStats = new Dictionary<string, Dictionary<long, int>>();	                                                         
+// 在类的顶部定义字典来存储地址和查询统计 使用 ConcurrentDictionary 来支持线程安全的访问
+private static ConcurrentDictionary<string, ConcurrentDictionary<long, int>> addressQueryStats = new ConcurrentDictionary<string, ConcurrentDictionary<long, int>>();                                                         
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
     var text = message.Text;
@@ -9120,10 +9110,23 @@ foreach (char c in tronAddress)
 }
     // 更新查询统计
     UpdateQueryStats(message.From.Id, tronAddress);
-    // 在构建结果文本之前，获取查询统计
-    var stats = GetQueryStats(tronAddress);
-    int totalQueries = stats.Values.Sum();
-    int uniqueUsers = stats.Count;
+
+    // 尝试获取查询统计，如果发生异常则处理
+    int totalQueries, uniqueUsers;
+    try
+    {
+        var stats = GetQueryStats(tronAddress);
+        totalQueries = stats.Values.Sum();
+        uniqueUsers = stats.Count;
+    }
+    catch (Exception ex)
+    {
+        // 在日志中记录异常信息，这里可以使用 Console.WriteLine 或其他日志库
+        Console.WriteLine($"Error retrieving query stats: {ex.Message}");
+        // 设置默认值
+        totalQueries = 0;
+        uniqueUsers = 0;
+    }
 	
 // 当连续相同字符数量大于等于4时，添加“靓号”信息
 string fireEmoji = "\uD83D\uDD25";
