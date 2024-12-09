@@ -16851,22 +16851,27 @@ if (message.From.Id == 1427768220)
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
-    // 如果虚拟广告没有在运行，就启动虚拟广告
-    if (!isVirtualAdvertisementRunning)
+    // 取消当前正在运行的虚拟广告任务（如果有）
+    if (isVirtualAdvertisementRunning)
     {
-        isVirtualAdvertisementRunning = true; // 将变量设置为 true，表示虚拟广告正在运行
-
-        virtualAdCancellationTokenSource = new CancellationTokenSource(); // 更新类级别的 CancellationTokenSource
-        var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-        _ = SendVirtualAdvertisement(botClient, virtualAdCancellationTokenSource.Token, rateRepository, FeeRate)
-            .ContinueWith(_ => isVirtualAdvertisementRunning = false); // 广告结束后将变量设置为 false
-
-        // 向用户发送一条消息，告知他们虚拟广告已经启动
-        _ = botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "兑换通知已启动！"
-        );
+        virtualAdCancellationTokenSource.Cancel();
+        virtualAdCancellationTokenSource.Dispose(); // 释放资源
+        isVirtualAdvertisementRunning = false; // 将变量设置为 false，表示虚拟广告已停止
     }
+
+    // 创建新的 CancellationTokenSource
+    virtualAdCancellationTokenSource = new CancellationTokenSource();
+    isVirtualAdvertisementRunning = true; // 将变量设置为 true，表示虚拟广告正在运行
+
+    var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+    _ = SendVirtualAdvertisement(botClient, virtualAdCancellationTokenSource.Token, rateRepository, FeeRate)
+        .ContinueWith(_ => isVirtualAdvertisementRunning = false); // 广告结束后将变量设置为 false
+
+    // 向用户发送一条消息，告知他们虚拟广告已经启动
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "兑换通知已重新启动！"
+    );
 }
 // 检查是否为指定用户并执行相应的操作
 //if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup))
