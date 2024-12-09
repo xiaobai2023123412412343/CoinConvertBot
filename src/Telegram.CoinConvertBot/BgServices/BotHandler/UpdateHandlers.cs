@@ -8330,7 +8330,7 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
         if (trxJsonDocument.RootElement.GetProperty("code").GetString() == "0" && trxJsonDocument.RootElement.GetProperty("data").GetArrayLength() > 0)
         {
             trxBalance = decimal.Parse(trxJsonDocument.RootElement.GetProperty("data")[0].GetProperty("balance").GetString());
-	    Console.WriteLine("TRX余额来自主API");	
+	    //Console.WriteLine("TRX余额来自主API");	
         }
 
         // 获取USDT余额
@@ -8360,29 +8360,38 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
         if (usdtJsonDocument.RootElement.GetProperty("code").GetString() == "0" && usdtJsonDocument.RootElement.GetProperty("data").GetArrayLength() > 0 && usdtJsonDocument.RootElement.GetProperty("data")[0].GetProperty("tokenList").GetArrayLength() > 0)
         {
             usdtBalance = decimal.Parse(usdtJsonDocument.RootElement.GetProperty("data")[0].GetProperty("tokenList")[0].GetProperty("holdingAmount").GetString());
-	    Console.WriteLine("USDT余额来自主API");	
+	    //Console.WriteLine("USDT余额来自主API");	
         }
 
-        // 如果任一余额为0，尝试使用备用API
-        if (trxBalance == 0m || usdtBalance == 0m)
+// 如果任一余额为0，尝试使用备用API
+if (trxBalance == 0m || usdtBalance == 0m)
+{
+    HttpResponseMessage backupResponse = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
+    string backupJson = await backupResponse.Content.ReadAsStringAsync();
+    //Console.WriteLine("备用API返回的JSON: " + backupJson);  // 输出API返回的完整JSON字符串
+    var backupJsonDocument = JsonDocument.Parse(backupJson);
+
+    // 遍历withPriceTokens数组，寻找TRX和USDT的余额
+    foreach (var token in backupJsonDocument.RootElement.GetProperty("withPriceTokens").EnumerateArray())
+    {
+        // 检查是否为TRX
+        if (token.GetProperty("tokenName").GetString() == "trx")
         {
-            HttpResponseMessage backupResponse = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
-            string backupJson = await backupResponse.Content.ReadAsStringAsync();
-            var backupJsonDocument = JsonDocument.Parse(backupJson);
-            foreach (var token in backupJsonDocument.RootElement.GetProperty("withPriceTokens").EnumerateArray())
-            {
-                if (token.GetProperty("tokenName").GetString() == "trx")
-                {
-                    trxBalance = token.GetProperty("amount").GetDecimal();
-                    Console.WriteLine("TRX余额来自备用API");
-                }
-                if (token.GetProperty("tokenId").GetString() == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" && token.GetProperty("tokenName").GetString() == "Tether USD")
-                {
-                    usdtBalance = token.GetProperty("amount").GetDecimal();
-                    Console.WriteLine("USDT余额来自备用API");
-                }
-            }
+            // 获取字符串类型的balance，然后转换为decimal，并进行单位转换
+            string trxBalanceStr = token.GetProperty("balance").GetString();
+            trxBalance = decimal.Parse(trxBalanceStr) / 1000000m;
+            //Console.WriteLine("TRX余额来自备用API: " + trxBalance);
         }
+        // 检查是否为USDT，确保tokenId和tokenName匹配
+        if (token.GetProperty("tokenId").GetString() == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" && token.GetProperty("tokenName").GetString() == "Tether USD")
+        {
+            // 获取字符串类型的balance，然后转换为decimal，并进行单位转换
+            string usdtBalanceStr = token.GetProperty("balance").GetString();
+            usdtBalance = decimal.Parse(usdtBalanceStr) / 1000000m;
+            //Console.WriteLine("USDT余额来自备用API: " + usdtBalance);
+        }
+    }
+}
 
         return (usdtBalance, trxBalance, false); // 如果没有发生错误，返回结果和IsError=false
     }
