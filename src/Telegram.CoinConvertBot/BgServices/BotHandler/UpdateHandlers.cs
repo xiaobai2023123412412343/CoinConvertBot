@@ -8330,6 +8330,7 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
         if (trxJsonDocument.RootElement.GetProperty("code").GetString() == "0" && trxJsonDocument.RootElement.GetProperty("data").GetArrayLength() > 0)
         {
             trxBalance = decimal.Parse(trxJsonDocument.RootElement.GetProperty("data")[0].GetProperty("balance").GetString());
+	    Console.WriteLine("TRX余额来自主API");	
         }
 
         // 获取USDT余额
@@ -8359,6 +8360,7 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
         if (usdtJsonDocument.RootElement.GetProperty("code").GetString() == "0" && usdtJsonDocument.RootElement.GetProperty("data").GetArrayLength() > 0 && usdtJsonDocument.RootElement.GetProperty("data")[0].GetProperty("tokenList").GetArrayLength() > 0)
         {
             usdtBalance = decimal.Parse(usdtJsonDocument.RootElement.GetProperty("data")[0].GetProperty("tokenList")[0].GetProperty("holdingAmount").GetString());
+	    Console.WriteLine("USDT余额来自主API");	
         }
 
         // 如果任一余额为0，尝试使用备用API
@@ -8371,11 +8373,13 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
             {
                 if (token.GetProperty("tokenName").GetString() == "trx")
                 {
-                    trxBalance = decimal.Parse(token.GetProperty("amount").GetString());
+                    trxBalance = token.GetProperty("amount").GetDecimal();
+                    Console.WriteLine("TRX余额来自备用API");
                 }
                 if (token.GetProperty("tokenId").GetString() == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" && token.GetProperty("tokenName").GetString() == "Tether USD")
                 {
-                    usdtBalance = decimal.Parse(token.GetProperty("amount").GetString());
+                    usdtBalance = token.GetProperty("amount").GetDecimal();
+                    Console.WriteLine("USDT余额来自备用API");
                 }
             }
         }
