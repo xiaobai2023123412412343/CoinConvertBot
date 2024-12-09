@@ -8998,6 +8998,90 @@ private static ConcurrentDictionary<long, int> GetQueryStats(string address)
     }
     return new ConcurrentDictionary<long, int>();
 }
+// 获取地址标签
+private static async Task<string> FetchAddressLabelAsync(string tronAddress)
+{
+    var url = $"https://www.oklink.com/zh-hans/trx/address/{tronAddress}";
+    try
+    {
+        var response = await httpClient.GetAsync(url);
+        //Console.WriteLine($"HTTP Response Status: {response.StatusCode}"); // 输出HTTP响应状态
+
+        if (response.IsSuccessStatusCode)
+        {
+            var pageContent = await response.Content.ReadAsStringAsync();
+            //Console.WriteLine($"Page Content: {pageContent}"); // 输出获取的页面内容，用于调试
+
+            // 查找 tagStore 中的 entityTag 和 riskTags
+            var tagStoreIndex = pageContent.IndexOf("\"tagStore\":{");
+            if (tagStoreIndex != -1)
+            {
+                var label = "";
+                var riskLabel = "";
+                var riskValue = "";
+
+                // 获取 entityTag
+                var entityTagIndex = pageContent.IndexOf("\"entityTag\":\"", tagStoreIndex);
+                if (entityTagIndex != -1)
+                {
+                    var startTag = "\"entityTag\":\"";
+                    var endTag = "\"";
+                    var startIndex = pageContent.IndexOf(startTag, entityTagIndex) + startTag.Length;
+                    var endIndex = pageContent.IndexOf(endTag, startIndex);
+                    label = pageContent.Substring(startIndex, endIndex - startIndex).Trim();
+                }
+
+                // 获取 riskTags
+                var riskTagsIndex = pageContent.IndexOf("\"riskTags\":[", tagStoreIndex);
+                if (riskTagsIndex != -1)
+                {
+                    var riskTagTextIndex = pageContent.IndexOf("\"text\":\"", riskTagsIndex);
+                    if (riskTagTextIndex != -1)
+                    {
+                        var startTag = "\"text\":\"";
+                        var endTag = "\"";
+                        var startIndex = pageContent.IndexOf(startTag, riskTagTextIndex) + startTag.Length;
+                        var endIndex = pageContent.IndexOf(endTag, startIndex);
+                        riskLabel = pageContent.Substring(startIndex, endIndex - startIndex).Trim();
+                    }
+
+                    // 获取 riskValue
+                    var riskValueIndex = pageContent.IndexOf("\"riskValue\":\"", riskTagsIndex);
+                    if (riskValueIndex != -1)
+                    {
+                        var startTag = "\"riskValue\":\"";
+                        var endTag = "\"";
+                        var startIndex = pageContent.IndexOf(startTag, riskValueIndex) + startTag.Length;
+                        var endIndex = pageContent.IndexOf(endTag, startIndex);
+                        riskValue = pageContent.Substring(startIndex, endIndex - startIndex).Trim();
+                    }
+                }
+
+                // 组合标签和风险信息
+                var combinedLabel = "";
+                if (!string.IsNullOrEmpty(label))
+                {
+                    combinedLabel += label;
+                }
+                if (!string.IsNullOrEmpty(riskLabel))
+                {
+                    combinedLabel += (!string.IsNullOrEmpty(combinedLabel) ? " | " : "") + riskLabel;
+                }
+                if (!string.IsNullOrEmpty(combinedLabel) && !string.IsNullOrEmpty(riskValue))
+                {
+                    combinedLabel += " | " + riskValue;
+                }
+
+                return combinedLabel; // 返回找到的标签和风险信息
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        //Console.WriteLine($"Error fetching address label: {ex.Message}");
+    }
+    return null; // 如果没有找到标签或请求失败，返回null
+}
 // 在类的顶部定义字典来存储地址和查询统计 使用 ConcurrentDictionary 来支持线程安全的访问
 private static ConcurrentDictionary<string, ConcurrentDictionary<long, int>> addressQueryStats = new ConcurrentDictionary<string, ConcurrentDictionary<long, int>>();                                                         
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
@@ -9127,6 +9211,14 @@ foreach (char c in tronAddress)
         totalQueries = 0;
         uniqueUsers = 0;
     }
+    // 获取地址标签
+    var addressLabel = await FetchAddressLabelAsync(tronAddress);
+	
+// 构建结果文本时，根据条件决定是否添加地址标签信息
+string addressLabelSection = "";
+if (!string.IsNullOrEmpty(addressLabel)) {
+    addressLabelSection = $"地址标签：<b>{addressLabel}</b>\n";
+}
 	
 // 当连续相同字符数量大于等于4时，添加“靓号”信息
 string fireEmoji = "\uD83D\uDD25";
@@ -9251,6 +9343,7 @@ if (trxBalance < 100)
     $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +	    
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
+    addressLabelSection + // 添加或省略地址标签信息
     transactionsText + // 添加或省略交易次数信息       
     $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}  |  TRX能量不足，请{exchangeLink}</b>\n" +
@@ -9281,6 +9374,7 @@ else
     $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +	
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
+    addressLabelSection + // 添加或省略地址标签信息
     transactionsText + // 添加或省略交易次数信息
     $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}  |  可供转账{availableTransferCount}次</b> \n" +
@@ -9313,6 +9407,7 @@ if (trxBalance < 100)
     $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +		
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
+    addressLabelSection + // 添加或省略地址标签信息
     transactionsText + // 添加或省略交易次数信息    
     $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}  |  TRX能量不足，请{exchangeLink}</b>\n" +
@@ -9341,6 +9436,7 @@ else
     $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +		
     $"————————<b>资源</b>————————\n"+
     $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
+    addressLabelSection + // 添加或省略地址标签信息
     transactionsText + // 添加或省略交易次数信息  
     $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
     $"TRX余额：<b>{trxBalance.ToString("N2")}  |  可供转账{availableTransferCount}次</b> \n" +
