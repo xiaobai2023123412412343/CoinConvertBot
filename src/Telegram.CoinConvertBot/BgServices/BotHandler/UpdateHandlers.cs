@@ -8313,7 +8313,7 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
             trxJson = await trxResponse.Content.ReadAsStringAsync();
             if (trxJson.Contains("\"code\":\"50011\"") && retryCount < 2) // 检查是否达到API速率限制
             {
-                Console.WriteLine("Rate limit exceeded. Retrying after delay...");
+                //Console.WriteLine("Rate limit exceeded. Retrying after delay...");
                 await Task.Delay(new Random().Next(1000, 1500)); // 随机延迟1到1.5秒
                 retryCount++;
             }
@@ -8343,7 +8343,7 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
             usdtJson = await usdtResponse.Content.ReadAsStringAsync();
             if (usdtJson.Contains("\"code\":\"50011\"") && retryCount < 2) // 检查是否达到API速率限制
             {
-                Console.WriteLine("Rate limit exceeded. Retrying after delay...");
+                //Console.WriteLine("Rate limit exceeded. Retrying after delay...");
                 await Task.Delay(new Random().Next(1000, 1500)); // 随机延迟1到1.5秒
                 retryCount++;
             }
