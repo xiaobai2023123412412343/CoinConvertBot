@@ -10966,7 +10966,10 @@ public static class GroupManager
     }
 }
 // 添加一个类级别的变量来跟踪广告是否正在运行
-private static bool isAdvertisementRunning = false;        
+private static bool isAdvertisementRunning = false;     
+// 添加一个类级别的 CancellationTokenSource 以管理广告任务的取消
+private static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+   
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
   
@@ -17611,25 +17614,30 @@ if (messageText.StartsWith("谷歌 "))
         replyMarkup: inlineKeyboard // 添加内联键盘
     );
 }
-    // 检查是否接收到了 /qdgg 消息，收到就启动广告
-    if (messageText.StartsWith("/qdgg"))
+// 检查是否接收到了 /qdgg 消息，收到就启动广告
+if (messageText.StartsWith("/qdgg"))
+{
+    // 取消当前正在运行的广告任务（如果有）
+    if (isAdvertisementRunning && cancellationTokenSource != null)
     {
-        // 如果广告没有在运行，就启动广告
-        if (!isAdvertisementRunning)
-        {
-            isAdvertisementRunning = true; // 将变量设置为 true，表示广告正在运行
-
-            var cancellationTokenSource = new CancellationTokenSource();
-            var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-            _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate)
-                .ContinueWith(_ => isAdvertisementRunning = false); // 广告结束后将变量设置为 false
-        // 向用户发送一条消息，告知他们广告已经启动
-        _ = botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "群广告已启动！"
-        );     
-        }
+        cancellationTokenSource.Cancel();
+        isAdvertisementRunning = false; // 将变量设置为 false，表示广告已停止
     }
+
+    // 创建新的 CancellationTokenSource
+    cancellationTokenSource = new CancellationTokenSource();
+    isAdvertisementRunning = true; // 将变量设置为 true，表示广告正在运行
+
+    var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+    _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate)
+        .ContinueWith(_ => isAdvertisementRunning = false); // 广告结束后将变量设置为 false
+
+    // 向用户发送一条消息，告知他们广告已经启动
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "群广告已启动！"
+    );     
+}
 
 // 检查是否为指定用户并执行相应的操作
 if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup))
