@@ -8361,6 +8361,25 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
             usdtBalance = decimal.Parse(usdtJsonDocument.RootElement.GetProperty("data")[0].GetProperty("tokenList")[0].GetProperty("holdingAmount").GetString());
         }
 
+        // 如果任一余额为0，尝试使用备用API
+        if (trxBalance == 0m || usdtBalance == 0m)
+        {
+            HttpResponseMessage backupResponse = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
+            string backupJson = await backupResponse.Content.ReadAsStringAsync();
+            var backupJsonDocument = JsonDocument.Parse(backupJson);
+            foreach (var token in backupJsonDocument.RootElement.GetProperty("withPriceTokens").EnumerateArray())
+            {
+                if (token.GetProperty("tokenName").GetString() == "trx")
+                {
+                    trxBalance = decimal.Parse(token.GetProperty("amount").GetString());
+                }
+                if (token.GetProperty("tokenId").GetString() == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" && token.GetProperty("tokenName").GetString() == "Tether USD")
+                {
+                    usdtBalance = decimal.Parse(token.GetProperty("amount").GetString());
+                }
+            }
+        }
+
         return (usdtBalance, trxBalance, false); // 如果没有发生错误，返回结果和IsError=false
     }
     catch (Exception ex)
