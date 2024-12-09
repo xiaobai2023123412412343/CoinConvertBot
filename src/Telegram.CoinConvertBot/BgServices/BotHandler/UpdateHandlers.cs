@@ -9043,6 +9043,13 @@ private static async Task<string> FetchAddressLabelAsync(string tronAddress)
                         var startIndex = pageContent.IndexOf(startTag, riskTagTextIndex) + startTag.Length;
                         var endIndex = pageContent.IndexOf(endTag, startIndex);
                         riskLabel = pageContent.Substring(startIndex, endIndex - startIndex).Trim();
+
+                        // 调用谷歌翻译对风险标签进行翻译
+                        var (translatedRiskLabel, _, translateError) = await GoogleTranslateFree.TranslateAsync(riskLabel, "zh");
+                        if (!translateError && !string.IsNullOrEmpty(translatedRiskLabel))
+                        {
+                            riskLabel = "⚠️ " + translatedRiskLabel; // 在风险标签前添加警告符号
+                        }
                     }
 
                     // 获取 riskValue
