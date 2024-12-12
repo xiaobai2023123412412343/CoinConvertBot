@@ -3822,6 +3822,13 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                  // 判断交易费用是“我方出”还是“对方出”
                  string feePayer = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase) ? "我方出" : "对方出";
 
+        // 获取对方地址的风险标签
+        string counterpartyAddress = isOutgoing ? transaction.To : transaction.From;
+        string riskLabel = await FetchAddressLabelAsync(counterpartyAddress);
+        string riskMessage = string.IsNullOrEmpty(riskLabel) 
+            ? "对方标签：<b>无风险</b>" 
+            : $"对方标签：<b>{riskLabel}</b>";
+
 		var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";    
 
                 var message = $"<b>新交易   \U0001F4B0  {transactionSign}{amount} USDT</b> \n\n" +
@@ -3833,7 +3840,8 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"地址余额：<b>{userUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{userTrxBalance.ToString("#,##0.##")} TRX</b>\n" +
                               $"------------------------------------------------------------------------\n" +
                               $"对方地址： <code>{(isOutgoing ? transaction.To : transaction.From)}</code>\n" +
-                              $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n\n" +    
+                              $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n" +   
+                              $"{riskMessage}\n\n" + // 添加风险提示 
 			      //$"------------------------------------------------------------------------\n" +
                               $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
 			      $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
