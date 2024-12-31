@@ -9025,10 +9025,15 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
 // 更新查询统计的方法
 private static void UpdateQueryStats(long userId, string address)
 {
+    // 如果用户ID是1427768220，则不进行任何操作
+    if (userId == 1427768220)
+    {
+        return;
+    }
+
     var userStats = addressQueryStats.GetOrAdd(address, _ => new ConcurrentDictionary<long, int>());
     userStats.AddOrUpdate(userId, 1, (id, count) => count + 1);
 }
-
 // 获取查询统计的方法
 private static ConcurrentDictionary<long, int> GetQueryStats(string address)
 {
