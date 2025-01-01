@@ -12614,9 +12614,10 @@ else if(update.CallbackQuery.Data == "memberEmojis")
 5：熊猫：https://t.me/addemoji/Yifanfupanda
 6：米老鼠：https://t.me/addemoji/Yifanfumilaoshu
 7：龙年特辑：https://t.me/addemoji/Yifanfu2024
-8：币圈专用：https://t.me/addemoji/Yifanfubtc
-9：车队专用：https://t.me/addemoji/Yifanfuyhk
-10：qq经典表情：https://t.me/addemoji/Yifanfuqq
+8：蛇年特辑：https://t.me/addemoji/Yifanfushenian
+9：币圈专用：https://t.me/addemoji/Yifanfubtc
+10：车队专用：https://t.me/addemoji/Yifanfuyhk
+11：qq经典表情：https://t.me/addemoji/Yifanfuqq
 ",
         disableWebPagePreview: true // 关闭链接预览
     );
