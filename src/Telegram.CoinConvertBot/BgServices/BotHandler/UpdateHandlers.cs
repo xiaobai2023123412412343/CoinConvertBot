@@ -3117,6 +3117,8 @@ public static Dictionary<int, string> GetZodiacDictionary(DateTime drawDate)
 
     return zodiacDictionary;
 }
+/*   
+//旧版香港六合彩获取api
 public static async Task<string> FetchHongKongLotteryResultAsync()
 {
     try
@@ -3159,6 +3161,57 @@ public static async Task<string> FetchHongKongLotteryResultAsync()
         return "error_hk"; // 统一返回错误标识
     }
 }
+*/
+public static async Task<string> FetchHongKongLotteryResultAsync()
+{
+    try
+    {
+        // 使用新的API地址
+        var response = await client.GetAsync("https://www.macaumarksix.com/api/hkjc.com");
+        if (!response.IsSuccessStatusCode)
+        {
+            return "error_hk"; // 如果请求失败，返回错误标识
+        }
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var jsonArray = JArray.Parse(jsonString);
+        var latestResult = jsonArray[0];
+
+        // 解析新的API返回的数据
+        var issue = latestResult["expect"].ToString();
+        var drawTime = DateTime.Parse(latestResult["openTime"].ToString());
+        var drawResult = latestResult["openCode"].ToString().Split(',');
+        var zodiacs = latestResult["zodiac"].ToString().Split(',');
+        var colors = latestResult["wave"].ToString().Split(',');
+
+        // 格式化开奖号码，确保双位数显示，并将最后一个号码用逗号分隔
+        var formattedDrawResult = string.Join("  ", drawResult.Take(drawResult.Length - 1).Select(x => x.PadLeft(2, '0'))) + " ，" + drawResult.Last().PadLeft(2, '0');
+        var formattedZodiacs = string.Join("  ", zodiacs);
+
+        // 将颜色英文单词转换为emoji
+        var colorEmojiMap = new Dictionary<string, string>
+        {
+            {"red", "\uD83D\uDD34"},
+            {"green", "\uD83D\uDFE2"},
+            {"blue", "\uD83D\uDD35"}
+        };
+        var formattedColors = string.Join("  ", colors.Select(color => colorEmojiMap[color]));
+
+        var result = $"香港六合彩\n\n" +
+                     $"期数：{issue}\n" +
+                     $"开奖日期：{drawTime:yyyy-MM-dd HH:mm:ss}\n" +
+                     $"开奖号码：{formattedDrawResult}\n" +
+                     $"生肖：{formattedZodiacs}\n" +
+                     $"波色：{formattedColors}";
+
+        return result;
+    }
+    catch (Exception ex)
+    {
+        return "error_hk"; // 如果发生异常，返回错误标识
+    }
+}
+
 }
 // 新澳门六合彩特码统计
 private static Dictionary<long, (int count, DateTime lastQueryDate)> newMacauUserQueries = new Dictionary<long, (int count, DateTime lastQueryDate)>();	
