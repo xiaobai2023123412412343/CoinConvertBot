@@ -13939,8 +13939,9 @@ if (messageText.StartsWith("/xianggang"))
         {
             new [] // 第一行按钮
             {
-                InlineKeyboardButton.WithCallbackData("开奖规律", "xgzhishu"),
-                InlineKeyboardButton.WithCallbackData("历史开奖", "historyy")
+                //InlineKeyboardButton.WithCallbackData("开奖规律", "xgzhishu"),
+               // InlineKeyboardButton.WithCallbackData("历史开奖", "historyy")
+                InlineKeyboardButton.WithCallbackData("关闭", "back")
             }
         });
 
