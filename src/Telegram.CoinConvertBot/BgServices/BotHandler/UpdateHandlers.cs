@@ -11039,96 +11039,95 @@ private static CancellationTokenSource cancellationTokenSource = new Cancellatio
    
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
-  
-
-    while (!cancellationToken.IsCancellationRequested)
+    try
     {
-        var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-        decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
-        var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
-string GetFearGreedDescription(int value)
-{
-    if (value >= 0 && value <= 24)
-        return "极度恐惧";
-    if (value >= 25 && value <= 49)
-        return "恐惧";
-    if (value >= 50 && value <= 74)
-        return "贪婪";
-    return "极度贪婪";
-}
-
-string fearGreedDescription = GetFearGreedDescription(today);        
-        // 获取比特币以太坊价格和涨跌幅
-        var cryptoSymbols = new[] { "bitcoin", "ethereum" };
-        var (prices, changes) = await GetCryptoPricesAsync(cryptoSymbols);
-        var bitcoinPrice = prices[0];
-        var ethereumPrice = prices[1];
-        var bitcoinChange = changes[0];
-        var ethereumChange = changes[1];
-        // 获取美元汇率
-        var currencyRates = await GetCurrencyRatesAsync();
-        if (!currencyRates.TryGetValue("美元 (USD)", out var usdRateTuple)) 
+        while (!cancellationToken.IsCancellationRequested)
         {
-            Console.WriteLine("Could not find USD rate in response.");
-            return; // 或者你可以选择继续，只是不显示美元汇率
-        }
-        var usdRate = 1 / usdRateTuple.Item1;
-        decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
-        
-        string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
-        string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
-            "机器人收款地址:\n (<b>点击自动复制</b>):<code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>\n\n" + //手动输入地址
-            "\U00002705 转U自动原地址返TRX,10U起兑!\n" +
-            "\U00002705 请勿使用交易所或中心化钱包转账!\n" +
-            $"\U00002705 <u>购买能量套餐，单笔转账低至 {(int)TransactionFee}TRX！</u>\n" +
-            $"\U00002705 有任何问题,请私聊联系<a href=\"{channelLink}\">机器人管理员</a>\n\n" +
-            "<b>另代开TG高级会员</b>:\n\n" +
-            "\u2708三月高级会员：24.99 u\n" +
-            "\u2708六月高级会员：39.99 u\n" +
-            "\u2708一年高级会员：70.99 u\n" +
-            "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)\n" +  
-            $"————————<b>其它汇率</b>————————\n" +
-            $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} </b>\n" +
-            $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +            
-            $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT     {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </b>\n" +
-            $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" +
-            $"<b>\U0001F4B0 币圈今日恐惧与贪婪指数：{today}  {fearGreedDescription}</b>\n" ;
+            var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+            decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
+            var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
+
+            string GetFearGreedDescription(int value)
+            {
+                if (value >= 0 && value <= 24)
+                    return "极度恐惧";
+                if (value >= 25 && value <= 49)
+                    return "恐惧";
+                if (value >= 50 && value <= 74)
+                    return "贪婪";
+                return "极度贪婪";
+            }
+
+            string fearGreedDescription = GetFearGreedDescription(today);  
+
+            // 获取比特币以太坊价格和涨跌幅    
+            var cryptoSymbols = new[] { "bitcoin", "ethereum" };
+            var (prices, changes) = await GetCryptoPricesAsync(cryptoSymbols);
+            var bitcoinPrice = prices[0];
+            var ethereumPrice = prices[1];
+            var bitcoinChange = changes[0];
+            var ethereumChange = changes[1];
+
+            var currencyRates = await GetCurrencyRatesAsync();
+
+            // 获取美元汇率 
+            if (!currencyRates.TryGetValue("美元 (USD)", out var usdRateTuple)) 
+            {
+                Console.WriteLine("Could not find USD rate in response.");
+                return; // 或者你可以选择继续，只是不显示美元汇率
+            }
+            var usdRate = 1 / usdRateTuple.Item1;
+            decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
             
-            
-string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
-string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
-string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
+            string channelLink = "tg://resolve?domain=yifanfu";
+            string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
+                "机器人收款地址:\n (<b>点击自动复制</b>):<code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>\n\n" +
+                "\U00002705 转U自动原地址返TRX,10U起兑!\n" +
+                "\U00002705 请勿使用交易所或中心化钱包转账!\n" +
+                $"\U00002705 <u>购买能量套餐，单笔转账低至 {(int)TransactionFee}TRX！</u>\n" +
+                $"\U00002705 有任何问题,请私聊联系<a href=\"{channelLink}\">机器人管理员</a>\n\n" +
+                "<b>另代开TG高级会员</b>:\n\n" +
+                "\u2708三月高级会员：24.99 u\n" +
+                "\u2708六月高级会员：39.99 u\n" +
+                "\u2708一年高级会员：70.99 u\n" +
+                "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)\n" +  
+                $"————————<b>其它汇率</b>————————\n" +
+                $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} </b>\n" +
+                $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +            
+                $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT     {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </b>\n" +
+                $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" +
+                $"<b>\U0001F4B0 币圈今日恐惧与贪婪指数：{today}  {fearGreedDescription}</b>\n" ;
 
-// 创建 InlineKeyboardButton 并设置文本和回调数据
-var visitButton1 = new InlineKeyboardButton("能量详情")
-{
-    CallbackData = "能量" // 当按钮被点击时发送的数据
-};
+            string botUsername = "yifanfubot";// 替换为你的机器人的用户名
+            string startParameter = "";
+            string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
-var visitButton2 = new InlineKeyboardButton("开通会员")
-{
-    Url = "https://t.me/Yifanfu" // 将此链接替换为你想要跳转的右侧链接
-};
+            var visitButton1 = new InlineKeyboardButton("能量详情")
+            {
+                CallbackData = "能量"
+            };
 
-var visitButton3 = new InlineKeyboardButton("私聊使用")
-{
-    Url = "https://t.me/Yifanfubot" // 将此链接替换为你想要跳转的右侧链接
-};
+            var visitButton2 = new InlineKeyboardButton("开通会员")
+            {
+                Url = "https://t.me/Yifanfu"
+            };
 
-var shareToGroupButton = InlineKeyboardButton.WithUrl("群聊使用", shareLink);
+            var visitButton3 = new InlineKeyboardButton("私聊使用")
+            {
+                Url = "https://t.me/Yifanfubot"
+            };
 
-// 创建 InlineKeyboardMarkup 并添加按钮
-var inlineKeyboard = new InlineKeyboardMarkup(new[]
-{
-    new[] { visitButton1, visitButton2 }, // 第一行按钮
-    new[] { visitButton3, shareToGroupButton } // 第二行按钮
-});
+            var shareToGroupButton = InlineKeyboardButton.WithUrl("群聊使用", shareLink);
 
-        try
-        {
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new[] { visitButton1, visitButton2 },
+                new[] { visitButton3, shareToGroupButton }
+            });
+
             // 用于存储已发送消息的字典
             var sentMessages = new Dictionary<long, Message>();
-       
+
             // 遍历群组 ID 并发送广告消息
             var groupIds = GroupManager.GroupIds.ToList();
             foreach (var groupId in groupIds)
@@ -11142,14 +11141,14 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
                     // 如果在尝试发送消息时出现错误，就从 groupIds 列表中移除这个群组
                     GroupManager.RemoveGroupId(groupId);
-			
+
                     // 同时从 GroupChats 中移除对应的群聊信息
                     var groupChatToRemove = GroupChats.FirstOrDefault(gc => gc.Id == groupId);
                     if (groupChatToRemove != null)
                     {
                         GroupChats.Remove(groupChatToRemove);
                         Console.WriteLine($"群聊信息已从 GroupChats 中移除，群ID：{groupId}");
-                    }			
+                    }
                     // 然后继续下一个群组，而不是停止整个任务
                     continue;
                 }
@@ -11163,21 +11162,24 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
             {
                 await botClient.DeleteMessageAsync(sentMessage.Key, sentMessage.Value.MessageId);
             }
-
             // 等待5秒，再次发送广告
             await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
         }
-        catch (Exception ex)
-        {
-            // 发送广告过程中出现异常
-            Console.WriteLine("Error in advertisement loop: " + ex.Message);
-
-            // 等10秒重启广告服务
-            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
-        }
+    }
+    catch (OperationCanceledException)
+    {
+        Console.WriteLine("广告发送任务被取消。");
+        throw;  // 重新抛出异常，确保调用者知道任务被取消
+    }
+    catch (Exception ex)
+    {
+        // 发送广告过程中出现异常
+        Console.WriteLine($"广告发送过程中出现异常：{ex.Message}");
+        
+        // 等10秒重启广告服务
+        await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
     }
 }
-
 
     public static Task PollingErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
@@ -17695,7 +17697,7 @@ if (messageText.StartsWith("/qdgg"))
     if (isAdvertisementRunning && cancellationTokenSource != null)
     {
         cancellationTokenSource.Cancel();
-        isAdvertisementRunning = false; // 将变量设置为 false，表示广告已停止
+        Console.WriteLine("当前广告任务已取消，准备启动新任务。");
     }
 
     // 创建新的 CancellationTokenSource
@@ -17704,7 +17706,18 @@ if (messageText.StartsWith("/qdgg"))
 
     var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
     _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate)
-        .ContinueWith(_ => isAdvertisementRunning = false); // 广告结束后将变量设置为 false
+        .ContinueWith(task => 
+        {
+            if (task.IsCanceled)
+            {
+                Console.WriteLine("广告任务因取消操作而终止。");
+            }
+            else if (task.IsFaulted)
+            {
+                Console.WriteLine($"广告任务出现错误：{task.Exception.InnerException.Message}");
+            }
+            isAdvertisementRunning = false; // 广告结束后将变量设置为 false
+        });
 
     // 向用户发送一条消息，告知他们广告已经启动
     _ = botClient.SendTextMessageAsync(
