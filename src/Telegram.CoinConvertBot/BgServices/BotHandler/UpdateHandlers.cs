@@ -4636,6 +4636,8 @@ static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, Cancell
     bool hasSentAdInQuietHours = false;
     while (!cancellationToken.IsCancellationRequested)
     {
+        cancellationToken.ThrowIfCancellationRequested(); // 检查取消请求
+
         var now = DateTime.Now;
         var hour = now.Hour;
         if (hour >= 1 && hour < 8)
@@ -4659,7 +4661,7 @@ static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, Cancell
         }
 
         var amount = amounts[random.Next(amounts.Length)];
-        var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+        var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate, cancellationToken); // 确保查询支持取消
         var trxAmount = amount.USDT_To_TRX(rate, FeeRate, 0);
         now = now.AddSeconds(-random.Next(10, 31));
         var address = "T" + new string(Enumerable.Range(0, 33).Select(_ => addressChars[random.Next(addressChars.Length)]).ToArray());
@@ -4680,20 +4682,23 @@ static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, Cancell
             new[] { visitButton }
         });
 
-         // 遍历群组 ID 并发送广告消息
+        // 遍历群组 ID 并发送广告消息
         var groupIds = GroupManager.GroupIds.ToList();
         foreach (var groupId in groupIds)
         {
-    // 检查当前群组 ID 是否在被拉黑的集合中
-    if (GroupManager.BlacklistedGroupIds.Contains(groupId))
-    {
-        // 如果是，则跳过本次循环，不在该群组发送兑换通知
-        continue;
-    }            
+            // 检查当前群组 ID 是否在被拉黑的集合中
+            if (GroupManager.BlacklistedGroupIds.Contains(groupId))
+            {
+                // 如果是，则跳过本次循环，不在该群组发送兑换通知
+                continue;
+            }            
             try
             {
-                //await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard); //关闭按钮
-                await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html);
+                // 如果您想发送带有按钮的消息，取消下面这行的注释
+                // await botClient.SendTextMessageAsync(chatId: groupId, text: advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard, cancellationToken: cancellationToken); // 发送带按钮的消息
+
+                // 如果您不需要发送按钮，使用下面这行
+                await botClient.SendTextMessageAsync(chatId: groupId, text: advertisementText, parseMode: ParseMode.Html, replyMarkup: null, cancellationToken: cancellationToken); // 确保发送消息支持取消
             }
             catch
             {
@@ -16922,12 +16927,19 @@ if (message.From.Id == 1427768220)
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
+    string responseMessage;
     // 取消当前正在运行的虚拟广告任务（如果有）
     if (isVirtualAdvertisementRunning)
     {
         virtualAdCancellationTokenSource.Cancel();
         virtualAdCancellationTokenSource.Dispose(); // 释放资源
+        Console.WriteLine("之前的兑换通知任务被正确取消");
+        responseMessage = "兑换通知已重新启动！";
         isVirtualAdvertisementRunning = false; // 将变量设置为 false，表示虚拟广告已停止
+    }
+    else
+    {
+        responseMessage = "兑换通知已启动！";
     }
 
     // 创建新的 CancellationTokenSource
@@ -16936,13 +16948,22 @@ if (messageText.StartsWith("/xuni"))
 
     var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
     _ = SendVirtualAdvertisement(botClient, virtualAdCancellationTokenSource.Token, rateRepository, FeeRate)
-        .ContinueWith(_ => isVirtualAdvertisementRunning = false); // 广告结束后将变量设置为 false
+        .ContinueWith(task => 
+        {
+            isVirtualAdvertisementRunning = false;
+            if (task.IsFaulted)
+            {
+                Console.WriteLine("兑换通知任务异常结束");
+            }
+        }); // 广告结束后将变量设置为 false
 
-    // 向用户发送一条消息，告知他们虚拟广告已经启动
+    // 向用户发送一条消息，告知他们虚拟广告的启动状态
     _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: "兑换通知已重新启动！"
+        text: responseMessage
     );
+
+    Console.WriteLine("重新启动兑换通知");
 }
 // 检查是否为指定用户并执行相应的操作
 //if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup))
