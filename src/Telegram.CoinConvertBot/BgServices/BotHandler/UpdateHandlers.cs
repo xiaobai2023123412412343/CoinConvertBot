@@ -19498,7 +19498,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 可获得TRX：<b>100 * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {100m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
     
 注意：<b>只支持 {MinUSDT} USDT以上的金额兑换！</b>    
-只限钱包转账，自动原地址返TRX，如需兑换到其它地址请{adminText}！
+只限钱包转账，自动原地址返TRX，禁止<b>交易所</b>或<b>汇旺</b>提现！如需兑换到其它地址请{adminText}！
 
 转帐前，推荐您绑定钱包地址来接收交易通知： 
 发送：<code>绑定 Txxxxxxx</code>(您的钱包地址)         {leftPointingIndex} <b>推荐使用！！！</b> 
@@ -19630,6 +19630,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     
 <b>注意：只支持 {MinUSDT} USDT以上的金额兑换！</b>   
 <b>给机器人收款地址转u自动原地址秒回TRX！</b> 
+<b>禁止从交易所或汇旺提现到机器人收款地址！ </b> 	
 —————————————————    
 转账费用：（浮动）
 对方地址有u：13.39 TRX - 14.00 TRX 
