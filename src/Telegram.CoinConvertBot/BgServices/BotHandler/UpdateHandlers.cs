@@ -13419,39 +13419,51 @@ catch (Exception ex)
 }
 if (message.ReplyToMessage != null && message.ReplyToMessage.From.Id == botClient.BotId)
 {
-    // 解析出被回复消息中的用户ID
-    var match = Regex.Match(message.ReplyToMessage.Text, @"ID: (\d+)");
-    if (match.Success)
+    // 确保被回复消息的文本不为 null
+    if (message.ReplyToMessage.Text != null)
     {
-        var userId = long.Parse(match.Groups[1].Value);
-
-        try
+        // 解析出被回复消息中的用户ID
+        var match = Regex.Match(message.ReplyToMessage.Text, @"ID: (\d+)");
+        if (match.Success)
         {
-            // 尝试向该用户发送新的消息，使用HTML格式
-            await botClient.SendTextMessageAsync(
-                chatId: userId,
-                text: message.Text,
-                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html // 设置消息格式为HTML
-            );
+            var userId = long.Parse(match.Groups[1].Value);
 
-            // 如果消息发送成功，向当前用户发送成功消息
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: "发送成功！"
-            );
+            try
+            {
+                // 尝试向该用户发送新的消息，使用HTML格式
+                await botClient.SendTextMessageAsync(
+                    chatId: userId,
+                    text: message.Text,
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html // 设置消息格式为HTML
+                );
+
+                // 如果消息发送成功，向当前用户发送成功消息
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "发送成功！"
+                );
+            }
+            catch (Exception ex)
+            {
+                // 如果发送消息失败，捕获异常并在当前位置发送错误消息
+                var errorMsg = ex.Message.Contains("Forbidden: bot was blocked by the user") 
+                    ? "信息发送失败：机器人被用户阻止" 
+                    : $"信息发送失败：<code>{ex.Message}</code>";
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: errorMsg,
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html // 设置错误消息格式为HTML
+                );
+            }
         }
-        catch (Exception ex)
-        {
-            // 如果发送消息失败，捕获异常并在当前位置发送错误消息
-            var errorMsg = ex.Message.Contains("Forbidden: bot was blocked by the user") 
-                ? "信息发送失败：机器人被用户阻止" 
-                : $"信息发送失败：<code>{ex.Message}</code>";
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: errorMsg,
-                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html // 设置错误消息格式为HTML
-            );
-        }
+    }
+    else
+    {
+        // 如果被回复的消息没有文本内容，可以选择发送一个提示消息
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "无法解析被回复的消息，因为它不包含文本。"
+        );
     }
 }
 // 检查消息是否来自指定管理员ID，并且文本以"回复"开头
@@ -19513,7 +19525,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
     // 发送图片和原本的文字作为图片说明
     await botClient.SendPhotoAsync(
         chatId: message.Chat.Id,
-        photo: "https://i.postimg.cc/sgF9Jd9g/Untitled.png", // 图片链接
+        photo: "", // 图片链接
         caption: msg, // 原本要发的文字作为图片说明
         parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
     );
