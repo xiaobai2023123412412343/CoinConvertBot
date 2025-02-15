@@ -38,11 +38,11 @@ curl -fsSL https://get.docker.com | bash -s docker --mirror AzureChinaCloud
 cd ~
 mkdir code
 cd code
-git clone -b v1.0.0 https://github.com/LightCountry/CoinConvertBot.git
+git clone -b v1.0.0 https://github.com/LighthtCountry/CoinConvertBot.git
 ```
 或者拉取`最新版本`源代码 完整版 👇👇👇
 ```
-git clone https://github.com/xiaobai2023123412412343/CoinConvertBot.git
+git clone https://github.com/jiangxiaobai2025/CoinConvertBot.git
 ```
 ### 3. 修改配置文件
 ```
