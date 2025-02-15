@@ -13150,7 +13150,7 @@ const long TARGET_CHAT_ID = -1002311185021;//指定群聊转发用户对机器�
 // 将这个值替换为你的机器人用户名
 const string BOT_USERNAME = "jiangxiaoba_bot";//机器人用户名
 // 指定管理员ID
-const int ADMIN_ID = 7795649425;//指定管理员ID不转发
+const long ADMIN_ID = 7795649425L;//指定管理员ID不转发
 
 // 存储机器人的所有命令
 string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/more","/music", "/cny","/lamzhishu","/xgzhishu","/xamzhishu", "/trc","/caifu","/qiand", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni","/ucard","/bijiacha", "/jkbtc", "更多功能", "能量租赁", "实时汇率", "U兑TRX", "合约助手", "查询余额", "地址监听", "加密货币", "外汇助手","能量","energyComparison", "监控" };    
