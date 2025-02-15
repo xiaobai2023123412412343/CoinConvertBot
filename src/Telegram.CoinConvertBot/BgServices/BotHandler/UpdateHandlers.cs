@@ -12252,7 +12252,7 @@ if(update.CallbackQuery.Data == "membershipOptions")
             await botClient.EditMessageTextAsync(
                 chatId: update.CallbackQuery.Message.Chat.Id,
                 messageId: update.CallbackQuery.Message.MessageId,
-                text: "<b>收款地址</b>：<code>TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv</code>",
+                text: "<b>收款地址</b>：<code>TSiSopVxR7vuwfUN47wrrzbtun3JBt4XcF</code>",
                 parseMode: ParseMode.Html,
                 replyMarkup: inlineKeyboard
             );
