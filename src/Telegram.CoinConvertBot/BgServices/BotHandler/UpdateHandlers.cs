@@ -36,21 +36,19 @@ using System.Threading;
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 
-//yifanfu或@yifanfu或t.me/yifanfu为管理员ID
-//yifanfubot或t.me/yifanfubot或@yifanfubot为机器人ID
-//TDMUZCUbQXRpbE5uvTh9K63ZyAJR9p6JXm为监控的收款地址
+
 //TDMUZCUbQXRpbE5uvTh9K63ZyAJR9p6JXm为监控的转账地址
 // 将这个值替换为目标群组的ID
 //const long TARGET_CHAT_ID = -1002311185021;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
-//const string BOT_USERNAME = "yifanfubot";//机器人用户名
+//const string BOT_USERNAME = "jiangxiaoba_bot";//机器人用户名
 // 指定管理员ID
 //const int ADMIN_ID = 7795649425;//指定管理员ID不转发
 // 将这个值替换为目标群组的ID
 //const long TARGET_CHAT_ID = -1002311185021;//指定群聊转发用户对机器人发送的信息
 //    await botClient.SendTextMessageAsync(
 //        chatId: -1002311185021, // 群聊ID   用户点击按钮 自动在指定群聊 艾特作者 已取消！！！！！
-//        text: $"@yifanfu 有人需要帮助，用户名： @{update.CallbackQuery.From.Username} 用户ID：{update.CallbackQuery.From.Id}"
+//        text: $"@jcb876 有人需要帮助，用户名： @{update.CallbackQuery.From.Username} 用户ID：{update.CallbackQuery.From.Id}"
 //    );
 //    static GroupManager()  广告发到指定群聊
 //    {
@@ -1313,7 +1311,7 @@ else
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         // 创建两个按钮：直接联系作者和由作者联系您
-        InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu"),
+        InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/jcb876"),
         InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest")
     });
 
@@ -3899,7 +3897,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
 			      $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
                               $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
-                              $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n"; // 修改后的两行文字
+                              $"<a href=\"https://t.me/jiangxiaoba_bot\">3️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n"; // 修改后的两行文字
 		    
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
@@ -7591,7 +7589,7 @@ private static async Task SendHelpMessageAsync(ITelegramBotClient botClient, Mes
 {
     if (message.Text.Contains("帮助") || message.Text.StartsWith("/help"))
     {
-        string adminLink = "https://t.me/yifanfu";
+        string adminLink = "https://t.me/jcb876";
         string adminLinkText = $"<a href=\"{adminLink}\">管理员！</a>";
 
         string helpText = "更改电报语言：在机器人对话框直接发送：<code>中文</code> 自动返回包括原zh_cn等众多简体中文语言包，点击任意链接即可更改界面语言！\n\n" +
@@ -9372,7 +9370,7 @@ else
 
     string resultText;
     
-string exchangeUrl = "https://t.me/yifanfubot";
+string exchangeUrl = "https://t.me/jiangxiaoba_bot";
 string exchangeLink = $"<a href=\"{exchangeUrl}\">立即兑换</a>";
 
 //decimal monthlyProfit = monthlyIncome - monthlyOutcome;//月盈亏
@@ -9414,7 +9412,7 @@ if (monthlyIncome != 0 || monthlyOutcome != 0 || dailyIncome != 0 || dailyOutcom
 }
 
 //私聊广告    
-string botUsername = "yifanfubot"; // 你的机器人的用户名
+string botUsername = "jiangxiaoba_bot"; // 你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";    
 string groupExclusiveText = $"<a href=\"{shareLink}\">群内发送地址可以查 USDT/USDC 授权记录！</a>\n";
@@ -9571,7 +9569,7 @@ else
 
 
         // 创建内联键盘
-   // string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+   // string botUsername = "jiangxiaoba_bot"; // 替换为你的机器人的用户名
    // string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
    // string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
@@ -10310,7 +10308,7 @@ public static async Task HandleCurrencyRatesCommandAsync(ITelegramBotClient botC
         count++;
     }
 
-    string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+    string botUsername = "jiangxiaoba_bot"; // 替换为你的机器人的用户名
     string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
     string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
@@ -10856,7 +10854,7 @@ static async Task<string> GetTopTradersRatio(string symbol)
     }
     var usdRate = 1 / usdRateTuple.Item1;
         
-        string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
+        string channelLink = "tg://resolve?domain=jcb876"; // 使用 'tg://' 协议替换为你的频道链接
 string advertisementText = $"—————————<b>合约大数据</b>—————————\n" +
     $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####}</b>\n" +
     $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +
@@ -10872,7 +10870,7 @@ string advertisementText = $"—————————<b>合约大数据</b>�
    // $"<code>\U0001F4B8 比特币24小时合约：{btcLongRate:#.##}% 做多  {btcShortRate:#.##}% 做空</code>\n" ;
             
             
-string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+string botUsername = "jiangxiaoba_bot"; // 替换为你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
@@ -11084,7 +11082,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             var usdRate = 1 / usdRateTuple.Item1;
             decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
             
-            string channelLink = "tg://resolve?domain=yifanfu";
+            string channelLink = "tg://resolve?domain=jcb876";
             string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
                 "机器人收款地址:\n (<b>点击自动复制</b>):<code>TDMUZCUbQXRpbE5uvTh9K63ZyAJR9p6JXm</code>\n\n" +
                 "\U00002705 转U自动原地址返TRX,10U起兑!\n" +
@@ -11103,7 +11101,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
                 $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" +
                 $"<b>\U0001F4B0 币圈今日恐惧与贪婪指数：{today}  {fearGreedDescription}</b>\n" ;
 
-            string botUsername = "yifanfubot";// 替换为你的机器人的用户名
+            string botUsername = "jiangxiaoba_bot";// 替换为你的机器人的用户名
             string startParameter = "";
             string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
@@ -11114,12 +11112,12 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
 
             var visitButton2 = new InlineKeyboardButton("开通会员")
             {
-                Url = "https://t.me/Yifanfu"
+                Url = "https://t.me/jcb876"
             };
 
             var visitButton3 = new InlineKeyboardButton("私聊使用")
             {
-                Url = "https://t.me/Yifanfubot"
+                Url = "https://t.me/jiangxiaoba_bot"
             };
 
             var shareToGroupButton = InlineKeyboardButton.WithUrl("群聊使用", shareLink);
@@ -11712,7 +11710,7 @@ if (update.Type == UpdateType.CallbackQuery)
    // }
     else if (callbackData[0] == "query_eye")
     {
-        string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+        string botUsername = "jiangxiaoba_bot"; // 替换为你的机器人的用户名
         string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
         string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
@@ -12246,7 +12244,7 @@ if(update.CallbackQuery.Data == "membershipOptions")
             {
                 new [] // 第一行按钮
                 {
-                    InlineKeyboardButton.WithUrl("支付成功", "https://t.me/yifanfu"),
+                    InlineKeyboardButton.WithUrl("支付成功", "https://t.me/jcb876"),
                     InlineKeyboardButton.WithCallbackData("重新选择", "cancelPayment"),
                 }
             });
@@ -12668,7 +12666,7 @@ else if(update.CallbackQuery.Data == "memberEmojis")
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: @"热门会员emoji表情包，点击链接即可添加：
 	
-1：热门：https://t.me/addemoji/yifanfu
+1：热门：https://t.me/addemoji/jcb876
 2：热门：https://t.me/addemoji/YifanfuTGvip
 3：财神：https://t.me/addemoji/Yifanfufacai
 4：闪字：https://t.me/addemoji/Yifanfushanzi
@@ -12727,7 +12725,7 @@ else if(update.CallbackQuery.Data == "contactAdmin")
     {
         new [] // 新增的按钮行
         {
-            InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu"),
+            InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/jcb876"),
             InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest")
         }
     });
@@ -13080,7 +13078,7 @@ if (message.Type == MessageType.ChatMembersAdded)
                 await botClient.SendTextMessageAsync(chat.Id, "升级管理员后机器人将自动删除群成员进出消息提醒！");
 		
             // 发送带有链接的文本消息
-            string adminLink = "t.me/yifanfu"; // 管理员的Telegram链接
+            string adminLink = "t.me/jcb876"; // 管理员的Telegram链接
             string messageWithLink = "汇率表每10分钟更新发送一次！如需关闭请" + $"<a href=\"https://{adminLink}\">联系作者</a>！";
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
@@ -13150,7 +13148,7 @@ await CheckUserBehavior(botClient, message);
 // 将这个值替换为目标群组的ID
 const long TARGET_CHAT_ID = -1002311185021;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
-const string BOT_USERNAME = "yifanfubot";//机器人用户名
+const string BOT_USERNAME = "jiangxiaoba_bot";//机器人用户名
 // 指定管理员ID
 const int ADMIN_ID = 7795649425;//指定管理员ID不转发
 
@@ -14387,7 +14385,7 @@ if (messageText.Contains("作者") || messageText.Contains("管理") || messageT
     {
         new [] // first row
         {
-            InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu"),
+            InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/jcb876"),
             InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest")
         }
     });
@@ -17596,7 +17594,7 @@ reply += $"<b>↘️历史最低：</b>{historicalLowDate}   {formattedHistorica
                     reply += priceInfo;
 
 // 创建内联键盘按钮
-    string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+    string botUsername = "jiangxiaoba_bot"; // 替换为你的机器人的用户名
     string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
     string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
                     
@@ -18394,7 +18392,7 @@ if (messageText.StartsWith("代解") && message.From.Id == 7795649425)
 // 检查是否接收到了 "预支" 消息，收到就发送指定文本
 if (messageText.StartsWith("预支"))
 {
-    string adminUsername = "yifanfu";
+    string adminUsername = "jcb876";
     string adminLink = $"https://t.me/{adminUsername}";
     string responseText = "请发送需要预支TRX的钱包地址查询是否满足要求：\n同时满足2点即可预支：\n⚠️仅限累计兑换 500 USDT 以上地址，\n⚠️地址余额大于 500 USDT且TRX余额低于13，\n⚠️预支的TRX能量仅够您向本机器人转账一次。\n\n如果查询满足条件，可<a href=\"" + adminLink + "\">联系管理员</a>直接预支TRX能量！";
     await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: responseText, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, disableWebPagePreview: true);
@@ -19446,7 +19444,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
             var UserId = message.From.Id;
             var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
             var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-            string adminLink = "t.me/yifanfu"; // 替换为你的管理员的Telegram链接
+            string adminLink = "t.me/jcb876"; // 替换为你的管理员的Telegram链接
             string adminText = $"<a href=\"http://{adminLink}\">联系管理</a>";
             string leftPointingIndex = char.ConvertFromUtf32(0x1F448);
             
@@ -19574,7 +19572,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     var UserId = message.From.Id;
     var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
     var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-    string adminLink = "t.me/yifanfu"; // 替换为你的管理员的Telegram链接
+    string adminLink = "t.me/jcb876"; // 替换为你的管理员的Telegram链接
     string adminText = $"<a href=\"http://{adminLink}\">联系管理</a>";
     string leftPointingIndex = char.ConvertFromUtf32(0x1F448);
 
@@ -19728,7 +19726,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
 
         // 发送欢迎消息和键盘
         string username = message.From.FirstName;
-        string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+        string botUsername = "jiangxiaoba_bot"; // 替换为你的机器人的用户名
         string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
         string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
         string groupFunctionText = $"<a href=\"{shareLink}\">⚠️ 点击拉我进群，有人修改资料将播报提醒！</a>";
@@ -19807,7 +19805,7 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
     InlineKeyboardButton.WithCallbackData("简体中文", "中文"),
     InlineKeyboardButton.WithCallbackData("实时u价", "/usdt"),
-    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/yifanfubot")
+    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/jiangxiaoba_bot")
 });
 
 // 发送分享按钮消息
@@ -19859,7 +19857,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
 
         // 发送欢迎消息和键盘
         string username = message.From.FirstName;
-        string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
+        string botUsername = "jiangxiaoba_bot"; // 替换为你的机器人的用户名
         string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
         string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
         string groupFunctionText = $"<a href=\"{shareLink}\">⚠️ 点击拉我进群，有人修改资料将播报提醒！</a>";
