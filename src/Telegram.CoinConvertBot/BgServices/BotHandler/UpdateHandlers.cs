@@ -12771,11 +12771,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 <code>监控 eth </code>可选
 <code>/zdcrsi</code> 启动定时查询rsi
 
-<code>绑定 TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv TRX 备注 开会员地址</code>
-<code>绑定 TWs6YaFusBbL6UYPjfK9XxpffNGCDu1ApF TRX 备注 安卓抹茶</code>
-<code>绑定 TLowmih1pMgmeUGTAg3Z7Fdk1CZ5KP5ZgB TRX 备注 iOS抹茶</code>
 
-<code>添加群聊：群名字：24小时营业 群ID：-1001691868771 群链接：https://t.me/+2hxPc3RySbRkNDZl</code>
 ";
 
     await botClient.SendTextMessageAsync(
@@ -12876,13 +12872,12 @@ poe gpt：https://poe.com/login
 服务器：https://www.bwgyhw.cn/
 服务器：https://manage.edisglobal.com/cart.php?gid=192&language=chinese
 服务器：https://oneprovider.com/fr/configure/dediconf/2592
-图片托管：https://postimg.cc/NLPvXFQ0/f01732c3  （机器人图片储存在此）
 代码转换：http://www.esjson.com/utf8Encode.html
 图片修改：https://www.gaitubao.com/
 api大全：https://www.apispace.com/#/api/detail/?productID=89
 韩小韩接口：https://api.vvhan.com/
 大象工具：https://www.sunzhongwei.com/go/tools
-机器人代码地址：https://github.com/xiaobai2023123412412343/CoinConvertBot/blob/master/wiki/manual_RUN.md";
+";
 
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
