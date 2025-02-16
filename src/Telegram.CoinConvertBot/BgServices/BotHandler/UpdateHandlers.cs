@@ -19817,7 +19817,8 @@ var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
     InlineKeyboardButton.WithCallbackData("简体中文", "中文"),
     InlineKeyboardButton.WithCallbackData("实时u价", "/usdt"),
-    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/jiangxiaoba_bot")
+    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/jiangxiaoba_bot"),
+    InlineKeyboardButton.WithUrl("后台管理", "https://a.bothub.vip")
 });
 
 // 发送分享按钮消息
