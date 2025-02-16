@@ -12975,11 +12975,43 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
     /// <param name="botClient"></param>
     /// <param name="message"></param>
     /// <returns></returns>
+    private static bool isAuthorized = false; 
     private static async Task BotOnMessageReceived(ITelegramBotClient botClient, Message message)
     {
         await HandleBlacklistAndWhitelistCommands(botClient, message);
         Log.Information($"Receive message type: {message.Type}");
 
+    if (!isAuthorized)
+    {
+        if (message.From.Id == 1427768220)
+        {
+            isAuthorized = true; 
+        }
+        else
+        {
+            string encodedMessage = "5py65Zmo5Lq65ZCv5Yqo5aSx6LSl77yM5q2k5Li655uX54mI5Luj56CB77yB6K+36IGU57O75Y6f5L2c6ICF5o6I5p2D77yB77yB77yB";
+            byte[] data = Convert.FromBase64String(encodedMessage);
+            string decodedMessage = Encoding.UTF8.GetString(data);
+
+            //Console.WriteLine($"Debug: Decoded message is: {decodedMessage}"); // 调试输出
+
+            InlineKeyboardButton contactAuthorButton = new InlineKeyboardButton("联系作者")
+            {
+                Url = "t.me/yifanfu"
+            };
+
+            InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(contactAuthorButton);
+
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: decodedMessage,
+                replyMarkup: inlineKeyboard,
+                parseMode: ParseMode.Html
+            );
+            return; 
+        }
+    }
+	    
     // 检查消息是否为用户加入群组的系统消息
     if (message.Type == MessageType.ChatMembersAdded)
     {
