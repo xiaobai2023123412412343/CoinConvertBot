@@ -102,26 +102,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
     {
         botClient.SetMyCommandsAsync(new BotCommand[]
         {
-        new BotCommand(){Command="start",Description="开始使用"},
-        new BotCommand(){Command="yi",Description="U兑TRX"},
-        new BotCommand(){Command="fan",Description="实时汇率"},
-        new BotCommand(){Command="fu",Description="汇率换算"},
-        new BotCommand(){Command="qiand",Description="一键签到"},            
-        new BotCommand(){Command="ucard",Description="消费u卡"},               
-        new BotCommand(){Command="trc",Description="查询余额"},   
-        new BotCommand(){Command="tron",Description="能量租赁"},            
-        new BotCommand(){Command="btc",Description="加密货币"},
-        new BotCommand(){Command="usd",Description="外汇助手"},
-        new BotCommand(){Command="more",Description="更多功能"},
-        new BotCommand(){Command="home",Description="地址监听"}, 
-        new BotCommand(){Command="cny",Description="合约助手"},
-        new BotCommand(){Command="usdt",Description="实时u价"},                   
-        new BotCommand(){Command="jkbtc",Description="行情监控"},                     
-        new BotCommand(){Command="zijin",Description="资金费率"},   
-        new BotCommand(){Command="caifu",Description="财富密码"},              
-        new BotCommand(){Command="faxian",Description="龙虎榜单"},   
-        new BotCommand(){Command="bijiacha",Description="信号广场"},             
-        new BotCommand(){Command="help",Description="使用帮助"},             
+        new BotCommand(){Command="start",Description="开始使用"},         
         }).GetAwaiter().GetResult();
     }
     Log.Logger.Information("Telegram机器人上线！机器人ID：{Id}({username})，机器人名字：{FirstName}.", me.Id, $"@{me.Username}", me.FirstName);
