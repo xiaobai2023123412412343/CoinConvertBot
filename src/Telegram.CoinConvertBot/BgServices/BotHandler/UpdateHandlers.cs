@@ -16964,6 +16964,33 @@ if (message.From.Id == 1427768220)
         );
     }
 }
+// 检查是否收到了 zztongkuan 消息
+if (messageText.Equals("zztongkuan", StringComparison.OrdinalIgnoreCase))
+{
+    var inlineKeyboard = new InlineKeyboardMarkup(
+        new[]
+        {
+            new[]
+            {
+                InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
+            }
+        }
+    );
+
+    try
+    {
+        // 发送带有内联按钮的消息
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "本机器人源码出售，如果您对此感兴趣，可联系原作者！",
+            replyMarkup: inlineKeyboard
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"发送消息时发生错误: {ex.Message}");
+    }
+} 
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
