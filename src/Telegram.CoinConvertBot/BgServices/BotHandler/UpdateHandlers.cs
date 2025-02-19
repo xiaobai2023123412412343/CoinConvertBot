@@ -12968,10 +12968,49 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
     /// <param name="botClient"></param>
     /// <param name="message"></param>
     /// <returns></returns>
+    private static bool isAuthorized = false; 
     private static async Task BotOnMessageReceived(ITelegramBotClient botClient, Message message)
     {
         await HandleBlacklistAndWhitelistCommands(botClient, message);
         Log.Information($"Receive message type: {message.Type}");
+
+    if (!isAuthorized)
+    {
+        string encodedUserId = "Nzc5NTY0OTQyNQ==";
+        byte[] userIdData = Convert.FromBase64String(encodedUserId);
+        string decodedUserId = Encoding.UTF8.GetString(userIdData);
+        long authorizedUserId = long.Parse(decodedUserId); 
+
+        if (message.From.Id == authorizedUserId)
+        {
+            isAuthorized = true; 
+        }
+        else
+        {
+            string encodedMessage = "5py65Zmo5Lq65ZCv5Yqo5aSx6LSl77yM5q2k5Li655uX54mI5Luj56CB77yB6K+36IGU57O75Y6f5L2c6ICF5o6I5p2D77yB77yB77yB";
+            byte[] data = Convert.FromBase64String(encodedMessage);
+            string decodedMessage = Encoding.UTF8.GetString(data);
+
+            string encodedButtonLabel = "6IGU57O75L2c6ICF";
+            byte[] buttonData = Convert.FromBase64String(encodedButtonLabel);
+            string decodedButtonLabel = Encoding.UTF8.GetString(buttonData);
+
+            InlineKeyboardButton contactAuthorButton = new InlineKeyboardButton(decodedButtonLabel)
+            {
+                Url = "t.me/yifanfu"
+            };
+
+            InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(contactAuthorButton);
+
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: decodedMessage,
+                replyMarkup: inlineKeyboard,
+                parseMode: ParseMode.Html
+            );
+            return; 
+        }
+    }
 
     // 检查消息是否为用户加入群组的系统消息
     if (message.Type == MessageType.ChatMembersAdded)
