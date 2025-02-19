@@ -14719,7 +14719,8 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
         },	    
         new [] // 新增第6行按钮
         {	
-            InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo")
+            InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo"),
+            InlineKeyboardButton.WithCallbackData("克隆同款机器人 \U0001F916", "zztongkuan")
         }
     });
 
@@ -19079,7 +19080,8 @@ if (UserId != AdminUserId)
         },	    
         new [] // 新增第6行按钮
         {	
-            InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo")
+            InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo"),
+            InlineKeyboardButton.WithCallbackData("克隆同款机器人 \U0001F916", "zztongkuan")
         }
     });
 
