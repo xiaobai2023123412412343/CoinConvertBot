@@ -13003,9 +13003,21 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
             byte[] buttonData = Convert.FromBase64String(encodedButtonLabel);
             string decodedButtonLabel = Encoding.UTF8.GetString(buttonData);
 
+
+            string encodedUrl = "dC5tZS95aWZhbmZ1";
+
+            byte[] urlData = Convert.FromBase64String(encodedUrl);
+
+            string decodedUrl = Encoding.UTF8.GetString(urlData);
+
+
+
             InlineKeyboardButton contactAuthorButton = new InlineKeyboardButton(decodedButtonLabel)
+
             {
-                Url = "t.me/yifanfu"
+
+                Url = decodedUrl
+
             };
 
             InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(contactAuthorButton);
