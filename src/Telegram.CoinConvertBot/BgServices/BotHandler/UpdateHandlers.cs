@@ -19298,11 +19298,17 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
             
             if (address.StartsWith("T") && address.Length == 34)
             {
-        // 检查地址是否为"TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6"
-        if (address == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6")
+		    
+    // 检查地址是否为机器人收款地址
+    if (address == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6")
+    {
+        // 检查用户ID是否为管理员ID
+        if (message.From.Id != 1427768220)
         {
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "此为机器人收款地址，绑定失败，请绑定您的钱包地址！");
-        }                
+        }
+        // 如果是管理员，允许绑定并继续执行后续代码
+    }                     
                 var from = message.From;
                 var UserId = from.Id; // 使用发送消息的用户的ID
 
