@@ -18991,11 +18991,12 @@ async Task<decimal> GetTodayTRXOutAsync(string ReciveAddress)
             // 调用Tronscan API以获取交易记录
             var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            string apiEndpoint = $"https://apilist.tronscanapi.com/api/new/transfer?sort=-timestamp&count=true&limit={PageSize}&start={(currentPage * PageSize)}&address={ReciveAddress}&filterTokenValue=1";
+            string apiEndpoint = $"https://apilist.tronscan.org/api/transfer?sort=-timestamp&count=true&limit={PageSize}&start={(currentPage * PageSize)}&address={ReciveAddress}";
             var response = await httpClient.GetAsync(apiEndpoint);
 
             if (!response.IsSuccessStatusCode)
             {
+                Console.WriteLine($"API Request Failed: {response.StatusCode} - {response.ReasonPhrase}");
                 // 请求失败，返回0
                 return 0;
             }
@@ -19003,28 +19004,28 @@ async Task<decimal> GetTodayTRXOutAsync(string ReciveAddress)
             var jsonResponse = await response.Content.ReadAsStringAsync();
             JObject transactions = JObject.Parse(jsonResponse);
 
-// 遍历交易记录并累计 TRX 转出
-foreach (var tx in transactions["data"])
-{
-    // 只统计今日的转出记录
-    var timestamp = (long)tx["timestamp"];
-    var dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(timestamp);
-    var localDateTime = dateTimeOffset.ToOffset(TimeSpan.FromHours(8)).DateTime; // 转换为北京时间
+            // 遍历交易记录并累计 TRX 转出
+            foreach (var tx in transactions["data"])
+            {
+                // 只统计今日的转出记录
+                var timestamp = (long)tx["timestamp"];
+                var dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(timestamp);
+                var localDateTime = dateTimeOffset.ToOffset(TimeSpan.FromHours(8)).DateTime; // 转换为北京时间
 
-    if (localDateTime.Date != DateTime.Today)
-    {
-        hasMoreData = false;
-        break;
-    }
+                if (localDateTime.Date != DateTime.Today)
+                {
+                    hasMoreData = false;
+                    break;
+                }
 
-    // 检查是否为支出记录
-    var transferFromAddress = (string)tx["transferFromAddress"];
-    if (transferFromAddress == ReciveAddress)
-    {
-        var rawAmount = (decimal)tx["amount"];
-        trxOut += rawAmount / 1_000_000L; // TRX的数量需要除以10^6，因为API返回的是最小单位
-    }
-}
+                // 检查是否为支出记录
+                var transferFromAddress = (string)tx["transferFromAddress"];
+                if (transferFromAddress == ReciveAddress)
+                {
+                    var rawAmount = (decimal)tx["amount"];
+                    trxOut += rawAmount / 1_000_000L; // TRX的数量需要除以10^6，因为API返回的是最小单位
+                }
+            }
 
             currentPage++;
         }
@@ -19037,7 +19038,7 @@ foreach (var tx in transactions["data"])
     }
 
     return trxOut;
-}          
+}    
         Message sentMessage = await action;
         async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
         {
