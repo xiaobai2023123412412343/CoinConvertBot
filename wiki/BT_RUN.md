@@ -25,7 +25,9 @@
 
 5 下载安装包  
 
-```https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/heads/master```
+```
+https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/heads/master
+```
 
 6 安装.NET 6.0 //    <pre>https://dotnet.microsoft.com/en-us/download/dotnet/6.0</pre>
 
