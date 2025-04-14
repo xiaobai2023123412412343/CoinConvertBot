@@ -32,8 +32,7 @@
 
 
 //打包win系统使用下面这个代码
-/*
-<Project Sdk="Microsoft.NET.Sdk">
+/*<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -67,5 +66,4 @@
     </None>
   </ItemGroup>
 
-</Project>
-*/
+</Project>*/
