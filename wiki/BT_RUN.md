@@ -49,7 +49,7 @@ https://dotnet.microsoft.com/download
 dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
 ```
 
-<b>10 打开文件目录示例：</u>
+<b>10 打开文件目录（示例）：</u>
 ```
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot 
 ```
@@ -64,7 +64,7 @@ dotnet build
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
 ```
 
-<b>13  打开文件目录示例： </u>
+<b>13  打开文件目录（示例）： </u>
 ```
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
 ```
@@ -73,3 +73,26 @@ cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\
 ```
 .\Telegram.CoinConvertBot.exe
 ```
+
+<b>创建自动任务并后台运行： </u>
+
+<b>15：终端输入并打开计划任务：</u>
+```
+taskschd.msc
+```
+<b>16：右上角创建任务</u>
+
+<b>17：名称/描述随便，更改用户，输入： </u>
+```system
+```
+<b>配置改成：Windows Server 2022</u>
+
+<b>18：触发器改成：启动时</u>
+
+<b>19：操作选择要启动的程序，起始于选择程序所在的目录，</u>
+
+<b>如：C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish\   后面必须有个\</u>
+
+<b>20：条件全取消</u>
+
+<b>21：设置把自动停止任务关闭</u>
