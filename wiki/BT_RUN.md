@@ -37,7 +37,8 @@ https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/head
 https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 ```
 
-<b>7 修改配置文件：重命名配置文件   appsettings.Example.json  改成</u>
+<b>7 修改配置文件后
+重命名配置文件   appsettings.Example.json  改成</u>
 ```
 appsettings.json
 ```
