@@ -84,7 +84,8 @@ taskschd.msc
 <b>16：右上角创建任务</u>
 
 <b>17：名称/描述随便，更改用户，输入： </u>
-```system
+```
+system
 ```
 <b>配置改成：Windows Server 2022</u>
 
