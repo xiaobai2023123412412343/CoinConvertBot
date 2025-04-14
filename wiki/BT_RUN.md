@@ -23,15 +23,15 @@
 
 4 操作-安全-获取win 密码并登录
 
-5 下载安装包   ``` https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/heads/master```
+5 下载安装包   <pre>https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/heads/master</pre>
 
-6 安装.NET 6.0 //    https://dotnet.microsoft.com/en-us/download/dotnet/6.0
+6 安装.NET 6.0 //    <pre>https://dotnet.microsoft.com/en-us/download/dotnet/6.0</pre>
 
 7 修改配置文件：重命名配置文件   appsettings.Example.json appsettings.json
 
-8  安装 .net.sdk     https://dotnet.microsoft.com/download
+8  安装 .net.sdk     <pre>https://dotnet.microsoft.com/download</pre>
 
-9 添加NuGet源：   dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
+9 添加NuGet源：   <pre>dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org</pre>
 
 10 打开文件目录示例：cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot 
 
