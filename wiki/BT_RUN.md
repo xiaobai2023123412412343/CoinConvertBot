@@ -149,4 +149,4 @@ C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src
 
 ---------------------------------------
 
-<b> 自动任务 好像没啥意义，手动开启还可以看看日志，看情况考虑是否开启！！！！</u>
+<b>执行自动计划任务时，可先修改日志模式是覆盖模式还是追加模式</u>
