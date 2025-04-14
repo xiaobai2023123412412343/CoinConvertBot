@@ -41,7 +41,7 @@ https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 ```
 appsettings.json
 ```
-<b>改名后修改配置文件里面的数据</u>
+<b>改名后修改配置文件里面的数据！！！</u>
 
 
 <b>8  安装 .net.sdk 浏览器 </u>   
