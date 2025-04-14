@@ -95,7 +95,7 @@ system
 
 <b>如：C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish\   </u>
 
-<b>后面必须有个\</u>
+<b>后面必须有个\ 别给删除了 </u>
 
 <b>20：条件没用的全取消</u>
 
