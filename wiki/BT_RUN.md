@@ -93,7 +93,7 @@ cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
 # 设置 PowerShell 解码程序输出为 UTF-8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-# 运行程序并写入文件（覆盖模式）
+# 运行程序并写入文件（覆盖模式，重启机器人日志清零）
 .\Telegram.CoinConvertBot.exe 2>&1 | Out-File -FilePath .\日志.txt -Encoding UTF8
 ```
 <b>或者是日志永久保留： </u>
@@ -101,7 +101,7 @@ cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
 # 设置 PowerShell 解码程序输出为 UTF-8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-# 运行程序并写入文件（追加模式）
+# 运行程序并写入文件（追加模式，重启机器人旧的日志保留）
 .\Telegram.CoinConvertBot.exe 2>&1 | Out-File -FilePath .\日志.txt -Encoding UTF8 -Append
 ```
 右键点击文件，选择“以 PowerShell 运行”
