@@ -84,6 +84,20 @@ cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\
 ```
 .\Telegram.CoinConvertBot.exe >> .\日志.txt 2>&1
 ```
+<b>14.3 新建一个文件自动执行,注意名称： </u>
+```
+一键启动机器人.ps1
+```
+<b>文本内容可自行修改： </u>
+```
+cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
+.\Telegram.CoinConvertBot.exe > .\日志.txt 2>&1
+```
+<b>或者是： </u>
+```
+cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
+.\Telegram.CoinConvertBot.exe >> .\日志.txt 2>&1
+```
 （也可以打开文件夹手动双击 .exe启动）
 ---------------------------------------
 
