@@ -98,7 +98,7 @@ cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
 .\Telegram.CoinConvertBot.exe >> .\日志.txt 2>&1
 ```
-（也可以打开文件夹手动双击 .exe启动）
+右键点击文件，选择“以 PowerShell 运行”
 ---------------------------------------
 
 <b>创建自动任务并后台运行： </u>
