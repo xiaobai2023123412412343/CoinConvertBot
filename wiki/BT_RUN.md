@@ -76,11 +76,11 @@ cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\
 
 <b>14：运行程序并记录日志 终端 ： </u>
 
-<b>14.1：日志一次性，停止运行后重启日志清理 </u>
+<b>14.1：日志一次性，重启机器人后日志清零 </u>
 ```
 .\Telegram.CoinConvertBot.exe > .\日志.txt 2>&1
 ```
-<b>14.2：日志永久保留，后续重启机器人会可保留记录 </u>
+<b>14.2：日志永久保留，重启机器人也可保留之前的记录 </u>
 ```
 .\Telegram.CoinConvertBot.exe >> .\日志.txt 2>&1
 ```
