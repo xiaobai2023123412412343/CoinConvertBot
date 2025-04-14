@@ -5,10 +5,10 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    // 下面是为Windows打包添加的配置，需要时取消注释
-    // <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    // <PublishSingleFile>true</PublishSingleFile>
-    // <SelfContained>true</SelfContained>
+    <!-- 下面是为Windows打包添加的配置，需要时取消注释 -->
+    <!-- <RuntimeIdentifier>win-x64</RuntimeIdentifier> -->
+    <!-- <PublishSingleFile>true</PublishSingleFile> -->
+    <!-- <SelfContained>true</SelfContained> -->
   </PropertyGroup>
 
   <ItemGroup>
