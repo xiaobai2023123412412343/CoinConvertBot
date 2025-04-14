@@ -23,7 +23,9 @@
 
 4 操作-安全-获取win 密码并登录
 
-5 下载安装包   <pre>https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/heads/master</pre>
+5 下载安装包  
+
+```https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/heads/master```
 
 6 安装.NET 6.0 //    <pre>https://dotnet.microsoft.com/en-us/download/dotnet/6.0</pre>
 
