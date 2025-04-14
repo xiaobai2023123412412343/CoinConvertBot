@@ -108,6 +108,7 @@ cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\
 ---------------------------------------
 
 <b>创建自动任务并后台运行： </u>
+---------------------------------
 
 <b>15：终端输入并打开计划任务：</u>
 ```
@@ -119,15 +120,15 @@ taskschd.msc
 ```
 system
 ```
-<b>配置改成：Windows Server 2022</u>
+<b>确保任务以系统权限运行，配置改成：Windows Server 2022</u>
 
-<b>18：触发器改成：启动时</u>
+<b>18：触发器改成：启动时  ，这样每次服务器启动时都会运行此任务。</u>
 
-<b>19：操作选择要启动的程序，起始于选择程序所在的目录，</u>
-
-<b>如：C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish\   </u>
-
-<b>后面必须有个\ 别给删除了 </u>
+1. 切换到“操作”选项卡，点击“新建”。
+2. 在“操作”下拉菜单中选择“启动程序”。
+在“程序或脚本”框中输入 powershell.exe。
+4. 在“添加参数(可选)”框中输入 -File "C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish\一键启动机器人.ps1"。确保路径正确指向您的 PowerShell 脚本。
+在“起始于(可选)”框中输入脚本所在的目录，例如：C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish\。
 
 <b>20：条件没用的全取消</u>
 
