@@ -93,7 +93,7 @@ cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
 .\Telegram.CoinConvertBot.exe > .\日志.txt 2>&1
 ```
-<b>或者是： </u>
+<b>或者是日志永久保留： </u>
 ```
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
 .\Telegram.CoinConvertBot.exe >> .\日志.txt 2>&1
