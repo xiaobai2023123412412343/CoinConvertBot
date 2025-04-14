@@ -75,6 +75,7 @@ cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\
 ```
 
 <b>14：运行程序并记录日志 终端 ： </u>
+
 <b>14.1：日志一次性，停止运行后重启日志清理 </u>
 ```
 .\Telegram.CoinConvertBot.exe > .\日志.txt 2>&1
