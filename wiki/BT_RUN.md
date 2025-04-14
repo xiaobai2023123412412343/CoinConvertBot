@@ -91,7 +91,10 @@ cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\
 <b>文本内容可自行修改： </u>
 ```
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
-.\Telegram.CoinConvertBot.exe > .\日志.txt 2>&1
+# 设置 PowerShell 解码程序输出为 UTF-8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+# 运行程序并写入文件
+.\Telegram.CoinConvertBot.exe 2>&1 | Out-File -FilePath .\日志.txt -Encoding UTF8 -Append
 ```
 <b>或者是日志永久保留： </u>
 ```
