@@ -9,4 +9,25 @@
 > 应用环境：无 （`Supervisor管理器`无此项）  
 > 执行目录：/xxx (你解压文件的目录)  
 > 启动文件：/xxx/Telegram.CoinConvertBot  
-> 如有其他选项保持默认  
+> 如有其他选项保持默认
+>
+> -------------------------------------------
+> 
+> 电脑编译步骤：
+> 
+1 首先购买win服务器：Microsoft Windows Server 2022 Base // t3.large // 选择秘钥对（没有就下载一个）
+2 创建安全组  全勾选
+3 启动实例并链接
+4 操作-安全-获取win 密码并登录
+
+5 下载安装包  https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/heads/master
+6 安装.NET 6.0 //  https://dotnet.microsoft.com/en-us/download/dotnet/6.0
+7 修改配置文件：重命名配置文件 appsettings.Example.json appsettings.json
+8  安装 .net.sdk  https://dotnet.microsoft.com/download
+9 添加NuGet源：dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
+
+10 打开文件目录示例：cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot 
+11 编译项目：dotnet build
+12 发布程序：dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
+13  打开文件目录示例： cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
+14：运行程序：  .\Telegram.CoinConvertBot.exe
