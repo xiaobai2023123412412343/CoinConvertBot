@@ -94,8 +94,9 @@ system
 <b>19：操作选择要启动的程序，起始于选择程序所在的目录，</u>
 
 <b>如：C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish\   </u>
+
 <b>后面必须有个\</u>
 
-<b>20：条件全取消</u>
+<b>20：条件没用的全取消</u>
 
-<b>21：设置把自动停止任务关闭</u>
+<b>21：设置里记得把自动停止任务关闭</u>
