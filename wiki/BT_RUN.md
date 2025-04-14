@@ -26,13 +26,13 @@
 Administrator
 ```
 
-<b>5 下载安装包  </u>
+<b>5 下载安装包 浏览器  </u>
 
 ```
 https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/heads/master
 ```
 
-<b>6 安装.NET 6.0    </u>
+<b>6 安装.NET 6.0  浏览器   </u>
 ```
 https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 ```
@@ -42,37 +42,37 @@ https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 appsettings.json
 ```
 
-<b>8  安装 .net.sdk  </u>   
+<b>8  安装 .net.sdk 浏览器 </u>   
 ```
 https://dotnet.microsoft.com/download
 ```
 
-<b>9 添加NuGet源：   </u>
+<b>9 添加NuGet源： 终端  </u>
 ```
 dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
 ```
 
-<b>10 打开文件目录（示例）：</u>
+<b>10 打开文件目录（示例）终端：</u>
 ```
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot 
 ```
 
-<b>11 编译项目：</u>
+<b>11 编译项目 终端：</u>
 ```
 dotnet build
 ```
 
-<b>12 发布程序：</u>
+<b>12 发布程序 终端 ：</u>
 ```
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
 ```
 
-<b>13  打开文件目录（示例）： </u>
+<b>13  打开文件目录（示例）终端 ： </u>
 ```
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
 ```
 
-<b>14：运行程序： </u>
+<b>14：运行程序 终端 ： </u>
 ```
 .\Telegram.CoinConvertBot.exe
 ```
