@@ -13,63 +13,63 @@
 >
 > -------------------------------------------
 
-电脑编译步骤：
+<b>电脑编译步骤：</u>
 
-1 首先购买win服务器：Microsoft Windows Server 2022 Base // t3.large // 选择秘钥对（没有就下载一个）
+<b>1 首先购买win服务器：Microsoft Windows Server 2022 Base // t3.large // 选择秘钥对（没有就下载一个）</u>
 
-2 创建安全组  全勾选
+<b>2 创建安全组  全勾选</u>
 
-3 启动实例并链接
+<b>3 启动实例并链接</u>
 
-4 操作-安全-获取win 密码并登录
+<b>4 操作-安全-获取win 密码并登录</u>
 
-5 下载安装包  
+<b>5 下载安装包  </u>
 
 ```
 https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/heads/master
 ```
 
-6 安装.NET 6.0    
+<b>6 安装.NET 6.0    </u>
 ```
 https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 ```
 
-7 修改配置文件：重命名配置文件   appsettings.Example.json  改成
+<b>7 修改配置文件：重命名配置文件   appsettings.Example.json  改成</u>
 ```
 appsettings.json
 ```
 
-8  安装 .net.sdk     
+<b>8  安装 .net.sdk  </u>   
 ```
 https://dotnet.microsoft.com/download
 ```
 
-9 添加NuGet源：   
+<b>9 添加NuGet源：   </u>
 ```
 dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
 ```
 
-10 打开文件目录示例：
+<b>10 打开文件目录示例：</u>
 ```
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot 
 ```
 
-11 编译项目：
+<b>11 编译项目：</u>
 ```
 dotnet build
 ```
 
-12 发布程序：
+<b>12 发布程序：</u>
 ```
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
 ```
 
-13  打开文件目录示例： 
+<b>13  打开文件目录示例： </u>
 ```
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
 ```
 
-14：运行程序： 
+<b>14：运行程序： </u>
 ```
 .\Telegram.CoinConvertBot.exe
 ```
