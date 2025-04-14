@@ -125,11 +125,21 @@ system
 <b>18：触发器改成：启动时  ，这样每次服务器启动时都会运行此任务。</u>
 
 19：切换到“操作”选项卡，点击“新建”。
-20： 在“操作”下拉菜单中选择“启动程序”。
-在“程序或脚本”框中输入 powershell.exe。
-21： 在“添加参数(可选)”框中输入 -File "C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish\一键启动机器人.ps1"。确保路径正确指向您的 PowerShell 脚本。
-在“起始于(可选)”框中输入脚本所在的目录，例如：C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish\。
 
+20： 在“操作”下拉菜单中选择“启动程序”。
+
+在“程序或脚本”框中输入 powershell.exe。
+
+21： 在“添加参数(可选)”框中输入 -File 
+```
+C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish\一键启动机器人.ps1
+```
+确保路径正确指向您的 PowerShell 脚本。
+
+在“起始于(可选)”框中输入脚本所在的目录：
+```
+C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish\
+```
 <b>22：条件没用的全取消</u>
 
 <b>23：设置里记得把自动停止任务关闭</u>
