@@ -17005,6 +17005,42 @@ if (messageText.Equals("zztongkuan", StringComparison.OrdinalIgnoreCase))
         Console.WriteLine($"发送消息时发生错误: {ex.Message}");
     }
 } 
+// 检查是否接收到了包含特定关键词的消息，收到就启动会员价格表的按钮
+if (messageText.Contains("会员") || messageText.Contains("代开") || messageText.Contains("vip") || messageText.Contains("Premium"))
+{
+    try
+    {
+        var membershipKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new [] // 第一行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("3个月会员    24.99 u", "3months"),
+            },
+            new [] // 第二行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("6个月会员    39.99 u", "6months"),
+            },
+            new [] // 第三行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("一年会员    70.99 u", "1year"),
+            },
+            new [] // 第四行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("返回", "back"),
+            }
+        });
+
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "请选择会员期限：",
+            replyMarkup: membershipKeyboard
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"发送会员价格表按钮时出现异常: {ex.Message}");
+    }
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
