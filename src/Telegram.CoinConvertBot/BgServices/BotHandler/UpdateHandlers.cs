@@ -17305,21 +17305,38 @@ else if (Regex.IsMatch(messageText, @"^取消监控\s*\S+", RegexOptions.IgnoreC
 // 检查是否接收到了 "时间"、"shijian"、"日期" 或 "sj" 中的任意一个消息，收到就返回当前北京时间
 if (messageText.Contains("时间") || messageText.Contains("shijian") || messageText.Contains("日期") || messageText.Contains("sj"))
 {
-    // 获取当前北京时间（UTC+8）
-    DateTime beijingTime = DateTime.UtcNow.AddHours(8);
-    string weekDay = beijingTime.ToString("dddd", new System.Globalization.CultureInfo("zh-CN"));
-    string responseText = $"<b>北京时间：</b>\n\n{beijingTime:yyyy/MM/dd HH:mm:ss} {weekDay}\n\n" +
-                          "一月：  <b>Jan</b>\n二月：  <b>Feb</b>\n三月：  <b>Mar</b>\n四月：  <b>Apr</b>\n五月：  <b>May</b>\n六月：  <b>Jun</b>\n" +
-                          "七月：  <b>Jul</b>\n八月：  <b>Aug</b>\n九月：  <b>Sep</b>\n十月：  <b>Oct</b>\n十一月：  <b>Nov</b>\n十二月：  <b>Dec</b>";
+    try
+    {
+        // 获取当前北京时间（UTC+8）
+        DateTime beijingTime = DateTime.UtcNow.AddHours(8);
+        string weekDay = beijingTime.ToString("dddd", new System.Globalization.CultureInfo("zh-CN"));
 
-    // 向用户发送当前北京时间和月份对照表，使用HTML格式以支持加粗
-    _ = botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: responseText,
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-	replyToMessageId: message.MessageId//回复用户的文本    
-    );
+        // 获取当前中国农历日期
+        System.Globalization.ChineseLunisolarCalendar chineseCalendar = new System.Globalization.ChineseLunisolarCalendar();
+        int lunarYear = chineseCalendar.GetYear(beijingTime);
+        int lunarMonth = chineseCalendar.GetMonth(beijingTime);
+        int lunarDay = chineseCalendar.GetDayOfMonth(beijingTime);
+        string lunarDate = $"{lunarYear.ToString("D4")}/{lunarMonth.ToString("D2")}/{lunarDay.ToString("D2")}";
+
+        string responseText = $"北京时间：<b>{beijingTime:yyyy/MM/dd}</b>\n\n" +
+                              $"       <b>{beijingTime:HH:mm:ss} {weekDay}</b>\n\n农历日期：<b>{lunarDate}</b>\n———————————\n" +
+                              "一月：  <b>Jan</b>\n二月：  <b>Feb</b>\n三月：  <b>Mar</b>\n四月：  <b>Apr</b>\n五月：  <b>May</b>\n六月：  <b>Jun</b>\n" +
+                              "七月：  <b>Jul</b>\n八月：  <b>Aug</b>\n九月：  <b>Sep</b>\n十月：  <b>Oct</b>\n十一月：  <b>Nov</b>\n十二月：  <b>Dec</b>";
+
+        // 向用户发送当前北京时间、农历日期和月份对照表，使用HTML格式以支持加粗
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: responseText,
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+            replyToMessageId: message.MessageId//回复用户的文本    
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"发送时间信息时出现异常: {ex.Message}");
+    }
 }
+
 // 检查是否接收到了包含“绑定”和“备注”的消息
 if (messageText.Contains("绑定") && messageText.Contains("备注"))
 {
