@@ -9844,6 +9844,9 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
 
             // 获取能量消耗数据
             string energyUrl = $"https://apilist.tronscanapi.com/api/account/analysis?address={tronAddress}&type=2";
+
+            // 添加 TRON API 密钥到请求头（只针对 tronscanapi.com 的请求）
+            httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", "0c138945-fd9f-4390-b015-6b93368de1fd");
             HttpResponseMessage energyResponse = await httpClient.GetAsync(energyUrl);
             if (energyResponse.IsSuccessStatusCode)
             {
