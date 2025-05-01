@@ -17005,8 +17005,9 @@ if (messageText.Equals("zztongkuan", StringComparison.OrdinalIgnoreCase))
         Console.WriteLine($"发送消息时发生错误: {ex.Message}");
     }
 } 
-// 检查是否接收到了包含特定关键词的消息，收到就启动会员价格表的按钮
-if (messageText.Contains("会员") || messageText.Contains("代开") || messageText.Contains("vip") || messageText.Contains("Premium"))
+// 检查是否接收到了包含特定关键词的消息，且不以 /vip 开头，收到符合条件的就启动会员价格表的按钮
+if ((messageText.Contains("会员") || messageText.Contains("代开") || messageText.Contains("vip") || messageText.Contains("Premium")) 
+    && !messageText.StartsWith("/vip"))
 {
     try
     {
