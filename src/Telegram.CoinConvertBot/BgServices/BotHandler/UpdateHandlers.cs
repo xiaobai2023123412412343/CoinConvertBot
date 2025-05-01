@@ -9970,6 +9970,9 @@ public static async Task<(decimal, decimal, decimal, decimal, decimal, decimal, 
     {
         using (HttpClient client = new HttpClient())
         {
+            // 添加 TRON API 密钥到请求头（只针对 tronscanapi.com 的请求）
+            httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", "0c138945-fd9f-4390-b015-6b93368de1fd");
+		
             var response = await client.GetStringAsync(url);
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var data = JsonSerializer.Deserialize<JsonElement>(response, options);
@@ -10010,6 +10013,9 @@ public static async Task<(decimal, decimal, decimal, decimal, decimal, decimal, 
     {
         using (HttpClient client = new HttpClient())
         {
+            // 添加 TRON API 密钥到请求头（只针对 tronscanapi.com 的请求）
+            httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", "0c138945-fd9f-4390-b015-6b93368de1fd");
+		
             var response = await client.GetStringAsync(url);
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var data = JsonSerializer.Deserialize<JsonElement>(response, options);
