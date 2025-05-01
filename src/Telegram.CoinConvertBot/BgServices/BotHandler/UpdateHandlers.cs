@@ -12435,6 +12435,7 @@ fofo影院：https://www.fofoyy.com/
 人人影视：https://www.renren.pro/
 茶杯狐电视电影推荐：https://cupfox.love/
 
+高清影视下载：https://www.seedhub.cc/
 全球各大地区电视台同步直播：https://tv.garden/
 在线音乐推荐使用洛雪播放器：https://lxmusic.toside.cn/download",
         disableWebPagePreview: true // 关闭链接预览
@@ -12465,6 +12466,8 @@ bbc：https://www.bbc.com/zhongwen/simp
 迪拜通：https://www.dubaichina.com/
 泰国通：https://hua.in.th/portal.php
 华人网：https://usa.huarenca.com/
+
+天涯神贴：https://tianya.at/?s=9635
 	    ",
         disableWebPagePreview: true // 关闭链接预览
     );
