@@ -8489,6 +8489,8 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, doub
         {
             //Console.WriteLine("主API失败，尝试副API...");
             // 新API失败，尝试旧API
+            // 添加 TRON API 密钥到请求头（只在调用备用API时添加）
+            httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", "0c138945-fd9f-4390-b015-6b93368de1fd");
             response = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
             if (response.IsSuccessStatusCode)
             {
