@@ -8439,6 +8439,8 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
 // 如果任一余额为0，尝试使用备用API
 if (trxBalance == 0m || usdtBalance == 0m)
 {
+    // 添加 TRON API 密钥到请求头
+    httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", "0c138945-fd9f-4390-b015-6b93368de1fd");
     HttpResponseMessage backupResponse = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
     string backupJson = await backupResponse.Content.ReadAsStringAsync();
     //Console.WriteLine("备用API返回的JSON: " + backupJson);  // 输出API返回的完整JSON字符串
