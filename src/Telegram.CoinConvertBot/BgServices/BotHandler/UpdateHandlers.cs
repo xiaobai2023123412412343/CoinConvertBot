@@ -7646,6 +7646,9 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
 
         using (var httpClient = new HttpClient())
         {
+            // 添加 TRON API 密钥到请求头
+            httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", "0c138945-fd9f-4390-b015-6b93368de1fd");
+
             var usdtResponse = await httpClient.GetStringAsync(usdtUrl);
             var usdtTransactions = ParseTransactions(usdtResponse, "USDT")
                 .Where(t => t.amount >= 10)
@@ -7659,7 +7662,6 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
             {
                 string trxUrl = $"https://apilist.tronscanapi.com/api/transfer?sort=-timestamp&count=true&limit={limit}&start={start}&address={outcomeAddress}&filterTokenValue=10000000"; // 10 TRX in sun
                 var trxResponse = await httpClient.GetStringAsync(trxUrl);
-                //Console.WriteLine($"API Response: {trxResponse}"); // 调试输出API响应
                 var newTransactions = ParseTransactions(trxResponse, "TRX")
                     .Where(t => t.amount > 10)
                     .ToList();
@@ -7707,9 +7709,13 @@ public static async Task<string> GetTransactionRecordsAsync(ITelegramBotClient b
     catch (Exception ex)
     {
         Console.WriteLine($"获取交易记录时发生错误：{ex.Message}");
-        return $"获取交易记录时发生错误：{ex.Message}";
+        await botClient.SendTextMessageAsync(message.Chat.Id, "查询超时，请进交易群查看！", replyMarkup: new InlineKeyboardMarkup(new[]
+        {
+            InlineKeyboardButton.WithUrl("点击加入交易群", "https://t.me/+b4NunT6Vwf0wZWI1")
+        }));
+        return "服务器超时，请进交易群查看！";
     }
-}
+} 
 
 private static List<(DateTime timestamp, string token, decimal amount)> ParseTransactions(string jsonResponse, string token)
 {
