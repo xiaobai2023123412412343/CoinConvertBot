@@ -7067,15 +7067,27 @@ private static async Task<string> FetchDcIdFromUsername(string username, long us
     }
     return null;
 }
+
+private static readonly object _followersLock = new object(); // 添加线程锁，用于保护 Followers 列表的并发访问
+private static readonly List<User> Followers = new List<User>();
+
 //完整列表
 private static async Task HandleFullListCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
-    var followers = Followers.OrderByDescending(f => f.FollowTime).ToList();
+    List<User> followers;
+    int followersCount;
+
+    // 使用线程锁保护数据读取操作
+    lock (_followersLock)
+    {
+        followers = Followers.OrderByDescending(f => f.FollowTime).ToList();
+        followersCount = Followers.Count;
+    }
 
     for (int i = 0; i < followers.Count; i += 100)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>\n");
+        sb.AppendLine($"机器人目前在用人数：<b>{followersCount}</b>\n");
 
         var followersBatch = followers.Skip(i).Take(100);
         foreach (var follower in followersBatch)
@@ -7089,7 +7101,8 @@ private static async Task HandleFullListCallbackAsync(ITelegramBotClient botClie
             parseMode: ParseMode.Html
         );
     }
-}  
+}
+
 //获取关注列表   
 private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
@@ -7115,24 +7128,45 @@ private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClie
 }   
 private static void AddFollower(Message message)
 {
-    var user = Followers.FirstOrDefault(x => x.Id == message.From.Id);
-    if (user == null)
+    lock (_followersLock)
     {
-        Followers.Add(new User { Name = message.From.FirstName, Username = message.From.Username, Id = message.From.Id, FollowTime = DateTime.UtcNow.AddHours(8) });
+        var user = Followers.FirstOrDefault(x => x.Id == message.From.Id);
+        if (user == null)
+        {
+            Followers.Add(new User 
+            { 
+                Name = message.From.FirstName, 
+                Username = message.From.Username, 
+                Id = message.From.Id, 
+                FollowTime = DateTime.UtcNow.AddHours(8),
+                IsBot = message.From.IsBot  // 设置 IsBot 属性
+            });
+        }
     }
 }
+
 
 private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botClient, Message message, int page = 0, bool edit = false)
 {
     AddFollower(message);
 
-    var todayFollowers = Followers.Count(f => f.FollowTime.Date == DateTime.UtcNow.AddHours(8).Date);
+    // 使用线程锁保护数据读取操作
+    int followersCount;
+    int todayFollowers;
+    List<User> followersPerPage;
+
+    lock (_followersLock)
+    {
+        followersCount = Followers.Count;
+        todayFollowers = Followers.Count(f => f.FollowTime.Date == DateTime.UtcNow.AddHours(8).Date);
+        // 每页显示15条数据，按关注时间倒序排列
+        followersPerPage = Followers.OrderByDescending(f => f.FollowTime).Skip(page * 15).Take(15).ToList();
+    }
 
     var sb = new StringBuilder();
-    sb.AppendLine($"机器人目前在用人数：<b>{Followers.Count}</b>   今日新增关注：<b>{todayFollowers}</b>\n");
+    sb.AppendLine($"机器人目前在用人数：<b>{followersCount}</b>   今日新增关注：<b>{todayFollowers}</b>\n");
 
-    // 每页显示10条数据
-    var followersPerPage = Followers.OrderByDescending(f => f.FollowTime).Skip(page * 15).Take(15);
+    // 遍历当前页的用户数据并添加到消息中
     foreach (var follower in followersPerPage)
     {
         sb.AppendLine($"<b>{follower.Name}</b>  用户名：@{follower.Username}   ID：<code>{follower.Id}</code>");
@@ -7183,15 +7217,13 @@ private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botC
         );
     }
 }
-
-private static readonly List<User> Followers = new List<User>();
-
 public class User
 {
     public string Name { get; set; }
     public string Username { get; set; }
     public long Id { get; set; }
     public DateTime FollowTime { get; set; }
+    public bool IsBot { get; set; }  // 添加 IsBot 属性
 }
 // 创建一个静态函数，用于计算包含大数字的表达式
 static double EvaluateExpression(string expression)
@@ -18198,15 +18230,31 @@ foreach (Match match in buttonMatches)
     });
 
     int total = 0, success = 0, fail = 0;
-    int batchSize = 200; // 每批次群发的用户数量
+    int batchSize = 200;
     Random random = new Random();
+    // 创建失败用户列表，用于存储发送失败的用户
+    var failedUsers = new List<User>();
+    List<User> currentBatch;
 
     try
     {
-        for (int i = 0; i < Followers.Count; i += batchSize)
+        // 先获取所有需要发送的用户
+        lock (_followersLock)
         {
-            var currentBatch = Followers.Skip(i).Take(batchSize).ToList();
-            foreach (var follower in currentBatch)
+            // 先删除所有机器人用户
+            var botUsers = Followers.Where(u => u.IsBot).ToList();
+            foreach (var botUser in botUsers)
+            {
+                Followers.RemoveAll(u => u.Id == botUser.Id);
+            }
+            currentBatch = Followers.ToList();
+        }
+
+        // 分批处理用户
+        for (int i = 0; i < currentBatch.Count; i += batchSize)
+        {
+            var batch = currentBatch.Skip(i).Take(batchSize).ToList();
+            foreach (var follower in batch)
             {
                 total++;
                 try
@@ -18215,37 +18263,44 @@ foreach (Match match in buttonMatches)
                         chatId: follower.Id, 
                         text: messageToSend, 
                         parseMode: ParseMode.Html,
-                        disableWebPagePreview: true,// 关闭链接预览
-			replyMarkup: inlineKeyboard); // 添加内联键盘    
+                        disableWebPagePreview: true,
+                        replyMarkup: inlineKeyboard);    
                     success++;
                 }
                 catch (ApiRequestException e)
                 {
-                    // 用户不存在或已经屏蔽了机器人
-                    // 在这里记录异常，然后继续向下一个用户发送消息
                     Log.Error($"Failed to send message to {follower.Id}: {e.Message}");
                     fail++;
 
-                    // 检查错误消息以确定是否应该删除用户
                     if (e.Message.Contains("bot can't send messages to bots") ||
                         e.Message.Contains("bot was blocked by the user") ||
                         e.Message.Contains("user is deactivated") ||
-                        e.Message.Contains("chat not found")||
+                        e.Message.Contains("chat not found") ||
                         e.Message.Contains("bot can't initiate conversation with a user"))
                     {
-                        // 从存储库中删除用户
-                        Followers.Remove(follower);
+                        // 将失败的用户添加到列表中
+                        failedUsers.Add(follower);
                     }
                 }
             }
 
-            // 在批次之间等待随机时间 1-2 秒
             await Task.Delay(random.Next(1000, 2001));
+        }
+
+        // 在所有批次处理完成后，统一移除失败的用户
+        if (failedUsers.Count > 0)
+        {
+            lock (_followersLock)
+            {
+                foreach (var failedUser in failedUsers)
+                {
+                    Followers.RemoveAll(u => u.Id == failedUser.Id);
+                }
+            }
         }
     }
     catch (Exception ex)
     {
-        // 通用异常处理，取消剩余的群发任务
         Log.Error($"An error occurred, stopping broadcast: {ex.Message}");
     }
 
@@ -18254,7 +18309,7 @@ foreach (Match match in buttonMatches)
         chatId: message.From.Id, 
         text: $"群发总数：<b>{total}</b>   成功：<b>{success}</b>  失败：<b>{fail}</b>", 
         parseMode: ParseMode.Html,
-        disableWebPagePreview: true); // 关闭链接预览
+        disableWebPagePreview: true);
 }
 if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
 {
