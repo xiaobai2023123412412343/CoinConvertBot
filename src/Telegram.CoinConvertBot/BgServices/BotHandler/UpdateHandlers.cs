@@ -12248,19 +12248,47 @@ if (isBlacklistCommand)
                    return;
                 }
 
-                if (containsNonChinese)
-                {
-                    var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
-                    var (translatedText, _, isError) = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage); // 修改这里
-                    if (isError) // 添加这个 if-else 语句
-                    {
-                        await botClient.SendTextMessageAsync(message.Chat.Id, "翻译服务异常，请稍后重试。");
-                    }
-                    else
-                    {
-                        await botClient.SendTextMessageAsync(message.Chat.Id, $"翻译结果：\n\n<code>{translatedText}</code>", parseMode: ParseMode.Html);
-                    }
-                }
+if (containsNonChinese)
+{
+    try 
+    {
+        var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
+        var (translatedText, _, isError) = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
+        
+        if (isError)
+        {
+            await botClient.SendTextMessageAsync(message.Chat.Id, "翻译服务异常，请稍后重试。");
+            return;
+        }
+
+        // 清理可能包含的HTML标签
+        translatedText = System.Web.HttpUtility.HtmlEncode(translatedText);
+        
+        await botClient.SendTextMessageAsync(
+            message.Chat.Id, 
+            $"翻译结果：\n\n<code>{translatedText}</code>", 
+            parseMode: ParseMode.Html
+        );
+    }
+    catch (ApiRequestException ex)
+    {
+        // 记录具体的API错误
+        Log.Error($"Telegram API错误: {ex.Message}");
+        await botClient.SendTextMessageAsync(
+            message.Chat.Id, 
+            "消息发送失败，请稍后重试。"
+        );
+    }
+    catch (Exception ex)
+    {
+        // 记录其他未预期的错误
+        Log.Error($"翻译过程发生未知错误: {ex.Message}");
+        await botClient.SendTextMessageAsync(
+            message.Chat.Id, 
+            "处理过程中发生错误，请稍后重试。"
+        );
+    }
+}
             }
         }
     }
