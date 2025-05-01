@@ -8624,6 +8624,10 @@ public static async Task<(string, bool)> GetOwnerPermissionAsync(string tronAddr
     try
     {
         using var httpClient = new HttpClient();
+
+        // 添加 TRON API 密钥到请求头（主API需要密钥）
+        httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", "0c138945-fd9f-4390-b015-6b93368de1fd");
+
         // 主API地址
         var response = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={tronAddress}");
 
