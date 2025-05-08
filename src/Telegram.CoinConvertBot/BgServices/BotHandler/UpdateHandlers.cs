@@ -5614,7 +5614,17 @@ public static class BinanceFundingRates
             result += $"<code>{symbol}</code>/USDT    -{Math.Round(Math.Abs(rate.lastFundingRate) * 100, 3)}%\n";
         }
 
-        return result;
+            // 尝试获取 Hyperliquid 资金费率
+            string hyperliquidResult = await FundingRateMonitor.GetHyperliquidFundingRates();
+            if (!hyperliquidResult.StartsWith("查询资金费率失败"))
+            {
+                // 如果 Hyperliquid 数据获取成功，追加分隔线和数据
+                result += "--------------------------\n";
+                result += hyperliquidResult;
+            }
+            // 如果 Hyperliquid 数据失败，不追加任何内容
+
+            return result;
     }
 
     // 从API获取资金费数据并更新本地缓存
