@@ -126,7 +126,7 @@ public static class FundingRateMonitor
             var json = await response.Content.ReadAsStringAsync();
 
             // 调试：输出 JSON
-           // Console.WriteLine($"metaAndAssetCtxs JSON: {json}");
+            // Console.WriteLine($"metaAndAssetCtxs JSON: {json}");
 
             // 解析 JSON
             var jsonDocument = JsonDocument.Parse(json);
@@ -144,8 +144,8 @@ public static class FundingRateMonitor
                     : "未知";
                 bool isDelisted = coin.TryGetProperty("isDelisted", out var delistedProp) && delistedProp.GetBoolean();
 
-                // 跳过已下架币种
-                if (isDelisted || symbol == "未知")
+                // 跳过已下架币种、未知币种或 TRX
+                if (isDelisted || symbol == "未知" || symbol == "TRX")
                 {
                     index++;
                     continue;
