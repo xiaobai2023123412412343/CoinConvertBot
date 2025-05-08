@@ -244,8 +244,10 @@ private static Dictionary<long, bool> fundingRateNotificationUserIds = new Dicti
     { 1427768220, true } // 初始用户ID
 };
 
-// 字典，用于存储资金费数据
+// 字典，用于存储币安资金费数据
 private static Dictionary<string, double> fundingRates = new Dictionary<string, double>();
+// 字典，用于存储Hyperliquid资金费数据
+private static Dictionary<string, double> hyperliquidFundingRates = new Dictionary<string, double>();
 
 // 定时器，用于定期检查资金费
 private static System.Timers.Timer fundingRateTimer;
@@ -278,20 +280,22 @@ private static void SetRandomTimerInterval()
     var interval = random.Next(600000, 1200001); // 随机10-20分钟更新  600-1200秒
     fundingRateTimer.Interval = interval;
 }
-// 从Binance API获取资金费数据并更新字典
+
+// 从Binance和Hyperliquid API获取资金费数据并更新字典
 private static async Task FetchAndUpdateFundingRates(ITelegramBotClient botClient)
 {
     try
     {
+        // 获取币安资金费率
         var httpClient = new HttpClient();
-        var response = await httpClient.GetAsync("https://fapi.binance.com/fapi/v1/premiumIndex");
-        if (response.IsSuccessStatusCode)
+        var binanceResponse = await httpClient.GetAsync("https://fapi.binance.com/fapi/v1/premiumIndex");
+        if (binanceResponse.IsSuccessStatusCode)
         {
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await binanceResponse.Content.ReadAsStringAsync();
             var data = JsonSerializer.Deserialize<List<FundingRate>>(content);
-            //Console.WriteLine("成功获取资金费数据。");
+            //Console.WriteLine("成功获取币安资金费数据。");
 
-            // 更新字典，排除特定币种
+            // 更新币安字典，排除特定币种
             foreach (var item in data)
             {
                 if (item.symbol != "TRXUSDT") // 排除 TRX/USDT
@@ -299,15 +303,51 @@ private static async Task FetchAndUpdateFundingRates(ITelegramBotClient botClien
                     fundingRates[item.symbol] = double.Parse(item.lastFundingRate);
                 }
             }
-
-            // 检查并通知用户
-            CheckAndNotifyUsers(botClient);
         }
         else
         {
-            //Console.WriteLine($"API调用失败: 状态码 {response.StatusCode}");
-            throw new Exception("API调用失败");
+            //Console.WriteLine($"币安API调用失败: 状态码 {binanceResponse.StatusCode}");
+            throw new Exception("币安API调用失败");
         }
+
+        // 获取Hyperliquid资金费率
+        var hyperliquidResult = await FundingRateMonitor.GetHyperliquidFundingRates();
+        if (!hyperliquidResult.StartsWith("查询资金费率失败"))
+        {
+            // 解析Hyperliquid返回的HTML格式数据
+            hyperliquidFundingRates.Clear();
+            var lines = hyperliquidResult.Split('\n');
+            foreach (var line in lines)
+            {
+                if (line.Contains("/USDT"))
+                {
+                    // 示例行：<code>BTC</code>/USDT    0.0123
+                    var parts = line.Split(new[] { "    " }, StringSplitOptions.None);
+                    if (parts.Length == 2)
+                    {
+                        var symbolPart = parts[0].Replace("<code>", "").Replace("</code>", "").Replace("/USDT", "");
+                         // 添加过滤逻辑：排除 TRX
+                        if (symbolPart != "TRX")
+                       {
+                          var ratePart = parts[1].TrimEnd('%'); // 去掉百分比符号
+                          if (double.TryParse(ratePart, out var rate))
+                          {
+                              hyperliquidFundingRates[$"{symbolPart}_hy"] = rate / 100; // 转换为小数
+                          }
+                       }
+                    }
+                }
+            }
+            //Console.WriteLine("成功获取Hyperliquid资金费数据。");
+        }
+        else
+        {
+            //Console.WriteLine($"Hyperliquid API调用失败: {hyperliquidResult}");
+            // 不抛出异常，继续处理币安数据
+        }
+
+        // 检查并通知用户
+        CheckAndNotifyUsers(botClient);
     }
     catch (Exception ex)
     {
@@ -315,6 +355,7 @@ private static async Task FetchAndUpdateFundingRates(ITelegramBotClient botClien
         // 停止定时器并清空字典
         fundingRateTimer.Stop();
         fundingRates.Clear();
+        hyperliquidFundingRates.Clear();
         // 向用户发送通知
         await botClient.SendTextMessageAsync(
             chatId: 1427768220,
@@ -324,10 +365,11 @@ private static async Task FetchAndUpdateFundingRates(ITelegramBotClient botClien
         throw; // 可选：重新抛出异常，如果需要在调用栈上层进一步处理
     }
 }
+
 // 字典，用于跟踪最后一次通知时间，针对每个用户和币种的组合
 private static Dictionary<(long, string), DateTime> lastNotifiedTimes = new Dictionary<(long, string), DateTime>();
 
-// 检查资金费变化并通知用户
+// 检查并通知用户
 private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
 {
     try
@@ -341,39 +383,51 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
 
         foreach (var userId in fundingRateNotificationUserIds.Keys.ToList()) // 使用ToList确保在迭代时可以修改原字典
         {
-            //Console.WriteLine($"检查用户 {userId} 的VIP状态...");
-
+            // VIP 状态检查
             if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime))
             {
                 DateTime beijingTimeExpiry = TimeZoneInfo.ConvertTimeFromUtc(expiryTime, chinaZone);
 
                 if (beijingTimeNow > beijingTimeExpiry)
                 {
-                    // 如果当前北京时间超过了到期北京时间
                     usersToRemove.Add(userId); // 添加到移除列表
                     //Console.WriteLine($"用户 {userId} 的VIP已过期，将被移除。");
-                    continue; // 跳过当前循环，不通知此用户
+                    continue;
                 }
             }
             else
             {
-                // 如果无法获取VIP状态或其他原因导致检查失败
                 usersToRemove.Add(userId);
                 //Console.WriteLine($"无法确认用户 {userId} 的VIP状态，将被移除。");
                 continue;
             }
 
-            List<(string symbol, double rate)> ratesToNotify = new List<(string symbol, double rate)>();
-            List<InlineKeyboardButton[]> buttons = new List<InlineKeyboardButton[]>(); // 在这里初始化buttons
-		
+            List<(string symbol, double rate, bool isHyperliquid)> ratesToNotify = new List<(string symbol, double rate, bool isHyperliquid)>();
+            List<InlineKeyboardButton[]> buttons = new List<InlineKeyboardButton[]>();
+
+            // 检查币安资金费率
             foreach (var rate in fundingRates)
             {
-                if (Math.Abs(rate.Value) >= 0.015) // 检查是否达到通知阈值  资金费正负 1.5% 播报提醒
+                if (Math.Abs(rate.Value) >= 0.02) // 资金费正负 2%
                 {
                     var key = (userId, rate.Key);
                     if (!lastNotifiedTimes.ContainsKey(key) || beijingTimeNow - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
                     {
-                        ratesToNotify.Add((rate.Key.Replace("USDT", ""), rate.Value));
+                        ratesToNotify.Add((rate.Key.Replace("USDT", ""), rate.Value, false));
+                        lastNotifiedTimes[key] = beijingTimeNow; // 更新通知时间
+                    }
+                }
+            }
+
+            // 检查Hyperliquid资金费率
+            foreach (var rate in hyperliquidFundingRates)
+            {
+                if (Math.Abs(rate.Value) >= 0.02) // 资金费正负 2%
+                {
+                    var key = (userId, rate.Key);
+                    if (!lastNotifiedTimes.ContainsKey(key) || beijingTimeNow - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
+                    {
+                        ratesToNotify.Add((rate.Key, rate.Value, true));
                         lastNotifiedTimes[key] = beijingTimeNow; // 更新通知时间
                     }
                 }
@@ -388,15 +442,20 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                     .ToList();
 
                 string message = "<b>资金费率异常提醒：</b>\n\n";
-                foreach (var (symbol, rate) in sortedRates)
+                foreach (var (symbol, rate, isHyperliquid) in sortedRates)
                 {
-                    message += $"<code>{symbol}</code>/USDT    {Math.Round(rate * 100, 3)}%\n";
+                    var displaySymbol = isHyperliquid ? symbol : symbol;
+                    message += $"<code>{displaySymbol}</code>/USDT    {Math.Round(rate * 100, 3)}%\n";
+                    // 仅添加币种查询按钮
                     buttons.Add(new InlineKeyboardButton[] {
-                        InlineKeyboardButton.WithCallbackData("取消异常提醒", "/quxiaozijinfei"),
-                        InlineKeyboardButton.WithCallbackData(symbol, $"查{symbol}")
-
+                        InlineKeyboardButton.WithCallbackData(displaySymbol, $"查{displaySymbol}")
                     });
                 }
+
+                // 添加单独的“取消异常提醒”按钮作为最后一行
+                buttons.Add(new InlineKeyboardButton[] {
+                    InlineKeyboardButton.WithCallbackData("取消异常提醒", "/quxiaozijinfei")
+                });
 
                 var keyboard = new InlineKeyboardMarkup(buttons.ToArray());
                 botClient.SendTextMessageAsync(
