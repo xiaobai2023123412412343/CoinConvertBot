@@ -408,7 +408,7 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
             // 检查币安资金费率
             foreach (var rate in fundingRates)
             {
-                if (Math.Abs(rate.Value) >= 0.02) // 资金费正负 2%
+                if (Math.Abs(rate.Value) >= 0.015) // 资金费正负 1.5%
                 {
                     var key = (userId, rate.Key);
                     if (!lastNotifiedTimes.ContainsKey(key) || beijingTimeNow - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
@@ -422,7 +422,7 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
             // 检查Hyperliquid资金费率
             foreach (var rate in hyperliquidFundingRates)
             {
-                if (Math.Abs(rate.Value) >= 0.02) // 资金费正负 2%
+                if (Math.Abs(rate.Value) >= 0.015) // 资金费正负 1.5%
                 {
                     var key = (userId, rate.Key);
                     if (!lastNotifiedTimes.ContainsKey(key) || beijingTimeNow - lastNotifiedTimes[key] > TimeSpan.FromHours(1))
