@@ -267,7 +267,7 @@ private static void CheckAndNotifyUsers(ITelegramBotClient botClient)
                     .ThenByDescending(r => Math.Abs(r.rate))
                     .ToList();
 
-                string message = "<b>资金费异常提醒：</b>\n\n";
+                string message = "<b>资金费率异常提醒：</b>\n\n";
                 foreach (var (symbol, rate) in sortedRates)
                 {
                     message += $"<code>{symbol}</code>/USDT    {Math.Round(rate * 100, 3)}%\n";
