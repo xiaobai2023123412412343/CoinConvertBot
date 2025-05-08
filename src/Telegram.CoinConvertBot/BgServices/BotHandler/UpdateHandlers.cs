@@ -104,6 +104,126 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+
+//查询获取hyperliquid资金费率 /zijinhy
+public static class FundingRateMonitor
+{
+    private static readonly HttpClient httpClient = new HttpClient();
+
+    public static async Task<string> GetHyperliquidFundingRates()
+    {
+        try
+        {
+            // 发送 metaAndAssetCtxs 请求
+            var requestBody = new { type = "metaAndAssetCtxs" };
+            var content = new StringContent(
+                JsonSerializer.Serialize(requestBody),
+                Encoding.UTF8,
+                "application/json"
+            );
+            var response = await httpClient.PostAsync("https://api.hyperliquid.xyz/info", content);
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync();
+
+            // 调试：输出 JSON
+           // Console.WriteLine($"metaAndAssetCtxs JSON: {json}");
+
+            // 解析 JSON
+            var jsonDocument = JsonDocument.Parse(json);
+
+            // 获取 universe（币种列表）和资金费率数据
+            var universe = jsonDocument.RootElement[0].GetProperty("universe").EnumerateArray();
+            var fundingData = jsonDocument.RootElement[1].EnumerateArray();
+
+            var fundingRates = new List<(string Symbol, decimal FundingRate)>();
+            int index = 0;
+            foreach (var coin in universe)
+            {
+                string symbol = coin.TryGetProperty("name", out var nameProp)
+                    ? nameProp.GetString()?.ToUpper() ?? "未知"
+                    : "未知";
+                bool isDelisted = coin.TryGetProperty("isDelisted", out var delistedProp) && delistedProp.GetBoolean();
+
+                // 跳过已下架币种
+                if (isDelisted || symbol == "未知")
+                {
+                    index++;
+                    continue;
+                }
+
+                // 从 fundingData 获取对应资金费率
+                if (index < fundingData.Count())
+                {
+                    var fundingItem = fundingData.ElementAt(index);
+                    decimal fundingRate = fundingItem.TryGetProperty("funding", out var rateProp)
+                        ? decimal.Parse(rateProp.GetString()!)
+                        : 0;
+
+                    fundingRates.Add((symbol, fundingRate));
+                }
+                index++;
+            }
+
+            // 排序正资金费率（前 5）
+            var positiveRates = fundingRates
+                .Where(r => r.FundingRate > 0)
+                .OrderByDescending(r => r.FundingRate)
+                .Take(5)
+                .ToList();
+
+            // 排序负资金费率（前 5，负数越大越靠前）
+            var negativeRates = fundingRates
+                .Where(r => r.FundingRate < 0)
+                .OrderBy(r => r.FundingRate) // 负数越大（数值越小）排前面
+                .Take(5)
+                .ToList();
+
+            // 构建 HTML 格式返回消息
+            var sb = new StringBuilder();
+            sb.AppendLine("<b>Hyperliquid 正资金费率 TOP5：</b>");
+            if (positiveRates.Any())
+            {
+                foreach (var rate in positiveRates)
+                {
+                    // 币种用 <code> 包裹，加 /USDT 后缀，币种后加 4 个空格
+                    sb.AppendLine($"<code>{rate.Symbol}</code>/USDT    {rate.FundingRate:P4}");
+                }
+            }
+            else
+            {
+                sb.AppendLine("暂无正资金费率数据");
+            }
+
+            sb.AppendLine("\n<b>Hyperliquid 负资金费率 TOP5：</b>");
+            if (negativeRates.Any())
+            {
+                foreach (var rate in negativeRates)
+                {
+                    // 币种用 <code> 包裹，加 /USDT 后缀，币种后加 4 个空格
+                    sb.AppendLine($"<code>{rate.Symbol}</code>/USDT    {rate.FundingRate:P4}");
+                }
+            }
+            else
+            {
+                sb.AppendLine("暂无负资金费率数据");
+            }
+
+            return sb.ToString();
+        }
+        catch (HttpRequestException ex)
+        {
+            return $"查询资金费率失败：网络错误 - {ex.Message} (Status: {ex.StatusCode})";
+        }
+        catch (JsonException ex)
+        {
+            return $"查询资金费率失败：JSON 解析错误 - {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            return $"查询资金费率失败：{ex.Message}";
+        }
+    }
+}
 	
 // 定义全局变量  租能量价格
 public static decimal TransactionFee = 7.00m;
@@ -17129,6 +17249,25 @@ if ((messageText.Contains("会员") || messageText.Contains("代开") || message
     catch (Exception ex)
     {
         Console.WriteLine($"发送会员价格表按钮时出现异常: {ex.Message}");
+    }
+}
+if (Regex.IsMatch(messageText, @"^/zijinhy\b", RegexOptions.IgnoreCase))
+{
+    if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "请私聊机器人查询 Hyperliquid 资金费率！"
+        );
+    }
+    else
+    {
+        var result = await FundingRateMonitor.GetHyperliquidFundingRates();
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: result,
+            parseMode: ParseMode.Html // 改为 Html
+        );
     }
 }
 // 检查是否接收到了 /xuni 消息，收到就启动广告
