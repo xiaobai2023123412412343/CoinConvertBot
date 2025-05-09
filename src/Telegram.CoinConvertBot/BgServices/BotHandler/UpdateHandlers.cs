@@ -5916,7 +5916,7 @@ private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, 
 //计算数字+数字货币的各地货币价值    
 private static async Task HandleCryptoCurrencyMessageAsync(ITelegramBotClient botClient, Message message)
 {
-    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)([a-zA-Z]+)$", RegexOptions.IgnoreCase);
+    var match = Regex.Match(message.Text, @"^(\d+(\.\d+)?)\s*([a-zA-Z]+)$", RegexOptions.IgnoreCase);
 
     if (!match.Success)
     {
@@ -18294,7 +18294,7 @@ if (Regex.IsMatch(message.Text, @"用户名：|ID："))
     await HandleStoreCommandAsync(botClient, message);
 }       
 // 修改启动方法以匹配任何数字后跟任何字母组合的币种符号
-if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?[a-zA-Z]+$", RegexOptions.IgnoreCase))
+if (Regex.IsMatch(message.Text, @"^\d+(\.\d+)?\s*[a-zA-Z]+$", RegexOptions.IgnoreCase))
 {
     await HandleCryptoCurrencyMessageAsync(botClient, message);
 }
