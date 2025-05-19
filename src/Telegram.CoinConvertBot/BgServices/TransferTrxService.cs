@@ -185,7 +185,7 @@ namespace Telegram.CoinConvertBot.BgServices
                             {
                                 try
                                 {
-                                    await _botClient.SendTextMessageAsync(bind.UserId, $@"<b>订单处理失败！</b>
+                                    await _botClient.SendTextMessageAsync(bind.UserId, $@"<b>订单处理中！</b>
 入账金额：<b>{record.OriginalAmount:#.######} {record.OriginalCurrency}</b>
 入账哈希：<code>{record.BlockTransactionId}</code>
 入账时间：<b>{record.ReceiveTime:yyyy-MM-dd HH:mm:ss}</b>
@@ -194,8 +194,8 @@ namespace Telegram.CoinConvertBot.BgServices
 出账哈希：<code>{record.Txid}</code>
 出账时间：<b>{record.PayTime:yyyy-MM-dd HH:mm:ss}</b>
 
-兑换失败：<b>{record.Error}</b>
-请联系管理员处理！
+
+如超时未到账请联系管理员处理！
 管理员： {UpdateHandlers.AdminUserUrl}
 ", Bot.Types.Enums.ParseMode.Html);
                                 }
