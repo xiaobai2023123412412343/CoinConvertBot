@@ -9182,7 +9182,7 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
                         response = await httpClient.GetAsync(requestUri);
                         if (!response.IsSuccessStatusCode)
                         {
-                            Console.WriteLine($"重试请求失败，状态码：{response.StatusCode}");
+                            //Console.WriteLine($"重试请求失败，状态码：{response.StatusCode}");
                             return "无法获取授权记录，请稍后再试。";
                         }
                     }
@@ -9361,7 +9361,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
                         response = await httpClient.GetAsync(requestUri);
                         if (!response.IsSuccessStatusCode)
                         {
-                            Console.WriteLine($"重试请求失败，状态码：{response.StatusCode}");
+                           // Console.WriteLine($"重试请求失败，状态码：{response.StatusCode}");
                             return "无法获取授权记录，请稍后再试。";
                         }
                     }
