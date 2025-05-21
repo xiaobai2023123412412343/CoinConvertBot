@@ -8481,7 +8481,9 @@ public static DateTime ConvertToBeijingTime(DateTime utcDateTime)
     var timeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
     return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, timeZone);
 }
+//获取最后活跃时间
 
+/*  //新版在下面
 public static async Task<(DateTime LastTransactionTime, bool IsError)> GetLastTransactionTimeAsync(string address)
 {
     string[] apiKeys = new string[] {
@@ -8548,6 +8550,115 @@ public static async Task<(DateTime LastTransactionTime, bool IsError)> GetLastTr
 
     // 如果所有密钥都失败，返回错误
     return (DateTime.MinValue, true);
+}
+*/  // 旧版从oklin获取 
+
+public static async Task<(DateTime LastTransactionTime, bool IsError)> GetLastTransactionTimeAsync(string address)
+{
+    string apiKey = "369e85e5-68d3-4299-a602-9d8d93ad026a";
+    using var httpClient = new HttpClient();
+    httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKey);
+
+    try
+    {
+        // 同时发起两个API请求
+        var trc20Task = httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20?only_confirmed=true&limit=1");
+        var trc10Task = httpClient.GetAsync($"https://apilist.tronscanapi.com/api/transfer?sort=-timestamp&count=true&limit=1&start=0&address={address}");
+
+        // 等待两个请求完成
+        await Task.WhenAll(trc20Task, trc10Task);
+
+        var trc20Response = await trc20Task;
+        var trc10Response = await trc10Task;
+
+        long trc20LatestTime = 0;
+        long trc10LatestTime = 0;
+
+        // 处理TRC20响应
+        if (trc20Response.IsSuccessStatusCode)
+        {
+            var trc20Json = await trc20Response.Content.ReadAsStringAsync();
+            //Console.WriteLine("TRC20 API Response:");
+            //Console.WriteLine(trc20Json);
+            
+            var trc20Document = JsonDocument.Parse(trc20Json);
+            
+            if (trc20Document.RootElement.TryGetProperty("data", out JsonElement trc20Data) && 
+                trc20Data.GetArrayLength() > 0)
+            {
+                var firstTrc20Transaction = trc20Data[0];
+                if (firstTrc20Transaction.TryGetProperty("block_timestamp", out JsonElement trc20Timestamp))
+                {
+                    trc20LatestTime = trc20Timestamp.GetInt64();
+                   // Console.WriteLine($"TRC20 Latest Transaction Time: {DateTimeOffset.FromUnixTimeMilliseconds(trc20LatestTime).DateTime}");
+                }
+            }
+            else
+            {
+               // Console.WriteLine("No TRC20 transactions found");
+            }
+        }
+        else
+        {
+           // Console.WriteLine($"TRC20 API Error: {trc20Response.StatusCode}");
+        }
+
+        // 处理TRC10响应
+        if (trc10Response.IsSuccessStatusCode)
+        {
+            var trc10Json = await trc10Response.Content.ReadAsStringAsync();
+            //Console.WriteLine("\nTRC10 API Response:");
+           // Console.WriteLine(trc10Json);
+            
+            var trc10Document = JsonDocument.Parse(trc10Json);
+            
+            if (trc10Document.RootElement.TryGetProperty("data", out JsonElement trc10Data) && 
+                trc10Data.GetArrayLength() > 0)
+            {
+                var firstTrc10Transaction = trc10Data[0];
+                if (firstTrc10Transaction.TryGetProperty("timestamp", out JsonElement trc10Timestamp))
+                {
+                    trc10LatestTime = trc10Timestamp.GetInt64();
+                    //Console.WriteLine($"TRC10 Latest Transaction Time: {DateTimeOffset.FromUnixTimeMilliseconds(trc10LatestTime).DateTime}");
+                }
+            }
+            else
+            {
+              //  Console.WriteLine("No TRC10 transactions found");
+            }
+        }
+        else
+        {
+           // Console.WriteLine($"TRC10 API Error: {trc10Response.StatusCode}");
+        }
+
+        // 比较两个时间戳，取最新的
+        long latestTimestamp = Math.Max(trc20LatestTime, trc10LatestTime);
+
+       // Console.WriteLine($"\nFinal Results:");
+       // Console.WriteLine($"TRC20 Latest Time: {trc20LatestTime}");
+       // Console.WriteLine($"TRC10 Latest Time: {trc10LatestTime}");
+       // Console.WriteLine($"Latest Timestamp: {latestTimestamp}");
+
+        if (latestTimestamp > 0)
+        {
+            var utcDateTime = DateTimeOffset.FromUnixTimeMilliseconds(latestTimestamp).DateTime;
+            var beijingTime = ConvertToBeijingTime(utcDateTime);
+          //  Console.WriteLine($"Final Beijing Time: {beijingTime}");
+            return (beijingTime, false);
+        }
+        else
+        {
+           // Console.WriteLine("No valid transaction time found");
+            return (DateTime.MinValue, true);
+        }
+    }
+    catch (Exception ex)
+    {
+       // Console.WriteLine($"Error getting last transaction time: {ex.Message}");
+       // Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+        return (DateTime.MinValue, true);
+    }
 }
     
 public static async Task<(DateTime CreationTime, bool IsError)> GetAccountCreationTimeAsync(string address)
