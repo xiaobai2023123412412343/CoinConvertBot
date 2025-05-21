@@ -9976,30 +9976,21 @@ else
         {
             InlineKeyboardButton.WithUrl("详细信息", $"https://tronscan.org/#/address/{tronAddress}"), // 链接到Tron地址的详细信息
             InlineKeyboardButton.WithUrl("链上天眼", $"https://www.oklink.com/cn/trx/address/{tronAddress}"), // 链接到欧意地址的详细信息
-           // InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
-           // InlineKeyboardButton.WithUrl("进群使用", shareLink), // 添加机器人到群组的链接
-            //InlineKeyboardButton.WithCallbackData("授权列表", $"authorized_list,{tronAddress}") // 添加新的按钮
         },
         new [] // 第二行按钮
         {
             InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
-            //InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
-	    //InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
-            InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型		
+            InlineKeyboardButton.WithUrl("大家一起查", shareLink), // 添加机器人到群组的链接			
         },
         new [] // 第三行按钮
         {
-            //InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
-            //InlineKeyboardButton.WithCallbackData("TRX消耗统计\U0001F4F6", $"trx_usage,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithCallbackData("完整授权列表", $"authorized_list,{tronAddress}"), // 添加新的按钮
+	    InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型	
             InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin") // 修改为打开链接的按钮 		
         },
         new [] // 第四行按钮
         {
             InlineKeyboardButton.WithCallbackData("TRX消耗统计\U0001F4F6", $"trx_usage,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithCallbackData("USDT账单详情\U0001F50D", $"账单详情{tronAddress}"), // 添加新的按钮		
-            //InlineKeyboardButton.WithCallbackData("完整授权列表", $"authorized_list,{tronAddress}"), // 添加新的按钮
-            //InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin") // 修改为打开链接的按钮      
+            InlineKeyboardButton.WithCallbackData("USDT账单详情\U0001F50D", $"账单详情{tronAddress}"), // 添加新的按钮		      
         }	    
         
     });
