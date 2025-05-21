@@ -8760,84 +8760,101 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, doub
 }
 public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tronAddress)
 {
-    string chainShortName = "tron";
-    string protocolType = "token_20";
     string tokenContractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-    int limit = 20; // 请求20条记录
-    string[] apiKeys = new string[] {
-        "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
-        "f49353bd-db65-4719-a56c-064b2eb231bf",
-        "587f64a1-43d5-40f2-9115-7d3c66b0459a",	    
-        "92854974-68da-4fd8-9e50-3948c1e6fa7e"
-    };
+    int limit = 20;
+    string apiKey = "369e85e5-68d3-4299-a602-9d8d93ad026a";
 
-    string url = $"https://www.oklink.com/api/v5/explorer/address/token-transaction-list?chainShortName={chainShortName}&address={tronAddress}&protocolType={protocolType}&tokenContractAddress={tokenContractAddress}&limit={limit}";
+    // 分别查询转入和转出的交易
+    string urlIn = $"https://apilist.tronscanapi.com/api/token_trc20/transfers?limit={limit}&start=0&contract_address={tokenContractAddress}&toAddress={tronAddress}&confirm=true";
+    string urlOut = $"https://apilist.tronscanapi.com/api/token_trc20/transfers?limit={limit}&start=0&contract_address={tokenContractAddress}&fromAddress={tronAddress}&confirm=true";
 
     using (var httpClient = new HttpClient())
     {
-        foreach (var apiKey in apiKeys)
+        httpClient.DefaultRequestHeaders.Clear();
+        httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKey);
+
+        try
         {
-            httpClient.DefaultRequestHeaders.Clear();
-            httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKey);
+            // 获取转入交易
+            //Console.WriteLine($"正在请求转入交易API: {urlIn}");
+            HttpResponseMessage responseIn = await httpClient.GetAsync(urlIn);
+            string jsonStringIn = await responseIn.Content.ReadAsStringAsync();
+            //Console.WriteLine($"转入交易API返回数据: {jsonStringIn}");
 
-            try
+            // 获取转出交易
+           // Console.WriteLine($"正在请求转出交易API: {urlOut}");
+            HttpResponseMessage responseOut = await httpClient.GetAsync(urlOut);
+            string jsonStringOut = await responseOut.Content.ReadAsStringAsync();
+           // Console.WriteLine($"转出交易API返回数据: {jsonStringOut}");
+
+            if (!responseIn.IsSuccessStatusCode || !responseOut.IsSuccessStatusCode)
             {
-                HttpResponseMessage response = await httpClient.GetAsync(url);
-                string jsonString = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    continue; // 尝试下一个 API 密钥
-                }
-
-                JObject jsonResponse = JObject.Parse(jsonString);
-
-                if (jsonResponse["code"].ToString() != "0")
-                {
-                    continue; // 尝试下一个 API 密钥
-                }
-
-                JArray data = (JArray)jsonResponse["data"];
-                if (data.Count == 0)
-                {
-                    return (string.Empty, false);
-                }
-
-                JArray transactions = (JArray)data[0]["transactionList"];
-                transactions = new JArray(transactions.Where(t => decimal.Parse((string)t["amount"]) > 1).Take(5)); // 筛选大于1USDT的交易并取前5条
-
-                if (transactions.Count > 0)
-                {
-                    StringBuilder transactionTextBuilder = new StringBuilder();
-                    transactionTextBuilder.AppendLine("———————<b>USDT账单</b>———————"); // 只有当有交易时才添加账单标题
-
-                    foreach (var transaction in transactions)
-                    {
-                        string txHash = (string)transaction["txId"];
-                        long transactionTime = (long)transaction["transactionTime"];
-                        DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(transactionTime).UtcDateTime;
-                        DateTime transactionTimeBeijing = TimeZoneInfo.ConvertTime(transactionTimeUtc, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
-
-                        string fromAddress = (string)transaction["from"];
-                        string toAddress = (string)transaction["to"];
-                        string type = tronAddress.Equals(toAddress, StringComparison.OrdinalIgnoreCase) ? "入 " : "出 ";
-
-                        decimal usdtAmount = decimal.Parse((string)transaction["amount"]); // 直接使用返回的USDT金额
-
-                        transactionTextBuilder.AppendLine($"{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}<a href=\"https://tronscan.org/#/transaction/{txHash}\">{usdtAmount:N2} U</a>");
-                    }
-
-                    return (transactionTextBuilder.ToString(), false);
-                }
+               // Console.WriteLine($"API请求失败，转入状态码: {responseIn.StatusCode}，转出状态码: {responseOut.StatusCode}");
+                return (string.Empty, true);
             }
-            catch (Exception ex)
+
+            JObject jsonResponseIn = JObject.Parse(jsonStringIn);
+            JObject jsonResponseOut = JObject.Parse(jsonStringOut);
+
+            // 合并转入和转出交易
+            JArray allTransactions = new JArray();
+            
+            if (jsonResponseIn["token_transfers"] != null)
             {
-                Console.WriteLine($"Error with API Key {apiKey}: {ex.Message}");
-                continue; // 尝试下一个 API 密钥
+                allTransactions.Merge((JArray)jsonResponseIn["token_transfers"]);
             }
+            
+            if (jsonResponseOut["token_transfers"] != null)
+            {
+                allTransactions.Merge((JArray)jsonResponseOut["token_transfers"]);
+            }
+
+            if (allTransactions.Count == 0)
+            {
+               // Console.WriteLine("没有找到任何交易记录");
+                return (string.Empty, false);
+            }
+
+            // 按时间排序并筛选大于1USDT的交易
+            var filteredTransactions = allTransactions
+                .Where(t => decimal.Parse((string)t["quant"]) / 1000000m > 1)
+                .OrderByDescending(t => (long)t["block_ts"])
+                .Take(5);
+
+            if (!filteredTransactions.Any())
+            {
+               // Console.WriteLine("没有找到大于1USDT的交易记录");
+                return (string.Empty, false);
+            }
+
+            StringBuilder transactionTextBuilder = new StringBuilder();
+            transactionTextBuilder.AppendLine("———————<b>USDT账单</b>———————");
+
+            foreach (var transaction in filteredTransactions)
+            {
+                string txHash = (string)transaction["transaction_id"];
+                long transactionTime = (long)transaction["block_ts"];
+                DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(transactionTime).UtcDateTime;
+                DateTime transactionTimeBeijing = TimeZoneInfo.ConvertTime(transactionTimeUtc, TimeZoneInfo.FindSystemTimeZoneById("China Standard Time"));
+
+                string fromAddress = (string)transaction["from_address"];
+                string toAddress = (string)transaction["to_address"];
+                string type = tronAddress.Equals(toAddress, StringComparison.OrdinalIgnoreCase) ? "入 " : "出 ";
+
+                decimal usdtAmount = decimal.Parse((string)transaction["quant"]) / 1000000m;
+
+                transactionTextBuilder.AppendLine($"{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}<a href=\"https://tronscan.org/#/transaction/{txHash}\">{usdtAmount:N2} U</a>");
+            }
+
+            //Console.WriteLine($"生成的账单文本: {transactionTextBuilder}");
+            return (transactionTextBuilder.ToString(), false);
         }
-
-        return (string.Empty, true); // 所有密钥都失败
+        catch (Exception ex)
+        {
+           // Console.WriteLine($"处理API请求时发生错误: {ex.Message}");
+           // Console.WriteLine($"错误详情: {ex.StackTrace}");
+            return (string.Empty, true);
+        }
     }
 }
 //获取多签地址
