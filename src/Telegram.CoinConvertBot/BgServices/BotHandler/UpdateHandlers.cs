@@ -9151,7 +9151,7 @@ public static async Task<string> GetUsdtAuthorizedListAsync(string tronAddress)
                 var response = await httpClient.GetAsync(requestUri);
                 if (!response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
+                    //Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
 
                     // 新增：检查是否是 API 权限错误
                     string errorContent = await response.Content.ReadAsStringAsync();
@@ -9329,7 +9329,7 @@ public static async Task<string> GetUsdtAuthorizedListAsyncquanbu(string tronAdd
                 var response = await httpClient.GetAsync(requestUri);
                 if (!response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
+                    //Console.WriteLine($"请求失败，状态码：{response.StatusCode}");
 
                     string errorContent = await response.Content.ReadAsStringAsync();
                     if (errorContent.Contains("No permission to use this API."))
