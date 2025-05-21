@@ -9781,7 +9781,7 @@ if (monthlyIncome != 0 || monthlyOutcome != 0 || dailyIncome != 0 || dailyOutcom
 string botUsername = "yifanfubot"; // 你的机器人的用户名
 string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
 string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";    
-string groupExclusiveText = $"<a href=\"{shareLink}\">群内发送地址可以查 USDT/USDC 授权记录！</a>\n";
+string groupExclusiveText = $"<a href=\"{shareLink}\">欢迎将 bot 拉进任意群组使用，大家一起查！</a>\n";
 string uxiaofeikaText = $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n"; 
 
 
