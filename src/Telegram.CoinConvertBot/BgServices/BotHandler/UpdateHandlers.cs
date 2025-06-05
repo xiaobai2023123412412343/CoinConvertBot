@@ -10288,7 +10288,7 @@ resultBuilder.AppendLine($"温馨提示：给对方无u余额地址转账需要�
 // 添加查询时间和地址
 string queryTime = nowInChina.ToString("yyyy/MM/dd HH:mm:ss");
 resultBuilder.AppendLine($"统计时间： {queryTime}");
-resultBuilder.AppendLine($"统统地址： {tronAddress}");
+resultBuilder.AppendLine($"统计地址： {tronAddress}");
 		
             // 创建内联按钮
             InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(
