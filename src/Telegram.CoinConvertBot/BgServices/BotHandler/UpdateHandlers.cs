@@ -20612,9 +20612,20 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 
      // 获取 USDT 的 OTC 价格
     var usdtPrice = await GetOkxPriceAsync("usdt", "cny", "otc");
+	
+    // 从本地缓存获取 ETH/USDT 价格
+    var ethInfo = await CoinDataCache.GetCoinInfoAsync("ETH");
+    double ethPriceUsd = ethInfo != null && ethInfo.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double price) ? price : 0.0;
 
+    // 计算 85 USDT 兑换 ETH 数量（显示为 100 USDT 的汇率）
+    double usdtForEth = 85.0; // 保留 15% 利润，100 USDT 按 85 USDT 计算
+    double ethAmount = ethPriceUsd > 0 ? usdtForEth / ethPriceUsd : 0.0; // 85 USDT 能换多少 ETH
+	
     var addressArray = configuration.GetSection("Address:USDT-TRC20").Get<string[]>();
     var ReciveAddress = addressArray.Length == 0 ? "未配置" : addressArray[UserId % addressArray.Length];
+	
+    // 构造 ERC-20 汇率表（仅当 ETH 价格有效时添加）
+    string ethRateText = ethPriceUsd > 0 ? $"<b>ERC-20 汇率表：</b><code>100 USDT ≈ {ethAmount:F6} ETH</code>\n" : "";
 
    // if (message.Chat.Id == AdminUserId) //管理直接返回资金费率  取消的话注释 5687-5708以及5764
    // {
@@ -20659,7 +20670,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 <b>给机器人收款地址转u自动原地址秒回TRX！</b> 
 <b>禁止从交易所或汇旺提现到机器人收款地址！ </b> 
 <b>如需兑换 ERC-20 手续费直接联系下方管理员！ </b> 	
-—————————————————    
+{ethRateText}—————————————————    
 转账费用：（浮动）
 对方地址有u：13.39 TRX - 14.00 TRX 
 对方地址无u：27.25 TRX - 28.00 TRX 
