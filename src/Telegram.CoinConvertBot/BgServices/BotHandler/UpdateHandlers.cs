@@ -20609,6 +20609,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     string adminLink = "t.me/yifanfu"; // 替换为你的管理员的Telegram链接
     string adminText = $"<a href=\"http://{adminLink}\">联系管理</a>";
     string leftPointingIndex = char.ConvertFromUtf32(0x1F448);
+    const long AdminUserId = 1427768220; // 管理员 ID	
 
      // 获取 USDT 的 OTC 价格
     var usdtPrice = await GetOkxPriceAsync("usdt", "cny", "otc");
@@ -20625,7 +20626,8 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     var ReciveAddress = addressArray.Length == 0 ? "未配置" : addressArray[UserId % addressArray.Length];
 	
     // 构造 ERC-20 汇率表（仅当 ETH 价格有效时添加）
-    string ethRateText = ethPriceUsd > 0 ? $"<b>ERC-20 汇率表：</b><code>100 USDT ≈ {ethAmount:F6} ETH</code>\n" : "";
+    string ethRateText = (UserId == AdminUserId && ethPriceUsd > 0) ? $"<b>ERC-20 汇率表：</b><code>100 USDT ≈ {ethAmount:F6} ETH</code>\n" : "";
+
 
    // if (message.Chat.Id == AdminUserId) //管理直接返回资金费率  取消的话注释 5687-5708以及5764
    // {
@@ -20658,7 +20660,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
   10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}  TRX 
   50 USDT = {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
  100 USDT = {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
- 300 USDT = {(5m * 60).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX 	
+ 300 USDT = {(5m * 60).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX 	
  500 USDT = {(5m * 100).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX
 1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX
 </code>
