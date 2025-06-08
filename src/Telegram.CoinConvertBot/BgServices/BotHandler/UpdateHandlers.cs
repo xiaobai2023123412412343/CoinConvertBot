@@ -36,6 +36,21 @@ using System.Threading;
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 
+
+/*
+//备忘录
+
+1：管理员ID: 1427768220
+2：播报群ID： -1001862069013
+3：双向用户群ID: -1002006327353
+4：收款地址： TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6
+5： 群广告固定汇率手动调整
+6： oklink 免费api修改  //API目前已暂停
+7： U兑TRX  按钮  修改 文字和 收款二维码
+8： /ucard  消费u卡 链接可修改
+9： 防盗版授权
+*/
+
 //yifanfu或@yifanfu或t.me/yifanfu为管理员ID
 //yifanfubot或t.me/yifanfubot或@yifanfubot为机器人ID
 //TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6为监控的收款地址
