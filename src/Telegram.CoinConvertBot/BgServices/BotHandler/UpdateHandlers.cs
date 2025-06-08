@@ -11800,8 +11800,8 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
             string channelLink = "tg://resolve?domain=yifanfu";
             string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
                 "机器人收款地址:\n (<b>点击自动复制</b>):<code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>\n\n" +
-                "\U00002705 转U自动原地址返TRX,10U起兑!\n" +
-                "\U00002705 请勿使用交易所或汇旺钱包转账!\n" +
+                "\U00002705 转U自动原地址返TRX,<b>10U</b>起兑!\n" +
+                "\U00002705 请勿使用<b>交易所或汇旺钱包</b>转账!\n" +
                 $"\U00002705 购买能量套餐，单笔转账低至 <b>{(int)TransactionFee}TRX</b>!\n" +
                 $"\U00002705 如需购买<b>ERC-20</b>手续费可联系管理员!\n" +		    
                 $"\U00002705 有任何问题,请私聊联系<a href=\"{channelLink}\">机器人管理员</a>\n\n" +
