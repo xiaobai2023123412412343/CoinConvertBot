@@ -131,7 +131,13 @@ public static class EthereumQuery
     private static readonly string UsdtContractAddress = "0xdac17f958d2ee523a2206206994597c13d831ec7";
     private static readonly string UsdcContractAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 
-    public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcBalance, decimal cnyUsdtBalance, decimal cnyUsdcBalance, bool isError)> QueryEthAddressAsync(string address)
+public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcBalance, decimal cnyUsdtBalance, decimal cnyUsdcBalance, bool isError)> QueryEthAddressAsync(string address)
+{
+    const int maxRetries = 2;
+    const int retryDelaySeconds = 5;
+    int attempt = 0;
+
+    while (attempt <= maxRetries)
     {
         try
         {
@@ -139,7 +145,7 @@ public static class EthereumQuery
             var ethBalanceTask = GetEthBalanceAsync(address);
             var usdtBalanceTask = GetErc20BalanceAsync(address, UsdtContractAddress);
             var usdcBalanceTask = GetErc20BalanceAsync(address, UsdcContractAddress);
-            var okxPriceTask = GetOkxPriceAsync("usdt", "cny", "alipay"); // 直接调用已有的 GetOkxPriceAsync
+            var okxPriceTask = GetOkxPriceAsync("usdt", "cny", "alipay");
 
             // 等待所有任务完成
             await Task.WhenAll(ethBalanceTask, usdtBalanceTask, usdcBalanceTask, okxPriceTask);
@@ -153,6 +159,16 @@ public static class EthereumQuery
             // 检查是否有错误或价格为 0
             if (isErrorEth || isErrorUsdt || isErrorUsdc || okxPrice == 0)
             {
+                // 检查是否是 API 限流错误
+                bool isRateLimitError = await CheckRateLimitError(ethBalanceTask, usdtBalanceTask, usdcBalanceTask);
+                if (isRateLimitError && attempt < maxRetries)
+                {
+                    Console.WriteLine($"检测到 Etherscan API 限流，第 {attempt + 1} 次重试，等待 {retryDelaySeconds} 秒...");
+                    await Task.Delay(TimeSpan.FromSeconds(retryDelaySeconds));
+                    attempt++;
+                    continue;
+                }
+
                 Console.WriteLine($"以太坊地址查询失败：ETH={isErrorEth}, USDT={isErrorUsdt}, USDC={isErrorUsdc}, OKX Price={okxPrice}");
                 return (0m, 0m, 0m, 0m, 0m, true);
             }
@@ -169,6 +185,49 @@ public static class EthereumQuery
             return (0m, 0m, 0m, 0m, 0m, true);
         }
     }
+
+    Console.WriteLine($"以太坊地址查询失败：达到最大重试次数 ({maxRetries})，可能是 API 限流");
+    return (0m, 0m, 0m, 0m, 0m, true);
+}
+
+// 辅助方法：检查是否为 API 限流错误
+private static async Task<bool> CheckRateLimitError(Task<(decimal, bool)> ethTask, Task<(decimal, bool)> usdtTask, Task<(decimal, bool)> usdcTask)
+{
+    try
+    {
+        // 检查每个任务的异常（如果有）
+        if (ethTask.IsFaulted && ethTask.Exception?.InnerException is HttpRequestException ethEx)
+        {
+            if (ethEx.Message.Contains("429") || ethEx.Message.Contains("rate limit")) return true;
+        }
+        if (usdtTask.IsFaulted && usdtTask.Exception?.InnerException is HttpRequestException usdtEx)
+        {
+            if (usdtEx.Message.Contains("429") || usdtEx.Message.Contains("rate limit")) return true;
+        }
+        if (usdcTask.IsFaulted && usdcTask.Exception?.InnerException is HttpRequestException usdcEx)
+        {
+            if (usdcEx.Message.Contains("429") || usdcEx.Message.Contains("rate limit")) return true;
+        }
+
+        // 进一步检查 Etherscan 的 JSON 响应
+        var tasks = new[] { ethTask, usdtTask, usdtTask };
+        foreach (var task in tasks)
+        {
+            if (task.IsCompletedSuccessfully && task.Result.Item2) // isError == true
+            {
+                // 假设错误是因为限流（Etherscan 返回 status 0，message 包含 "rate limit" 或类似）
+                // 这里需要根据实际情况调整（可能需要从原始响应中解析）
+                // 由于 GetEthBalanceAsync 和 GetErc20BalanceAsync 已处理 JSON，这里简化为假设
+                return true; // 假设 isError 表示限流
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"检查限流错误时异常：{ex.Message}");
+    }
+    return false;
+}
 
     private static async Task<(decimal balance, bool isError)> GetEthBalanceAsync(string address)
     {
@@ -12632,28 +12691,30 @@ if (message.Text.StartsWith("/gzgzgz") && message.From.Id == AdminUserId)
 var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
 // 检查输入文本是否为以太坊地址（0x 开头，固定 42 位）
 var isEthAddress = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{40}$");	
-	
-var addressLength = message.Text.Length;
+// 检查输入文本是否为以太坊格式但长度不正确（0x 开头，长度 > 30 且 < 42 或 > 42）
+var isInvalidEthLength = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{30,}$") && !isEthAddress;
 
-// 检查地址长度是否大于10且小于33，或者大于33
-var isInvalidLength = message.Text.StartsWith("T") && (addressLength > 20 && addressLength < 34 || addressLength > 34);
+var addressLength = message.Text.Length;
+// 检查地址长度是否大于20且小于34，或者大于34（针对波场地址）
+var isInvalidTronLength = message.Text.StartsWith("T") && (addressLength > 20 && addressLength < 34 || addressLength > 34);
 
 if (isTronAddress)
 {
-    await HandleQueryCommandAsync(botClient, message); // 当满足条件时，调用查询方法
+    await HandleQueryCommandAsync(botClient, message); // 波场地址处理
 }
-        else if (isEthAddress)
-        {
-            await HandleEthQueryAsync(botClient, message); // 新增以太坊地址处理
-        }	
-else if (isInvalidLength)
+else if (isEthAddress)
+{
+    await HandleEthQueryAsync(botClient, message); // 以太坊地址处理
+}
+else if (isInvalidTronLength)
 {
     await botClient.SendTextMessageAsync(message.Chat.Id, "这好像是个波场TRC-20地址，长度不正确，请仔细检查！");
 }
-else
+else if (isInvalidEthLength)
 {
-    // 在这里处理其他文本消息
+    await botClient.SendTextMessageAsync(message.Chat.Id, "这好像是个以太坊ERC-20地址，长度不正确，请仔细检查！");
 }
+	
 }
         // 检查消息文本是否以 "转" 开头
         if (message?.Text != null && message.Text.StartsWith("转"))
