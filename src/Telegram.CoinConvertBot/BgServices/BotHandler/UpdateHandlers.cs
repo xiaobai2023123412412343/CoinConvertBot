@@ -13179,6 +13179,18 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 您当前监控整段发送触发批量删除监控k线
 <code>单笔价格</code> <code>设置单笔价格</code> （查询与设置）
 
+备忘录：
+1：管理员ID: 1427768220
+2：播报群ID： -1001862069013
+3：双向用户群ID: -1002006327353
+4：收款地址： TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6
+5： 群广告固定汇率手动调整
+6： oklink 免费api修改  //API目前已暂停
+7： U兑TRX  按钮  修改 收款二维码
+8： /ucard  消费u卡 链接可修改
+9： /start 开始菜单 固定GIF链接修改
+10： 防盗版授权
+
 启动机器人先：先开启保存群聊资料：<code>/baocunqunliao</code>
 储存之前的用户资料 代绑地址 可以代解 储存群聊资料
 <code>/qdgg</code> 启动广告
