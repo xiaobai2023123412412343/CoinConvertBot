@@ -132,7 +132,7 @@ public static class EthereumQuery
     private static readonly string UsdtContractAddress = "0xdac17f958d2ee523a2206206994597c13d831ec7";
     private static readonly string UsdcContractAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 
-    public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcBalance, decimal cnyUsdtBalance, decimal cnyUsdcBalance, DateTime? lastTxTime, bool isError)> QueryEthAddressAsync(string address)
+    public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcBalance, decimal cnyUsdtBalance, decimal cnyUsdcBalance, decimal gasPriceGwei, DateTime? lastTxTime, bool isError)> QueryEthAddressAsync(string address)
     {
         const int maxRetries = 2;
         const int retryDelaySeconds = 5;
@@ -146,24 +146,26 @@ public static class EthereumQuery
                 var ethBalanceTask = GetEthBalanceAsync(address);
                 var usdtBalanceTask = GetErc20BalanceAsync(address, UsdtContractAddress);
                 var usdcBalanceTask = GetErc20BalanceAsync(address, UsdcContractAddress);
+                var gasPriceTask = GetGasPriceAsync(); // 新增 Gas 价格查询任务
                 var okxPriceTask = GetOkxPriceAsync("usdt", "cny", "alipay");
                 var lastTxTimeTask = GetLastTransactionTimeAsync(address);
 
                 // 等待所有任务完成
-                await Task.WhenAll(ethBalanceTask, usdtBalanceTask, usdcBalanceTask, okxPriceTask, lastTxTimeTask);
+                await Task.WhenAll(ethBalanceTask, usdtBalanceTask, usdcBalanceTask, gasPriceTask, okxPriceTask, lastTxTimeTask);
 
                 // 获取结果
                 var (ethBalance, isErrorEth, ethErrorMessage) = ethBalanceTask.Result;
                 var (usdtBalance, isErrorUsdt, usdtErrorMessage) = usdtBalanceTask.Result;
                 var (usdcBalance, isErrorUsdc, usdcErrorMessage) = usdcBalanceTask.Result;
+                var (gasPriceGwei, isErrorGas, gasErrorMessage) = gasPriceTask.Result; // 获取 Gas 价格结果
                 var (lastTxTime, isErrorTxTime, txErrorMessage) = lastTxTimeTask.Result;
                 decimal okxPrice = okxPriceTask.Result;
 
                 // 检查是否有错误或价格为 0（不检查 isErrorTxTime）
-                if (isErrorEth || isErrorUsdt || isErrorUsdc || okxPrice == 0)
+                if (isErrorEth || isErrorUsdt || isErrorUsdc || isErrorGas || okxPrice == 0)
                 {
                     // 检查是否是 API 限流错误
-                    bool isRateLimitError = await CheckRateLimitError(ethBalanceTask, usdtBalanceTask, usdcBalanceTask, lastTxTimeTask);
+                    bool isRateLimitError = await CheckRateLimitError(ethBalanceTask, usdtBalanceTask, usdcBalanceTask, gasPriceTask, lastTxTimeTask);
                     if (isRateLimitError && attempt < maxRetries)
                     {
                         Console.WriteLine($"检测到 Etherscan API 限流，第 {attempt + 1} 次重试，等待 {retryDelaySeconds} 秒...");
@@ -172,8 +174,8 @@ public static class EthereumQuery
                         continue;
                     }
 
-                    Console.WriteLine($"以太坊地址查询失败：ETH={isErrorEth} ({ethErrorMessage ?? "无错误消息"}), USDT={isErrorUsdt} ({usdtErrorMessage ?? "无错误消息"}), USDC={isErrorUsdc} ({usdcErrorMessage ?? "无错误消息"}), LastTx={isErrorTxTime} ({txErrorMessage ?? "无错误消息"}), OKX Price={okxPrice}");
-                    return (0m, 0m, 0m, 0m, 0m, null, true);
+                    Console.WriteLine($"以太坊地址查询失败：ETH={isErrorEth} ({ethErrorMessage ?? "无错误消息"}), USDT={isErrorUsdt} ({usdtErrorMessage ?? "无错误消息"}), USDC={isErrorUsdc} ({usdcErrorMessage ?? "无错误消息"}), Gas={isErrorGas} ({gasErrorMessage ?? "无错误消息"}), LastTx={isErrorTxTime} ({txErrorMessage ?? "无错误消息"}), OKX Price={okxPrice}");
+                    return (0m, 0m, 0m, 0m, 0m, 0m, null, true);
                 }
 
                 // 计算人民币余额
@@ -181,17 +183,17 @@ public static class EthereumQuery
                 decimal cnyUsdcBalance = usdcBalance * okxPrice; // 假设 USDC 价格与 USDT 相同
 
                 // 即使交易时间查询失败（isErrorTxTime = true），仍返回余额
-                return (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, lastTxTime, false);
+                return (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, gasPriceGwei, lastTxTime, false);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"以太坊地址查询异常：{ex.Message}");
-                return (0m, 0m, 0m, 0m, 0m, null, true);
+                return (0m, 0m, 0m, 0m, 0m, 0m, null, true);
             }
         }
 
         Console.WriteLine($"以太坊地址查询失败：达到最大重试次数 ({maxRetries})，可能是 API 限流");
-        return (0m, 0m, 0m, 0m, 0m, null, true);
+        return (0m, 0m, 0m, 0m, 0m, 0m, null, true);
     }
 
     private static async Task<(decimal balance, bool isError, string errorMessage)> GetEthBalanceAsync(string address)
@@ -316,10 +318,47 @@ public static class EthereumQuery
         }
     }
 
+    // 新增方法：查询当前 Gas 价格（单位：Gwei，选择 Average/ProposeGasPrice）
+    private static async Task<(decimal gasPriceGwei, bool isError, string errorMessage)> GetGasPriceAsync()
+    {
+        try
+        {
+            using var client = new HttpClient();
+            var url = $"{EtherscanBaseUrl}?module=gastracker&action=gasoracle&apikey={EtherscanApiKey}";
+            var response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var jsonDoc = JsonDocument.Parse(json);
+            var status = jsonDoc.RootElement.GetProperty("status").GetString();
+            if (status != "1")
+            {
+                var errorMessage = jsonDoc.RootElement.GetProperty("message").GetString() + ": " + jsonDoc.RootElement.GetProperty("result").GetString();
+                Console.WriteLine($"Gas 价格查询失败：{errorMessage}");
+                return (0m, true, errorMessage);
+            }
+
+            var gasPriceWei = jsonDoc.RootElement.GetProperty("result").GetProperty("ProposeGasPrice").GetString(); // 使用 Average/ProposeGasPrice
+            var gasPriceGwei = decimal.Parse(gasPriceWei); // ProposeGasPrice 单位为 Gwei
+            return (gasPriceGwei, false, null);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+        {
+            Console.WriteLine($"查询 Gas 价格限流：HTTP 429");
+            return (0m, true, "HTTP 429: Too Many Requests");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"查询 Gas 价格异常：{ex.Message}");
+            return (0m, true, ex.Message);
+        }
+    }
+
     private static async Task<bool> CheckRateLimitError(
         Task<(decimal balance, bool isError, string errorMessage)> ethTask,
         Task<(decimal balance, bool isError, string errorMessage)> usdtTask,
         Task<(decimal balance, bool isError, string errorMessage)> usdcTask,
+        Task<(decimal gasPriceGwei, bool isError, string errorMessage)> gasPriceTask, // 新增 Gas 价格任务
         Task<(DateTime? lastTxTime, bool isError, string errorMessage)> lastTxTimeTask)
     {
         try
@@ -337,18 +376,22 @@ public static class EthereumQuery
             {
                 return true;
             }
+            if (gasPriceTask.IsFaulted && gasPriceTask.Exception?.InnerException is HttpRequestException gasEx && gasEx.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                return true;
+            }
             if (lastTxTimeTask.IsFaulted && lastTxTimeTask.Exception?.InnerException is HttpRequestException txEx && txEx.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
             {
                 return true;
             }
 
             // 检查 JSON 响应中的限流消息
-            Task[] tasks = new Task[] { ethTask, usdtTask, usdcTask, lastTxTimeTask };
+            Task[] tasks = new Task[] { ethTask, usdtTask, usdcTask, gasPriceTask, lastTxTimeTask };
             foreach (var task in tasks)
             {
                 string errorMessage = task switch
                 {
-                    Task<(decimal, bool, string)> balanceTask => balanceTask.Result.Item3,
+                    Task<(decimal, bool, string)> balanceTask => balanceTask.Result.Item3, // 涵盖 ethTask, usdtTask, usdcTask, gasPriceTask
                     Task<(DateTime?, bool, string)> txTask => txTask.Result.Item3,
                     _ => null
                 };
@@ -382,7 +425,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     );
 
     // 调用以太坊查询方法
-    var (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, lastTxTime, isError) = await EthereumQuery.QueryEthAddressAsync(ethAddress);
+    var (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, gasPriceGwei, lastTxTime, isError) = await EthereumQuery.QueryEthAddressAsync(ethAddress);
 
     if (isError)
     {
@@ -418,11 +461,14 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     captionText.AppendLine($"<b>来自 </b>{userLink}<b>的以太坊主网地址查询</b>\n");
     captionText.AppendLine($"查询地址：<code>{ethAddress}</code>");
 
-    // 如果有交易时间，添加“最后在线”字段
+    // 如果有交易时间，添加“最后活跃”字段
     if (lastTxTime.HasValue)
     {
         captionText.AppendLine($"最后活跃：<b>{lastTxTime.Value:yyyy-MM-dd HH:mm:ss}</b>");
     }
+
+    // 添加当前 Gas 价格（平均）
+    captionText.AppendLine($"当前 Gas：<b>{gasPriceGwei:N3} Gwei</b>");
 
     captionText.AppendLine("——————————————");
     captionText.AppendLine($"  ETH 余额：<b>{ethBalance:N4} ETH</b>");
@@ -430,7 +476,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     captionText.AppendLine($"USDC余额：<b>{usdcBalance:N2} ≈ {cnyUsdcBalance:N2}元人民币</b>");	
     // 添加广告文本，包含可点击链接
     captionText.AppendLine($"\n<a href=\"t.me/yifanfu\">如需兑换 ERC-20 转账手续费可联系管理员！</a>");
-	
+    
     // 创建内联键盘按钮（一行三个）
     var shareLink = "https://t.me/yifanfuBot?startgroup=true"; // 机器人添加到群组的链接
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
