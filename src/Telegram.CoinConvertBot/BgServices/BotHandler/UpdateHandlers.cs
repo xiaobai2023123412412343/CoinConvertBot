@@ -50,6 +50,9 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 8： /ucard  消费u卡 链接可修改
 9： /start 开始菜单 固定GIF链接修改
 10： 防盗版授权
+11： 波场api修改： 10609102-669a-4cf4-8c36-cc3ed97f9a30    2f9385ef-2820-4caa-9f74-e720e1a39a75    https://www.trongrid.io/dashboard   都是免费的api，随便注册即可
+12： 波场官网api修改：  369e85e5-68d3-4299-a602-9d8d93ad026a   0c138945-fd9f-4390-b015-6b93368de1fd   https://tronscan.org/#/myaccount/apiKeys  都是免费的api，随便注册即可
+13：  以太坊api： WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4    https://etherscan.io/apidashboard   都是免费的api，随便注册即可
 */
 
 //yifanfu或@yifanfu或t.me/yifanfu为管理员ID
