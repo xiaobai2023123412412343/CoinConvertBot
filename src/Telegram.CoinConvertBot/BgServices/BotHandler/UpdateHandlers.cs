@@ -414,7 +414,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
 
     // 构建图片说明文本（作为 caption，模仿波场代码的 HTML 格式）
     var captionText = new StringBuilder();
-    captionText.AppendLine($"<b>来自 </b>{userLink}<b>的以太坊地址查询</b>\n");
+    captionText.AppendLine($"<b>来自 </b>{userLink}<b>的以太坊主网地址查询</b>\n");
     captionText.AppendLine($"查询地址：<code>{ethAddress}</code>");
 
     // 如果有交易时间，添加“最后在线”字段
