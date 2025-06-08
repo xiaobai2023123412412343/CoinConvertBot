@@ -451,32 +451,193 @@ public static class EthereumQuery
         return false;
     }
 }
+// 新增一个类来管理查询冷却
+public static class QueryCooldownManager
+{
+    private static readonly Dictionary<long, (DateTime LastQueryTime, int? MessageId, CancellationTokenSource Cts)> _userCooldowns = new();
+    private static readonly TimeSpan CooldownPeriod = TimeSpan.FromSeconds(5);
 
+    // 检查用户是否在冷却期，并返回剩余秒数
+    public static (bool IsInCooldown, double RemainingSeconds) CheckCooldown(long userId)
+    {
+        if (_userCooldowns.TryGetValue(userId, out var cooldownInfo))
+        {
+            var timeSinceLastQuery = DateTime.UtcNow - cooldownInfo.LastQueryTime;
+            var remainingSeconds = CooldownPeriod.TotalSeconds - timeSinceLastQuery.TotalSeconds;
+            if (remainingSeconds > 0)
+            {
+                return (true, remainingSeconds);
+            }
+            // 冷却期已结束，移除记录
+            _userCooldowns.Remove(userId);
+        }
+        return (false, 0);
+    }
+
+    // 记录查询时间（首次查询调用）
+    public static void RecordQueryTime(long userId)
+    {
+        var cts = new CancellationTokenSource();
+        _userCooldowns[userId] = (DateTime.UtcNow, null, cts);
+    }
+
+    // 开始冷却并处理倒计时消息（第二次查询调用）
+    public static async Task StartCooldownAsync(ITelegramBotClient botClient, long chatId, long userId)
+    {
+        // 如果已有倒计时消息，直接返回
+        if (_userCooldowns.TryGetValue(userId, out var existingCooldown) && existingCooldown.MessageId.HasValue)
+        {
+            return;
+        }
+
+        // 创建新的 CancellationTokenSource
+        var cts = new CancellationTokenSource();
+        try
+        {
+            // 发送初始倒计时消息
+            Telegram.Bot.Types.Message? message = null;
+            try
+            {
+                message = await botClient.SendTextMessageAsync(
+                    chatId: chatId,
+                    text: "频繁查询，请 5 秒后重试！",
+                    parseMode: ParseMode.Html,
+                    cancellationToken: cts.Token
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"发送冷却提示消息失败：{ex.Message}");
+                return; // 发送失败，直接退出
+            }
+
+            // 更新记录，包含消息ID
+            _userCooldowns[userId] = (DateTime.UtcNow, message.MessageId, cts);
+
+            // 倒计时逻辑
+            for (int seconds = 4; seconds >= 1; seconds--)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
+                if (cts.Token.IsCancellationRequested) return;
+
+                try
+                {
+                    await botClient.EditMessageTextAsync(
+                        chatId: chatId,
+                        messageId: message.MessageId,
+                        text: $"频繁查询，请 {seconds} 秒后重试！",
+                        parseMode: ParseMode.Html,
+                        cancellationToken: cts.Token
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"编辑冷却提示消息失败（剩余 {seconds} 秒）：{ex.Message}");
+                    return; // 编辑失败，退出倒计时
+                }
+            }
+
+            // 最后一秒后撤回消息
+            await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
+            if (cts.Token.IsCancellationRequested) return;
+
+            try
+            {
+                await botClient.DeleteMessageAsync(
+                    chatId: chatId,
+                    messageId: message.MessageId,
+                    cancellationToken: cts.Token
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"撤回冷却提示消息失败：{ex.Message}");
+                // 撤回失败，仅记录日志，继续清理
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 取消操作，不记录错误
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"倒计时消息处理异常：{ex.Message}");
+        }
+        finally
+        {
+            // 清理记录
+            if (_userCooldowns.ContainsKey(userId))
+            {
+                _userCooldowns.Remove(userId);
+            }
+            cts.Dispose();
+        }
+    }
+
+    // 取消现有的倒计时
+    public static void CancelCooldown(long userId)
+    {
+        if (_userCooldowns.TryGetValue(userId, out var cooldownInfo))
+        {
+            cooldownInfo.Cts?.Cancel();
+            _userCooldowns.Remove(userId);
+        }
+    }
+}
 public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Message message)
 {
+    var chatId = message.Chat.Id;
+    var userId = message.From?.Id ?? 0;
     var ethAddress = message.Text;
 
+    // 检查冷却状态
+    var (isInCooldown, remainingSeconds) = QueryCooldownManager.CheckCooldown(userId);
+    if (isInCooldown)
+    {
+        // 触发冷却提示消息
+        await QueryCooldownManager.StartCooldownAsync(botClient, chatId, userId);
+        return;
+    }
+
     // 回复用户正在查询
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: "正在查询以太坊主网地址，请稍后...",
-        parseMode: ParseMode.Html
-    );
+    try
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: chatId,
+            text: "正在查询以太坊主网地址，请稍后...",
+            parseMode: ParseMode.Html
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"发送查询提示消息失败：{ex.Message}");
+        return; // 发送失败，直接退出
+    }
 
     // 调用以太坊查询方法
     var (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, gasPriceGwei, gasPriceUsd, lastTxTime, isError) = await EthereumQuery.QueryEthAddressAsync(ethAddress);
 
+    // 取消之前的倒计时（如果有）
+    QueryCooldownManager.CancelCooldown(userId);
+
     if (isError)
     {
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "查询以太坊地址有误或接口限流，请稍后重试！",
-            parseMode: ParseMode.Html
-        );
+        try
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: "查询以太坊地址有误或接口限流，请稍后重试！",
+                parseMode: ParseMode.Html
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"发送错误提示消息失败：{ex.Message}");
+        }
         return;
     }
 
-    // 获取用户信息（模仿波场代码）
+    // 获取用户信息
     var fromUser = message.From;
     string userLink = "未知用户";
     if (fromUser != null)
@@ -495,29 +656,24 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         }
     }
 
-    // 构建图片说明文本（作为 caption，模仿波场代码的 HTML 格式）
+    // 构建图片说明文本
     var captionText = new StringBuilder();
     captionText.AppendLine($"<b>来自 </b>{userLink}<b>的以太坊主网地址查询</b>\n");
     captionText.AppendLine($"查询地址：<code>{ethAddress}</code>");
 
-    // 如果有交易时间，添加“最后活跃”字段
     if (lastTxTime.HasValue)
     {
         captionText.AppendLine($"最后活跃：<b>{lastTxTime.Value:yyyy-MM-dd HH:mm:ss}</b>");
     }
 
-    // 添加当前 Gas 价格（平均）及其美元成本
     captionText.AppendLine($"当前 Gas：<b>{gasPriceGwei:N3} Gwei ≈ ${gasPriceUsd:N2}</b>");
-
     captionText.AppendLine("——————————————");
     captionText.AppendLine($"  ETH 余额：<b>{ethBalance:N4} ETH</b>");
     captionText.AppendLine($"USDT余额：<b>{usdtBalance:N2} ≈ {cnyUsdtBalance:N2}元人民币</b>");
     captionText.AppendLine($"USDC余额：<b>{usdcBalance:N2} ≈ {cnyUsdcBalance:N2}元人民币</b>");
-    // 添加广告文本，包含可点击链接
     captionText.AppendLine($"\n<a href=\"t.me/yifanfu\">如需兑换 ERC-20 转账手续费可联系管理员！</a>");
 
-    // 创建内联键盘按钮（一行三个）
-    var shareLink = "https://t.me/yifanfuBot?startgroup=true"; // 机器人添加到群组的链接
+    var shareLink = "https://t.me/yifanfuBot?startgroup=true";
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         new InlineKeyboardButton[]
@@ -528,14 +684,25 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         }
     });
 
-    // 发送图片，文本作为图片说明，附带内联键盘
-    await botClient.SendPhotoAsync(
-        chatId: message.Chat.Id,
-        photo: new InputOnlineFile("https://i.postimg.cc/vB4VKgQN/unnamed.png"),
-        caption: captionText.ToString(),
-        parseMode: ParseMode.Html,
-        replyMarkup: inlineKeyboard
-    );
+    // 发送查询结果
+    try
+    {
+        await botClient.SendPhotoAsync(
+            chatId: chatId,
+            photo: new InputOnlineFile("https://i.postimg.cc/vB4VKgQN/unnamed.png"),
+            caption: captionText.ToString(),
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"发送查询结果失败：{ex.Message}");
+        return;
+    }
+
+    // 记录查询时间（首次查询）
+    QueryCooldownManager.RecordQueryTime(userId);
 }
 //查询获取hyperliquid资金费率 /zijinhy
 public static class FundingRateMonitor
@@ -12484,30 +12651,70 @@ if (update.Type == UpdateType.CallbackQuery)
         // 调用 HandleQueryCommandAsync 方法来查询并返回结果
         await HandleQueryCommandAsync(botClient, message);
     }
-            // 处理以太坊“再查一次”按钮的回调
-            else if (callbackQuery.Data?.StartsWith("eth_query:") == true)
+
+    var chatId = callbackQuery.Message.Chat.Id;
+    var userId = callbackQuery.From.Id;
+
+        // 处理以太坊“再查一次”按钮的回调
+        if (callbackQuery.Data?.StartsWith("eth_query:") == true)
+        {
+            var ethAddress = callbackQuery.Data.Substring("eth_query:".Length);
+            if (Regex.IsMatch(ethAddress, @"^0x[a-fA-F0-9]{40}$"))
             {
-                var ethAddress = callbackQuery.Data.Substring("eth_query:".Length);
-                if (Regex.IsMatch(ethAddress, @"^0x[a-fA-F0-9]{40}$"))
+                // 检查冷却状态
+                var (isInCooldown, remainingSeconds) = QueryCooldownManager.CheckCooldown(userId);
+                if (isInCooldown)
                 {
-                    var message = new Message
+                    try
                     {
-                        Chat = callbackQuery.Message.Chat,
-                        From = callbackQuery.From,
-                        Text = ethAddress
-                    };
-                    await HandleEthQueryAsync(botClient, message);
-                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
+                        await botClient.AnswerCallbackQueryAsync(
+                            callbackQuery.Id,
+                            "频繁查询，已触发冷却！",
+                            showAlert: true,
+                            cancellationToken: cancellationToken
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"发送回调警告失败：{ex.Message}");
+                    }
+                    await QueryCooldownManager.StartCooldownAsync(botClient, chatId, userId);
+                    return;
                 }
-                else
+
+                var message = new Message
+                {
+                    Chat = callbackQuery.Message.Chat,
+                    From = callbackQuery.From,
+                    Text = ethAddress
+                };
+                await HandleEthQueryAsync(botClient, message);
+                try
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"应答回调查询失败：{ex.Message}");
+                }
+            }
+            else
+            {
+                try
                 {
                     await botClient.AnswerCallbackQueryAsync(
                         callbackQuery.Id,
                         "无效的以太坊地址！",
-                        showAlert: true
+                        showAlert: true,
+                        cancellationToken: cancellationToken
                     );
                 }
-            }	
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"发送无效地址警告失败：{ex.Message}");
+                }
+            }
+        }
     else if (callbackData[0] == "authorized_list")
     {
         // 从 CallbackData 中获取Tron地址
@@ -12859,43 +13066,76 @@ if (update.Type == UpdateType.CallbackQuery)
 }
         if (update.Type == UpdateType.Message)
     {
-var message = update.Message;
-if (message?.Text != null)
-{
-if (message.Text.StartsWith("/gzgzgz") && message.From.Id == AdminUserId)
-{
-    await HandleGetFollowersCommandAsync(botClient, message);
-}
-    
-// 检查输入文本是否为 Tron 地址
-var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
-// 检查输入文本是否为以太坊地址（0x 开头，固定 42 位）
-var isEthAddress = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{40}$");	
-// 检查输入文本是否为以太坊格式但长度不正确（0x 开头，长度 > 30 且 < 42 或 > 42）
-var isInvalidEthLength = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{30,}$") && !isEthAddress;
 
-var addressLength = message.Text.Length;
-// 检查地址长度是否大于20且小于34，或者大于34（针对波场地址）
-var isInvalidTronLength = message.Text.StartsWith("T") && (addressLength > 20 && addressLength < 34 || addressLength > 34);
+    var message = update.Message; // 确保 message 在开头声明
+    if (message?.Text != null)
+    {
+        var chatId = message.Chat.Id; // 使用 message 获取 chatId
+        var userId = message.From?.Id ?? 0; // 使用 message 获取 userId
 
-if (isTronAddress)
-{
-    await HandleQueryCommandAsync(botClient, message); // 波场地址处理
-}
-else if (isEthAddress)
-{
-    await HandleEthQueryAsync(botClient, message); // 以太坊地址处理
-}
-else if (isInvalidTronLength)
-{
-    await botClient.SendTextMessageAsync(message.Chat.Id, "这好像是个波场TRC-20地址，长度不正确，请仔细检查！");
-}
-else if (isInvalidEthLength)
-{
-    await botClient.SendTextMessageAsync(message.Chat.Id, "这好像是个以太坊ERC-20地址，长度不正确，请仔细检查！");
-}
-	
-}
+            if (message.Text.StartsWith("/gzgzgz") && message.From.Id == AdminUserId)
+            {
+                await HandleGetFollowersCommandAsync(botClient, message);
+            }
+
+            // 检查输入文本是否为 Tron 地址
+            var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
+            // 检查输入文本是否为以太坊地址（0x 开头，固定 42 位）
+            var isEthAddress = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{40}$");
+            // 检查输入文本是否为以太坊格式但长度不正确（0x 开头，长度 > 30 且 < 42 或 > 42）
+            var isInvalidEthLength = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{30,}$") && !isEthAddress;
+
+            var addressLength = message.Text.Length;
+            // 检查地址长度是否大于20且小于34，或者大于34（针对波场地址）
+            var isInvalidTronLength = message.Text.StartsWith("T") && (addressLength > 20 && addressLength < 34 || addressLength > 34);
+
+            // 检查冷却状态
+            var (isInCooldown, remainingSeconds) = QueryCooldownManager.CheckCooldown(userId);
+            if (isInCooldown)
+            {
+                await QueryCooldownManager.StartCooldownAsync(botClient, chatId, userId);
+                return;
+            }
+
+            if (isTronAddress)
+            {
+                await HandleQueryCommandAsync(botClient, message); // 波场地址处理
+            }
+            else if (isEthAddress)
+            {
+                await HandleEthQueryAsync(botClient, message); // 以太坊地址处理
+            }
+            else if (isInvalidTronLength)
+            {
+                try
+                {
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "这好像是个波场TRC-20地址，长度不正确，请仔细检查！",
+                        cancellationToken: cancellationToken
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"发送波场地址错误提示失败：{ex.Message}");
+                }
+            }
+            else if (isInvalidEthLength)
+            {
+                try
+                {
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: "这好像是个以太坊ERC-20地址，长度不正确，请仔细检查！",
+                        cancellationToken: cancellationToken
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"发送以太坊地址错误提示失败：{ex.Message}");
+                }
+            }        
+    }
         // 检查消息文本是否以 "转" 开头
         if (message?.Text != null && message.Text.StartsWith("转"))
         {
