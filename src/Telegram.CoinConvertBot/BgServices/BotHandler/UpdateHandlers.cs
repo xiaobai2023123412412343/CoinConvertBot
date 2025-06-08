@@ -48,7 +48,8 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 6： oklink 免费api修改  //API目前已暂停
 7： U兑TRX  按钮  修改 文字和 收款二维码
 8： /ucard  消费u卡 链接可修改
-9： 防盗版授权
+9： /start 开始菜单 固定GIF链接修改
+10： 防盗版授权
 */
 
 //yifanfu或@yifanfu或t.me/yifanfu为管理员ID
