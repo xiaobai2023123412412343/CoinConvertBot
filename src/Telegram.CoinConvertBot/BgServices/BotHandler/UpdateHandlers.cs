@@ -123,7 +123,8 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-
+	
+//查询以太坊主网代币信息
 public static class EthereumQuery
 {
     private static readonly string EtherscanBaseUrl = "https://api.etherscan.io/api";
