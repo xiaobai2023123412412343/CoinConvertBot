@@ -456,10 +456,16 @@ public static class QueryCooldownManager
 {
     private static readonly Dictionary<long, (DateTime LastQueryTime, int? MessageId, CancellationTokenSource Cts)> _userCooldowns = new();
     private static readonly TimeSpan CooldownPeriod = TimeSpan.FromSeconds(5);
+    private const long AdminUserId = 1427768220; // 管理员 ID
 
-    // 检查用户是否在冷却期，并返回剩余秒数
+    // 检查用户是否在冷却期，并返回剩余秒数（管理员免冷却）
     public static (bool IsInCooldown, double RemainingSeconds) CheckCooldown(long userId)
     {
+        if (userId == AdminUserId)
+        {
+            return (false, 0); // 管理员不触发冷却
+        }
+
         if (_userCooldowns.TryGetValue(userId, out var cooldownInfo))
         {
             var timeSinceLastQuery = DateTime.UtcNow - cooldownInfo.LastQueryTime;
@@ -477,13 +483,23 @@ public static class QueryCooldownManager
     // 记录查询时间（首次查询调用）
     public static void RecordQueryTime(long userId)
     {
+        if (userId == AdminUserId)
+        {
+            return; // 管理员不记录查询时间
+        }
+
         var cts = new CancellationTokenSource();
         _userCooldowns[userId] = (DateTime.UtcNow, null, cts);
     }
 
-    // 开始冷却并处理倒计时消息（第二次查询调用）
+    // 开始冷却并处理倒计时消息（第二次查询调用，非管理员）
     public static async Task StartCooldownAsync(ITelegramBotClient botClient, long chatId, long userId)
     {
+        if (userId == AdminUserId)
+        {
+            return; // 管理员不触发冷却提示
+        }
+
         // 如果已有倒计时消息，直接返回
         if (_userCooldowns.TryGetValue(userId, out var existingCooldown) && existingCooldown.MessageId.HasValue)
         {
@@ -500,7 +516,7 @@ public static class QueryCooldownManager
             {
                 message = await botClient.SendTextMessageAsync(
                     chatId: chatId,
-                    text: "频繁查询，请 5 秒后重试！",
+                    text: "操作频繁，请 5 秒后重试！",
                     parseMode: ParseMode.Html,
                     cancellationToken: cts.Token
                 );
@@ -525,7 +541,7 @@ public static class QueryCooldownManager
                     await botClient.EditMessageTextAsync(
                         chatId: chatId,
                         messageId: message.MessageId,
-                        text: $"频繁查询，请 {seconds} 秒后重试！",
+                        text: $"操作频繁，请 {seconds} 秒后重试！",
                         parseMode: ParseMode.Html,
                         cancellationToken: cts.Token
                     );
@@ -574,9 +590,14 @@ public static class QueryCooldownManager
         }
     }
 
-    // 取消现有的倒计时
+    // 取消现有的倒计时（管理员无需取消）
     public static void CancelCooldown(long userId)
     {
+        if (userId == AdminUserId)
+        {
+            return; // 管理员不触发冷却
+        }
+
         if (_userCooldowns.TryGetValue(userId, out var cooldownInfo))
         {
             cooldownInfo.Cts?.Cancel();
@@ -12669,7 +12690,7 @@ if (update.Type == UpdateType.CallbackQuery)
                     {
                         await botClient.AnswerCallbackQueryAsync(
                             callbackQuery.Id,
-                            "频繁查询，已触发冷却！",
+                            "操作频繁，请5秒后重试！",
                             showAlert: true,
                             cancellationToken: cancellationToken
                         );
