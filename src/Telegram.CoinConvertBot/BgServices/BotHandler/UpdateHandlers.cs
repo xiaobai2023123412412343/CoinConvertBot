@@ -14243,64 +14243,81 @@ var timestamp = message.Date != default(DateTime)
     }
 
     string forwardedMessage = $"{timestamp}  {userFullName}  @{username} (ID:<code> {userId}</code>)\n\n{chatOrigin}：<code>{text}</code>";
-    var isTronAddress = Regex.IsMatch(text, @"^(T[A-Za-z0-9]{33})$");// 新增：检查消息是否是波场地址  新增：检查消息是否是数字+货币的组合
+    var isTronAddress = Regex.IsMatch(text, @"^(T[A-Za-z0-9]{33})$"); // 检查消息是否是波场地址
+    var isEthAddress = Regex.IsMatch(text, @"^0x[a-fA-F0-9]{40}$"); // 新增：检查消息是否是以太坊地址
     var isNumberCurrency = Regex.IsMatch(text, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
-    var isQueryAgainWithTronAddress = Regex.IsMatch(text, @"^query_again,(T[A-Za-z0-9]{33})$"); // 新增：检查消息是否符合特定格式
+    var isQueryAgainWithTronAddress = Regex.IsMatch(text, @"^query_again,(T[A-Za-z0-9]{33})$"); // 检查是否为波场地址的“再查一次”格式
+    var isQueryAgainWithEthAddress = Regex.IsMatch(text, @"^eth_query:0x[a-fA-F0-9]{40}$"); // 新增：检查是否为以太坊地址的“再查一次”格式
 
-if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCommand) || isTronAddress || isNumberCurrency || isQueryAgainWithTronAddress)
-{
-    if (userId != ADMIN_ID)
+    if (chatType == ChatType.Private || (chatType != ChatType.Private && containsCommand) || isTronAddress || isEthAddress || isNumberCurrency || isQueryAgainWithTronAddress || isQueryAgainWithEthAddress)
     {
-        // 解析出波场地址
-        string tronAddress = isTronAddress ? text : (isQueryAgainWithTronAddress ? text.Split(',')[1] : null);
-
-        // 创建内联键盘，如果是波场地址或特定格式的字符串
-        InlineKeyboardMarkup inlineKeyboard = null;
-        if (isTronAddress || isQueryAgainWithTronAddress)
+        if (userId != ADMIN_ID)
         {
-            inlineKeyboard = new InlineKeyboardMarkup(new[]
+            // 解析出波场或以太坊地址
+            string address = null;
+            if (isTronAddress || isQueryAgainWithTronAddress)
             {
-                InlineKeyboardButton.WithCallbackData("查该地址", $"query_again,{tronAddress}")
-            });
-        }
-
-        try
-        {
-            await botClient.SendTextMessageAsync(
-                chatId: TARGET_CHAT_ID,
-                text: forwardedMessage,
-                parseMode: ParseMode.Html,
-                replyMarkup: inlineKeyboard // 添加内联键盘
-            );
-        }
-        catch (Telegram.Bot.Exceptions.ApiRequestException ex)
-        {
-            // 检查是否因为群聊不存在而导致的错误
-            if (ex.Message.Contains("chat not found"))
-            {
-                Console.WriteLine("目标群聊不存在，消息未发送。");
+                address = isTronAddress ? text : text.Split(',')[1];
             }
-            else
+            else if (isEthAddress || isQueryAgainWithEthAddress)
             {
-                // 处理其他类型的 Telegram API 请求异常
-                Console.WriteLine($"消息转发失败，原因：{ex.Message}");
+                address = isEthAddress ? text : text.Substring("eth_query:".Length);
+            }
+
+            // 创建内联键盘
+            InlineKeyboardMarkup inlineKeyboard = null;
+            if (isTronAddress || isQueryAgainWithTronAddress)
+            {
+                inlineKeyboard = new InlineKeyboardMarkup(new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("查该波场地址", $"query_again,{address}")
+                });
+            }
+            else if (isEthAddress || isQueryAgainWithEthAddress)
+            {
+                inlineKeyboard = new InlineKeyboardMarkup(new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("查该以太坊地址", $"eth_query:{address}")
+                });
+            }
+
+            try
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: TARGET_CHAT_ID,
+                    text: forwardedMessage,
+                    parseMode: ParseMode.Html,
+                    replyMarkup: inlineKeyboard // 添加内联键盘
+                );
+            }
+            catch (Telegram.Bot.Exceptions.ApiRequestException ex)
+            {
+                // 检查是否因群聊不存在导致错误
+                if (ex.Message.Contains("chat not found"))
+                {
+                    Console.WriteLine("目标群聊不存在，消息未发送。");
+                }
+                else
+                {
+                    // 处理其他 Telegram API 请求异常
+                    Console.WriteLine($"消息转发失败，原因：{ex.Message}");
+                    await botClient.SendTextMessageAsync(
+                        chatId: ADMIN_ID,
+                        text: $"消息转发失败，原因：{ex.Message}"
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                // 处理其他异常
+                Console.WriteLine($"发生异常，原因：{ex.Message}");
                 await botClient.SendTextMessageAsync(
                     chatId: ADMIN_ID,
-                    text: $"消息转发失败，原因：{ex.Message}"
+                    text: $"发生异常，原因：{ex.Message}"
                 );
             }
         }
-        catch (Exception ex)
-        {
-            // 处理其他类型的异常
-            Console.WriteLine($"发生异常，原因：{ex.Message}");
-            await botClient.SendTextMessageAsync(
-                chatId: ADMIN_ID,
-                text: $"发生异常，原因：{ex.Message}"
-            );
-        }
     }
-}
 } 
 // 获取群资料
 try
