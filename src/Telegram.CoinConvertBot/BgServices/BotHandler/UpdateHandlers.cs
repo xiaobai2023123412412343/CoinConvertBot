@@ -15607,7 +15607,7 @@ if (message.Type == MessageType.Text && (message.Text.Equals("查询余额", Str
     // 无论用户是否是管理员，都执行以下方法
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id, 
-        text: "请发送您要查询的<b>TRC-20(波场)地址：</b> ", 
+        text: "请发送您要查询的<b>TRC-20(波场) 或 ERC-20(以太坊) 地址：</b> ", 
         parseMode: ParseMode.Html
     );
 }
