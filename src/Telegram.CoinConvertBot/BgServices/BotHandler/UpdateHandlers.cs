@@ -275,12 +275,25 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
                         $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyUsdtBalance.ToString("N2")}元人民币</b>\n" +
                         $"USDC余额：<b>{usdcBalance.ToString("N2")} ≈ {cnyUsdcBalance.ToString("N2")}元人民币</b>";
 
-    // 发送图片，文本作为图片说明
+    // 创建内联键盘按钮（一行三个）
+    var shareLink = "https://t.me/yifanfuBot?startgroup=true"; // 机器人添加到群组的链接
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new InlineKeyboardButton[]
+        {
+            InlineKeyboardButton.WithCallbackData("再查一次", $"eth_query:{ethAddress}"), // 再次查询
+            InlineKeyboardButton.WithUrl("详细信息", $"https://etherscan.io/address/{ethAddress}"), // Etherscan 链接
+            InlineKeyboardButton.WithUrl("进群使用", shareLink) // 进群链接
+        }
+    });
+
+    // 发送图片，文本作为图片说明，附带内联键盘
     await botClient.SendPhotoAsync(
         chatId: message.Chat.Id,
         photo: new InputOnlineFile("https://i.postimg.cc/vB4VKgQN/unnamed.png"),
         caption: captionText,
-        parseMode: ParseMode.Html
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard // 添加内联键盘
     );
 }
 //查询获取hyperliquid资金费率 /zijinhy
@@ -12229,6 +12242,30 @@ if (update.Type == UpdateType.CallbackQuery)
         // 调用 HandleQueryCommandAsync 方法来查询并返回结果
         await HandleQueryCommandAsync(botClient, message);
     }
+            // 处理以太坊“再查一次”按钮的回调
+            else if (callbackQuery.Data?.StartsWith("eth_query:") == true)
+            {
+                var ethAddress = callbackQuery.Data.Substring("eth_query:".Length);
+                if (Regex.IsMatch(ethAddress, @"^0x[a-fA-F0-9]{40}$"))
+                {
+                    var message = new Message
+                    {
+                        Chat = callbackQuery.Message.Chat,
+                        From = callbackQuery.From,
+                        Text = ethAddress
+                    };
+                    await HandleEthQueryAsync(botClient, message);
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id);
+                }
+                else
+                {
+                    await botClient.AnswerCallbackQueryAsync(
+                        callbackQuery.Id,
+                        "无效的以太坊地址！",
+                        showAlert: true
+                    );
+                }
+            }	
     else if (callbackData[0] == "authorized_list")
     {
         // 从 CallbackData 中获取Tron地址
