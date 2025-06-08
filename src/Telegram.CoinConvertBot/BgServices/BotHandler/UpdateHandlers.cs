@@ -14175,53 +14175,57 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
             return; 
         }
     }
-    // 新增：检查消息是否来自群聊（群ID为负数），并自动更新或添加群聊信息
-    if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
+// 新增：检查消息是否来自群聊（群ID为负数），并自动更新或添加群聊信息 以及更新群广告仓库
+if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
+{
+    try
     {
+        // 获取群聊信息
+        var chat = await botClient.GetChatAsync(message.Chat.Id);
+        string inviteLink = null;
+
+        // 尝试获取群聊邀请链接（需要机器人是管理员）
         try
         {
-            // 获取群聊信息
-            var chat = await botClient.GetChatAsync(message.Chat.Id);
-            string inviteLink = null;
-
-            // 尝试获取群聊邀请链接（需要机器人是管理员）
-            try
-            {
-                var chatInviteLink = await botClient.ExportChatInviteLinkAsync(message.Chat.Id);
-                inviteLink = chatInviteLink;
-            }
-            catch (Telegram.Bot.Exceptions.ApiRequestException ex)
-            {
-                Log.Information($"无法获取群聊 {message.Chat.Id} 的邀请链接，可能机器人不是管理员: {ex.Message}");
-                // 如果机器人不是管理员，inviteLink 保持为 null
-            }
-
-            // 检查仓库中是否已有该群聊
-            var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == chat.Id);
-            if (existingGroupChat != null)
-            {
-                // 更新已有群聊信息
-                existingGroupChat.Title = chat.Title;
-                existingGroupChat.InviteLink = inviteLink; // 更新邀请链接（可能为 null）
-                Log.Information($"更新群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
-            }
-            else
-            {
-                // 新增群聊信息
-                GroupChats.Add(new GroupChat 
-                { 
-                    Id = chat.Id, 
-                    Title = chat.Title, 
-                    InviteLink = inviteLink // 可能为 null
-                });
-                Log.Information($"新增群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
-            }
+            var chatInviteLink = await botClient.ExportChatInviteLinkAsync(message.Chat.Id);
+            inviteLink = chatInviteLink;
         }
-        catch (Exception ex)
+        catch (Telegram.Bot.Exceptions.ApiRequestException ex)
         {
-            Log.Error($"处理群聊信息更新时发生异常，群ID：{message.Chat.Id}, 错误：{ex.Message}");
+            Log.Information($"无法获取群聊 {message.Chat.Id} 的邀请链接，可能机器人不是管理员: {ex.Message}");
+            // 如果机器人不是管理员，inviteLink 保持为 null
         }
-    }	    
+
+        // 检查仓库中是否已有该群聊
+        var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == chat.Id);
+        if (existingGroupChat != null)
+        {
+            // 更新已有群聊信息
+            existingGroupChat.Title = chat.Title;
+            existingGroupChat.InviteLink = inviteLink; // 更新邀请链接（可能为 null）
+            Log.Information($"更新群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
+        }
+        else
+        {
+            // 新增群聊信息
+            GroupChats.Add(new GroupChat 
+            { 
+                Id = chat.Id, 
+                Title = chat.Title, 
+                InviteLink = inviteLink // 可能为 null
+            });
+            Log.Information($"新增群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
+
+            // 自动将群ID添加到广告仓库
+            GroupManager.AddGroupId(chat.Id);
+            Log.Information($"已将群ID {chat.Id} 添加到广告仓库");
+        }
+    }
+    catch (Exception ex)
+    {
+        Log.Error($"处理群聊信息更新时发生异常，群ID：{message.Chat.Id}, 错误：{ex.Message}");
+    }
+}    
     // 检查消息是否为用户加入群组的系统消息
     if (message.Type == MessageType.ChatMembersAdded)
     {
