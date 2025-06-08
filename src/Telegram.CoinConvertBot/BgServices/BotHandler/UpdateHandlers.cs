@@ -232,7 +232,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     // 回复用户正在查询
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: "正在查询以太坊地址，请稍后...",
+        text: "正在查询以太坊主网地址，请稍后...",
         parseMode: ParseMode.Html
     );
 
