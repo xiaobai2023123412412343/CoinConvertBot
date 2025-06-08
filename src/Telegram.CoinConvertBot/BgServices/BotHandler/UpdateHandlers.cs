@@ -20657,7 +20657,8 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
     
 <b>注意：只支持 {MinUSDT} USDT以上的金额兑换！</b>   
 <b>给机器人收款地址转u自动原地址秒回TRX！</b> 
-<b>禁止从交易所或汇旺提现到机器人收款地址！ </b> 	
+<b>禁止从交易所或汇旺提现到机器人收款地址！ </b> 
+<b>如需兑换 ERC-20 手续费可以联系下方管理员！ </b> 	
 —————————————————    
 转账费用：（浮动）
 对方地址有u：13.39 TRX - 14.00 TRX 
