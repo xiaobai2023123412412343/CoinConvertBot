@@ -121,6 +121,168 @@ public static class UpdateHandlers
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
 
+public static class EthereumQuery
+{
+    private static readonly string EtherscanBaseUrl = "https://api.etherscan.io/api";
+    private static readonly string EtherscanApiKey = "WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4";
+    private static readonly string UsdtContractAddress = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+    private static readonly string UsdcContractAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
+
+    public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcBalance, decimal cnyUsdtBalance, decimal cnyUsdcBalance, bool isError)> QueryEthAddressAsync(string address)
+    {
+        try
+        {
+            // 启动所有查询任务
+            var ethBalanceTask = GetEthBalanceAsync(address);
+            var usdtBalanceTask = GetErc20BalanceAsync(address, UsdtContractAddress);
+            var usdcBalanceTask = GetErc20BalanceAsync(address, UsdcContractAddress);
+            var okxPriceTask = GetOkxPriceAsync("usdt", "cny", "alipay"); // 直接调用已有的 GetOkxPriceAsync
+
+            // 等待所有任务完成
+            await Task.WhenAll(ethBalanceTask, usdtBalanceTask, usdcBalanceTask, okxPriceTask);
+
+            // 获取结果
+            var (ethBalance, isErrorEth) = ethBalanceTask.Result;
+            var (usdtBalance, isErrorUsdt) = usdtBalanceTask.Result;
+            var (usdcBalance, isErrorUsdc) = usdcBalanceTask.Result;
+            decimal okxPrice = okxPriceTask.Result;
+
+            // 检查是否有错误或价格为 0
+            if (isErrorEth || isErrorUsdt || isErrorUsdc || okxPrice == 0)
+            {
+                Console.WriteLine($"以太坊地址查询失败：ETH={isErrorEth}, USDT={isErrorUsdt}, USDC={isErrorUsdc}, OKX Price={okxPrice}");
+                return (0m, 0m, 0m, 0m, 0m, true);
+            }
+
+            // 计算人民币余额
+            decimal cnyUsdtBalance = usdtBalance * okxPrice;
+            decimal cnyUsdcBalance = usdcBalance * okxPrice; // 假设 USDC 价格与 USDT 相同
+
+            return (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, false);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"以太坊地址查询异常：{ex.Message}");
+            return (0m, 0m, 0m, 0m, 0m, true);
+        }
+    }
+
+    private static async Task<(decimal balance, bool isError)> GetEthBalanceAsync(string address)
+    {
+        try
+        {
+            using var client = new HttpClient();
+            var url = $"{EtherscanBaseUrl}?module=account&action=balance&address={address}&tag=latest&apikey={EtherscanApiKey}";
+            var response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var jsonDoc = JsonDocument.Parse(json);
+            var status = jsonDoc.RootElement.GetProperty("status").GetString();
+            if (status != "1")
+            {
+                Console.WriteLine($"ETH 余额查询失败：{jsonDoc.RootElement.GetProperty("message").GetString()}");
+                return (0m, true);
+            }
+
+            var balanceWei = jsonDoc.RootElement.GetProperty("result").GetString();
+            var balanceEth = decimal.Parse(balanceWei) / 1_000_000_000_000_000_000m; // 转换为 ETH (18 位小数)
+            return (balanceEth, false);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"查询 ETH 余额异常：{ex.Message}");
+            return (0m, true);
+        }
+    }
+
+    private static async Task<(decimal balance, bool isError)> GetErc20BalanceAsync(string address, string contractAddress)
+    {
+        try
+        {
+            using var client = new HttpClient();
+            var url = $"{EtherscanBaseUrl}?module=account&action=tokenbalance&contractaddress={contractAddress}&address={address}&tag=latest&apikey={EtherscanApiKey}";
+            var response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var jsonDoc = JsonDocument.Parse(json);
+            var status = jsonDoc.RootElement.GetProperty("status").GetString();
+            if (status != "1")
+            {
+                Console.WriteLine($"ERC-20 余额查询失败：{jsonDoc.RootElement.GetProperty("message").GetString()}");
+                return (0m, true);
+            }
+
+            var balanceWei = jsonDoc.RootElement.GetProperty("result").GetString();
+            var balance = decimal.Parse(balanceWei) / 1_000_000m; // USDT 和 USDC 均为 6 位小数
+            return (balance, false);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"查询 ERC-20 余额异常：{ex.Message}");
+            return (0m, true);
+        }
+    }
+}	
+public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Message message)
+{
+    var ethAddress = message.Text;
+
+    // 回复用户正在查询
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "正在查询以太坊地址，请稍后...",
+        parseMode: ParseMode.Html
+    );
+
+    // 调用以太坊查询方法
+    var (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, isError) = await EthereumQuery.QueryEthAddressAsync(ethAddress);
+
+    if (isError)
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "查询以太坊地址有误或接口维护中，请稍后重试！",
+            parseMode: ParseMode.Html
+        );
+        return;
+    }
+
+    // 获取用户信息（模仿波场代码）
+    var fromUser = message.From;
+    string userLink = "未知用户";
+    if (fromUser != null)
+    {
+        string fromUsername = fromUser.Username;
+        string fromFirstName = fromUser.FirstName;
+        string fromLastName = fromUser.LastName;
+
+        if (!string.IsNullOrEmpty(fromUsername))
+        {
+            userLink = $"<a href=\"tg://user?id={fromUser.Id}\">{fromFirstName} {fromLastName}</a>";
+        }
+        else
+        {
+            userLink = $"{fromFirstName} {fromLastName}";
+        }
+    }
+
+    // 构建图片说明文本（作为 caption，模仿波场代码的 HTML 格式）
+    string captionText = $"<b>来自 </b>{userLink}<b>的以太坊地址查询</b>\n\n" +
+                        $"查询地址：<code>{ethAddress}</code>\n" +
+                        $"ETH余额：<b>{ethBalance.ToString("N4")} ETH</b>\n" +
+                        $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyUsdtBalance.ToString("N2")}元人民币</b>\n" +
+                        $"USDC余额：<b>{usdcBalance.ToString("N2")} ≈ {cnyUsdcBalance.ToString("N2")}元人民币</b>";
+
+    // 发送图片，文本作为图片说明
+    await botClient.SendPhotoAsync(
+        chatId: message.Chat.Id,
+        photo: new InputOnlineFile("https://i.postimg.cc/vB4VKgQN/unnamed.png"),
+        caption: captionText,
+        parseMode: ParseMode.Html
+    );
+}
 //查询获取hyperliquid资金费率 /zijinhy
 public static class FundingRateMonitor
 {
@@ -12428,6 +12590,9 @@ if (message.Text.StartsWith("/gzgzgz") && message.From.Id == AdminUserId)
     
 // 检查输入文本是否为 Tron 地址
 var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
+// 检查输入文本是否为以太坊地址（0x 开头，固定 42 位）
+var isEthAddress = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{40}$");	
+	
 var addressLength = message.Text.Length;
 
 // 检查地址长度是否大于10且小于33，或者大于33
@@ -12437,6 +12602,10 @@ if (isTronAddress)
 {
     await HandleQueryCommandAsync(botClient, message); // 当满足条件时，调用查询方法
 }
+        else if (isEthAddress)
+        {
+            await HandleEthQueryAsync(botClient, message); // 新增以太坊地址处理
+        }	
 else if (isInvalidLength)
 {
     await botClient.SendTextMessageAsync(message.Chat.Id, "这好像是个波场TRC-20地址，长度不正确，请仔细检查！");
@@ -12532,7 +12701,10 @@ if (isNumberRange)
             // 检查输入文本是否为 Tron 地址
             //var isTronAddress = Regex.IsMatch(inputText, @"^(T[A-Za-z0-9]{33})$");
 	    var isTronAddress = Regex.IsMatch(inputText, @"^T[A-Za-z0-9]{20,}$");
-
+		
+// 检查输入文本是否为以太坊地址（0x 开头，固定 42 位）
+var isEthAddress = Regex.IsMatch(inputText, @"^0x[a-fA-F0-9]{40}$");
+		
             // 检查输入文本是否为币种
             var currencyNamesRegex = new Regex(@"(美元|港币|台币|日元|英镑|欧元|澳元|韩元|柬币|泰铢|越南盾|老挝币|缅甸币|印度卢比|瑞士法郎|新西兰元|新加坡新元|柬埔寨瑞尔|菲律宾披索|墨西哥比索|迪拜迪拉姆|俄罗斯卢布|加拿大加元|马来西亚币|科威特第纳尔|元|块|美金|法郎|新币|瑞尔|迪拉姆|卢布|披索|比索|马币|第纳尔|卢比|CNY|USD|HKD|TWD|JPY|GBP|EUR|AUD|KRW|THB|VND|LAK|MMK|INR|CHF|NZD|SGD|KHR|PHP|MXN|AED|RUB|CAD|MYR|KWD)", RegexOptions.IgnoreCase);		
             // 检查输入文本是否仅包含表情符号
@@ -12544,7 +12716,7 @@ if (isNumberRange)
                 return;
             }
 
-            if (!containsKeywordsOrCommandsOrNumbersOrAtSign && !isTronAddress && !isOnlyEmoji && !isNumberCurrency && !isChineseTextWithSpaces)
+            if (!containsKeywordsOrCommandsOrNumbersOrAtSign && !isTronAddress && !isEthAddress && !isOnlyEmoji && !isNumberCurrency && !isChineseTextWithSpaces)
             {
 // 检查输入文本是否包含货币的中文名称
 var containsCurrencyName = currencyNamesRegex.IsMatch(inputText);
