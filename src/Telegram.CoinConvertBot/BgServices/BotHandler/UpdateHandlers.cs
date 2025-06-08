@@ -52,7 +52,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 10： 防盗版授权
 11： 波场api修改： 10609102-669a-4cf4-8c36-cc3ed97f9a30    2f9385ef-2820-4caa-9f74-e720e1a39a75    https://www.trongrid.io/dashboard   都是免费的api，随便注册即可
 12： 波场官网api修改：  369e85e5-68d3-4299-a602-9d8d93ad026a   0c138945-fd9f-4390-b015-6b93368de1fd   https://tronscan.org/#/myaccount/apiKeys  都是免费的api，随便注册即可
-13：  以太坊api： WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4    https://etherscan.io/apidashboard   都是免费的api，随便注册即可
+13：  以太坊api： WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4   DIPNHXE6J4IA1NS57ZFYRGRMSWVVCM9GXI    https://etherscan.io/apidashboard   都是免费的api，随便注册即可
 */
 
 //yifanfu或@yifanfu或t.me/yifanfu为管理员ID
@@ -128,9 +128,20 @@ public static class UpdateHandlers
 public static class EthereumQuery
 {
     private static readonly string EtherscanBaseUrl = "https://api.etherscan.io/api";
-    private static readonly string EtherscanApiKey = "WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4";
+    private static readonly string[] EtherscanApiKeys = new[]
+    {
+        "WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4",
+        "DIPNHXE6J4IA1NS57ZFYRGRMSWVVCM9GXI"
+    };
     private static readonly string UsdtContractAddress = "0xdac17f958d2ee523a2206206994597c13d831ec7";
     private static readonly string UsdcContractAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
+    private static readonly Random _random = new Random();
+
+    // 辅助方法：随机选择一个 API 密钥
+    private static string GetRandomApiKey()
+    {
+        return EtherscanApiKeys[_random.Next(EtherscanApiKeys.Length)];
+    }
 
     public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcBalance, decimal cnyUsdtBalance, decimal cnyUsdcBalance, decimal gasPriceGwei, decimal gasPriceUsd, DateTime? lastTxTime, bool isError)> QueryEthAddressAsync(string address)
     {
@@ -142,13 +153,17 @@ public static class EthereumQuery
         {
             try
             {
-                // 启动所有查询任务
-                var ethBalanceTask = GetEthBalanceAsync(address);
-                var usdtBalanceTask = GetErc20BalanceAsync(address, UsdtContractAddress);
-                var usdcBalanceTask = GetErc20BalanceAsync(address, UsdcContractAddress);
-                var gasPriceTask = GetGasPriceAsync(); // 新增 Gas 价格查询任务
+                // 为每次查询随机选择 API 密钥
+                string apiKey = GetRandomApiKey();
+                //Console.WriteLine($"使用 API 密钥：{apiKey.Substring(0, 6)}... 进行第 {attempt + 1} 次查询");
+
+                // 启动所有查询任务，传递随机选择的 API 密钥
+                var ethBalanceTask = GetEthBalanceAsync(address, apiKey);
+                var usdtBalanceTask = GetErc20BalanceAsync(address, UsdtContractAddress, apiKey);
+                var usdcBalanceTask = GetErc20BalanceAsync(address, UsdcContractAddress, apiKey);
+                var gasPriceTask = GetGasPriceAsync(apiKey);
                 var okxPriceTask = GetOkxPriceAsync("usdt", "cny", "alipay");
-                var lastTxTimeTask = GetLastTransactionTimeAsync(address);
+                var lastTxTimeTask = GetLastTransactionTimeAsync(address, apiKey);
 
                 // 等待所有任务完成
                 await Task.WhenAll(ethBalanceTask, usdtBalanceTask, usdcBalanceTask, gasPriceTask, okxPriceTask, lastTxTimeTask);
@@ -157,7 +172,7 @@ public static class EthereumQuery
                 var (ethBalance, isErrorEth, ethErrorMessage) = ethBalanceTask.Result;
                 var (usdtBalance, isErrorUsdt, usdtErrorMessage) = usdtBalanceTask.Result;
                 var (usdcBalance, isErrorUsdc, usdcErrorMessage) = usdcBalanceTask.Result;
-                var (gasPriceGwei, gasPriceUsd, isErrorGas, gasErrorMessage) = gasPriceTask.Result; // 获取 Gas 价格和美元成本
+                var (gasPriceGwei, gasPriceUsd, isErrorGas, gasErrorMessage) = gasPriceTask.Result;
                 var (lastTxTime, isErrorTxTime, txErrorMessage) = lastTxTimeTask.Result;
                 decimal okxPrice = okxPriceTask.Result;
 
@@ -196,12 +211,12 @@ public static class EthereumQuery
         return (0m, 0m, 0m, 0m, 0m, 0m, 0m, null, true);
     }
 
-    private static async Task<(decimal balance, bool isError, string errorMessage)> GetEthBalanceAsync(string address)
+    private static async Task<(decimal balance, bool isError, string errorMessage)> GetEthBalanceAsync(string address, string apiKey)
     {
         try
         {
             using var client = new HttpClient();
-            var url = $"{EtherscanBaseUrl}?module=account&action=balance&address={address}&tag=latest&apikey={EtherscanApiKey}";
+            var url = $"{EtherscanBaseUrl}?module=account&action=balance&address={address}&tag=latest&apikey={apiKey}";
             var response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
@@ -221,7 +236,7 @@ public static class EthereumQuery
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
         {
-            Console.WriteLine($"查询 ETH 余额限流：HTTP 429");
+            Console.WriteLine($"查询 ETH 余额限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
             return (0m, true, "HTTP 429: Too Many Requests");
         }
         catch (Exception ex)
@@ -231,12 +246,12 @@ public static class EthereumQuery
         }
     }
 
-    private static async Task<(decimal balance, bool isError, string errorMessage)> GetErc20BalanceAsync(string address, string contractAddress)
+    private static async Task<(decimal balance, bool isError, string errorMessage)> GetErc20BalanceAsync(string address, string contractAddress, string apiKey)
     {
         try
         {
             using var client = new HttpClient();
-            var url = $"{EtherscanBaseUrl}?module=account&action=tokenbalance&contractaddress={contractAddress}&address={address}&tag=latest&apikey={EtherscanApiKey}";
+            var url = $"{EtherscanBaseUrl}?module=account&action=tokenbalance&contractaddress={contractAddress}&address={address}&tag=latest&apikey={apiKey}";
             var response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
@@ -256,7 +271,7 @@ public static class EthereumQuery
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
         {
-            Console.WriteLine($"查询 ERC-20 余额限流：HTTP 429");
+            Console.WriteLine($"查询 ERC-20 余额限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
             return (0m, true, "HTTP 429: Too Many Requests");
         }
         catch (Exception ex)
@@ -266,12 +281,12 @@ public static class EthereumQuery
         }
     }
 
-    private static async Task<(DateTime? lastTxTime, bool isError, string errorMessage)> GetLastTransactionTimeAsync(string address)
+    private static async Task<(DateTime? lastTxTime, bool isError, string errorMessage)> GetLastTransactionTimeAsync(string address, string apiKey)
     {
         try
         {
             using var client = new HttpClient();
-            var url = $"{EtherscanBaseUrl}?module=account&action=txlist&address={address}&page=1&offset=1&sort=desc&apikey={EtherscanApiKey}";
+            var url = $"{EtherscanBaseUrl}?module=account&action=txlist&address={address}&page=1&offset=1&sort=desc&apikey={apiKey}";
             var response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
@@ -308,7 +323,7 @@ public static class EthereumQuery
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
         {
-            Console.WriteLine($"查询最新交易时间限流：HTTP 429");
+            Console.WriteLine($"查询最新交易时间限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
             return (null, true, "HTTP 429: Too Many Requests"); // 限流错误，触发重试
         }
         catch (Exception ex)
@@ -318,14 +333,13 @@ public static class EthereumQuery
         }
     }
 
-    // 新增方法：查询当前 Gas 价格（单位：Gwei，选择 Average/ProposeGasPrice，并从 CoinDataCache 获取 ETH 美元价格）
-    private static async Task<(decimal gasPriceGwei, decimal gasPriceUsd, bool isError, string errorMessage)> GetGasPriceAsync()
+    private static async Task<(decimal gasPriceGwei, decimal gasPriceUsd, bool isError, string errorMessage)> GetGasPriceAsync(string apiKey)
     {
         try
         {
             // 查询 Gas 价格
             using var client = new HttpClient();
-            var gasUrl = $"{EtherscanBaseUrl}?module=gastracker&action=gasoracle&apikey={EtherscanApiKey}";
+            var gasUrl = $"{EtherscanBaseUrl}?module=gastracker&action=gasoracle&apikey={apiKey}";
             var gasResponse = await client.GetAsync(gasUrl);
             gasResponse.EnsureSuccessStatusCode();
 
@@ -368,7 +382,7 @@ public static class EthereumQuery
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
         {
-            Console.WriteLine($"查询 Gas 价格限流：HTTP 429");
+            Console.WriteLine($"查询 Gas 价格限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
             return (0m, 0m, true, "HTTP 429: Too Many Requests");
         }
         catch (Exception ex)
@@ -382,7 +396,7 @@ public static class EthereumQuery
         Task<(decimal balance, bool isError, string errorMessage)> ethTask,
         Task<(decimal balance, bool isError, string errorMessage)> usdtTask,
         Task<(decimal balance, bool isError, string errorMessage)> usdcTask,
-        Task<(decimal gasPriceGwei, decimal gasPriceUsd, bool isError, string errorMessage)> gasPriceTask, // 新增 Gas 价格任务
+        Task<(decimal gasPriceGwei, decimal gasPriceUsd, bool isError, string errorMessage)> gasPriceTask,
         Task<(DateTime? lastTxTime, bool isError, string errorMessage)> lastTxTimeTask)
     {
         try
@@ -415,8 +429,8 @@ public static class EthereumQuery
             {
                 string errorMessage = task switch
                 {
-                    Task<(decimal, bool, string)> balanceTask => balanceTask.Result.Item3, // 涵盖 ethTask, usdtTask, usdcTask
-                    Task<(decimal, decimal, bool, string)> gasTask => gasTask.Result.Item4, // 涵盖 gasPriceTask
+                    Task<(decimal, bool, string)> balanceTask => balanceTask.Result.Item3,
+                    Task<(decimal, decimal, bool, string)> gasTask => gasTask.Result.Item4,
                     Task<(DateTime?, bool, string)> txTask => txTask.Result.Item3,
                     _ => null
                 };
@@ -498,19 +512,19 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     captionText.AppendLine("——————————————");
     captionText.AppendLine($"  ETH 余额：<b>{ethBalance:N4} ETH</b>");
     captionText.AppendLine($"USDT余额：<b>{usdtBalance:N2} ≈ {cnyUsdtBalance:N2}元人民币</b>");
-    captionText.AppendLine($"USDC余额：<b>{usdcBalance:N2} ≈ {cnyUsdcBalance:N2}元人民币</b>");	
+    captionText.AppendLine($"USDC余额：<b>{usdcBalance:N2} ≈ {cnyUsdcBalance:N2}元人民币</b>");
     // 添加广告文本，包含可点击链接
     captionText.AppendLine($"\n<a href=\"t.me/yifanfu\">如需兑换 ERC-20 转账手续费可联系管理员！</a>");
-    
+
     // 创建内联键盘按钮（一行三个）
     var shareLink = "https://t.me/yifanfuBot?startgroup=true"; // 机器人添加到群组的链接
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         new InlineKeyboardButton[]
         {
-            InlineKeyboardButton.WithCallbackData("再查一次", $"eth_query:{ethAddress}"), // 再次查询
-            InlineKeyboardButton.WithUrl("详细信息", $"https://etherscan.io/address/{ethAddress}"), // Etherscan 链接
-            InlineKeyboardButton.WithUrl("进群使用", shareLink) // 进群链接
+            InlineKeyboardButton.WithCallbackData("再查一次", $"eth_query:{ethAddress}"),
+            InlineKeyboardButton.WithUrl("详细信息", $"https://etherscan.io/address/{ethAddress}"),
+            InlineKeyboardButton.WithUrl("进群使用", shareLink)
         }
     });
 
@@ -520,7 +534,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         photo: new InputOnlineFile("https://i.postimg.cc/vB4VKgQN/unnamed.png"),
         caption: captionText.ToString(),
         parseMode: ParseMode.Html,
-        replyMarkup: inlineKeyboard // 添加内联键盘
+        replyMarkup: inlineKeyboard
     );
 }
 //查询获取hyperliquid资金费率 /zijinhy
