@@ -131,7 +131,7 @@ public static class EthereumQuery
     private static readonly string UsdtContractAddress = "0xdac17f958d2ee523a2206206994597c13d831ec7";
     private static readonly string UsdcContractAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 
-    public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcBalance, decimal cnyUsdtBalance, decimal cnyUsdcBalance, bool isError)> QueryEthAddressAsync(string address)
+    public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcBalance, decimal cnyUsdtBalance, decimal cnyUsdcBalance, DateTime? lastTxTime, bool isError)> QueryEthAddressAsync(string address)
     {
         const int maxRetries = 2;
         const int retryDelaySeconds = 5;
@@ -146,21 +146,23 @@ public static class EthereumQuery
                 var usdtBalanceTask = GetErc20BalanceAsync(address, UsdtContractAddress);
                 var usdcBalanceTask = GetErc20BalanceAsync(address, UsdcContractAddress);
                 var okxPriceTask = GetOkxPriceAsync("usdt", "cny", "alipay");
+                var lastTxTimeTask = GetLastTransactionTimeAsync(address);
 
                 // 等待所有任务完成
-                await Task.WhenAll(ethBalanceTask, usdtBalanceTask, usdcBalanceTask, okxPriceTask);
+                await Task.WhenAll(ethBalanceTask, usdtBalanceTask, usdcBalanceTask, okxPriceTask, lastTxTimeTask);
 
                 // 获取结果
                 var (ethBalance, isErrorEth, ethErrorMessage) = ethBalanceTask.Result;
                 var (usdtBalance, isErrorUsdt, usdtErrorMessage) = usdtBalanceTask.Result;
                 var (usdcBalance, isErrorUsdc, usdcErrorMessage) = usdcBalanceTask.Result;
+                var (lastTxTime, isErrorTxTime, txErrorMessage) = lastTxTimeTask.Result;
                 decimal okxPrice = okxPriceTask.Result;
 
-                // 检查是否有错误或价格为 0
+                // 检查是否有错误或价格为 0（不检查 isErrorTxTime）
                 if (isErrorEth || isErrorUsdt || isErrorUsdc || okxPrice == 0)
                 {
                     // 检查是否是 API 限流错误
-                    bool isRateLimitError = await CheckRateLimitError(ethBalanceTask, usdtBalanceTask, usdcBalanceTask);
+                    bool isRateLimitError = await CheckRateLimitError(ethBalanceTask, usdtBalanceTask, usdcBalanceTask, lastTxTimeTask);
                     if (isRateLimitError && attempt < maxRetries)
                     {
                         Console.WriteLine($"检测到 Etherscan API 限流，第 {attempt + 1} 次重试，等待 {retryDelaySeconds} 秒...");
@@ -169,25 +171,26 @@ public static class EthereumQuery
                         continue;
                     }
 
-                    Console.WriteLine($"以太坊地址查询失败：ETH={isErrorEth} ({ethErrorMessage}), USDT={isErrorUsdt} ({usdtErrorMessage}), USDC={isErrorUsdc} ({usdcErrorMessage}), OKX Price={okxPrice}");
-                    return (0m, 0m, 0m, 0m, 0m, true);
+                    Console.WriteLine($"以太坊地址查询失败：ETH={isErrorEth} ({ethErrorMessage ?? "无错误消息"}), USDT={isErrorUsdt} ({usdtErrorMessage ?? "无错误消息"}), USDC={isErrorUsdc} ({usdcErrorMessage ?? "无错误消息"}), LastTx={isErrorTxTime} ({txErrorMessage ?? "无错误消息"}), OKX Price={okxPrice}");
+                    return (0m, 0m, 0m, 0m, 0m, null, true);
                 }
 
                 // 计算人民币余额
                 decimal cnyUsdtBalance = usdtBalance * okxPrice;
                 decimal cnyUsdcBalance = usdcBalance * okxPrice; // 假设 USDC 价格与 USDT 相同
 
-                return (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, false);
+                // 即使交易时间查询失败（isErrorTxTime = true），仍返回余额
+                return (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, lastTxTime, false);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"以太坊地址查询异常：{ex.Message}");
-                return (0m, 0m, 0m, 0m, 0m, true);
+                return (0m, 0m, 0m, 0m, 0m, null, true);
             }
         }
 
         Console.WriteLine($"以太坊地址查询失败：达到最大重试次数 ({maxRetries})，可能是 API 限流");
-        return (0m, 0m, 0m, 0m, 0m, true);
+        return (0m, 0m, 0m, 0m, 0m, null, true);
     }
 
     private static async Task<(decimal balance, bool isError, string errorMessage)> GetEthBalanceAsync(string address)
@@ -260,7 +263,63 @@ public static class EthereumQuery
         }
     }
 
-    private static async Task<bool> CheckRateLimitError(Task<(decimal balance, bool isError, string errorMessage)> ethTask, Task<(decimal balance, bool isError, string errorMessage)> usdtTask, Task<(decimal balance, bool isError, string errorMessage)> usdcTask)
+    private static async Task<(DateTime? lastTxTime, bool isError, string errorMessage)> GetLastTransactionTimeAsync(string address)
+    {
+        try
+        {
+            using var client = new HttpClient();
+            var url = $"{EtherscanBaseUrl}?module=account&action=txlist&address={address}&page=1&offset=1&sort=desc&apikey={EtherscanApiKey}";
+            var response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var jsonDoc = JsonDocument.Parse(json);
+            var status = jsonDoc.RootElement.GetProperty("status").GetString();
+            var resultElement = jsonDoc.RootElement.GetProperty("result");
+
+            if (status != "1")
+            {
+                var errorMessage = jsonDoc.RootElement.GetProperty("message").GetString() + (resultElement.ValueKind == JsonValueKind.String ? ": " + resultElement.GetString() : "");
+                Console.WriteLine($"最新交易时间查询失败：{errorMessage}");
+                return (null, false, errorMessage); // API 错误，返回 false 不影响余额查询
+            }
+
+            if (resultElement.ValueKind != JsonValueKind.Array)
+            {
+                Console.WriteLine($"最新交易时间查询失败：result 不是数组，类型为 {resultElement.ValueKind}");
+                return (null, false, $"Unexpected result type: {resultElement.ValueKind}");
+            }
+
+            var resultArray = resultElement.EnumerateArray();
+            if (!resultArray.Any())
+            {
+                Console.WriteLine($"地址 {address} 无交易记录");
+                return (null, false, null); // 无交易记录，返回 null 且 isError = false
+            }
+
+            var timeStamp = resultArray.First().GetProperty("timeStamp").GetString();
+            var unixTime = long.Parse(timeStamp);
+            var utcTime = DateTimeOffset.FromUnixTimeSeconds(unixTime).UtcDateTime;
+            var beijingTime = utcTime.AddHours(8); // 转换为北京时间 (UTC+8)
+            return (beijingTime, false, null);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+        {
+            Console.WriteLine($"查询最新交易时间限流：HTTP 429");
+            return (null, true, "HTTP 429: Too Many Requests"); // 限流错误，触发重试
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"查询最新交易时间异常：{ex.Message}");
+            return (null, false, ex.Message); // 其他异常，返回 false 不影响余额查询
+        }
+    }
+
+    private static async Task<bool> CheckRateLimitError(
+        Task<(decimal balance, bool isError, string errorMessage)> ethTask,
+        Task<(decimal balance, bool isError, string errorMessage)> usdtTask,
+        Task<(decimal balance, bool isError, string errorMessage)> usdcTask,
+        Task<(DateTime? lastTxTime, bool isError, string errorMessage)> lastTxTimeTask)
     {
         try
         {
@@ -277,21 +336,28 @@ public static class EthereumQuery
             {
                 return true;
             }
+            if (lastTxTimeTask.IsFaulted && lastTxTimeTask.Exception?.InnerException is HttpRequestException txEx && txEx.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                return true;
+            }
 
             // 检查 JSON 响应中的限流消息
-            var tasks = new[] { ethTask, usdtTask, usdcTask }; // 修复：包含 usdcTask
+            Task[] tasks = new Task[] { ethTask, usdtTask, usdcTask, lastTxTimeTask };
             foreach (var task in tasks)
             {
-                if (task.IsCompletedSuccessfully && task.Result.isError)
+                string errorMessage = task switch
                 {
-                    var errorMessage = task.Result.errorMessage?.ToLower();
-                    if (errorMessage != null &&
-                        (errorMessage.Contains("max rate limit reached") ||
-                         errorMessage.Contains("maximum rate limit reached") ||
-                         errorMessage.Contains("rate limit of 1/5sec applied")))
-                    {
-                        return true;
-                    }
+                    Task<(decimal, bool, string)> balanceTask => balanceTask.Result.Item3,
+                    Task<(DateTime?, bool, string)> txTask => txTask.Result.Item3,
+                    _ => null
+                };
+
+                if (errorMessage != null &&
+                    (errorMessage.ToLower().Contains("max rate limit reached") ||
+                     errorMessage.ToLower().Contains("maximum rate limit reached") ||
+                     errorMessage.ToLower().Contains("rate limit of 1/5sec applied")))
+                {
+                    return true;
                 }
             }
         }
@@ -315,7 +381,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     );
 
     // 调用以太坊查询方法
-    var (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, isError) = await EthereumQuery.QueryEthAddressAsync(ethAddress);
+    var (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, lastTxTime, isError) = await EthereumQuery.QueryEthAddressAsync(ethAddress);
 
     if (isError)
     {
@@ -347,11 +413,20 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     }
 
     // 构建图片说明文本（作为 caption，模仿波场代码的 HTML 格式）
-    string captionText = $"<b>来自 </b>{userLink}<b>的以太坊地址查询</b>\n\n" +
-                        $"查询地址：<code>{ethAddress}</code>\n" +
-                        $"ETH余额：<b>{ethBalance.ToString("N4")} ETH</b>\n" +
-                        $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyUsdtBalance.ToString("N2")}元人民币</b>\n" +
-                        $"USDC余额：<b>{usdcBalance.ToString("N2")} ≈ {cnyUsdcBalance.ToString("N2")}元人民币</b>";
+    var captionText = new StringBuilder();
+    captionText.AppendLine($"<b>来自 </b>{userLink}<b>的以太坊地址查询</b>\n");
+    captionText.AppendLine($"查询地址：<code>{ethAddress}</code>");
+
+    // 如果有交易时间，添加“最后在线”字段
+    if (lastTxTime.HasValue)
+    {
+        captionText.AppendLine($"最后在线：<b>{lastTxTime.Value:yyyy-MM-dd HH:mm:ss}</b>");
+    }
+
+    captionText.AppendLine("------------------------------");
+    captionText.AppendLine($"ETH余额：<b>{ethBalance:N4} ETH</b>");
+    captionText.AppendLine($"USDT余额：<b>{usdtBalance:N2} ≈ {cnyUsdtBalance:N2}元人民币</b>");
+    captionText.AppendLine($"USDC余额：<b>{usdcBalance:N2} ≈ {cnyUsdcBalance:N2}元人民币</b>");
 
     // 创建内联键盘按钮（一行三个）
     var shareLink = "https://t.me/yifanfuBot?startgroup=true"; // 机器人添加到群组的链接
@@ -369,7 +444,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     await botClient.SendPhotoAsync(
         chatId: message.Chat.Id,
         photo: new InputOnlineFile("https://i.postimg.cc/vB4VKgQN/unnamed.png"),
-        caption: captionText,
+        caption: captionText.ToString(),
         parseMode: ParseMode.Html,
         replyMarkup: inlineKeyboard // 添加内联键盘
     );
