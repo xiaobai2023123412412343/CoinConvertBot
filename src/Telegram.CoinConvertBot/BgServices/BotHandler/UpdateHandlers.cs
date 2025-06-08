@@ -420,14 +420,16 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     // 如果有交易时间，添加“最后在线”字段
     if (lastTxTime.HasValue)
     {
-        captionText.AppendLine($"最后在线：<b>{lastTxTime.Value:yyyy-MM-dd HH:mm:ss}</b>");
+        captionText.AppendLine($"最后活跃：<b>{lastTxTime.Value:yyyy-MM-dd HH:mm:ss}</b>");
     }
 
     captionText.AppendLine("——————————————");
     captionText.AppendLine($"  ETH 余额：<b>{ethBalance:N4} ETH</b>");
     captionText.AppendLine($"USDT余额：<b>{usdtBalance:N2} ≈ {cnyUsdtBalance:N2}元人民币</b>");
-    captionText.AppendLine($"USDC余额：<b>{usdcBalance:N2} ≈ {cnyUsdcBalance:N2}元人民币</b>");
-
+    captionText.AppendLine($"USDC余额：<b>{usdcBalance:N2} ≈ {cnyUsdcBalance:N2}元人民币</b>");	
+    // 添加广告文本，包含可点击链接
+    captionText.AppendLine($"\n<a href=\"t.me/yifanfu\">如需兑换 ERC-20 转账手续费可联系管理员！</a>");
+	
     // 创建内联键盘按钮（一行三个）
     var shareLink = "https://t.me/yifanfuBot?startgroup=true"; // 机器人添加到群组的链接
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
