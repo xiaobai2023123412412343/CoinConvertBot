@@ -423,8 +423,8 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         captionText.AppendLine($"最后在线：<b>{lastTxTime.Value:yyyy-MM-dd HH:mm:ss}</b>");
     }
 
-    captionText.AppendLine("------------------------------");
-    captionText.AppendLine($"ETH余额：<b>{ethBalance:N4} ETH</b>");
+    captionText.AppendLine("——————————————");
+    captionText.AppendLine($"  ETH 余额：<b>{ethBalance:N4} ETH</b>");
     captionText.AppendLine($"USDT余额：<b>{usdtBalance:N2} ≈ {cnyUsdtBalance:N2}元人民币</b>");
     captionText.AppendLine($"USDC余额：<b>{usdcBalance:N2} ≈ {cnyUsdcBalance:N2}元人民币</b>");
 
