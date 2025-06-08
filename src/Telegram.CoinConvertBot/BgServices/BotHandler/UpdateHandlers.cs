@@ -46,7 +46,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 4：收款地址： TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6
 5： 群广告固定汇率手动调整
 6： oklink 免费api修改  //API目前已暂停
-7： U兑TRX  按钮  修改 文字和 收款二维码
+7： U兑TRX  按钮  修改 收款二维码
 8： /ucard  消费u卡 链接可修改
 9： /start 开始菜单 固定GIF链接修改
 10： 防盗版授权
