@@ -2,7 +2,7 @@
 
 本教程理论上适用于Windows、Linux、MacOS，仅在win11机器上测试过
 
-# Windows版本教程   https://github.com/xiaobai2023123412412343/CoinConvertBot/blob/master/wiki/BT_RUN.md
+# Windows版本教程   
 ## 1. 下载源代码
 下载`Release`中与您的设备相符的版本
 
