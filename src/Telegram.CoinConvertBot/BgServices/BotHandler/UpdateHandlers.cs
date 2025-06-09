@@ -10178,10 +10178,54 @@ private static async Task<string> FetchAddressLabelAsync(string tronAddress)
     return null; // 如果没有找到标签或请求失败，返回null
 }
 // 在类的顶部定义字典来存储地址和查询统计 使用 ConcurrentDictionary 来支持线程安全的访问
-private static ConcurrentDictionary<string, ConcurrentDictionary<long, int>> addressQueryStats = new ConcurrentDictionary<string, ConcurrentDictionary<long, int>>();                                                         
+// 类级别常量和字段（添加冷却相关字段）
+private static readonly ConcurrentDictionary<long, DateTime> _queryCooldowns = new ConcurrentDictionary<long, DateTime>();
+private const int QueryCooldownSeconds = 10; // 冷却时间10秒
+private const long BotAdminUserId = 1427768220; // 机器人管理员ID
+private static ConcurrentDictionary<string, ConcurrentDictionary<long, int>> addressQueryStats = new ConcurrentDictionary<string, ConcurrentDictionary<long, int>>(); // 已有字段，保留
+
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
+    var chatId = message.Chat.Id;
+    var userId = message.From?.Id ?? 0;
     var text = message.Text;
+
+    // 检查冷却状态
+    if (userId != BotAdminUserId && _queryCooldowns.TryGetValue(userId, out var lastQueryTime))
+    {
+        var timeSinceLastQuery = DateTime.UtcNow - lastQueryTime;
+        if (timeSinceLastQuery.TotalSeconds < QueryCooldownSeconds)
+        {
+            var remainingSeconds = Math.Ceiling(QueryCooldownSeconds - timeSinceLastQuery.TotalSeconds);
+            try
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: chatId,
+                    text: $"操作频繁，请等待 {remainingSeconds:F0} 秒后重试！",
+                    parseMode: ParseMode.Html
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"发送冷却提示消息失败：{ex.Message}");
+            }
+            return;
+        }
+        // 如果冷却时间已过，移除记录（虽然定时删除会处理，但这里提前清理）
+        _queryCooldowns.TryRemove(userId, out _);
+    }
+
+    // 记录查询时间（在查询开始前）
+    if (userId != BotAdminUserId)
+    {
+        _queryCooldowns.TryAdd(userId, DateTime.UtcNow);
+        // 启动异步任务，10秒后自动删除
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(QueryCooldownSeconds));
+            _queryCooldowns.TryRemove(userId, out _);
+        });
+    }
     var match = Regex.Match(text, @"(T[A-Za-z0-9]{33})"); // 验证Tron地址格式
     if (!match.Success)
     {
