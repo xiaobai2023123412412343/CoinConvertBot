@@ -13977,6 +13977,7 @@ else if(update.CallbackQuery.Data == "shoucang")
 {
     string favoriteLinks = @"<b>币圈：</b>
 paxful：https://paxful.com/zh  （无需实名 otc交易）
+hyperliquid：https://app.hyperliquid.xyz/trade/BTC （链上第一去中心化交易所）
 remitano：https://remitano.com/r/cn
 合约数据：https://www.coinglass.com/zh 
 合约帝国际版：https://bitfrog.io/zh-CN/
