@@ -15931,12 +15931,53 @@ if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt")| messageText
 // 检查是否是"千百度查"命令或 "/trc"
 if (message.Type == MessageType.Text && (message.Text.Equals("千百度查", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
-    // 无论用户是否是管理员，都执行以下方法
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id, 
-        text: "请发送您要查询的<b>TRC-20(波场) 或 ERC-20(以太坊) 地址：</b> ", 
-        parseMode: ParseMode.Html
-    );
+    string queryMessage = @$"你好呀~欢迎使用<b>千百度查</b>！
+
+<b>支持区块链币种汇率、法币汇率、地址信息等查询！</b>
+
+支持以下加密货币：
+<blockquote expandable><code>BTC</code>, <code>ETH</code>, <code>XRP</code>, <code>BNB</code>, <code>SOL</code>, <code>DOGE</code>, <code>TON</code> 等几百个加密货币价格及汇率！</blockquote>
+
+支持以下法定货币：
+<blockquote expandable><code>USDT</code> (泰达币), <code>CNY</code> (人民币), <code>USD</code> (美元), <code>HKD</code> (港币), <code>TWD</code> (新台币), <code>JPY</code> (日元), <code>GBP</code> (英镑), <code>EUR</code> (欧元), <code>AUD</code> (澳大利亚元), <code>KRW</code> (韩元), <code>THB</code> (泰铢), <code>VND</code> (越南盾), <code>LAK</code> (老挝基普), <code>MMK</code> (缅甸缅), <code>INR</code> (印度卢比), <code>CHF</code> (瑞士法郎), <code>NZD</code> (新西兰元), <code>SGD</code> (新加坡元), <code>KHR</code> (柬埔寨瑞尔), <code>PHP</code> (菲律宾比索), <code>MXN</code> (墨西哥比索), <code>AED</code> (阿联酋迪拉姆), <code>RUB</code> (俄罗斯卢布), <code>CAD</code> (加拿大元), <code>MYR</code> (马来西亚林吉特), <code>KWD</code> (科威特第纳尔)</blockquote>
+
+支持查询区块链账户信息：
+<blockquote expandable>支持的链：TRON（TRC-20）、Ethereum（ERC-20）
+波场(TRON)地址示例：
+<code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>
+以太坊(ETH)地址示例：
+<code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code></blockquote>
+
+支持查询TGid、欧易USDT汇率、新(农)历、历史加密货币价格等N多功能，欢迎体验！
+<blockquote expandable>示例：对话框直接发送：<code>ID</code>, <code>z0</code>, <code>时间</code>, <code>btc 2024/04/04 00.00</code></blockquote>";
+
+    // 创建内联键盘并添加按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new[]
+        {
+            InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin"),
+            InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/yifanfubot")
+        }
+    });
+
+    try
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: queryMessage,
+            parseMode: ParseMode.Html, // 使用 HTML 格式以支持加粗、折叠和点击复制
+            replyMarkup: inlineKeyboard
+        );
+    }
+    catch (Exception ex)
+    {
+        // 调试用：发送错误信息给管理员或记录日志
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"发生错误，请稍后重试：{ex.Message}"
+        );
+    }
 }
 // 使用正则表达式来匹配命令，允许命令后面跟随 "@机器人用户名"
 var moreCommandRegex = new Regex(@"^/more(@\w+)?$", RegexOptions.IgnoreCase);
