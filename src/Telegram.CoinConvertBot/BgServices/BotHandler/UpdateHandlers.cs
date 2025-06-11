@@ -14712,7 +14712,7 @@ try
     if (message.Type == MessageType.Text && message.Text.Equals("/baocunqunliao", StringComparison.OrdinalIgnoreCase))
     {
         var chat = await botClient.GetChatAsync(message.Chat.Id);
-        Console.WriteLine($"收到保存群聊指令，群ID：{chat.Id}");
+        //Console.WriteLine($"收到保存群聊指令，群ID：{chat.Id}");
         // 无论如何都回复
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
