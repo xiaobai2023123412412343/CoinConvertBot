@@ -14457,70 +14457,7 @@ string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc
 
 if (message.Type == MessageType.Text)
 {	
-if (messageText.Contains("中文") || messageText.Contains("简体") || messageText.Contains("语言") || messageText.Contains("language"))
-{
-    string languagePackMessage = @"Telegram 简体中文语言包
-
-管理员自用，原zh_cn简体中文包: https://t.me/setlanguage/classic-zh-cn
-
-支持 Telegram for iOS/Android/macOS/Desktop, Telegram X for iOS/Android 官方客户端
-支持 Nicegram/Plus Messager/Unigram 第三方客户端
-Telegram 官网网页版不能使用语言包.
-如果遇到不能更改语言包, 先把Telegram客户端升级新版
-
-各个语言包:
-
-中文(简体)-聪聪: https://t.me/setlanguage/zhcncc
-中文(简体)-@zh_CN: https://t.me/setlanguage/classic-zh-cn
-中文(简体)-简体: https://t.me/setlanguage/classic-zh
-中文(简体)-langCN: https://t.me/setlanguage/zhlangcn
-中文(简体)-zh-hans: https://t.me/setlanguage/zh-hans-beta
-中文(简体)-瓜体: https://t.me/setlanguage/duang-zh-cn
-中文(简体)-瓜皮中文: https://t.me/setlanguage/duangr-zhcn
-中文(简体)-小哇花里胡哨: https://t.me/setlanguage/qingwa
-中文(简体)-爱吃辣条的小学生: https://t.me/setlanguage/xiaowa
-中文(简体)-江湖中文版: https://t.me/setlanguage/jianghu
-中文(简体)-江湖侠客版: https://t.me/setlanguage/baoku
-中文(简体)-@cnmoe: https://t.me/setlanguage/moecn
-中文(简体)-@teslacn: https://t.me/setlanguage/vexzh
-中文(简体)-: https://t.me/setlanguage/cnsimplified
-中文(简体)-@MiaoCN: https://t.me/setlanguage/meowcn
-中文(简体)-@Fengzh: https://t.me/setlanguage/fengcs
-中文(简体)-简体字: https://t.me/setlanguage/jiantizi
-中文(香港)-简体中文: https://t.me/setlanguage/zh-hans-raw
-中文(香港)-繁体1: https://t.me/setlanguage/hongkong
-中文(香港)-繁体2: https://t.me/setlanguage/zhhant-hk
-中文(香港)-繁体3: https://t.me/setlanguage/zh-hant-raw
-中文(香港)-人口语: https://t.me/setlanguage/hongkonger
-中文(香港)-广东话1: https://t.me/setlanguage/zhhkpb1
-中文(香港)-广东话2: https://t.me/setlanguage/hkcantonese
-中文(香港)-廣東話: https://t.me/setlanguage/cantonese
-中文(香港)-郭桓桓: https://t.me/setlanguage/zhong-taiwan-traditional
-中文(台灣)-正体: https://t.me/setlanguage/taiwan
-中文(台灣)-繁体: https://t.me/setlanguage/zh-hant-beta
-中文(台灣)-文言: https://t.me/setlanguage/chinese-ancient
-中文(台灣)-文言: https://t.me/setlanguage/chinese-literary
-中文(台灣)-魔法師: https://t.me/setlanguage/encha
-日文: https://t.me/setlanguage/ja-beta
-
-说明:
-Telegram 官方只开放了语言包翻译接口, 并没有提供中文语言包；
-目前所有的中文语言包都是非官方人员翻译, 由作者统一整理编录的；
-如果中文语言包对您有帮助，欢迎使用并在有需要时推荐给他人，谢谢！";
-
-    // 创建内联键盘并添加按钮
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
-    {
-        InlineKeyboardButton.WithUrl("点击应用原 @zh_cn 简体中文语言包", "https://t.me/setlanguage/classic-zh-cn")
-    });
-
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: languagePackMessage,
-        disableWebPagePreview: true, // 关闭链接预览
-        replyMarkup: inlineKeyboard // 添加内联键盘
-    );
-}    
+  
 // 获取北京时区
 TimeZoneInfo chinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
 
@@ -14630,6 +14567,67 @@ var timestamp = message.Date != default(DateTime)
             }
         }
     }
+}
+if (messageText.Contains("中文") || messageText.Contains("简体") || messageText.Contains("语言") || messageText.Contains("language"))
+{
+    string languagePackMessage = @$"Telegram 简体中文语言包
+
+管理员自用，原zh_cn简体中文包: https://t.me/setlanguage/classic-zh-cn
+
+各个语言包:
+
+<blockquote expandable>中文(简体)-聪聪: https://t.me/setlanguage/zhcncc
+中文(简体)-@zh_CN: https://t.me/setlanguage/classic-zh-cn
+中文(简体)-简体: https://t.me/setlanguage/classic-zh
+中文(简体)-langCN: https://t.me/setlanguage/zhlangcn
+中文(简体)-zh-hans: https://t.me/setlanguage/zh-hans-beta
+中文(简体)-瓜体: https://t.me/setlanguage/duang-zh-cn
+中文(简体)-瓜皮中文: https://t.me/setlanguage/duangr-zhcn
+中文(简体)-小哇花里胡哨: https://t.me/setlanguage/qingwa
+中文(简体)-爱吃辣条的小学生: https://t.me/setlanguage/xiaowa
+中文(简体)-江湖中文版: https://t.me/setlanguage/jianghu
+中文(简体)-江湖侠客版: https://t.me/setlanguage/baoku
+中文(简体)-@cnmoe: https://t.me/setlanguage/moecn
+中文(简体)-@teslacn: https://t.me/setlanguage/vexzh
+中文(简体)-: https://t.me/setlanguage/cnsimplified
+中文(简体)-@MiaoCN: https://t.me/setlanguage/meowcn
+中文(简体)-@Fengzh: https://t.me/setlanguage/fengcs
+中文(简体)-简体字: https://t.me/setlanguage/jiantizi
+中文(香港)-简体中文: https://t.me/setlanguage/zh-hans-raw
+中文(香港)-繁体1: https://t.me/setlanguage/hongkong
+中文(香港)-繁体2: https://t.me/setlanguage/zhhant-hk
+中文(香港)-繁体3: https://t.me/setlanguage/zh-hant-raw
+中文(香港)-人口语: https://t.me/setlanguage/hongkonger
+中文(香港)-广东话1: https://t.me/setlanguage/zhhkpb1
+中文(香港)-广东话2: https://t.me/setlanguage/hkcantonese
+中文(香港)-廣東話: https://t.me/setlanguage/cantonese
+中文(香港)-郭桓桓: https://t.me/setlanguage/zhong-taiwan-traditional
+中文(台灣)-正体: https://t.me/setlanguage/taiwan
+中文(台灣)-繁体: https://t.me/setlanguage/zh-hant-beta
+中文(台灣)-文言: https://t.me/setlanguage/chinese-ancient
+中文(台灣)-文言: https://t.me/setlanguage/chinese-literary
+中文(台灣)-魔法師: https://t.me/setlanguage/encha
+日文: https://t.me/setlanguage/ja-beta
+
+说明:
+Telegram 官方只开放了语言包翻译接口, 并没有提供中文语言包；
+目前所有的中文语言包都是非官方人员翻译, 由作者统一整理编录的；
+支持所有官方客户端，第三方客户端 & Telegram 官网网页版不能使用语言包；
+如果中文语言包对您有帮助，欢迎使用并在有需要时推荐给他人，谢谢！</blockquote>";
+
+    // 创建内联键盘并添加按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithUrl("点击应用原 @zh_cn 简体中文语言包", "https://t.me/setlanguage/classic-zh-cn")
+    });
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: languagePackMessage,
+        parseMode: ParseMode.Html, // 使用 HTML 格式以支持 expandable 属性
+        disableWebPagePreview: true, // 关闭链接预览
+        replyMarkup: inlineKeyboard // 添加内联键盘
+    );
 } 
 // 获取群资料
 try
