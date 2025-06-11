@@ -10307,11 +10307,24 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     }
     // 在此处添加获取USDT OTC价格的代码
     var getOkxPriceTask = GetOkxPriceAsync("usdt", "cny", "alipay");
-    await getOkxPriceTask;
     decimal okxPrice = getOkxPriceTask.Result;
     
     // 回复用户正在查询
-    await botClient.SendTextMessageAsync(message.Chat.Id, "正在查询，请稍后...");
+    Telegram.Bot.Types.Message infoMessage;
+    try
+    {
+        infoMessage = await botClient.SendTextMessageAsync(
+            chatId: chatId,
+            text: "正在查询，请稍后...",
+            parseMode: ParseMode.Html,
+            replyToMessageId: message.MessageId
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"发送查询提示消息失败：{ex.Message}");
+        return;
+    }
 
 // 同时启动所有任务
 var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6");
@@ -10324,9 +10337,40 @@ var getLastFiveTransactionsTask = GetLastFiveTransactionsAsync(tronAddress);
 var getOwnerPermissionTask = GetOwnerPermissionAsync(tronAddress);
 var usdtAuthorizedListTask = GetUsdtAuthorizedListAsync(tronAddress);    
 
-// 等待所有任务完成
-//await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask, getOwnerPermissionTask);
-await Task.WhenAll(getUsdtTransferTotalTask, getBalancesTask, getAccountCreationTimeTask, getLastTransactionTimeTask, getTotalIncomeTask, getBandwidthTask, getLastFiveTransactionsTask, getOwnerPermissionTask, usdtAuthorizedListTask);
+    // 等待所有任务完成
+    try
+    {
+        await Task.WhenAll(
+            getOkxPriceTask,
+            getUsdtTransferTotalTask,
+            getBalancesTask,
+            getAccountCreationTimeTask,
+            getLastTransactionTimeTask,
+            getTotalIncomeTask,
+            getBandwidthTask,
+            getLastFiveTransactionsTask,
+            getOwnerPermissionTask,
+            usdtAuthorizedListTask
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"查询任务执行失败：{ex.Message}");
+        try
+        {
+            await botClient.EditMessageTextAsync(
+                chatId: chatId,
+                messageId: infoMessage.MessageId,
+                text: "查询失败，请稍后重试！",
+                parseMode: ParseMode.Html
+            );
+        }
+        catch (Exception editEx)
+        {
+            Console.WriteLine($"编辑查询失败提示失败：{editEx.Message}");
+        }
+        return;
+    }
     
 
 // 处理结果
@@ -10361,23 +10405,6 @@ var usdtAuthorizedListResult = usdtAuthorizedListTask.Result;
 // 计算可供转账的次数
 int availableTransferCount = (int)(trxBalance / 13.3959m);    
     
-// 检查是否发生了请求错误 欧意otc价格未加入，异常会导致返回的价格为0 全部关闭  所有的接口都处理了异常了
-//if (isErrorUsdtTransferTotal || isErrorGetBandwidth || isErrorGetLastFiveTransactions || isErrorGetBalances || isErrorGetAccountCreationTime || isErrorGetLastTransactionTime || isErrorGetTotalIncome || isErrorGetOwnerPermission)
-//{
-//    await botClient.SendTextMessageAsync(message.Chat.Id, "查询地址有误或接口维护中，请稍后重试！");
-//    return;
-//}
-    
-    // 判断是否所有返回的数据都是0
-//if (usdtTotal == 0 && transferCount == 0 && usdtBalance == 0 && trxBalance == 0 && 
-    //usdtTotalIncome == 0 && remainingBandwidth == 0 && totalBandwidth == 0 && 
-    //transactions == 0 && transactionsIn == 0 && transactionsOut == 0)
-//{
-    // 如果都是0，那么添加提醒用户的语句
-    //string warningText = "查询地址有误或地址未激活，请激活后重试！";
-    //await botClient.SendTextMessageAsync(message.Chat.Id, warningText);
-    //return;
-//}
 // 计算地址中连续相同字符的数量（忽略大小写）
 int maxConsecutiveIdenticalCharsCount = 0;
 int currentConsecutiveIdenticalCharsCount = 0;
@@ -10468,11 +10495,6 @@ else
 string exchangeUrl = "https://t.me/yifanfubot";
 string exchangeLink = $"<a href=\"{exchangeUrl}\">立即兑换</a>";
 
-//decimal monthlyProfit = monthlyIncome - monthlyOutcome;//月盈亏
-//decimal dailyProfit = dailyIncome - dailyOutcome; //日盈亏 
-//decimal usdtProfit = usdtTotalIncome - usdtTotalOutcome; //计算累计盈亏
-
-//不想要可以把 3301-3315删除    3318-3320删除 $"<b>来自 </b>{userLink}<b>的查询</b>\n\n" +删除即可
 // 获取发送消息的用户信息
 var fromUser = message.From;
 string userLink = "未知用户";
@@ -10557,15 +10579,8 @@ if (trxBalance < 100)
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +  
     usdtAuthorizedListText + // 添加授权列表的信息
-   // $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
     incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息
-    //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
-    //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
-    //$"年度收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +
-    //$"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    //$"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +
-    //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;   
     $"{uxiaofeikaText}";	
 }
 else
@@ -10588,15 +10603,8 @@ else
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +   
     usdtAuthorizedListText + // 添加授权列表的信息        
-   // $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
     incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息
-    //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
-    //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
-    //$"年度收入：<b>{usdtTotalIncome.ToString("N2")}</b> | 支出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 盈亏：<b>{usdtProfit.ToString("N2")}</b>\n" +    
-    //$"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    //$"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +
-    //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;   
     $"{uxiaofeikaText}";	
 }
 }  
@@ -10620,16 +10628,10 @@ if (trxBalance < 100)
     $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +   
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
-   // $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
     incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息  
-    //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
-    //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
-    //$"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    //$"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" +    
     $"{groupExclusiveText}" +   // 在这里使用 groupExclusiveText
     $"{uxiaofeikaText}";	
-    //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
 }
 else
 {
@@ -10649,24 +10651,12 @@ else
     $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +       
     $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
     $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
-  //  $"———————<b>USDT账单</b>———————\n" +
     $"{lastFiveTransactions}\n"+
     incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息
-    //$"USDT转入：<b>{usdtTotalIncome.ToString("N2")}</b> | 本月：<b>{monthlyIncome.ToString("N2")}</b> | 今日：<b>{dailyIncome.ToString("N2")}</b>\n" +
-    //$"USDT转出：<b>{usdtTotalOutcome.ToString("N2")}</b> | 本月：<b>{monthlyOutcome.ToString("N2")}</b> | 今日：<b>{dailyOutcome.ToString("N2")}</b>\n";
-    //$"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-    //$"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：-<b>{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n" + 
     $"{groupExclusiveText}" +   // 在这里使用 groupExclusiveText
-    $"{uxiaofeikaText}";	
-    //$"USDT今日收入：<b>{dailyIncome.ToString("N2")}</b>\n" ;    
+    $"{uxiaofeikaText}";	 
 }
 }    
-
-
-        // 创建内联键盘
-   // string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
-   // string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
-   // string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
 // 创建内联键盘
 InlineKeyboardMarkup inlineKeyboard;
@@ -10676,24 +10666,18 @@ if (message.Chat.Type == ChatType.Private && message.From.Id != 1427768220)
     {
         new [] // 第一行按钮
         {
-            //InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
-            //InlineKeyboardButton.WithCallbackData("查授权记录", "query_eye"), // 修改为CallbackData类型
             InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
             InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接		
         },
         new [] // 第二行按钮
         {
-            //InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
-            //InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接
-            InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型
-            //InlineKeyboardButton.WithCallbackData("查授权记录", "query_eye"), // 修改为CallbackData类型	
+            InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型	
 	    InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin") // 修改为打开链接的按钮   		
         },
         new [] // 第三行按钮
         {
             InlineKeyboardButton.WithCallbackData("TRX消耗统计\U0001F4F6", $"trx_usage,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithCallbackData("USDT账单详情\U0001F50D", $"账单详情{tronAddress}"), // 添加新的按钮		
-	    //InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin") // 修改为打开链接的按钮      	
+            InlineKeyboardButton.WithCallbackData("USDT账单详情\U0001F50D", $"账单详情{tronAddress}"), // 添加新的按钮		    	
         }	    
     });
 }
@@ -10727,13 +10711,65 @@ else
 
     // 发送GIF和带按钮的文本
     string gifUrl = "https://i.postimg.cc/Jzrm1m9c/277574078-352558983556639-7702866525169266409-n.png";
-    await botClient.SendPhotoAsync(
-        chatId: message.Chat.Id,
-        photo: new InputOnlineFile(gifUrl),
-        caption: resultText, // 将文本作为图片说明发送
-        parseMode: ParseMode.Html,
-        replyMarkup: inlineKeyboard // 添加内联键盘
-    );
+    try
+    {
+        await botClient.EditMessageMediaAsync(
+            chatId: chatId,
+            messageId: infoMessage.MessageId,
+media: new InputMediaPhoto(gifUrl)
+{
+    Caption = resultText,
+    ParseMode = ParseMode.Html
+},
+            replyMarkup: inlineKeyboard
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"编辑为GIF消息失败：{ex.Message}");
+        try
+        {
+            await botClient.SendPhotoAsync(
+                chatId: chatId,
+                photo: new InputOnlineFile(gifUrl),
+                caption: resultText,
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard
+            );
+            await botClient.DeleteMessageAsync(chatId, infoMessage.MessageId);
+        }
+        catch (Exception sendEx)
+        {
+            Console.WriteLine($"发送GIF消息失败：{sendEx.Message}");
+            try
+            {
+                await botClient.EditMessageTextAsync(
+                    chatId: chatId,
+                    messageId: infoMessage.MessageId,
+                    text: resultText,
+                    parseMode: ParseMode.Html,
+                    replyMarkup: inlineKeyboard
+                );
+            }
+            catch (Exception textEx)
+            {
+                Console.WriteLine($"编辑为文本消息失败：{textEx.Message}");
+                try
+                {
+                    await botClient.SendTextMessageAsync(
+                        chatId: chatId,
+                        text: resultText,
+                        parseMode: ParseMode.Html,
+                        replyMarkup: inlineKeyboard
+                    );
+                }
+                catch (Exception finalEx)
+                {
+                    Console.WriteLine($"发送文本消息失败：{finalEx.Message}");
+                }
+            }
+        }
+    }
 }
 //USDT账单详情
 public static async Task<(string, InlineKeyboardMarkup)> GetRecentTransactionsAsync(string tronAddress)
