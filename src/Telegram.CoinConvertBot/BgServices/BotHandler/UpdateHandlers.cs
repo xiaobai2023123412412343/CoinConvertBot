@@ -13971,6 +13971,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: commandsText,
+	disableWebPagePreview: true, // 关闭链接预览    
         parseMode: ParseMode.Html
     );
 }
@@ -15954,7 +15955,10 @@ if (message.Type == MessageType.Text && (message.Text.Equals("千百度查", Str
 示例：直接发送地址如：<code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code></blockquote>
 
 支持查询TGid、欧易USDT汇率、新(农)历、历史加密货币价格等N多功能，欢迎体验！
-<blockquote expandable>示例：直接发送如：<code>ID</code>, <code>z0</code>, <code>时间</code>, <code>btc 2024/04/04 00.00</code></blockquote>";
+<blockquote expandable>示例：直接发送如：<code>ID</code>, <code>z0</code>, <code>时间</code>, <code>btc 2024/04/04 00.00</code></blockquote>
+
+<a href=""https://t.me/yifanfubot"">欢迎各位老板前来兑换能量或开通电报会员！
+也可以直接打赏作者！谢谢大家的支持厚爱！</a>";
 
     // 创建内联键盘并添加按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
@@ -15972,6 +15976,7 @@ if (message.Type == MessageType.Text && (message.Text.Equals("千百度查", Str
             chatId: message.Chat.Id,
             text: queryMessage,
             parseMode: ParseMode.Html, // 使用 HTML 格式以支持加粗、折叠和点击复制
+            disableWebPagePreview: true, // 关闭链接预览
             replyMarkup: inlineKeyboard
         );
     }
