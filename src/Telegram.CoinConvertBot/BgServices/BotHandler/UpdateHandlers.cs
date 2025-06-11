@@ -14302,21 +14302,20 @@ if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
         // 如果群聊已存在且已有邀请链接，不重复生成
         if (existingGroupChat != null && !string.IsNullOrEmpty(existingGroupChat.InviteLink))
         {
-            inviteLink = existingGroupChat.InviteLink; // 使用现有链接
+            inviteLink = existingGroupChat.InviteLink; // 使用现有永久链接
             //Log.Information($"群聊 {chat.Id} 已存在，复用现有邀请链接：{inviteLink}");
         }
         else
         {
-            // 仅当无链接时尝试生成（需要机器人是管理员）
+            // 仅当无链接时尝试生成永久主邀请链接（需要机器人是管理员）
             try
             {
-                var chatInviteLink = await botClient.ExportChatInviteLinkAsync(message.Chat.Id);
-                inviteLink = chatInviteLink;
-               // Log.Information($"为群聊 {chat.Id} 生成新邀请链接：{inviteLink}");
+                inviteLink = await botClient.ExportChatInviteLinkAsync(message.Chat.Id); // 生成永久主邀请链接
+                //Log.Information($"为群聊 {chat.Id} 生成永久主邀请链接：{inviteLink}");
             }
             catch (Telegram.Bot.Exceptions.ApiRequestException ex)
             {
-                //Log.Information($"无法生成群聊 {chat.Id} 的邀请链接，可能机器人不是管理员: {ex.Message}");
+                //Log.Information($"无法生成群聊 {chat.Id} 的永久邀请链接，可能机器人不是管理员: {ex.Message}");
                 // inviteLink 保持为 null
             }
         }
@@ -14337,16 +14336,16 @@ if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
                 Title = chat.Title,
                 InviteLink = inviteLink // 可能为 null
             });
-           // Log.Information($"新增群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
+            //Log.Information($"新增群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
 
             // 自动将群ID添加到广告仓库
             GroupManager.AddGroupId(chat.Id);
-           // Log.Information($"已将群ID {chat.Id} 添加到广告仓库");
+            //Log.Information($"已将群ID {chat.Id} 添加到广告仓库");
         }
     }
     catch (Exception ex)
     {
-        //Log.Error($"处理群聊信息更新时发生异常，群ID：{message.Chat.Id}, 错误：{ex.Message}");
+       // Log.Error($"处理群聊信息更新时发生异常，群ID：{message.Chat.Id}, 错误：{ex.Message}");
     }
 }
 
@@ -14754,7 +14753,7 @@ try
 {
     if (message.Type == MessageType.Text && message.Text.Equals("/qunliaoziliao", StringComparison.OrdinalIgnoreCase))
     {
-        Console.WriteLine($"收到查询群聊资料指令，用户ID：{message.From.Id}");
+        //Console.WriteLine($"收到查询群聊资料指令，用户ID：{message.From.Id}");
         // 检查是否为指定管理员
         if (message.From.Id == 1427768220)
         {
@@ -14765,7 +14764,7 @@ try
                     text: "机器人所在 <b>0</b> 个群：",
                     parseMode: ParseMode.Html
                 );
-                Console.WriteLine("回复用户：机器人所在 0 个群");
+               // Console.WriteLine("回复用户：机器人所在 0 个群");
             }
             else
             {
@@ -14793,7 +14792,7 @@ try
                             parseMode: ParseMode.Html,
                             disableWebPagePreview: true // 关闭链接预览
                         );
-                        Console.WriteLine($"发送群聊资料，群数量：{i + 1}");
+                        //Console.WriteLine($"发送群聊资料，群数量：{i + 1}");
                         sb.Clear();
                     }
                 }
@@ -14801,7 +14800,7 @@ try
         }
         else
         {
-            Console.WriteLine($"非指定管理员尝试查询群聊资料，用户ID：{message.From.Id}");
+            //Console.WriteLine($"非指定管理员尝试查询群聊资料，用户ID：{message.From.Id}");
         }
     }
 }
