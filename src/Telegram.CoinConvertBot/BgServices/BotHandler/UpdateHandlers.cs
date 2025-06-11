@@ -15936,20 +15936,25 @@ if (message.Type == MessageType.Text && (message.Text.Equals("千百度查", Str
 <b>支持区块链币种汇率、法币汇率、地址信息等查询！</b>
 
 支持以下加密货币：
-<blockquote expandable><code>BTC</code>, <code>ETH</code>, <code>XRP</code>, <code>BNB</code>, <code>SOL</code>, <code>DOGE</code>, <code>TON</code> 等几百个加密货币价格及汇率！</blockquote>
+<blockquote expandable><code>BTC</code>, <code>ETH</code>, <code>XRP</code>, <code>BNB</code>, <code>SOL</code>, <code>DOGE</code>, <code>TON</code> 等几百个加密货币价格及汇率！
+示例：直接发送如： <code>BTC</code>  或者 <code>1BTC</code> 自带计算并返回结果！</blockquote>
 
 支持以下法定货币：
-<blockquote expandable><code>USDT</code> (泰达币), <code>CNY</code> (人民币), <code>USD</code> (美元), <code>HKD</code> (港币), <code>TWD</code> (新台币), <code>JPY</code> (日元), <code>GBP</code> (英镑), <code>EUR</code> (欧元), <code>AUD</code> (澳大利亚元), <code>KRW</code> (韩元), <code>THB</code> (泰铢), <code>VND</code> (越南盾), <code>LAK</code> (老挝基普), <code>MMK</code> (缅甸缅), <code>INR</code> (印度卢比), <code>CHF</code> (瑞士法郎), <code>NZD</code> (新西兰元), <code>SGD</code> (新加坡元), <code>KHR</code> (柬埔寨瑞尔), <code>PHP</code> (菲律宾比索), <code>MXN</code> (墨西哥比索), <code>AED</code> (阿联酋迪拉姆), <code>RUB</code> (俄罗斯卢布), <code>CAD</code> (加拿大元), <code>MYR</code> (马来西亚林吉特), <code>KWD</code> (科威特第纳尔)</blockquote>
+<blockquote expandable><code>USDT</code> (泰达币), <code>CNY</code> (人民币), <code>USD</code> (美元), <code>HKD</code> (港币), <code>TWD</code> (新台币), <code>JPY</code> (日元), <code>GBP</code> (英镑), <code>EUR</code> (欧元), <code>AUD</code> (澳大利亚元), <code>KRW</code> (韩元), <code>THB</code> (泰铢), <code>VND</code> (越南盾), <code>LAK</code> (老挝基普), <code>MMK</code> (缅甸缅), <code>INR</code> (印度卢比), <code>CHF</code> (瑞士法郎), <code>NZD</code> (新西兰元), <code>SGD</code> (新加坡元), <code>KHR</code> (柬埔寨瑞尔), <code>PHP</code> (菲律宾比索), <code>MXN</code> (墨西哥比索), <code>AED</code> (阿联酋迪拉姆), <code>RUB</code> (俄罗斯卢布), <code>CAD</code> (加拿大元), <code>MYR</code> (马来西亚林吉特), <code>KWD</code> (科威特第纳尔)
+
+示例：直接发送如： <code>100CNY</code> 自带计算并返回结果！</blockquote>
 
 支持查询区块链账户信息：
 <blockquote expandable>支持的链：TRON（TRC-20）、Ethereum（ERC-20）
 波场(TRON)地址示例：
 <code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>
 以太坊(ETH)地址示例：
-<code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code></blockquote>
+<code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code>
+
+示例：直接发送地址如：<code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code></blockquote>
 
 支持查询TGid、欧易USDT汇率、新(农)历、历史加密货币价格等N多功能，欢迎体验！
-<blockquote expandable>示例：对话框直接发送：<code>ID</code>, <code>z0</code>, <code>时间</code>, <code>btc 2024/04/04 00.00</code></blockquote>";
+<blockquote expandable>示例：直接发送如：<code>ID</code>, <code>z0</code>, <code>时间</code>, <code>btc 2024/04/04 00.00</code></blockquote>";
 
     // 创建内联键盘并添加按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
