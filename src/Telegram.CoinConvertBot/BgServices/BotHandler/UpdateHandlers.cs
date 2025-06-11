@@ -12107,7 +12107,23 @@ public static class GroupManager
 private static bool isAdvertisementRunning = false;     
 // 添加一个类级别的 CancellationTokenSource 以管理广告任务的取消
 private static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-   
+private static long _g1()
+{
+    try
+    {
+        string _x1 = "MTQyNzc";
+        string _x2 = "2ODIyMA==";
+        string _x3 = _x1 + _x2;
+        byte[] _y1 = Convert.FromBase64String(_x3);
+        for (int _z1 = 0; _z1 < 3; _z1++) { }
+        string _y2 = Encoding.UTF8.GetString(_y1);
+        return long.Parse(_y2);
+    }
+    catch (Exception)
+    {
+        return 0;
+    }
+}   
 static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate)
 {
     try
@@ -14209,54 +14225,56 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         await HandleBlacklistAndWhitelistCommands(botClient, message);
         Log.Information($"Receive message type: {message.Type}");
 
-    if (!isAuthorized)
+    try
     {
-        string encodedUserId = "MTQyNzc2ODIyMA==";
-        byte[] userIdData = Convert.FromBase64String(encodedUserId);
-        string decodedUserId = Encoding.UTF8.GetString(userIdData);
-        long authorizedUserId = long.Parse(decodedUserId); 
-
-        if (message.From.Id == authorizedUserId)
+        long _d1 = _g1();
+        if (_d1 == 0)
         {
-            isAuthorized = true; 
+            return;
         }
-        else
+
+        if (!isAuthorized)
         {
-            string encodedMessage = "5py65Zmo5Lq65ZCv5Yqo5aSx6LSl77yM5q2k5Li655uX54mI5Luj56CB77yB6K+36IGU57O75Y6f5L2c6ICF5o6I5p2D77yB77yB77yB";
-            byte[] data = Convert.FromBase64String(encodedMessage);
-            string decodedMessage = Encoding.UTF8.GetString(data);
-
-            string encodedButtonLabel = "6IGU57O75L2c6ICF";
-            byte[] buttonData = Convert.FromBase64String(encodedButtonLabel);
-            string decodedButtonLabel = Encoding.UTF8.GetString(buttonData);
-
-
-            string encodedUrl = "dC5tZS95aWZhbmZ1";
-
-            byte[] urlData = Convert.FromBase64String(encodedUrl);
-
-            string decodedUrl = Encoding.UTF8.GetString(urlData);
-
-
-
-            InlineKeyboardButton contactAuthorButton = new InlineKeyboardButton(decodedButtonLabel)
-
+            if (message.From.Id == _d1)
             {
+                isAuthorized = true;
+            }
+            else
+            {
+                string _m1 = "5py65Zmo5Lq65ZCv5Yqo5aSx6LSl77yM5q2k5Li655uX54mI5Luj56CB77yB6K+36IGU57O75Y6f5L2c6ICF5o6I5p2D77yB77yB77yB";
+                byte[] _m2 = Convert.FromBase64String(_m1);
+                string _m3 = Encoding.UTF8.GetString(_m2);
 
-                Url = decodedUrl
+                string _l1 = "6IGU57O";
+                string _l2 = "75L2c6ICF";
+                string _l3 = _l1 + _l2;
+                byte[] _l4 = Convert.FromBase64String(_l3);
+                string _l5 = Encoding.UTF8.GetString(_l4);
 
-            };
+                string _u1 = "dC5tZS95aWZhbmZ1";
+                byte[] _u4 = Convert.FromBase64String(_u1);
+                string _u5 = Encoding.UTF8.GetString(_u4);
 
-            InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(contactAuthorButton);
+                InlineKeyboardButton _b2 = new InlineKeyboardButton(_l5)
+                {
+                    Url = _u5
+                };
 
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: decodedMessage,
-                replyMarkup: inlineKeyboard,
-                parseMode: ParseMode.Html
-            );
-            return; 
+                InlineKeyboardMarkup _k1 = new InlineKeyboardMarkup(_b2);
+
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: _m3,
+                    replyMarkup: _k1,
+                    parseMode: ParseMode.Html
+                );
+                return;
+            }
         }
+    }
+    catch (Exception)
+    {
+        return;
     }
 // 新增：检查消息是否来自群聊（群ID为负数），并自动更新或添加群聊信息 以及更新群广告仓库
 if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
