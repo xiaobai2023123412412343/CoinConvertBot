@@ -10556,107 +10556,41 @@ if (transactions > 0) {
     transactionsText = $"交易次数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n";
 } 
 	
-// 判断 TRX 余额是否小于100
-if (message.Chat.Type != ChatType.Private)
-{
-if (trxBalance < 100)
-{
-    resultText = $"<b>来自 </b>{userLink}<b>的查询</b>\n\n" +
-    $"查询地址：<code>{tronAddress}</code>\n" +
-    $"多签地址：<b>{addressPermissionText}</b>\n" +    
-    $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-    $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-    $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +	    
-    $"————————<b>资源</b>————————\n"+
-    $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
-    addressLabelSection + // 添加或省略地址标签信息
-    transactionsText + // 添加或省略交易次数信息       
-    $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
-    $"TRX余额：<b>{trxBalance.ToString("N2")}  |  TRX能量不足，请{exchangeLink}</b>\n" +
-    $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
-    $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
-    $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +   
-    $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
-    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +  
-    usdtAuthorizedListText + // 添加授权列表的信息
-    $"{lastFiveTransactions}\n"+
-    incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息
-    $"{uxiaofeikaText}";	
-}
-else
-{
-    resultText = $"<b>来自 </b>{userLink}<b>的查询</b>\n\n" +
-    $"查询地址：<code>{tronAddress}</code>\n" +
-    $"多签地址：<b>{addressPermissionText}</b>\n" +    
-    $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-    $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-    $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +	
-    $"————————<b>资源</b>————————\n"+
-    $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
-    addressLabelSection + // 添加或省略地址标签信息
-    transactionsText + // 添加或省略交易次数信息
-    $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
-    $"TRX余额：<b>{trxBalance.ToString("N2")}  |  可供转账{availableTransferCount}次</b> \n" +
-    $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
-    $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
-    $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +       
-    $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
-    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +   
-    usdtAuthorizedListText + // 添加授权列表的信息        
-    $"{lastFiveTransactions}\n"+
-    incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息
-    $"{uxiaofeikaText}";	
-}
-}  
-else
-{  
-if (trxBalance < 100)
-{
-    resultText =  $"查询地址：<code>{tronAddress}</code>\n" +
-    $"多签地址：<b>{addressPermissionText}</b>\n" +    
-    $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-    $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-    $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +		
-    $"————————<b>资源</b>————————\n"+
-    $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
-    addressLabelSection + // 添加或省略地址标签信息
-    transactionsText + // 添加或省略交易次数信息    
-    $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
-    $"TRX余额：<b>{trxBalance.ToString("N2")}  |  TRX能量不足，请{exchangeLink}</b>\n" +
-    $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
-    $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
-    $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +   
-    $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
-    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
-    $"{lastFiveTransactions}\n"+
-    incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息  
-    $"{groupExclusiveText}" +   // 在这里使用 groupExclusiveText
-    $"{uxiaofeikaText}";	
-}
-else
-{
-    resultText = $"查询地址：<code>{tronAddress}</code>\n" +
-    $"多签地址：<b>{addressPermissionText}</b>\n" +    
-    $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-    $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-    $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +		
-    $"————————<b>资源</b>————————\n"+
-    $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
-    addressLabelSection + // 添加或省略地址标签信息
-    transactionsText + // 添加或省略交易次数信息  
-    $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
-    $"TRX余额：<b>{trxBalance.ToString("N2")}  |  可供转账{availableTransferCount}次</b> \n" +
-    $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
-    $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
-    $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +       
-    $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
-    $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
-    $"{lastFiveTransactions}\n"+
-    incomeOutcomeText + // 添加或省略月/日收入支出盈亏信息
-    $"{groupExclusiveText}" +   // 在这里使用 groupExclusiveText
-    $"{uxiaofeikaText}";	 
-}
-}    
+// 确定是否为私聊
+bool isPrivateChat = message.Chat.Type == ChatType.Private;
+
+// 使用已有的 userLink（避免重复定义）
+string headerText = isPrivateChat
+    ? $"查询地址：<code>{tronAddress}</code>\n"
+    : $"<b>来自 </b>{userLink}<b>的查询</b>\n\n查询地址：<code>{tronAddress}</code>\n";
+
+// 确定 TRX 余额相关文本
+string trxBalanceText = trxBalance < 100
+    ? $"TRX余额：<b>{trxBalance.ToString("N2")}  |  TRX能量不足，请{exchangeLink}</b>\n"
+    : $"TRX余额：<b>{trxBalance.ToString("N2")}  |  可供转账{availableTransferCount}次</b>\n";
+
+// 构建 resultText
+resultText = headerText +
+             $"多签地址：<b>{addressPermissionText}</b>\n" +
+             $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+             $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+             $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +
+             $"————————<b>资源</b>————————\n" +
+             $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
+             addressLabelSection +
+             transactionsText +
+             $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
+             trxBalanceText +
+             $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
+             $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
+             $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +
+             $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
+             $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
+             usdtAuthorizedListText +
+             $"{lastFiveTransactions}\n" +
+             incomeOutcomeText +
+             (isPrivateChat ? groupExclusiveText : "") +
+             uxiaofeikaText; 
 
 // 创建内联键盘
 InlineKeyboardMarkup inlineKeyboard;
