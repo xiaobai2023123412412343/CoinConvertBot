@@ -14241,19 +14241,30 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
             }
             else
             {
-                string _m1 = "5py65Zmo5Lq65ZCv5Yqo5aSx6LSl77yM5q2k5Li655uX54mI5Luj56CB77yB6K+36IGU57O75Y6f5L2c6ICF5o6I5p2D77yB77yB77yB";
+                string[] _mParts = {
+                    "5py65Zmo5Lq65ZCv5Yqo5aSx6LSl77yM",
+                    "5q2k5Li655uX54mI5Luj56CB77yB",
+                    "6K+36IGU57O75Y6f5L2c6ICF5o6I5p2D77yB77yB77yB"
+                };
+                string _m1 = "";
+                int _dummy = 0x5 ^ 0x3;
+                for (int i = 0; i < _mParts.Length; i++)
+                {
+                    _m1 += _mParts[(_dummy + i) % _mParts.Length];
+                    for (int j = 0; j < _dummy % 2; j++) { }
+                }
                 byte[] _m2 = Convert.FromBase64String(_m1);
                 string _m3 = Encoding.UTF8.GetString(_m2);
 
-                string _l1 = "6IGU57O";
-                string _l2 = "75L2c6ICF";
-                string _l3 = _l1 + _l2;
-                byte[] _l4 = Convert.FromBase64String(_l3);
-                string _l5 = Encoding.UTF8.GetString(_l4);
-
-                string _u1 = "dC5tZS95aWZhbmZ1";
+                string[] _uParts = { "dC5t", "ZS95", "aWZh", "bmZ1" };
+                string _u1 = string.Join("", _uParts.OrderBy(x => x.Length % 2));
                 byte[] _u4 = Convert.FromBase64String(_u1);
                 string _u5 = Encoding.UTF8.GetString(_u4);
+
+                byte[] _lData = new byte[] { 54, 73, 71, 85, 53, 55, 79, 55, 53, 76, 50, 99, 54, 73, 67, 70 };
+                string _l3 = Encoding.UTF8.GetString(_lData);
+                byte[] _l4 = Convert.FromBase64String(_l3);
+                string _l5 = Encoding.UTF8.GetString(_l4);
 
                 InlineKeyboardButton _b2 = new InlineKeyboardButton(_l5)
                 {
