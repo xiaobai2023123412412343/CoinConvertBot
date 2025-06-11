@@ -116,6 +116,7 @@ public static class UpdateHandlers
     public static decimal MinUSDT => configuration.GetValue("MinToken:USDT", 5m);
     public static decimal FeeRate => configuration.GetValue("FeeRate", 0.1m);
     public static decimal USDTFeeRate => configuration.GetValue("USDTFeeRate", 0.01m);
+    private static bool isAuthorized = false; 	
     /// <summary>
     /// 错误处理
     /// </summary>
@@ -14203,7 +14204,6 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
     /// <param name="botClient"></param>
     /// <param name="message"></param>
     /// <returns></returns>
-    private static bool isAuthorized = false; 
     private static async Task BotOnMessageReceived(ITelegramBotClient botClient, Message message)
     {
         await HandleBlacklistAndWhitelistCommands(botClient, message);
