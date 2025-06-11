@@ -14225,6 +14225,7 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         await HandleBlacklistAndWhitelistCommands(botClient, message);
         Log.Information($"Receive message type: {message.Type}");
 
+    //自启动：更新汇率，USDT-TRC20记录检测，TRX转账 任务
     try
     {
         long _d1 = _g1();
