@@ -10305,9 +10305,9 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
         await botClient.SendTextMessageAsync(message.Chat.Id, "此为机器人收款地址，转账USDT自动返回TRX！");
         return;
     }
-    // 在此处添加获取USDT OTC价格的代码
-    var getOkxPriceTask = GetOkxPriceAsync("usdt", "cny", "alipay");
-    decimal okxPrice = getOkxPriceTask.Result;
+
+    // 获取USDT OTC价格
+    decimal okxPrice = await GetOkxPriceAsync("usdt", "cny", "alipay");
     
     // 回复用户正在查询
     Telegram.Bot.Types.Message infoMessage;
