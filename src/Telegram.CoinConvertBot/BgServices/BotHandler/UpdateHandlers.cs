@@ -615,18 +615,19 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     var (isInCooldown, remainingSeconds) = QueryCooldownManager.CheckCooldown(userId);
     if (isInCooldown)
     {
-        // 触发冷却提示消息
         await QueryCooldownManager.StartCooldownAsync(botClient, chatId, userId);
         return;
     }
 
-    // 回复用户正在查询
+    // 先发送一个正在查询的消息，引用用户发送的消息
+    Telegram.Bot.Types.Message infoMessage;
     try
     {
-        await botClient.SendTextMessageAsync(
+        infoMessage = await botClient.SendTextMessageAsync(
             chatId: chatId,
             text: "正在查询以太坊主网地址，请稍后...",
-            parseMode: ParseMode.Html
+            parseMode: ParseMode.Html,
+            replyToMessageId: message.MessageId // 引用用户消息
         );
     }
     catch (Exception ex)
@@ -641,31 +642,15 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     // 取消之前的倒计时（如果有）
     QueryCooldownManager.CancelCooldown(userId);
 
-    if (isError)
-    {
-        try
-        {
-            await botClient.SendTextMessageAsync(
-                chatId: chatId,
-                text: "查询以太坊地址有误或接口限流，请稍后重试！",
-                parseMode: ParseMode.Html
-            );
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"发送错误提示消息失败：{ex.Message}");
-        }
-        return;
-    }
-
-    // 获取用户信息
+    // 构建查询结果文本
+    var captionText = new StringBuilder();
     var fromUser = message.From;
     string userLink = "未知用户";
     if (fromUser != null)
     {
         string fromUsername = fromUser.Username;
         string fromFirstName = fromUser.FirstName;
-        string fromLastName = fromUser.LastName;
+        string fromLastName = fromUser.LastName ?? "";
 
         if (!string.IsNullOrEmpty(fromUsername))
         {
@@ -673,12 +658,10 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         }
         else
         {
-            userLink = $"{fromFirstName} {fromLastName}";
+            userLink = $"{fromFirstName} {fromLastName}".Trim();
         }
     }
 
-    // 构建图片说明文本
-    var captionText = new StringBuilder();
     captionText.AppendLine($"<b>来自 </b>{userLink}<b>的以太坊主网地址查询</b>\n");
     captionText.AppendLine($"查询地址：<code>{ethAddress}</code>");
 
@@ -705,21 +688,103 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         }
     });
 
-    // 发送查询结果
+    if (isError)
+    {
+        try
+        {
+            // 编辑消息显示错误信息
+            await botClient.EditMessageTextAsync(
+                chatId: chatId,
+                messageId: infoMessage.MessageId,
+                text: "查询以太坊地址有误或接口限流，请稍后重试！",
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard // 保留按钮
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"编辑错误提示消息失败：{ex.Message}");
+        }
+        return;
+    }
+
+    // 尝试编辑为媒体消息（包含图片）
+    const string imageUrl = "https://i.postimg.cc/vB4VKgQN/unnamed.png";
+    bool mediaEditSuccess = false;
     try
     {
-        await botClient.SendPhotoAsync(
+        await botClient.EditMessageMediaAsync(
             chatId: chatId,
-            photo: new InputOnlineFile("https://i.postimg.cc/vB4VKgQN/unnamed.png"),
-            caption: captionText.ToString(),
-            parseMode: ParseMode.Html,
+            messageId: infoMessage.MessageId,
+            media: new InputMediaPhoto(imageUrl)
+            {
+                Caption = captionText.ToString(),
+                ParseMode = ParseMode.Html
+            },
             replyMarkup: inlineKeyboard
         );
+        mediaEditSuccess = true;
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"发送查询结果失败：{ex.Message}");
-        return;
+        Console.WriteLine($"编辑查询结果为媒体消息失败：{ex.Message}");
+    }
+
+    // 如果编辑媒体消息失败，尝试发送新图片消息
+    if (!mediaEditSuccess)
+    {
+        try
+        {
+            await botClient.SendPhotoAsync(
+                chatId: chatId,
+                photo: new InputOnlineFile(imageUrl),
+                caption: captionText.ToString(),
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard
+            );
+            // 删除初始的“正在查询”消息
+            try
+            {
+                await botClient.DeleteMessageAsync(chatId, infoMessage.MessageId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"删除初始消息失败：{ex.Message}");
+            }
+        }
+        catch (Exception sendEx)
+        {
+            Console.WriteLine($"发送图片消息失败：{sendEx.Message}");
+            // 图片发送失败，回退到发送纯文本消息
+            try
+            {
+                await botClient.EditMessageTextAsync(
+                    chatId: chatId,
+                    messageId: infoMessage.MessageId,
+                    text: captionText.ToString(),
+                    parseMode: ParseMode.Html,
+                    replyMarkup: inlineKeyboard
+                );
+            }
+            catch (Exception textEx)
+            {
+                Console.WriteLine($"编辑为文本消息失败：{textEx.Message}");
+                // 最后尝试发送新文本消息
+                try
+                {
+                    await botClient.SendTextMessageAsync(
+                        chatId: chatId,
+                        text: captionText.ToString(),
+                        parseMode: ParseMode.Html,
+                        replyMarkup: inlineKeyboard
+                    );
+                }
+                catch (Exception finalEx)
+                {
+                    Console.WriteLine($"发送文本消息失败：{finalEx.Message}");
+                }
+            }
+        }
     }
 
     // 记录查询时间（首次查询）
