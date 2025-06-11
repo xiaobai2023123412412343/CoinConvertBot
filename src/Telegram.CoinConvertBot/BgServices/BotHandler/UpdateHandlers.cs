@@ -10341,7 +10341,6 @@ var usdtAuthorizedListTask = GetUsdtAuthorizedListAsync(tronAddress);
     try
     {
         await Task.WhenAll(
-            getOkxPriceTask,
             getUsdtTransferTotalTask,
             getBalancesTask,
             getAccountCreationTimeTask,
