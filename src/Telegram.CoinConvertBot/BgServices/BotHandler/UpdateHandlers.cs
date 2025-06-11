@@ -14417,7 +14417,7 @@ if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
             Log.Information("图片没有附带文字");
         }
     }	    
-     // 检查机器人是否被添加到新的群组
+
 // 检查机器人是否被添加到新的群组
 if (message.Type == MessageType.ChatMembersAdded)
 {
