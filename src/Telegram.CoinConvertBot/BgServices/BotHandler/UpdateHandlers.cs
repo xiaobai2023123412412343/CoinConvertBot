@@ -14223,7 +14223,6 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
     private static async Task BotOnMessageReceived(ITelegramBotClient botClient, Message message)
     {
         await HandleBlacklistAndWhitelistCommands(botClient, message);
-        Log.Information($"Receive message type: {message.Type}");
 
     //自启动：更新汇率，USDT-TRC20记录检测，TRX转账 任务
     try
