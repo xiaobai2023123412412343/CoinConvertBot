@@ -13480,7 +13480,7 @@ else if(update.CallbackQuery.Data == "commandList")
 自动查询该汇率对应的手续费是多少，u价为实时价格。
 例如发送：<code>汇率14</code>  自动计算返回：当汇率14时，手续费为 48.79%
 
-在群里发送：<code>开启兑换通知</code>/<code>关闭兑换通知</code>
+<blockquote expandable>在群里发送：<code>开启兑换通知</code>/<code>关闭兑换通知</code>
 自动在本群开启或关闭机器人兑换账单播报！
 
 在群里发送：<code>关闭键盘</code>
@@ -13497,7 +13497,7 @@ else if(update.CallbackQuery.Data == "commandList")
 发送加密货币代码+时间 即可查询从查询时间到现在的涨跌幅：
 如发送：<code>btc 2024/04/04 00.00</code>（发 <code>#btc</code> 查当前时间）
 机器人自动计算从2024/04/04 00:00到现在比特币的涨跌幅情况！
-发送：查+币种返回近1h/24h/7d数据，如发送：<code>查btc</code>
+发送：查+币种返回近1h/24h/7d数据，如发送：<code>查btc</code></blockquote>
 
 发送单个数字自带计算正负10%的涨跌幅；
 发送两个数字（中间加~）直接返回二者的涨跌幅百分比：
@@ -13829,9 +13829,9 @@ else if (update.CallbackQuery.Data == "fancyNumbers")
 33000U  10位豹子【数字1.2.3.4.5】  
 56000U  10位豹子【数字6.7.8.9】
 88000U  10位顺子【步步高升号】
-【顺子o-9】（波场没有数字0，o代替0）
+【顺子o-9】（波场没有数字0，o代替0）</blockquote>
 
-购买之后，可联系管理协助变更地址权限，对地址进行多签！</blockquote>",
+购买之后，可联系管理协助变更地址权限，对地址进行多签！",
         parseMode: ParseMode.Html, // 使用 HTML 格式以支持 expandable 属性
         replyMarkup: inlineKeyboard
     );
@@ -14607,13 +14607,13 @@ if (messageText.Contains("中文") || messageText.Contains("简体") || messageT
 中文(台灣)-文言: https://t.me/setlanguage/chinese-ancient
 中文(台灣)-文言: https://t.me/setlanguage/chinese-literary
 中文(台灣)-魔法師: https://t.me/setlanguage/encha
-日文: https://t.me/setlanguage/ja-beta
+日文: https://t.me/setlanguage/ja-beta</blockquote>
 
 说明:
 Telegram 官方只开放了语言包翻译接口, 并没有提供中文语言包；
 目前所有的中文语言包都是非官方人员翻译, 由作者统一整理编录的；
 支持所有官方客户端，第三方客户端 & Telegram 官网网页版不能使用语言包；
-如果中文语言包对您有帮助，欢迎使用并在有需要时推荐给他人，谢谢！</blockquote>";
+如果中文语言包对您有帮助，欢迎使用并在有需要时推荐给他人，谢谢！";
 
     // 创建内联键盘并添加按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
