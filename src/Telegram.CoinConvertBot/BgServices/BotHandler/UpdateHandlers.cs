@@ -13784,7 +13784,7 @@ else if (update.CallbackQuery.Data == "newQueryByWave")
         replyMarkup: inlineKeyboard
     );
 }	    
-else if(update.CallbackQuery.Data == "fancyNumbers")
+else if (update.CallbackQuery.Data == "fancyNumbers")
 {
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
@@ -13798,10 +13798,10 @@ else if(update.CallbackQuery.Data == "fancyNumbers")
     await botClient.SendPhotoAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         photo: "https://i.postimg.cc/rpg41NWV/photo-2023-05-03-14-15-51.jpg",
-        caption: @"出售TRX靓号生成器： 本地生成 不保存秘钥 支持断网生成
-同时支持直接购买 ：   尾号4连-5连-6连-7连-8连-9连-10连
+        caption: @$"出售TRX靓号生成器： 本地生成 不保存秘钥 支持断网生成
+同时支持直接购买 ： 尾号4连-5连-6连-7连-8连-9连-10连
 
-【6连靓号】
+<blockquote expandable>【6连靓号】
 所有号码50U一个
 
 【7连靓号】
@@ -13831,7 +13831,8 @@ else if(update.CallbackQuery.Data == "fancyNumbers")
 88000U  10位顺子【步步高升号】
 【顺子o-9】（波场没有数字0，o代替0）
 
-购买之后，可联系管理协助变更地址权限，对地址进行多签！",
+购买之后，可联系管理协助变更地址权限，对地址进行多签！</blockquote>",
+        parseMode: ParseMode.Html, // 使用 HTML 格式以支持 expandable 属性
         replyMarkup: inlineKeyboard
     );
 }
