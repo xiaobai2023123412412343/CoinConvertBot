@@ -14303,7 +14303,7 @@ if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
         if (existingGroupChat != null && !string.IsNullOrEmpty(existingGroupChat.InviteLink))
         {
             inviteLink = existingGroupChat.InviteLink; // 使用现有链接
-            Log.Information($"群聊 {chat.Id} 已存在，复用现有邀请链接：{inviteLink}");
+            //Log.Information($"群聊 {chat.Id} 已存在，复用现有邀请链接：{inviteLink}");
         }
         else
         {
@@ -14312,11 +14312,11 @@ if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
             {
                 var chatInviteLink = await botClient.ExportChatInviteLinkAsync(message.Chat.Id);
                 inviteLink = chatInviteLink;
-                Log.Information($"为群聊 {chat.Id} 生成新邀请链接：{inviteLink}");
+               // Log.Information($"为群聊 {chat.Id} 生成新邀请链接：{inviteLink}");
             }
             catch (Telegram.Bot.Exceptions.ApiRequestException ex)
             {
-                Log.Information($"无法生成群聊 {chat.Id} 的邀请链接，可能机器人不是管理员: {ex.Message}");
+                //Log.Information($"无法生成群聊 {chat.Id} 的邀请链接，可能机器人不是管理员: {ex.Message}");
                 // inviteLink 保持为 null
             }
         }
@@ -14326,7 +14326,7 @@ if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
             // 更新已有群聊信息
             existingGroupChat.Title = chat.Title;
             existingGroupChat.InviteLink = inviteLink; // 更新链接（可能为 null）
-            Log.Information($"更新群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
+            //Log.Information($"更新群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
         }
         else
         {
@@ -14337,16 +14337,16 @@ if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
                 Title = chat.Title,
                 InviteLink = inviteLink // 可能为 null
             });
-            Log.Information($"新增群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
+           // Log.Information($"新增群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
 
             // 自动将群ID添加到广告仓库
             GroupManager.AddGroupId(chat.Id);
-            Log.Information($"已将群ID {chat.Id} 添加到广告仓库");
+           // Log.Information($"已将群ID {chat.Id} 添加到广告仓库");
         }
     }
     catch (Exception ex)
     {
-        Log.Error($"处理群聊信息更新时发生异常，群ID：{message.Chat.Id}, 错误：{ex.Message}");
+        //Log.Error($"处理群聊信息更新时发生异常，群ID：{message.Chat.Id}, 错误：{ex.Message}");
     }
 }
 
