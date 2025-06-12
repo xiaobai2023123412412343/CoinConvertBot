@@ -894,25 +894,40 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
 
     // 构建查询结果文本
     var captionText = new StringBuilder();
-    var fromUser = message.From;
-    string userLink = "未知用户";
-    if (fromUser != null)
+var fromUser = message.From;
+string userLink = "匿名用户"; // 默认值
+
+if (fromUser != null)
+{
+    string fromFirstName = fromUser.FirstName ?? "";
+    string fromUsername = fromUser.Username ?? "";
+    string fromLastName = fromUser.LastName ?? "";
+
+    if (fromUsername == "GroupAnonymousBot")
     {
-        string fromUsername = fromUser.Username;
-        string fromFirstName = "壹凡夫"; // 假设为示例用户名
-        string fromLastName = fromUser.LastName ?? "";
-
-        if (!string.IsNullOrEmpty(fromUsername))
-        {
-            userLink = $"<a href=\"https://tg.user?id={fromUser.Id}\">{fromFirstName} {fromUser.Username}</a>";
-        }
-        else
-        {
-            userLink = $"{fromFirstName} {fromLastName}".Trim();
-        }
+        // 群组匿名用户，直接显示匿名用户，无链接
+        userLink = "<b>匿名用户</b>";
     }
+    else if (!string.IsNullOrEmpty(fromUsername))
+    {
+        // 有用户名（非群组匿名），名字链接到 t.me/Username
+        string displayName = !string.IsNullOrEmpty(fromFirstName) ? fromFirstName : "用户";
+        userLink = $"<a href=\"https://t.me/{fromUsername.TrimStart('@')}\">{displayName}</a>";
+    }
+    else if (!string.IsNullOrEmpty(fromFirstName) || !string.IsNullOrEmpty(fromLastName))
+    {
+        // 无用户名，显示纯文本名字
+        userLink = $"{fromFirstName} {fromLastName}".Trim();
+    }
+    else
+    {
+        // 名字和姓氏为空，显示匿名用户
+        userLink = "匿名用户";
+    }
+}
 
-    captionText.AppendLine($"<b>来自 </b>{userLink}<b> | 7trx转u 的查询</b>\n");
+
+    captionText.AppendLine($"<b>来自 </b>{userLink}<b> 的查询</b>\n");
     captionText.AppendLine($"查询地址：<code>{ethAddress}</code>");
     captionText.AppendLine("——————————————");
     captionText.AppendLine($"<b>Ethereum</b>（以太坊主网）");
