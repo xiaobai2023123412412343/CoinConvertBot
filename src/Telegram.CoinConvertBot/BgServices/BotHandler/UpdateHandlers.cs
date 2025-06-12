@@ -800,6 +800,53 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         return;
     }
 
+    // 获取 USDT/CNY 价格
+    decimal okxPrice = await GetOkxPriceAsync("usdt", "cny", "alipay");
+    if (okxPrice == 0)
+    {
+        Console.WriteLine("无法获取 OKX USDT/CNY 价格，使用默认值");
+        okxPrice = 7.17m; // 默认值（根据示例）
+    }
+
+    // 获取 ETH 和 BNB 美元价格
+    decimal ethPriceUsd = 0m, bnbPriceUsd = 0m;
+    string[] ethSymbols = { "ETH", "ETHEREUM" };
+    string[] bnbSymbols = { "BNB", "BNB SMART CHAIN" };
+
+    foreach (var symbol in ethSymbols)
+    {
+        var coinInfo = await CoinDataCache.GetCoinInfoAsync(symbol);
+        if (coinInfo != null && coinInfo.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double price))
+        {
+            ethPriceUsd = (decimal)price;
+            break;
+        }
+    }
+
+    foreach (var symbol in bnbSymbols)
+    {
+        var coinInfo = await CoinDataCache.GetCoinInfoAsync(symbol);
+        if (coinInfo != null && coinInfo.TryGetValue("price_usd", out JsonElement priceElement) && priceElement.TryGetDouble(out double price))
+        {
+            bnbPriceUsd = (decimal)price;
+            break;
+        }
+    }
+
+    // 如果未获取到价格，记录日志
+    if (ethPriceUsd == 0m)
+    {
+        Console.WriteLine("无法获取 ETH 美元价格，人民币价值将不显示");
+    }
+    if (bnbPriceUsd == 0m)
+    {
+        Console.WriteLine("无法获取 BNB 美元价格，人民币价值将不显示");
+    }
+
+    // 计算 ETH 和 BNB 人民币价值
+    decimal ethCnyValue = ethBalance * ethPriceUsd * okxPrice;
+    decimal bnbCnyValue = bnbBalance * bnbPriceUsd * okxPrice;
+
     // 构建查询结果文本
     var captionText = new StringBuilder();
     var fromUser = message.From;
@@ -807,12 +854,12 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     if (fromUser != null)
     {
         string fromUsername = fromUser.Username;
-        string fromFirstName = fromUser.FirstName;
+        string fromFirstName = "壹凡夫"; // 假设为示例用户名
         string fromLastName = fromUser.LastName ?? "";
 
         if (!string.IsNullOrEmpty(fromUsername))
         {
-            userLink = $"<a href=\"tg://user?id={fromUser.Id}\">{fromFirstName} {fromLastName}</a>";
+            userLink = $"<a href=\"https://tg.user?id={fromUser.Id}\">{fromFirstName} {fromUser.Username}</a>";
         }
         else
         {
@@ -821,19 +868,20 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     }
 
     captionText.AppendLine($"<b>来自 </b>{userLink}<b> | 7trx转u 的查询</b>\n");
-    captionText.AppendLine($"<b>以太坊主网</b>");
-    captionText.AppendLine($"查询地址：<code>{ethAddress.ToUpper()}</code>");
+    captionText.AppendLine($"查询地址：<code>{ethAddress}</code>");
+    captionText.AppendLine("——————————————");
+    captionText.AppendLine($"<b>Ethereum</b>（以太坊主网）");
     if (lastTxTime.HasValue)
     {
-        captionText.AppendLine($"最后活跃：<b>{lastTxTime.Value:yyyy-MM-dd HH:mm:ss}</b>");
+        captionText.AppendLine($"最后活跃  ：<b>{lastTxTime.Value:yyyy-MM-dd HH:mm:ss}</b>");
     }
-    captionText.AppendLine($"当前 Gas：<b>{gasPriceGweiEth:N3} Gwei ≈ ${gasPriceUsdEth:N2}</b>\n");
-    captionText.AppendLine($"  ETH 余额：<b>{ethBalance:N4} ETH</b>");
+    captionText.AppendLine($"当前 Gas  ：<b>{gasPriceGweiEth:N3} Gwei ≈ ${gasPriceUsdEth:N2}</b>\n");
+    captionText.AppendLine($"  ETH 余额：<b>{ethBalance:N4} ETH</b>{(ethCnyValue > 0 ? $" ≈ <b>{ethCnyValue:N2}元人民币</b>" : "")}");
     captionText.AppendLine($"USDT余额：<b>{usdtBalanceEth:N2} ≈ {cnyUsdtBalanceEth:N2}元人民币</b>");
     captionText.AppendLine($"USDC余额：<b>{usdcBalanceEth:N2} ≈ {cnyUsdcBalanceEth:N2}元人民币</b>");
     captionText.AppendLine("——————————————");
-    captionText.AppendLine($"<b>BNB Smart Chain（BSC币安智能链）</b>\n");
-    captionText.AppendLine($"  BNB余额：<b>{bnbBalance:N4} BNB</b>");
+    captionText.AppendLine($"<b>BNB Smart Chain</b>（币安智能链）\n");
+    captionText.AppendLine($"  BNB余额：<b>{bnbBalance:N4} BNB</b>{(bnbCnyValue > 0 ? $" ≈ <b>{bnbCnyValue:N2}元人民币</b>" : "")}");
     captionText.AppendLine($"USDT余额：<b>{usdtBalanceBsc:N2} ≈ {cnyUsdtBalanceBsc:N2}元人民币</b>");
     captionText.AppendLine($"USDC余额：<b>{usdcBalanceBsc:N2} ≈ {cnyUsdcBalanceBsc:N2}元人民币</b>");
     captionText.AppendLine($"\n<a href=\"t.me/yifanfu\">如需兑换 ERC-20 转账手续费可联系管理员！</a>");
@@ -908,7 +956,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
             }
             catch (Exception textEx)
             {
-                Console.WriteLine($"编辑为文本消息失败：{textEx.Message}");
+                Console.WriteLine($"编辑为文本消息：{textEx.Message}");
                 try
                 {
                     await botClient.SendTextMessageAsync(
