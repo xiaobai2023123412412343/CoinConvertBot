@@ -755,7 +755,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     }
     catch (Exception ex)
     {
-       // Console.WriteLine($"发送查询提示消息失败：{ex.Message}");
+        Console.WriteLine($"发送查询提示消息失败：{ex.Message}");
         return;
     }
 
@@ -770,6 +770,35 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
 
     // 取消冷却
     QueryCooldownManager.CancelCooldown(userId);
+
+    // 如果两条链都查询失败，报错
+    if (isErrorEth && isErrorBsc)
+    {
+        try
+        {
+            await botClient.EditMessageTextAsync(
+                chatId: chatId,
+                messageId: infoMessage.MessageId,
+                text: "查询以太坊和 BSC 地址均失败，请稍后重试！",
+                parseMode: ParseMode.Html,
+                replyMarkup: new InlineKeyboardMarkup(new[]
+                {
+                    new InlineKeyboardButton[]
+                    {
+                        InlineKeyboardButton.WithCallbackData("再查一次", $"eth_query:{ethAddress}"),
+                        InlineKeyboardButton.WithUrl("ETH 详细信息", $"https://etherscan.io/address/{ethAddress}"),
+                        InlineKeyboardButton.WithUrl("BSC 详细信息", $"https://bscscan.com/address/{ethAddress}"),
+                        InlineKeyboardButton.WithUrl("进群使用", "https://t.me/yifanfuBot?startgroup=true")
+                    }
+                })
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"编辑错误提示消息失败：{ex.Message}");
+        }
+        return;
+    }
 
     // 构建查询结果文本
     var captionText = new StringBuilder();
@@ -793,20 +822,18 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
 
     captionText.AppendLine($"<b>来自 </b>{userLink}<b> | 7trx转u 的查询</b>\n");
     captionText.AppendLine($"<b>以太坊主网</b>");
-    captionText.AppendLine($"查询地址：<code>{ethAddress}</code>");
+    captionText.AppendLine($"查询地址：<code>{ethAddress.ToUpper()}</code>");
     if (lastTxTime.HasValue)
     {
         captionText.AppendLine($"最后活跃：<b>{lastTxTime.Value:yyyy-MM-dd HH:mm:ss}</b>");
     }
-    captionText.AppendLine($"当前 Gas：<b>{gasPriceGweiEth:N3} Gwei ≈ ${gasPriceUsdEth:N2}</b>");
-    captionText.AppendLine("——————————————");
+    captionText.AppendLine($"当前 Gas：<b>{gasPriceGweiEth:N3} Gwei ≈ ${gasPriceUsdEth:N2}</b>\n");
     captionText.AppendLine($"  ETH 余额：<b>{ethBalance:N4} ETH</b>");
     captionText.AppendLine($"USDT余额：<b>{usdtBalanceEth:N2} ≈ {cnyUsdtBalanceEth:N2}元人民币</b>");
     captionText.AppendLine($"USDC余额：<b>{usdcBalanceEth:N2} ≈ {cnyUsdcBalanceEth:N2}元人民币</b>");
     captionText.AppendLine("——————————————");
-    captionText.AppendLine($"<b>BNB Smart Chain（BSC币安智能链）</b>");
-    captionText.AppendLine("——————————————");
-    captionText.AppendLine($"  BNB 余额：<b>{bnbBalance:N4} BNB</b>");
+    captionText.AppendLine($"<b>BNB Smart Chain（BSC币安智能链）</b>\n");
+    captionText.AppendLine($"  BNB余额：<b>{bnbBalance:N4} BNB</b>");
     captionText.AppendLine($"USDT余额：<b>{usdtBalanceBsc:N2} ≈ {cnyUsdtBalanceBsc:N2}元人民币</b>");
     captionText.AppendLine($"USDC余额：<b>{usdcBalanceBsc:N2} ≈ {cnyUsdcBalanceBsc:N2}元人民币</b>");
     captionText.AppendLine($"\n<a href=\"t.me/yifanfu\">如需兑换 ERC-20 转账手续费可联系管理员！</a>");
@@ -822,25 +849,6 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
             InlineKeyboardButton.WithUrl("进群使用", shareLink)
         }
     });
-
-    if (isErrorEth || isErrorBsc)
-    {
-        try
-        {
-            await botClient.EditMessageTextAsync(
-                chatId: chatId,
-                messageId: infoMessage.MessageId,
-                text: "查询以太坊或 BSC 地址有误，请稍后重试！",
-                parseMode: ParseMode.Html,
-                replyMarkup: inlineKeyboard
-            );
-        }
-        catch (Exception ex)
-        {
-          //  Console.WriteLine($"编辑错误提示消息失败：{ex.Message}");
-        }
-        return;
-    }
 
     // 尝试编辑为媒体消息
     const string imageUrl = "https://i.postimg.cc/vB4VKgQN/unnamed.png";
@@ -861,7 +869,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     }
     catch (Exception ex)
     {
-       // Console.WriteLine($"编辑查询结果为媒体消息失败：{ex.Message}");
+        Console.WriteLine($"编辑查询结果为媒体消息失败：{ex.Message}");
     }
 
     // 如果编辑媒体消息失败，尝试发送新图片消息
@@ -887,7 +895,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         }
         catch (Exception sendEx)
         {
-           // Console.WriteLine($"发送图片消息失败：{sendEx.Message}");
+            Console.WriteLine($"发送图片消息失败：{sendEx.Message}");
             try
             {
                 await botClient.EditMessageTextAsync(
@@ -900,7 +908,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
             }
             catch (Exception textEx)
             {
-              //  Console.WriteLine($"编辑为文本消息失败：{textEx.Message}");
+                Console.WriteLine($"编辑为文本消息失败：{textEx.Message}");
                 try
                 {
                     await botClient.SendTextMessageAsync(
