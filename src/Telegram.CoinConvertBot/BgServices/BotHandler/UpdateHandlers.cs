@@ -14782,14 +14782,14 @@ var timestamp = message.Date != default(DateTime)
             {
                 inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("查该波场地址", $"query_again,{address}")
+                    InlineKeyboardButton.WithCallbackData("查-该波场地址", $"query_again,{address}")
                 });
             }
             else if (isEthAddress || isQueryAgainWithEthAddress)
             {
                 inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("查该以太坊地址", $"eth_query:{address}")
+                    InlineKeyboardButton.WithCallbackData("查-该以太坊/币安链地址", $"eth_query:{address}")
                 });
             }
 
