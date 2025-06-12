@@ -124,7 +124,129 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-	
+
+//查询币安智能链余额
+public static class BscQuery
+{
+    private static readonly string BscRpcUrl = "https://bsc-dataseed.binance.org/";
+    private static readonly string UsdtContractAddress = "0x55d398326f99059ff775485246999027b3197955"; // BSC USDT
+    private static readonly string UsdcContractAddress = "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d"; // BSC USDC
+    private static readonly decimal WeiToToken = 1_000_000_000_000_000_000m; // 10^18
+
+    public static async Task<(decimal bnbBalance, decimal usdtBalance, decimal usdcBalance, decimal cnyUsdtBalance, decimal cnyUsdcBalance, bool isError)> QueryBscAddressAsync(string address)
+    {
+        try
+        {
+            using var client = new HttpClient();
+
+            // 查询 BNB 余额（Wei 单位）
+            var bnbBalanceWei = await GetBnbBalanceAsync(client, address);
+            var bnbBalance = bnbBalanceWei / WeiToToken; // 转换为 BNB
+
+            // 查询 USDT 余额（Wei 单位）
+            var usdtBalanceWei = await GetErc20BalanceAsync(client, address, UsdtContractAddress);
+            var usdtBalance = usdtBalanceWei / WeiToToken; // 转换为 USDT
+
+            // 查询 USDC 余额（Wei 单位）
+            var usdcBalanceWei = await GetErc20BalanceAsync(client, address, UsdcContractAddress);
+            var usdcBalance = usdcBalanceWei / WeiToToken; // 转换为 USDC
+
+            // 获取 USDT/CNY 价格
+            decimal okxPrice = await GetOkxPriceAsync("usdt", "cny", "alipay");
+            if (okxPrice == 0)
+            {
+                Console.WriteLine("无法获取 OKX USDT/CNY 价格");
+                return (0m, 0m, 0m, 0m, 0m, true);
+            }
+
+            // 计算人民币余额
+            decimal cnyUsdtBalance = usdtBalance * okxPrice;
+            decimal cnyUsdcBalance = usdcBalance * okxPrice; // 假设 USDC 价格与 USDT 相同
+
+            // 验证余额非负
+            if (bnbBalance < 0 || usdtBalance < 0 || usdcBalance < 0)
+            {
+                //Console.WriteLine($"BSC 余额解析错误：BNB={bnbBalance}, USDT={usdtBalance}, USDC={usdcBalance}");
+                return (0m, 0m, 0m, 0m, 0m, true);
+            }
+
+            return (bnbBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, false);
+        }
+        catch (Exception ex)
+        {
+            //Console.WriteLine($"BSC 地址查询异常：{ex.Message}");
+            return (0m, 0m, 0m, 0m, 0m, true);
+        }
+    }
+
+    private static async Task<decimal> GetBnbBalanceAsync(HttpClient client, string address)
+    {
+        var request = new
+        {
+            jsonrpc = "2.0",
+            method = "eth_getBalance",
+            @params = new object[] { address, "latest" },
+            id = 1
+        };
+
+        var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+        var response = await client.PostAsync(BscRpcUrl, content);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var jsonDoc = JsonDocument.Parse(json);
+
+        var result = jsonDoc.RootElement.GetProperty("result").GetString();
+        if (string.IsNullOrEmpty(result))
+        {
+            throw new Exception("BNB 余额查询失败：无效的响应结果");
+        }
+
+        // 解析十六进制为 BigInteger
+        var balanceWei = BigInteger.Parse("0" + result.Substring(2), System.Globalization.NumberStyles.HexNumber);
+        return (decimal)balanceWei; // 返回 Wei 单位
+    }
+
+    private static async Task<decimal> GetErc20BalanceAsync(HttpClient client, string address, string contractAddress)
+    {
+        // balanceOf 方法签名：0x70a08231 + 补齐的地址（去掉 0x，填充到 64 位）
+        var paddedAddress = address.Substring(2).PadLeft(64, '0');
+        var data = $"0x70a08231{paddedAddress}";
+
+        var request = new
+        {
+            jsonrpc = "2.0",
+            method = "eth_call",
+            @params = new object[]
+            {
+                new
+                {
+                    to = contractAddress,
+                    data = data
+                },
+                "latest"
+            },
+            id = 1
+        };
+
+        var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+        var response = await client.PostAsync(BscRpcUrl, content);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var jsonDoc = JsonDocument.Parse(json);
+
+        var result = jsonDoc.RootElement.GetProperty("result").GetString();
+        if (string.IsNullOrEmpty(result))
+        {
+            throw new Exception("ERC-20 余额查询失败：无效的响应结果");
+        }
+
+        // 解析十六进制为 BigInteger
+        var balanceWei = BigInteger.Parse("0" + result.Substring(2), System.Globalization.NumberStyles.HexNumber);
+        return (decimal)balanceWei; // 返回 Wei 单位
+    }
+}
 // 查询以太坊主网代币信息
 public static class EthereumQuery
 {
@@ -190,7 +312,7 @@ public static class EthereumQuery
                         continue;
                     }
 
-                    Console.WriteLine($"以太坊地址查询失败：ETH={isErrorEth} ({ethErrorMessage ?? "无错误消息"}), USDT={isErrorUsdt} ({usdtErrorMessage ?? "无错误消息"}), USDC={isErrorUsdc} ({usdcErrorMessage ?? "无错误消息"}), Gas={isErrorGas} ({gasErrorMessage ?? "无错误消息"}), LastTx={isErrorTxTime} ({txErrorMessage ?? "无错误消息"}), OKX Price={okxPrice}");
+                   // Console.WriteLine($"以太坊地址查询失败：ETH={isErrorEth} ({ethErrorMessage ?? "无错误消息"}), USDT={isErrorUsdt} ({usdtErrorMessage ?? "无错误消息"}), USDC={isErrorUsdc} ({usdcErrorMessage ?? "无错误消息"}), Gas={isErrorGas} ({gasErrorMessage ?? "无错误消息"}), LastTx={isErrorTxTime} ({txErrorMessage ?? "无错误消息"}), OKX Price={okxPrice}");
                     return (0m, 0m, 0m, 0m, 0m, 0m, 0m, null, true);
                 }
 
@@ -203,7 +325,7 @@ public static class EthereumQuery
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"以太坊地址查询异常：{ex.Message}");
+                //Console.WriteLine($"以太坊地址查询异常：{ex.Message}");
                 return (0m, 0m, 0m, 0m, 0m, 0m, 0m, null, true);
             }
         }
@@ -227,7 +349,7 @@ public static class EthereumQuery
             if (status != "1")
             {
                 var errorMessage = jsonDoc.RootElement.GetProperty("message").GetString() + ": " + jsonDoc.RootElement.GetProperty("result").GetString();
-                Console.WriteLine($"ETH 余额查询失败：{errorMessage}");
+               // Console.WriteLine($"ETH 余额查询失败：{errorMessage}");
                 return (0m, true, errorMessage);
             }
 
@@ -237,12 +359,12 @@ public static class EthereumQuery
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
         {
-            Console.WriteLine($"查询 ETH 余额限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
+           // Console.WriteLine($"查询 ETH 余额限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
             return (0m, true, "HTTP 429: Too Many Requests");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"查询 ETH 余额异常：{ex.Message}");
+           // Console.WriteLine($"查询 ETH 余额异常：{ex.Message}");
             return (0m, true, ex.Message);
         }
     }
@@ -272,12 +394,12 @@ public static class EthereumQuery
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
         {
-            Console.WriteLine($"查询 ERC-20 余额限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
+           // Console.WriteLine($"查询 ERC-20 余额限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
             return (0m, true, "HTTP 429: Too Many Requests");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"查询 ERC-20 余额异常：{ex.Message}");
+           // Console.WriteLine($"查询 ERC-20 余额异常：{ex.Message}");
             return (0m, true, ex.Message);
         }
     }
@@ -299,20 +421,20 @@ public static class EthereumQuery
             if (status != "1")
             {
                 var errorMessage = jsonDoc.RootElement.GetProperty("message").GetString() + (resultElement.ValueKind == JsonValueKind.String ? ": " + resultElement.GetString() : "");
-                Console.WriteLine($"最新交易时间查询失败：{errorMessage}");
+               // Console.WriteLine($"最新交易时间查询失败：{errorMessage}");
                 return (null, false, errorMessage); // API 错误，返回 false 不影响余额查询
             }
 
             if (resultElement.ValueKind != JsonValueKind.Array)
             {
-                Console.WriteLine($"最新交易时间查询失败：result 不是数组，类型为 {resultElement.ValueKind}");
+               // Console.WriteLine($"最新交易时间查询失败：result 不是数组，类型为 {resultElement.ValueKind}");
                 return (null, false, $"Unexpected result type: {resultElement.ValueKind}");
             }
 
             var resultArray = resultElement.EnumerateArray();
             if (!resultArray.Any())
             {
-                Console.WriteLine($"地址 {address} 无交易记录");
+               // Console.WriteLine($"地址 {address} 无交易记录");
                 return (null, false, null); // 无交易记录，返回 null 且 isError = false
             }
 
@@ -324,12 +446,12 @@ public static class EthereumQuery
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
         {
-            Console.WriteLine($"查询最新交易时间限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
+           // Console.WriteLine($"查询最新交易时间限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
             return (null, true, "HTTP 429: Too Many Requests"); // 限流错误，触发重试
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"查询最新交易时间异常：{ex.Message}");
+            //Console.WriteLine($"查询最新交易时间异常：{ex.Message}");
             return (null, false, ex.Message); // 其他异常，返回 false 不影响余额查询
         }
     }
@@ -350,7 +472,7 @@ public static class EthereumQuery
             if (gasStatus != "1")
             {
                 var errorMessage = gasJsonDoc.RootElement.GetProperty("message").GetString() + ": " + gasJsonDoc.RootElement.GetProperty("result").GetString();
-                Console.WriteLine($"Gas 价格查询失败：{errorMessage}");
+               // Console.WriteLine($"Gas 价格查询失败：{errorMessage}");
                 return (0m, 0m, true, errorMessage);
             }
 
@@ -372,7 +494,7 @@ public static class EthereumQuery
             if (ethPriceUsd == 0m)
             {
                 var errorMessage = "无法从 CoinDataCache 获取 ETH 美元价格";
-                Console.WriteLine(errorMessage);
+               // Console.WriteLine(errorMessage);
                 return (gasPriceGwei, 0m, true, errorMessage);
             }
 
@@ -383,12 +505,12 @@ public static class EthereumQuery
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
         {
-            Console.WriteLine($"查询 Gas 价格限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
+          //  Console.WriteLine($"查询 Gas 价格限流：HTTP 429，API 密钥：{apiKey.Substring(0, 6)}...");
             return (0m, 0m, true, "HTTP 429: Too Many Requests");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"查询 Gas 价格异常：{ex.Message}");
+          //  Console.WriteLine($"查询 Gas 价格异常：{ex.Message}");
             return (0m, 0m, true, ex.Message);
         }
     }
@@ -524,7 +646,7 @@ public static class QueryCooldownManager
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"发送冷却提示消息失败：{ex.Message}");
+               // Console.WriteLine($"发送冷却提示消息失败：{ex.Message}");
                 return; // 发送失败，直接退出
             }
 
@@ -549,7 +671,7 @@ public static class QueryCooldownManager
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"编辑冷却提示消息失败（剩余 {seconds} 秒）：{ex.Message}");
+                   // Console.WriteLine($"编辑冷却提示消息失败（剩余 {seconds} 秒）：{ex.Message}");
                     return; // 编辑失败，退出倒计时
                 }
             }
@@ -568,7 +690,7 @@ public static class QueryCooldownManager
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"撤回冷却提示消息失败：{ex.Message}");
+               // Console.WriteLine($"撤回冷却提示消息失败：{ex.Message}");
                 // 撤回失败，仅记录日志，继续清理
             }
         }
@@ -578,7 +700,7 @@ public static class QueryCooldownManager
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"倒计时消息处理异常：{ex.Message}");
+           // Console.WriteLine($"倒计时消息处理异常：{ex.Message}");
         }
         finally
         {
@@ -620,27 +742,33 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         return;
     }
 
-    // 先发送一个正在查询的消息，引用用户发送的消息
+    // 发送正在查询的消息
     Telegram.Bot.Types.Message infoMessage;
     try
     {
         infoMessage = await botClient.SendTextMessageAsync(
             chatId: chatId,
-            text: "正在查询以太坊主网地址，请稍后...",
+            text: "正在查询以太坊主网和币安智能链地址，请稍后...",
             parseMode: ParseMode.Html,
-            replyToMessageId: message.MessageId // 引用用户消息
+            replyToMessageId: message.MessageId
         );
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"发送查询提示消息失败：{ex.Message}");
-        return; // 发送失败，直接退出
+       // Console.WriteLine($"发送查询提示消息失败：{ex.Message}");
+        return;
     }
 
-    // 调用以太坊查询方法
-    var (ethBalance, usdtBalance, usdcBalance, cnyUsdtBalance, cnyUsdcBalance, gasPriceGwei, gasPriceUsd, lastTxTime, isError) = await EthereumQuery.QueryEthAddressAsync(ethAddress);
+    // 并行查询以太坊和 BSC
+    var ethTask = EthereumQuery.QueryEthAddressAsync(ethAddress);
+    var bscTask = BscQuery.QueryBscAddressAsync(ethAddress);
 
-    // 取消之前的倒计时（如果有）
+    await Task.WhenAll(ethTask, bscTask);
+
+    var (ethBalance, usdtBalanceEth, usdcBalanceEth, cnyUsdtBalanceEth, cnyUsdcBalanceEth, gasPriceGweiEth, gasPriceUsdEth, lastTxTime, isErrorEth) = ethTask.Result;
+    var (bnbBalance, usdtBalanceBsc, usdcBalanceBsc, cnyUsdtBalanceBsc, cnyUsdcBalanceBsc, isErrorBsc) = bscTask.Result;
+
+    // 取消冷却
     QueryCooldownManager.CancelCooldown(userId);
 
     // 构建查询结果文本
@@ -663,19 +791,24 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         }
     }
 
-    captionText.AppendLine($"<b>来自 </b>{userLink}<b>的以太坊主网地址查询</b>\n");
+    captionText.AppendLine($"<b>来自 </b>{userLink}<b> | 7trx转u 的查询</b>\n");
+    captionText.AppendLine($"<b>以太坊主网</b>");
     captionText.AppendLine($"查询地址：<code>{ethAddress}</code>");
-
     if (lastTxTime.HasValue)
     {
         captionText.AppendLine($"最后活跃：<b>{lastTxTime.Value:yyyy-MM-dd HH:mm:ss}</b>");
     }
-
-    captionText.AppendLine($"当前 Gas：<b>{gasPriceGwei:N3} Gwei ≈ ${gasPriceUsd:N2}</b>");
+    captionText.AppendLine($"当前 Gas：<b>{gasPriceGweiEth:N3} Gwei ≈ ${gasPriceUsdEth:N2}</b>");
     captionText.AppendLine("——————————————");
     captionText.AppendLine($"  ETH 余额：<b>{ethBalance:N4} ETH</b>");
-    captionText.AppendLine($"USDT余额：<b>{usdtBalance:N2} ≈ {cnyUsdtBalance:N2}元人民币</b>");
-    captionText.AppendLine($"USDC余额：<b>{usdcBalance:N2} ≈ {cnyUsdcBalance:N2}元人民币</b>");
+    captionText.AppendLine($"USDT余额：<b>{usdtBalanceEth:N2} ≈ {cnyUsdtBalanceEth:N2}元人民币</b>");
+    captionText.AppendLine($"USDC余额：<b>{usdcBalanceEth:N2} ≈ {cnyUsdcBalanceEth:N2}元人民币</b>");
+    captionText.AppendLine("——————————————");
+    captionText.AppendLine($"<b>BNB Smart Chain（BSC币安智能链）</b>");
+    captionText.AppendLine("——————————————");
+    captionText.AppendLine($"  BNB 余额：<b>{bnbBalance:N4} BNB</b>");
+    captionText.AppendLine($"USDT余额：<b>{usdtBalanceBsc:N2} ≈ {cnyUsdtBalanceBsc:N2}元人民币</b>");
+    captionText.AppendLine($"USDC余额：<b>{usdcBalanceBsc:N2} ≈ {cnyUsdcBalanceBsc:N2}元人民币</b>");
     captionText.AppendLine($"\n<a href=\"t.me/yifanfu\">如需兑换 ERC-20 转账手续费可联系管理员！</a>");
 
     var shareLink = "https://t.me/yifanfuBot?startgroup=true";
@@ -684,32 +817,32 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         new InlineKeyboardButton[]
         {
             InlineKeyboardButton.WithCallbackData("再查一次", $"eth_query:{ethAddress}"),
-            InlineKeyboardButton.WithUrl("详细信息", $"https://etherscan.io/address/{ethAddress}"),
+            InlineKeyboardButton.WithUrl("ETH 详细信息", $"https://etherscan.io/address/{ethAddress}"),
+            InlineKeyboardButton.WithUrl("BSC 详细信息", $"https://bscscan.com/address/{ethAddress}"),
             InlineKeyboardButton.WithUrl("进群使用", shareLink)
         }
     });
 
-    if (isError)
+    if (isErrorEth || isErrorBsc)
     {
         try
         {
-            // 编辑消息显示错误信息
             await botClient.EditMessageTextAsync(
                 chatId: chatId,
                 messageId: infoMessage.MessageId,
-                text: "查询以太坊地址有误或接口限流，请稍后重试！",
+                text: "查询以太坊或 BSC 地址有误，请稍后重试！",
                 parseMode: ParseMode.Html,
-                replyMarkup: inlineKeyboard // 保留按钮
+                replyMarkup: inlineKeyboard
             );
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"编辑错误提示消息失败：{ex.Message}");
+          //  Console.WriteLine($"编辑错误提示消息失败：{ex.Message}");
         }
         return;
     }
 
-    // 尝试编辑为媒体消息（包含图片）
+    // 尝试编辑为媒体消息
     const string imageUrl = "https://i.postimg.cc/vB4VKgQN/unnamed.png";
     bool mediaEditSuccess = false;
     try
@@ -728,7 +861,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"编辑查询结果为媒体消息失败：{ex.Message}");
+       // Console.WriteLine($"编辑查询结果为媒体消息失败：{ex.Message}");
     }
 
     // 如果编辑媒体消息失败，尝试发送新图片消息
@@ -743,7 +876,6 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
                 parseMode: ParseMode.Html,
                 replyMarkup: inlineKeyboard
             );
-            // 删除初始的“正在查询”消息
             try
             {
                 await botClient.DeleteMessageAsync(chatId, infoMessage.MessageId);
@@ -755,8 +887,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         }
         catch (Exception sendEx)
         {
-            Console.WriteLine($"发送图片消息失败：{sendEx.Message}");
-            // 图片发送失败，回退到发送纯文本消息
+           // Console.WriteLine($"发送图片消息失败：{sendEx.Message}");
             try
             {
                 await botClient.EditMessageTextAsync(
@@ -769,8 +900,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
             }
             catch (Exception textEx)
             {
-                Console.WriteLine($"编辑为文本消息失败：{textEx.Message}");
-                // 最后尝试发送新文本消息
+              //  Console.WriteLine($"编辑为文本消息失败：{textEx.Message}");
                 try
                 {
                     await botClient.SendTextMessageAsync(
@@ -788,7 +918,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         }
     }
 
-    // 记录查询时间（首次查询）
+    // 记录查询时间
     QueryCooldownManager.RecordQueryTime(userId);
 }
 //查询获取hyperliquid资金费率 /zijinhy
