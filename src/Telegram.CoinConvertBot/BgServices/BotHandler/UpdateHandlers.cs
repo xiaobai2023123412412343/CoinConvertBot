@@ -728,6 +728,7 @@ public static class QueryCooldownManager
         }
     }
 }
+//主方法查询eth bsc并返回
 public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Message message)
 {
     var chatId = message.Chat.Id;
@@ -755,7 +756,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"发送查询提示消息失败：{ex.Message}");
+        //Console.WriteLine($"发送查询提示消息失败：{ex.Message}");
         return;
     }
 
@@ -795,7 +796,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"编辑错误提示消息失败：{ex.Message}");
+            //Console.WriteLine($"编辑错误提示消息失败：{ex.Message}");
         }
         return;
     }
@@ -804,7 +805,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     decimal okxPrice = await GetOkxPriceAsync("usdt", "cny", "alipay");
     if (okxPrice == 0)
     {
-        Console.WriteLine("无法获取 OKX USDT/CNY 价格，使用默认值");
+        //Console.WriteLine("无法获取 OKX USDT/CNY 价格，使用默认值");
         okxPrice = 7.17m; // 默认值（根据示例）
     }
 
@@ -836,11 +837,11 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     // 如果未获取到价格，记录日志
     if (ethPriceUsd == 0m)
     {
-        Console.WriteLine("无法获取 ETH 美元价格，人民币价值将不显示");
+       // Console.WriteLine("无法获取 ETH 美元价格，人民币价值将不显示");
     }
     if (bnbPriceUsd == 0m)
     {
-        Console.WriteLine("无法获取 BNB 美元价格，人民币价值将不显示");
+      //  Console.WriteLine("无法获取 BNB 美元价格，人民币价值将不显示");
     }
 
     // 计算 ETH 和 BNB 人民币价值
@@ -917,7 +918,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"编辑查询结果为媒体消息失败：{ex.Message}");
+       // Console.WriteLine($"编辑查询结果为媒体消息失败：{ex.Message}");
     }
 
     // 如果编辑媒体消息失败，尝试发送新图片消息
@@ -938,12 +939,12 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"删除初始消息失败：{ex.Message}");
+              //  Console.WriteLine($"删除初始消息失败：{ex.Message}");
             }
         }
         catch (Exception sendEx)
         {
-            Console.WriteLine($"发送图片消息失败：{sendEx.Message}");
+          //  Console.WriteLine($"发送图片消息失败：{sendEx.Message}");
             try
             {
                 await botClient.EditMessageTextAsync(
@@ -956,7 +957,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
             }
             catch (Exception textEx)
             {
-                Console.WriteLine($"编辑为文本消息：{textEx.Message}");
+              //  Console.WriteLine($"编辑为文本消息：{textEx.Message}");
                 try
                 {
                     await botClient.SendTextMessageAsync(
@@ -968,7 +969,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
                 }
                 catch (Exception finalEx)
                 {
-                    Console.WriteLine($"发送文本消息失败：{finalEx.Message}");
+                  //  Console.WriteLine($"发送文本消息失败：{finalEx.Message}");
                 }
             }
         }
