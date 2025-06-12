@@ -6778,10 +6778,9 @@ private static void UnhandledExceptionHandler(object sender, UnhandledExceptionE
 //存储用户资料    
 private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, Message message)
 {
-    // 检查消息是否来自指定的用户 ID
+    // 检查消息是否来自指定的用户 ID（管理员）
     if (message.From.Id != 1427768220)
     {
-        // 如果不是管理员，直接返回，不做任何处理
         return;
     }
 
@@ -6792,53 +6791,94 @@ private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, 
     var regex = new Regex(@"(.*?)用户名：@(.*?)\s+id：(\d+)", RegexOptions.IgnoreCase);
     var matches = regex.Matches(lowerCaseMessage);
 
-    foreach (Match match in matches)
+    lock (_followersLock) // 添加线程锁保护 Followers 操作
     {
-        try
+        foreach (Match match in matches)
         {
-            string name = match.Groups[1].Value.Trim();
-            string username = match.Groups[2].Value.Trim();
-            long id = long.Parse(match.Groups[3].Value.Trim());
+            try
+            {
+                string name = match.Groups[1].Value.Trim();
+                string username = match.Groups[2].Value.Trim();
+                long id = long.Parse(match.Groups[3].Value.Trim());
 
-            // 检查是否已经存在相同ID的用户
-            var existingUser = Followers.FirstOrDefault(u => u.Id == id);
-            if (existingUser != null)
-            {
-                // 如果存在，更新用户名和名字
-                existingUser.Username = username;
-                existingUser.Name = name;
+                // 检查是否在黑名单中
+                if (BlacklistedUserIds.Contains(id) || BlacklistedUsernames.Contains(username))
+                {
+                    // 如果在黑名单中，移除已存在的用户
+                    var existingBlacklistedUser = Followers.FirstOrDefault(u => u.Id == id);
+                    if (existingBlacklistedUser != null)
+                    {
+                        Followers.Remove(existingBlacklistedUser);
+                    }
+                    continue; // 跳过黑名单用户
+                }
+
+                // 检查是否已经存在相同ID的用户
+                var existingUser = Followers.FirstOrDefault(u => u.Id == id);
+                if (existingUser != null)
+                {
+                    // 如果存在，更新用户名和名字
+                    existingUser.Username = username;
+                    existingUser.Name = name;
+                }
+                else
+                {
+                    // 如果不存在，创建新的用户对象并添加到列表中
+                    var user = new User
+                    {
+                        Name = name,
+                        Username = username,
+                        Id = id,
+                        FollowTime = DateTime.UtcNow.AddHours(8)
+                    };
+                    Followers.Add(user);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // 如果不存在，创建新的用户对象并添加到列表中
-                var user = new User { Name = name, Username = username, Id = id, FollowTime = DateTime.UtcNow.AddHours(8) };
+                // 在这里处理异常，例如记录日志
+                // Log.Error(ex, "处理用户信息时出错");
+                continue; // 跳过当前用户，继续处理下一个用户
+            }
+        }
+
+        // 单独存储用户名或ID
+        if (message.Text.StartsWith("存 用户名："))
+        {
+            string username = message.Text.Substring("存 用户名：".Length).Trim();
+            // 检查用户名是否在黑名单中
+            if (BlacklistedUsernames.Contains(username))
+            {
+                // 移除已存在的黑名单用户（如果有）
+                var existingBlacklistedUser = Followers.FirstOrDefault(u => u.Username == username);
+                if (existingBlacklistedUser != null)
+                {
+                    Followers.Remove(existingBlacklistedUser);
+                }
+                return;
+            }
+            var user = new User { Username = username, FollowTime = DateTime.UtcNow.AddHours(8) };
+            Followers.Add(user);
+        }
+        else if (message.Text.StartsWith("存 ID："))
+        {
+            string idText = message.Text.Substring("存 ID：".Length).Trim();
+            if (long.TryParse(idText, out long id))
+            {
+                // 检查ID是否在黑名单中
+                if (BlacklistedUserIds.Contains(id))
+                {
+                    // 移除已存在的黑名单用户（如果有）
+                    var existingBlacklistedUser = Followers.FirstOrDefault(u => u.Id == id);
+                    if (existingBlacklistedUser != null)
+                    {
+                        Followers.Remove(existingBlacklistedUser);
+                    }
+                    return;
+                }
+                var user = new User { Id = id, FollowTime = DateTime.UtcNow.AddHours(8) };
                 Followers.Add(user);
             }
-
-            // 原本的代码逻辑中，这里会发送一条消息确认用户被添加，现在我们移除这个逻辑，改为在最后统一发送
-        }
-        catch (Exception ex)
-        {
-            // 在这里处理异常，例如记录日志
-            // Log.Error(ex, "处理用户信息时出错");
-            continue; // 跳过当前用户，继续处理下一个用户
-        }
-    }
-
-    // 单独存储用户名或ID
-    if (message.Text.StartsWith("存 用户名："))
-    {
-        string username = message.Text.Substring("存 用户名：".Length).Trim();
-        var user = new User { Username = username, FollowTime = DateTime.UtcNow.AddHours(8) };
-        Followers.Add(user);
-    }
-    else if (message.Text.StartsWith("存 ID："))
-    {
-        string idText = message.Text.Substring("存 ID：".Length).Trim();
-        if (long.TryParse(idText, out long id))
-        {
-            var user = new User { Id = id, FollowTime = DateTime.UtcNow.AddHours(8) };
-            Followers.Add(user);
         }
     }
 
@@ -8192,6 +8232,18 @@ private static async Task<string> FetchDcIdFromUsername(string username, long us
 private static readonly object _followersLock = new object(); // 添加线程锁，用于保护 Followers 列表的并发访问
 private static readonly List<User> Followers = new List<User>();
 
+//黑名单，指定用户不储存
+private static readonly HashSet<long> BlacklistedUserIds = new HashSet<long>
+{
+    1087968824,
+    // 在这里添加更多用户ID，每行一个
+};
+
+private static readonly HashSet<string> BlacklistedUsernames = new HashSet<string>
+{
+    "GroupAnonymousBot",
+    // 在这里添加更多用户名，每行一个
+};
 //完整列表
 private static async Task HandleFullListCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
@@ -8249,6 +8301,22 @@ private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClie
 }   
 private static void AddFollower(Message message)
 {
+    // 检查是否在黑名单中
+    if (BlacklistedUserIds.Contains(message.From.Id) ||
+        BlacklistedUsernames.Contains(message.From.Username ?? ""))
+    {
+        // 如果在黑名单中，从仓库中移除（如果存在）
+        lock (_followersLock)
+        {
+            var existingUser = Followers.FirstOrDefault(x => x.Id == message.From.Id);
+            if (existingUser != null)
+            {
+                Followers.Remove(existingUser);
+            }
+        }
+        return;
+    }
+
     lock (_followersLock)
     {
         var user = Followers.FirstOrDefault(x => x.Id == message.From.Id);
@@ -8260,7 +8328,7 @@ private static void AddFollower(Message message)
                 Username = message.From.Username, 
                 Id = message.From.Id, 
                 FollowTime = DateTime.UtcNow.AddHours(8),
-                IsBot = message.From.IsBot  // 设置 IsBot 属性
+                IsBot = message.From.IsBot
             });
         }
     }
