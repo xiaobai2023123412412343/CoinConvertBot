@@ -16208,10 +16208,12 @@ if (message.Type == MessageType.Text && (message.Text.Equals("询千百度", Str
 示例：直接发送如： <code>100CNY</code> 自带计算并返回结果！</blockquote>
 
 支持查询区块链账户信息：
-<blockquote expandable>支持的链：<b>TRON（TRC-20）、Ethereum（ERC-20）</b>
+<blockquote expandable>支持的链：<b>TRON（TRC-20）、Ethereum（ERC-20）、BNB Smart Chain（BSC-币安智能链）</b>
 波场(TRON)地址示例：
 <code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>
 以太坊(ETH)地址示例：
+<code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code>
+币安智能链(BSC)地址示例：
 <code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code>
 
 示例：直接发送地址如：<code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code></blockquote>
