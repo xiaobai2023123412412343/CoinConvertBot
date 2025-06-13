@@ -993,7 +993,7 @@ if (fromUser != null)
     captionText.AppendLine($"  BNB余额：<b>{bnbBalance:N4} BNB</b>{(bnbCnyValue > 0 ? $" ≈ <b>{bnbCnyValue:N2}元人民币</b>" : "")}");
     captionText.AppendLine($"USDT余额：<b>{usdtBalanceBsc:N2} ≈ {cnyUsdtBalanceBsc:N2}元人民币</b>");
     captionText.AppendLine($"USDC余额：<b>{usdcBalanceBsc:N2} ≈ {cnyUsdcBalanceBsc:N2}元人民币</b>");
-    captionText.AppendLine($"\n<a href=\"t.me/yifanfu\">如需兑换ERC-20或BEP-20转账手续费可联系管理员！</a>");
+    captionText.AppendLine($"\n<a href=\"t.me/yifanfu\">代开会员 | TRX兑换 | 点击购买：\nTRC-20、ERC-20、BEP-20 能量！ </a>");
 
     var shareLink = "https://t.me/yifanfuBot?startgroup=true";
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
