@@ -20049,7 +20049,7 @@ if (message?.Text != null)
             {
                 TranslationSettingsManager.SetTranslationStatus(chatId, false); // 关闭群组翻译
                 var sentMessageClose = await botClient.SendTextMessageAsync(chatId, "已关闭群组自动翻译功能");
-                await Task.Delay(1000); // 延迟3秒以确保用户看到消息
+                await Task.Delay(1000); // 延迟1秒以确保用户看到消息
                 await botClient.DeleteMessageAsync(chatId, sentMessageClose.MessageId); // 撤回机器人消息
                 await botClient.DeleteMessageAsync(chatId, message.MessageId); // 撤回用户命令
             }
@@ -20070,7 +20070,7 @@ if (message?.Text != null)
             {
                 TranslationSettingsManager.SetTranslationStatus(chatId, true); // 开启群组翻译
                 var sentMessageOpen = await botClient.SendTextMessageAsync(chatId, "已开启群组自动翻译功能");
-                await Task.Delay(1000); // 延迟3秒
+                await Task.Delay(1000); // 延迟1秒
                 await botClient.DeleteMessageAsync(chatId, sentMessageOpen.MessageId); // 撤回机器人消息
                 await botClient.DeleteMessageAsync(chatId, message.MessageId); // 撤回用户命令
             }
