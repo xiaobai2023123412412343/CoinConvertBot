@@ -17087,52 +17087,125 @@ else if (messageText.Equals("开启计算", StringComparison.OrdinalIgnoreCase))
         );
     }
 }
-// 检查消息是否为纯数字，如果是，则计算上涨和下跌的数据
-if (decimal.TryParse(messageText, out decimal number))
+// 处理价格涨跌幅计算消息
+try
 {
-    var responseText = new StringBuilder($"{number} 涨跌 1-10% 数据\n\n");
+    // 确定消息来源ID（私聊使用用户ID，群聊使用群组ID）
+    long sourceId = message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id;
 
-    for (int i = 1; i <= 10; i++)
+    // 检查是否在黑名单中
+    if (PriceCalculationBlacklistManager.IsBlacklisted(sourceId))
     {
-        decimal downPercentage = 1m - (i / 100m);
-        decimal upPercentage = 1m + (i / 100m);
-        decimal down = Math.Round(number * downPercentage, 8, MidpointRounding.AwayFromZero); // 下跌
-        decimal up = Math.Round(number * upPercentage, 8, MidpointRounding.AwayFromZero); // 上涨
-        responseText.AppendLine($"`- {i}%  {down} | {up}  +{i}%`");
+        //Console.WriteLine($"ID {sourceId} 在黑名单中，忽略价格涨跌计算请求");
+        return; // 在黑名单中，直接返回，不回复
     }
 
-    _ = botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: responseText.ToString(),
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown
-	//replyToMessageId: message.MessageId // 这里引用用户的消息ID    
-    );
-}
-else if (messageText.Contains("~") || messageText.Contains("～"))
-{
-    var parts = messageText.Split(new[] { '~', '～' }, StringSplitOptions.RemoveEmptyEntries);
-    if (parts.Length == 2 && decimal.TryParse(parts[0], out decimal start) && decimal.TryParse(parts[1], out decimal end))
+    // 创建内联按钮：关闭自动计算
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
-        string responseMessage;
-        if (start < end)
+        new InlineKeyboardButton("关闭自动计算") { CallbackData = "关闭计算" }
+    });
+
+    // 检查消息是否为纯数字
+    if (decimal.TryParse(messageText, out decimal number))
+    {
+        // 构建 1-10% 涨跌幅表格
+        var responseText = new StringBuilder($"{number} 涨跌 1-10% 数据\n\n");
+
+        for (int i = 1; i <= 10; i++)
         {
-            // 计算上涨百分比
-            decimal increasePercentage = Math.Round((end - start) / start * 100, 2);
-            responseMessage = $"从{start}到{end}，上涨 {increasePercentage}%";
+            decimal downPercentage = 1m - (i / 100m);
+            decimal upPercentage = 1m + (i / 100m);
+            decimal down = Math.Round(number * downPercentage, 8, MidpointRounding.AwayFromZero); // 下跌
+            decimal up = Math.Round(number * upPercentage, 8, MidpointRounding.AwayFromZero); // 上涨
+            responseText.AppendLine($"`- {i}%  {down} | {up}  +{i}%`");
+        }
+
+        // 发送回复消息，包含内联按钮
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: responseText.ToString(),
+            parseMode: ParseMode.Markdown,
+            replyMarkup: inlineKeyboard
+            //replyToMessageId: message.MessageId // 引用用户消息ID（根据需要取消注释）
+        ).ContinueWith(task =>
+        {
+            if (task.IsFaulted)
+            {
+                //Console.WriteLine($"发送涨跌幅表格消息失败：{task.Exception?.InnerException?.Message}");
+            }
+        });
+
+        //Console.WriteLine($"已发送 {number} 的涨跌幅表格（ID: {sourceId}）");
+    }
+    // 检查消息是否为范围格式（包含 ~ 或 ～）
+    else if (messageText.Contains("~") || messageText.Contains("～"))
+    {
+        var parts = messageText.Split(new[] { '~', '～' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 2 && decimal.TryParse(parts[0], out decimal start) && decimal.TryParse(parts[1], out decimal end))
+        {
+            string responseMessage;
+            if (start < end)
+            {
+                // 计算上涨百分比
+                decimal increasePercentage = Math.Round((end - start) / start * 100, 2);
+                responseMessage = $"从 {start} 到 {end}，上涨 {increasePercentage}%。";
+            }
+            else
+            {
+                // 计算下跌百分比
+                decimal decreasePercentage = Math.Round((start - end) / start * 100, 2);
+                responseMessage = $"从 {start} 到 {end}，下跌 {decreasePercentage}%。";
+            }
+
+            // 发送回复消息，包含内联按钮
+            _ = botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: responseMessage,
+                replyMarkup: inlineKeyboard
+                //replyToMessageId: message.MessageId // 引用用户消息ID（根据需要取消注释）
+            ).ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    //Console.WriteLine($"发送涨跌幅百分比消息失败：{task.Exception?.InnerException?.Message}");
+                }
+            });
+
+            //Console.WriteLine($"已发送 {start} 到 {end} 的涨跌幅计算（ID: {sourceId}）");
         }
         else
         {
-            // 计算下跌百分比
-            decimal decreasePercentage = Math.Round((start - end) / start * 100, 2);
-            responseMessage = $"从{start}到{end}，下跌 {decreasePercentage}%";
+            // 无效的范围格式
+            _ = botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "无效的范围格式，请使用类似 '1~2' 或 '1～2' 的格式！",
+                replyMarkup: inlineKeyboard
+            ).ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    //Console.WriteLine($"发送无效格式提示失败：{task.Exception?.InnerException?.Message}");
+                }
+            });
         }
-
-        _ = botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: responseMessage
-	    //replyToMessageId: message.MessageId // 这里引用用户的消息ID	
-        );
     }
+}
+catch (Exception ex)
+{
+    //Console.WriteLine($"处理价格涨跌幅计算异常：{ex.Message}");
+    // 发送错误提示
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "处理命令时发生错误，请稍后重试！",
+        parseMode: ParseMode.Html
+    ).ContinueWith(task =>
+    {
+        if (task.IsFaulted)
+        {
+            //Console.WriteLine($"发送错误提示消息失败：{task.Exception?.InnerException?.Message}");
+        }
+    });
 }
 // 在处理消息的地方，当机器人收到 /jisuzhangdie 消息或者 "市场异动" 文本时
 if (messageText.StartsWith("/jisuzhangdie") || messageText.Contains("市场异动"))
