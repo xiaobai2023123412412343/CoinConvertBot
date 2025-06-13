@@ -125,6 +125,55 @@ public static class UpdateHandlers
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
 
+// 新增一个类来管理价格涨跌计算的黑名单
+public static class PriceCalculationBlacklistManager
+{
+    private static readonly HashSet<long> _blacklistedIds = new();
+    private static readonly object _lock = new();
+
+    // 检查是否在黑名单中
+    public static bool IsBlacklisted(long id)
+    {
+        lock (_lock)
+        {
+            return _blacklistedIds.Contains(id);
+        }
+    }
+
+    // 添加到黑名单
+    public static bool AddToBlacklist(long id)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                return _blacklistedIds.Add(id); // 返回 true 表示添加成功，false 表示已存在
+            }
+            catch (Exception ex)
+            {
+                //Console.WriteLine($"添加黑名单失败（ID: {id}）：{ex.Message}");
+                return false;
+            }
+        }
+    }
+
+    // 从黑名单移除
+    public static bool RemoveFromBlacklist(long id)
+    {
+        lock (_lock)
+        {
+            try
+            {
+                return _blacklistedIds.Remove(id); // 返回 true 表示移除成功，false 表示不存在
+            }
+            catch (Exception ex)
+            {
+                //Console.WriteLine($"移除黑名单失败（ID: {id}）：{ex.Message}");
+                return false;
+            }
+        }
+    }
+}
 // 查询币安智能链余额
 public static class BscQuery
 {
@@ -16938,7 +16987,106 @@ if (messageText.StartsWith("/gongtongqunzu"))
             text: "无法检查您的群组状态，请确保机器人具有查看群组成员信息的权限。"
         );
     }
-}   
+} 
+// 处理 开启计算 关闭计算
+if (messageText.Equals("关闭计算", StringComparison.OrdinalIgnoreCase))
+{
+    string responseMessage = "已关闭价格涨跌计算。";
+    long idToBlacklist = message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id;
+
+    try
+    {
+        // 检查是否已关闭（ID已在黑名单中）
+        if (PriceCalculationBlacklistManager.IsBlacklisted(idToBlacklist))
+        {
+            responseMessage = "当前已关闭自动计算价格涨跌幅，无需重复关闭！";
+        }
+        else
+        {
+            // 尝试添加到黑名单
+            bool added = PriceCalculationBlacklistManager.AddToBlacklist(idToBlacklist);
+            if (!added)
+            {
+                //Console.WriteLine($"添加黑名单失败（ID: {idToBlacklist}）");
+                responseMessage = "关闭价格涨跌计算失败，请稍后重试！";
+            }
+        }
+
+        // 发送纯文本回复消息，不附带按钮
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: responseMessage,
+            parseMode: ParseMode.Html
+        ).ContinueWith(task =>
+        {
+            if (task.IsFaulted)
+            {
+                //Console.WriteLine($"发送关闭计算回复消息失败：{task.Exception?.InnerException?.Message}");
+            }
+        });
+
+        //Console.WriteLine($"价格涨跌计算已关闭（ID: {idToBlacklist}）");
+    }
+    catch (Exception ex)
+    {
+        //Console.WriteLine($"处理关闭计算命令异常：{ex.Message}");
+        // 发送错误提示
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "处理命令时发生错误，请稍后重试！",
+            parseMode: ParseMode.Html
+        );
+    }
+}
+else if (messageText.Equals("开启计算", StringComparison.OrdinalIgnoreCase))
+{
+    string responseMessage = "已开启价格涨跌计算。";
+    long idToRemove = message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id;
+
+    try
+    {
+        // 检查是否已开启（ID不在黑名单中）
+        if (!PriceCalculationBlacklistManager.IsBlacklisted(idToRemove))
+        {
+            responseMessage = "当前已开启自动计算价格涨跌幅，无需重复开启！";
+        }
+        else
+        {
+            // 尝试从黑名单移除
+            bool removed = PriceCalculationBlacklistManager.RemoveFromBlacklist(idToRemove);
+            if (!removed)
+            {
+                //Console.WriteLine($"移除黑名单失败（ID: {idToRemove}）");
+                responseMessage = "开启价格涨跌计算失败，请稍后重试！";
+            }
+        }
+
+        // 发送纯文本回复消息，不附带按钮
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: responseMessage,
+            parseMode: ParseMode.Html
+        ).ContinueWith(task =>
+        {
+            if (task.IsFaulted)
+            {
+                //Console.WriteLine($"发送开启计算回复消息失败：{task.Exception?.InnerException?.Message}");
+            }
+        });
+
+        //Console.WriteLine($"价格涨跌计算已开启（ID: {idToRemove}）");
+    }
+    catch (Exception ex)
+    {
+        //Console.WriteLine($"处理开启计算命令异常：{ex.Message}");
+        // 发送错误提示
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "处理命令时发生错误，请稍后重试！",
+            parseMode: ParseMode.Html
+        );
+    }
+}
 // 检查消息是否为纯数字，如果是，则计算上涨和下跌的数据
 if (decimal.TryParse(messageText, out decimal number))
 {
