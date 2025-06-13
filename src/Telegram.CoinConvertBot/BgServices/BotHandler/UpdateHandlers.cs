@@ -20048,18 +20048,18 @@ if (message?.Text != null)
             try
             {
                 TranslationSettingsManager.SetTranslationStatus(chatId, false); // 关闭群组翻译
-                var sentMessageClose = await botClient.SendTextMessageAsync(chatId, "已关闭群组自动翻译功能");
-                await Task.Delay(1000); // 延迟1秒以确保用户看到消息
+                var sentMessageClose = await botClient.SendTextMessageAsync(chatId, "已关闭群组自动翻译功能，如需使用发送： 开启翻译");
+                await Task.Delay(3000); // 延迟3秒以确保用户看到消息
                 await botClient.DeleteMessageAsync(chatId, sentMessageClose.MessageId); // 撤回机器人消息
                 await botClient.DeleteMessageAsync(chatId, message.MessageId); // 撤回用户命令
             }
             catch (ApiRequestException ex)
             {
-                Log.Error($"群组翻译关闭时撤回消息失败: {ex.Message}");
+                //Log.Error($"群组翻译关闭时撤回消息失败: {ex.Message}");
             }
             catch (Exception ex)
             {
-                Log.Error($"群组翻译关闭时发生未知错误: {ex.Message}");
+                //Log.Error($"群组翻译关闭时发生未知错误: {ex.Message}");
                 await botClient.SendTextMessageAsync(chatId, "处理关闭翻译命令时发生错误，请稍后重试。");
             }
             return;
@@ -20070,17 +20070,17 @@ if (message?.Text != null)
             {
                 TranslationSettingsManager.SetTranslationStatus(chatId, true); // 开启群组翻译
                 var sentMessageOpen = await botClient.SendTextMessageAsync(chatId, "已开启群组自动翻译功能");
-                await Task.Delay(1000); // 延迟1秒
+                await Task.Delay(3000); // 延迟3秒
                 await botClient.DeleteMessageAsync(chatId, sentMessageOpen.MessageId); // 撤回机器人消息
                 await botClient.DeleteMessageAsync(chatId, message.MessageId); // 撤回用户命令
             }
             catch (ApiRequestException ex)
             {
-                Log.Error($"群组翻译开启时撤回消息失败: {ex.Message}");
+               // Log.Error($"群组翻译开启时撤回消息失败: {ex.Message}");
             }
             catch (Exception ex)
             {
-                Log.Error($"群组翻译开启时发生未知错误: {ex.Message}");
+               // Log.Error($"群组翻译开启时发生未知错误: {ex.Message}");
                 await botClient.SendTextMessageAsync(chatId, "处理开启翻译命令时发生错误，请稍后重试。");
             }
             return;
@@ -20094,16 +20094,16 @@ if (message?.Text != null)
             try
             {
                 TranslationSettingsManager.SetTranslationStatus(userId, false); // 将用户加入黑名单
-                await botClient.SendTextMessageAsync(chatId, "已关闭您的自动翻译功能。");
+                await botClient.SendTextMessageAsync(chatId, "已关闭您的自动翻译功能，如需使用发送： 开启翻译");
             }
             catch (ApiRequestException ex)
             {
-                Log.Error($"私聊翻译关闭时发送消息失败: {ex.Message}");
+               // Log.Error($"私聊翻译关闭时发送消息失败: {ex.Message}");
                 await botClient.SendTextMessageAsync(chatId, "无法发送关闭确认消息，请稍后重试。");
             }
             catch (Exception ex)
             {
-                Log.Error($"私聊翻译关闭时发生未知错误: {ex.Message}");
+               // Log.Error($"私聊翻译关闭时发生未知错误: {ex.Message}");
                 await botClient.SendTextMessageAsync(chatId, "处理关闭翻译命令时发生错误，请稍后重试。");
             }
             return;
@@ -20117,12 +20117,12 @@ if (message?.Text != null)
             }
             catch (ApiRequestException ex)
             {
-                Log.Error($"私聊翻译开启时发送消息失败: {ex.Message}");
+               // Log.Error($"私聊翻译开启时发送消息失败: {ex.Message}");
                 await botClient.SendTextMessageAsync(chatId, "无法发送开启确认消息，请稍后重试。");
             }
             catch (Exception ex)
             {
-                Log.Error($"私聊翻译开启时发生未知错误: {ex.Message}");
+               // Log.Error($"私聊翻译开启时发生未知错误: {ex.Message}");
                 await botClient.SendTextMessageAsync(chatId, "处理开启翻译命令时发生错误，请稍后重试。");
             }
             return;
