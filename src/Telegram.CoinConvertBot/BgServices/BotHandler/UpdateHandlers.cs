@@ -13770,11 +13770,18 @@ if (update.Type == UpdateType.Message)
                             // 清理可能包含的HTML标签
                             translatedText = System.Web.HttpUtility.HtmlEncode(translatedText);
                             
-                            await botClient.SendTextMessageAsync(
-                                message.Chat.Id, 
-                                $"翻译结果：\n\n<code>{translatedText}</code>", 
-                                parseMode: ParseMode.Html
-                            );
+                                // 添加内联按钮
+                                var keyboard = new InlineKeyboardMarkup(new[]
+                                {
+                                    InlineKeyboardButton.WithCallbackData("关闭自动翻译", "关闭翻译")
+                                });
+
+                                await botClient.SendTextMessageAsync(
+                                    message.Chat.Id, 
+                                    $"翻译结果：\n\n<code>{translatedText}</code>", 
+                                    parseMode: ParseMode.Html,
+                                    replyMarkup: keyboard
+                                );
                         }
                         catch (ApiRequestException ex)
                         {
