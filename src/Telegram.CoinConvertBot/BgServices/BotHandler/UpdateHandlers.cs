@@ -16472,7 +16472,6 @@ if (message.Type == MessageType.Text && (message.Text.Equals("询千百度", Str
 目前支持翻译的语种有：
 <code>英语</code>, <code>日语</code>, <code>韩语</code>, <code>越南语</code>, <code>高棉语</code>, <code>泰语</code>, <code>菲律宾语</code>, <code>阿拉伯语</code>, <code>老挝语</code>, <code>马来西亚语</code> 等超过62个主流语种及发音！</blockquote>
 
-
 <a href=""https://t.me/yifanfubot"">欢迎各位老板前来兑换能量或开通电报会员！
 也可以直接打赏作者！谢谢大家的支持厚爱！</a>";
 
