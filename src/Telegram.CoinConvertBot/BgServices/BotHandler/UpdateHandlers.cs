@@ -13965,8 +13965,11 @@ else if(update.CallbackQuery.Data == "commandList")
 在群里发送：<code>关闭键盘</code>
 自动把机器人键盘收回去。
 
-在群里发：<code>关闭翻译</code>/<code>开启翻译</code>（默认开启）
+对话框发：<code>关闭翻译</code>/<code>开启翻译</code>（默认开启）
 自动在本群停止翻译，发送外语不再自动翻译成中文！
+
+对话框发：<code>关闭计算</code>/<code>开启计算</code>（默认开启）
+自动停止自动计算价格涨跌幅！
 
 在任意群组发送： 签到 即可获得签到积分，积分可兑换电报会员，FF Pro会员等。
 
