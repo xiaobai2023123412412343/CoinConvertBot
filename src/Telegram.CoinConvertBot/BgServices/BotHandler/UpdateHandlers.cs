@@ -9133,9 +9133,21 @@ private static async Task HandleTranslateCommandAsync(ITelegramBotClient botClie
             }
             else
             {
-                var responseText = $"翻译结果：\n\n<code>{translatedText}</code>";
+                // 清理可能包含的HTML标签
+                translatedText = System.Web.HttpUtility.HtmlEncode(translatedText);
 
-                await botClient.SendTextMessageAsync(message.Chat.Id, responseText, parseMode: ParseMode.Html);
+                // 添加内联按钮
+                var keyboard = new InlineKeyboardMarkup(new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("关闭自动翻译", "关闭翻译")
+                });
+
+                await botClient.SendTextMessageAsync(
+                    message.Chat.Id,
+                    $"翻译结果：\n\n<code>{translatedText}</code>",
+                    parseMode: ParseMode.Html,
+                    replyMarkup: keyboard
+                );
 
                 // 发送发音音频
                 var audioUrl = GoogleTranslateFree.GetPronunciationAudioUrl(translatedText, targetLanguageCode);
@@ -13558,255 +13570,236 @@ if (update.Type == UpdateType.CallbackQuery)
         }
     }
 }
-        if (update.Type == UpdateType.Message)
-    {
-
+if (update.Type == UpdateType.Message)
+{
     var message = update.Message; // 确保 message 在开头声明
     if (message?.Text != null)
     {
         var chatId = message.Chat.Id; // 使用 message 获取 chatId
         var userId = message.From?.Id ?? 0; // 使用 message 获取 userId
 
-            if (message.Text.StartsWith("/gzgzgz") && message.From.Id == AdminUserId)
-            {
-                await HandleGetFollowersCommandAsync(botClient, message);
-            }
+        if (message.Text.StartsWith("/gzgzgz") && message.From.Id == AdminUserId)
+        {
+            await HandleGetFollowersCommandAsync(botClient, message);
+        }
 
-            // 检查输入文本是否为 Tron 地址
-            var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
-            // 检查输入文本是否为以太坊地址（0x 开头，固定 42 位）
-            var isEthAddress = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{40}$");
-            // 检查输入文本是否为以太坊格式但长度不正确（0x 开头，长度 > 30 且 < 42 或 > 42）
-            var isInvalidEthLength = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{30,}$") && !isEthAddress;
+        // 检查输入文本是否为 Tron 地址
+        var isTronAddress = Regex.IsMatch(message.Text, @"^(T[A-Za-z0-9]{33})$");
+        // 检查输入文本是否为以太坊地址（0x 开头，固定 42 位）
+        var isEthAddress = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{40}$");
+        // 检查输入文本是否为以太坊格式但长度不正确（0x 开头，长度 > 30 且 < 42 或 > 42）
+        var isInvalidEthLength = Regex.IsMatch(message.Text, @"^0x[a-fA-F0-9]{30,}$") && !isEthAddress;
 
-            var addressLength = message.Text.Length;
-            // 检查地址长度是否大于20且小于34，或者大于34（针对波场地址）
-            var isInvalidTronLength = message.Text.StartsWith("T") && (addressLength > 20 && addressLength < 34 || addressLength > 34);
+        var addressLength = message.Text.Length;
+        // 检查地址长度是否大于20且小于34，或者大于34（针对波场地址）
+        var isInvalidTronLength = message.Text.StartsWith("T") && (addressLength > 20 && addressLength < 34 || addressLength > 34);
 
-            // 检查冷却状态
-            var (isInCooldown, remainingSeconds) = QueryCooldownManager.CheckCooldown(userId);
-            if (isInCooldown)
-            {
-                await QueryCooldownManager.StartCooldownAsync(botClient, chatId, userId);
-                return;
-            }
+        // 检查冷却状态
+        var (isInCooldown, remainingSeconds) = QueryCooldownManager.CheckCooldown(userId);
+        if (isInCooldown)
+        {
+            await QueryCooldownManager.StartCooldownAsync(botClient, chatId, userId);
+            return;
+        }
 
-            if (isTronAddress)
+        if (isTronAddress)
+        {
+            await HandleQueryCommandAsync(botClient, message); // 波场地址处理
+        }
+        else if (isEthAddress)
+        {
+            await HandleEthQueryAsync(botClient, message); // 以太坊地址处理
+        }
+        else if (isInvalidTronLength)
+        {
+            try
             {
-                await HandleQueryCommandAsync(botClient, message); // 波场地址处理
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "这好像是个波场TRC-20地址，长度不正确，请仔细检查！",
+                    cancellationToken: cancellationToken
+                );
             }
-            else if (isEthAddress)
+            catch (Exception ex)
             {
-                await HandleEthQueryAsync(botClient, message); // 以太坊地址处理
+                Console.WriteLine($"发送波场地址错误提示失败：{ex.Message}");
             }
-            else if (isInvalidTronLength)
+        }
+        else if (isInvalidEthLength)
+        {
+            try
             {
-                try
-                {
-                    await botClient.SendTextMessageAsync(
-                        chatId: message.Chat.Id,
-                        text: "这好像是个波场TRC-20地址，长度不正确，请仔细检查！",
-                        cancellationToken: cancellationToken
-                    );
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"发送波场地址错误提示失败：{ex.Message}");
-                }
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "这好像是个以太坊ERC-20地址，长度不正确，请仔细检查！",
+                    cancellationToken: cancellationToken
+                );
             }
-            else if (isInvalidEthLength)
+            catch (Exception ex)
             {
-                try
-                {
-                    await botClient.SendTextMessageAsync(
-                        chatId: message.Chat.Id,
-                        text: "这好像是个以太坊ERC-20地址，长度不正确，请仔细检查！",
-                        cancellationToken: cancellationToken
-                    );
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"发送以太坊地址错误提示失败：{ex.Message}");
-                }
+                Console.WriteLine($"发送以太坊地址错误提示失败：{ex.Message}");
+            }
+        }        
+    }
+    // 检查消息文本是否以 "转" 开头
+    if (message?.Text != null && message.Text.StartsWith("转"))
+    {
+        await HandleTranslateCommandAsync(botClient, message); // 在这里处理翻译命令
+    } 
+    else if (message?.Text != null && (message.Text.StartsWith("z0") || message.Text.StartsWith("zo") || message.Text.StartsWith("shijian") || message.Text.StartsWith("sj")))
+    {
+        // 如果消息文本以 "z0" 开头，则不执行翻译
+        return;
+    } 
+    else if (Regex.IsMatch(message?.Text ?? "", @"^[a-zA-Z0-9]{2,}\s+\d{4}/\d{2}/\d{2}\s+\d{2}\.\d{2}$"))
+    {
+        // 如果消息文本符合数字货币+时间的格式，并且中间允许有多个空格，则不执行翻译
+        return;
+    }		
+    else
+    {
+        // 检查用户或群组是否禁用了翻译
+        if (!TranslationSettingsManager.IsTranslationEnabled(message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id))
+        {
+            return;
+        }    
+        if (message != null && !string.IsNullOrWhiteSpace(message.Text))
+        {
+            // 检查群聊或用户的翻译设置
+            if ((message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup || message.Chat.Type == ChatType.Private) &&
+                !TranslationSettingsManager.IsTranslationEnabled(message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id))
+            {
+                return; // 如果翻译被禁用，直接返回
             }        
-    }
-        // 检查消息文本是否以 "转" 开头
-        if (message?.Text != null && message.Text.StartsWith("转"))
-        {
-            await HandleTranslateCommandAsync(botClient, message); // 在这里处理翻译命令
-        } 
-else if (message?.Text != null && (message.Text.StartsWith("z0") || message.Text.StartsWith("zo")|| message.Text.StartsWith("shijian")|| message.Text.StartsWith("sj")))
-{
-    // 如果消息文本以 "z0" 开头，则不执行翻译
-    return;
-} 
-else if (Regex.IsMatch(message?.Text ?? "", @"^[a-zA-Z0-9]{2,}\s+\d{4}/\d{2}/\d{2}\s+\d{2}\.\d{2}$"))
-{
-    // 如果消息文本符合数字货币+时间的格式，并且中间允许有多个空格，则不执行翻译
-    return;
-}		
-else
-{
-// 检查用户或群组是否禁用了翻译
-if (!TranslationSettingsManager.IsTranslationEnabled(message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id))
-{
-    return;
-}    
-    if (message != null && !string.IsNullOrWhiteSpace(message.Text))
-    {
-    // 检查群聊或用户的翻译设置
-    if ((message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup || message.Chat.Type == ChatType.Private) &&
-        !TranslationSettingsManager.IsTranslationEnabled(message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id))
-    {
-        return; // 如果翻译被禁用，直接返回
-    }        
-        var inputText = message.Text.Trim();
-        // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
-        var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|买入|卖出|设置单笔价格|成交量|发现超卖|群发)");
-
-        // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
-        if (isBindOrUnbindCommand)
-        {
-            return;
-        }  
-// 添加新的正则表达式以检查输入文本是否包含 "用户名："
-var containsUsername = Regex.IsMatch(inputText, @"用户名：");
-
-// 如果输入文本包含 "用户名："，则不执行翻译
-if (containsUsername)
-{
-    return;
-}  
-// 检查输入文本是否为数字（包括小数）加~或～的组合，例如 "55~23"、"55～23" 或 "0.12~0.15"
-var isNumberRange = Regex.IsMatch(inputText, @"^\d+(\.\d+)?[~～]\d+(\.\d+)?$");
-// 检查输入文本是否为以#开头的加密货币标识，例如 "#btc"
-var isCryptoSymbol = Regex.IsMatch(inputText, @"^(#|查\s*)[a-zA-Z0-9]+$");
-// 如果输入文本符合数字（包括小数）加~或～的组合，或者是以#开头的加密货币标识，则不执行翻译
-if (isNumberRange || isCryptoSymbol)
-{
-    return;
-}
-// 如果输入文本符合数字（包括小数）加~或～的组合，则不执行翻译
-if (isNumberRange)
-{
-    return;
-}    
-        
-        // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
-        var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
-        // 添加新正则表达式以检查输入文本是否包含 "查id"、"查ID" 或 "t.me/"
-        var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|授权|赠送|yhk|TRX|t\.me/", RegexOptions.IgnoreCase);
-
-        // 如果输入文本包含 "查id"、"查ID" 或 "t.me/"，则不执行翻译
-        if (containsIdOrTme)
-        {
-            return;
-        }
-        
-        if (!string.IsNullOrWhiteSpace(inputText))
-        {
-            // 修改正则表达式以匹配带小数点的数字计算
-            var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|qiand|shiwukxian|music|mairumaichu|charsi|provip|huiyuanku|zdcrsi|usd|more|usdt|tron|z0|cny|trc|home|jiankong|caifu|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|ucard|jisuzhangdie|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|询千百度|地址监听|加密货币|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
-
-            // 检查输入文本是否为数字+货币的组合
-            var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
-
-            // 检查输入文本是否为纯中文文本带空格
-            var isChineseTextWithSpaces = Regex.IsMatch(inputText, @"^[\u4e00-\u9fa5\s]+$");
-
-            // 检查输入文本是否为 Tron 地址
-            //var isTronAddress = Regex.IsMatch(inputText, @"^(T[A-Za-z0-9]{33})$");
-	    var isTronAddress = Regex.IsMatch(inputText, @"^T[A-Za-z0-9]{20,}$");
-		
-// 检查输入文本是否为以太坊地址（0x 开头，固定 42 位）
-var isEthAddress = Regex.IsMatch(inputText, @"^0x[a-fA-F0-9]{40}$");
-		
-            // 检查输入文本是否为币种
-            var currencyNamesRegex = new Regex(@"(美元|港币|台币|日元|英镑|欧元|澳元|韩元|柬币|泰铢|越南盾|老挝币|缅甸币|印度卢比|瑞士法郎|新西兰元|新加坡新元|柬埔寨瑞尔|菲律宾披索|墨西哥比索|迪拜迪拉姆|俄罗斯卢布|加拿大加元|马来西亚币|科威特第纳尔|元|块|美金|法郎|新币|瑞尔|迪拉姆|卢布|披索|比索|马币|第纳尔|卢比|CNY|USD|HKD|TWD|JPY|GBP|EUR|AUD|KRW|THB|VND|LAK|MMK|INR|CHF|NZD|SGD|KHR|PHP|MXN|AED|RUB|CAD|MYR|KWD)", RegexOptions.IgnoreCase);		
-            // 检查输入文本是否仅包含表情符号
-            var isOnlyEmoji = EmojiHelper.IsOnlyEmoji(inputText);
-            
-            // 如果输入文本仅为 'id' 或 'ID'，则不执行翻译
-            if (isIdOrID)
+            var inputText = message.Text.Trim();
+            // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
+            var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|买入|卖出|设置单笔价格|成交量|发现超卖|群发)");
+            // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
+            if (isBindOrUnbindCommand)
+            {
+                return;
+            }  
+            // 添加新的正则表达式以检查输入文本是否包含 "用户名："
+            var containsUsername = Regex.IsMatch(inputText, @"用户名：");
+            // 如果输入文本包含 "用户名："，则不执行翻译
+            if (containsUsername)
+            {
+                return;
+            }  
+            // 检查输入文本是否为数字（包括小数）加~或～的组合，例如 "55~23"、"55～23" 或 "0.12~0.15"
+            var isNumberRange = Regex.IsMatch(inputText, @"^\d+(\.\d+)?[~～]\d+(\.\d+)?$");
+            // 检查输入文本是否为以#开头的加密货币标识，例如 "#btc"
+            var isCryptoSymbol = Regex.IsMatch(inputText, @"^(#|查\s*)[a-zA-Z0-9]+$");
+            // 如果输入文本符合数字（包括小数）加~或～的组合，或者是以#开头的加密货币标识，则不执行翻译
+            if (isNumberRange || isCryptoSymbol)
             {
                 return;
             }
-
-            if (!containsKeywordsOrCommandsOrNumbersOrAtSign && !isTronAddress && !isEthAddress && !isOnlyEmoji && !isNumberCurrency && !isChineseTextWithSpaces)
+            // 如果输入文本符合数字（包括小数）加~或～的组合，则不执行翻译
+            if (isNumberRange)
             {
-// 检查输入文本是否包含货币的中文名称
-var containsCurrencyName = currencyNamesRegex.IsMatch(inputText);
-
-// 如果输入文本包含货币的中文名称，则不执行翻译
-if (containsCurrencyName)
-{
-    return;
-}		    
-                // 检查输入文本是否包含任何非中文字符
-                var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
-                // 添加新的正则表达式以检查输入文本是否只包含符号
-                var isOnlySymbols = Regex.IsMatch(inputText, @"^[^\w\s]+$");
-// 检查输入文本是否为 "拉黑 用户ID" 类型的文本
-var isBlacklistCommand = Regex.IsMatch(inputText, @"^拉黑|拉白\s+\d+$");
-
-// 如果输入文本为 "拉黑 用户ID" 类型的文本，则不执行翻译
-if (isBlacklistCommand)
-{
-    return;
-}                
-
-                 // 如果输入文本仅包含符号，则不执行翻译
-                if (isOnlySymbols)
+                return;
+            }    
+            // 添加新正则表达式以检查输入文本是否仅为 'id' 或 'ID'
+            var isIdOrID = Regex.IsMatch(inputText, @"^\b(id|ID)\b$", RegexOptions.IgnoreCase);
+            // 添加新正则表达式以检查输入文本是否包含 "查id"、"查ID" 或 "t.me/"
+            var containsIdOrTme = Regex.IsMatch(inputText, @"查id|查ID|授权|赠送|yhk|TRX|t\.me/", RegexOptions.IgnoreCase);
+            // 如果输入文本包含 "查id"、"查ID" 或 "t.me/"，则不执行翻译
+            if (containsIdOrTme)
+            {
+                return;
+            }
+            if (!string.IsNullOrWhiteSpace(inputText))
+            {
+                // 修改正则表达式以匹配带小数点的数字计算
+                var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|qiand|shiwukxian|music|mairumaichu|charsi|provip|huiyuanku|zdcrsi|usd|more|usdt|tron|z0|cny|trc|home|jiankong|caifu|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|ucard|jisuzhangdie|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|询千百度|地址监听|加密货币|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
+                // 检查输入文本是否为数字+货币的组合
+                var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
+                // 检查输入文本是否为纯中文文本带空格
+                var isChineseTextWithSpaces = Regex.IsMatch(inputText, @"^[\u4e00-\u9fa5\s]+$");
+                // 检查输入文本是否为 Tron 地址
+                var isTronAddress = Regex.IsMatch(inputText, @"^T[A-Za-z0-9]{20,}$");
+                // 检查输入文本是否为以太坊地址（0x 开头，固定 42 位）
+                var isEthAddress = Regex.IsMatch(inputText, @"^0x[a-fA-F0-9]{40}$");
+                // 检查输入文本是否为币种
+                var currencyNamesRegex = new Regex(@"(美元|港币|台币|日元|英镑|欧元|澳元|韩元|柬币|泰铢|越南盾|老挝币|缅甸币|印度卢比|瑞士法郎|新西兰元|新加坡新元|柬埔寨瑞尔|菲律宾披索|墨西哥比索|迪拜迪拉姆|俄罗斯卢布|加拿大加元|马来西亚币|科威特第纳尔|元|块|美金|法郎|新币|瑞尔|迪拉姆|卢布|披索|比索|马币|第纳尔|卢比|CNY|USD|HKD|TWD|JPY|GBP|EUR|AUD|KRW|THB|VND|LAK|MMK|INR|CHF|NZD|SGD|KHR|PHP|MXN|AED|RUB|CAD|MYR|KWD)", RegexOptions.IgnoreCase);
+                // 检查输入文本是否仅包含表情符号
+                var isOnlyEmoji = EmojiHelper.IsOnlyEmoji(inputText);
+                // 如果输入文本仅为 'id' 或 'ID'，则不执行翻译
+                if (isIdOrID)
                 {
-                   return;
+                    return;
                 }
-
-if (containsNonChinese)
-{
-    try 
-    {
-        var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
-        var (translatedText, _, isError) = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
-        
-        if (isError)
-        {
-            await botClient.SendTextMessageAsync(message.Chat.Id, "翻译服务异常，请稍后重试。");
-            return;
-        }
-
-        // 清理可能包含的HTML标签
-        translatedText = System.Web.HttpUtility.HtmlEncode(translatedText);
-        
-        await botClient.SendTextMessageAsync(
-            message.Chat.Id, 
-            $"翻译结果：\n\n<code>{translatedText}</code>", 
-            parseMode: ParseMode.Html
-        );
-    }
-    catch (ApiRequestException ex)
-    {
-        // 记录具体的API错误
-        Log.Error($"Telegram API错误: {ex.Message}");
-        await botClient.SendTextMessageAsync(
-            message.Chat.Id, 
-            "消息发送失败，请稍后重试。"
-        );
-    }
-    catch (Exception ex)
-    {
-        // 记录其他未预期的错误
-        Log.Error($"翻译过程发生未知错误: {ex.Message}");
-        await botClient.SendTextMessageAsync(
-            message.Chat.Id, 
-            "处理过程中发生错误，请稍后重试。"
-        );
-    }
-}
+                if (!containsKeywordsOrCommandsOrNumbersOrAtSign && !isTronAddress && !isEthAddress && !isOnlyEmoji && !isNumberCurrency && !isChineseTextWithSpaces)
+                {
+                    // 检查输入文本是否包含货币的中文名称
+                    var containsCurrencyName = currencyNamesRegex.IsMatch(inputText);
+                    // 如果输入文本包含货币的中文名称，则不执行翻译
+                    if (containsCurrencyName)
+                    {
+                        return;
+                    }		    
+                    // 检查输入文本是否包含任何非中文字符
+                    var containsNonChinese = Regex.IsMatch(inputText, @"[^\u4e00-\u9fa5]");
+                    // 添加新的正则表达式以检查输入文本是否只包含符号
+                    var isOnlySymbols = Regex.IsMatch(inputText, @"^[^\w\s]+$");
+                    // 检查输入文本是否为 "拉黑 用户ID" 类型的文本
+                    var isBlacklistCommand = Regex.IsMatch(inputText, @"^拉黑|拉白\s+\d+$");
+                    // 如果输入文本为 "拉黑 用户ID" 类型的文本，则不执行翻译
+                    if (isBlacklistCommand)
+                    {
+                        return;
+                    }                
+                    // 如果输入文本仅包含符号，则不执行翻译
+                    if (isOnlySymbols)
+                    {
+                        return;
+                    }
+                    if (containsNonChinese)
+                    {
+                        try 
+                        {
+                            var targetLanguage = "zh-CN"; // 将目标语言设置为简体中文
+                            var (translatedText, _, isError) = await GoogleTranslateFree.TranslateAsync(inputText, targetLanguage);
+                            
+                            if (isError)
+                            {
+                                await botClient.SendTextMessageAsync(message.Chat.Id, "翻译服务异常，请稍后重试。");
+                                return;
+                            }
+                            // 清理可能包含的HTML标签
+                            translatedText = System.Web.HttpUtility.HtmlEncode(translatedText);
+                            
+                            await botClient.SendTextMessageAsync(
+                                message.Chat.Id, 
+                                $"翻译结果：\n\n<code>{translatedText}</code>", 
+                                parseMode: ParseMode.Html
+                            );
+                        }
+                        catch (ApiRequestException ex)
+                        {
+                            // 记录具体的API错误
+                            Log.Error($"Telegram API错误: {ex.Message}");
+                            await botClient.SendTextMessageAsync(
+                                message.Chat.Id, 
+                                "消息发送失败，请稍后重试。"
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            // 记录其他未预期的错误
+                            Log.Error($"翻译过程发生未知错误: {ex.Message}");
+                            await botClient.SendTextMessageAsync(
+                                message.Chat.Id, 
+                                "处理过程中发生错误，请稍后重试。"
+                            );
+                        }
+                    }
+                }
             }
         }
     }
 }
-    }
 if(update.CallbackQuery != null)
 {
     try
