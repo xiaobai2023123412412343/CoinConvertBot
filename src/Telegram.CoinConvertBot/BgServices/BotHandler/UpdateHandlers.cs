@@ -16991,7 +16991,7 @@ if (messageText.StartsWith("/gongtongqunzu"))
 // 处理 开启计算 关闭计算
 if (messageText.Equals("关闭计算", StringComparison.OrdinalIgnoreCase))
 {
-    string responseMessage = "已关闭价格涨跌计算。";
+    string responseMessage = "已关闭价格涨跌计算，如需开启发送： 开启计算";
     long idToBlacklist = message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id;
 
     try
