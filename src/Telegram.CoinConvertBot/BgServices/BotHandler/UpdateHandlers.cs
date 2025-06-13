@@ -9053,7 +9053,22 @@ private static string FormatTransactionRecords(List<(DateTime timestamp, string 
 }
 //以上3个方法是监控收款地址以及出款地址的交易记录并返回！   
 //谷歌翻译
-static Dictionary<long, bool> groupTranslationSettings = new Dictionary<long, bool>();    
+public static class TranslationSettingsManager
+{
+    private static readonly Dictionary<long, bool> TranslationSettings = new Dictionary<long, bool>();
+
+    // 检查是否允许翻译（群组或用户）
+    public static bool IsTranslationEnabled(long id)
+    {
+        return !TranslationSettings.TryGetValue(id, out var isDisabled) || isDisabled;
+    }
+
+    // 设置翻译状态（true 为启用，false 为禁用）
+    public static void SetTranslationStatus(long id, bool isEnabled)
+    {
+        TranslationSettings[id] = isEnabled;
+    }
+} 
 public class GoogleTranslateFree
 {
     private const string GoogleTranslateUrl = "https://translate.google.com/translate_a/single?client=gtx&sl=auto&tl={0}&dt=t&q={1}";
@@ -13632,17 +13647,18 @@ else if (Regex.IsMatch(message?.Text ?? "", @"^[a-zA-Z0-9]{2,}\s+\d{4}/\d{2}/\d{
 }		
 else
 {
-// 检查用户是否在黑名单中
-if (blacklistedUserIds.Contains(message.From.Id))
+// 检查用户或群组是否禁用了翻译
+if (!TranslationSettingsManager.IsTranslationEnabled(message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id))
 {
     return;
 }    
     if (message != null && !string.IsNullOrWhiteSpace(message.Text))
     {
-    // 检查群聊的翻译设置
-    if ((message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup) && groupTranslationSettings.TryGetValue(message.Chat.Id, out var isTranslationEnabled) && !isTranslationEnabled)
+    // 检查群聊或用户的翻译设置
+    if ((message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup || message.Chat.Type == ChatType.Private) &&
+        !TranslationSettingsManager.IsTranslationEnabled(message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id))
     {
-        return;
+        return; // 如果翻译被禁用，直接返回
     }        
         var inputText = message.Text.Trim();
         // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
@@ -20018,26 +20034,99 @@ foreach (Match match in buttonMatches)
         parseMode: ParseMode.Html,
         disableWebPagePreview: true);
 }
-if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
+if (message?.Text != null)
 {
-    var groupId = message.Chat.Id;
-    var command = messageText.ToLower();
+    var chatId = message.Chat.Id;
+    var userId = message.From.Id;
+    var command = message.Text.ToLower();
 
-    if (command == "关闭翻译")
+    // 处理群组或超级群组的翻译开关
+    if (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup)
     {
-        groupTranslationSettings[groupId] = false;
-        var sentMessage1 = await botClient.SendTextMessageAsync(groupId, "已关闭翻译功能。");
-        await Task.Delay(1000); // 等待5秒
-        await botClient.DeleteMessageAsync(groupId, sentMessage1.MessageId); // 撤回机器人的消息
-        await botClient.DeleteMessageAsync(groupId, message.MessageId); // 尝试撤回关闭翻译命令
+        if (command == "关闭翻译")
+        {
+            try
+            {
+                TranslationSettingsManager.SetTranslationStatus(chatId, false); // 关闭群组翻译
+                var sentMessageClose = await botClient.SendTextMessageAsync(chatId, "已关闭群组自动翻译功能");
+                await Task.Delay(1000); // 延迟3秒以确保用户看到消息
+                await botClient.DeleteMessageAsync(chatId, sentMessageClose.MessageId); // 撤回机器人消息
+                await botClient.DeleteMessageAsync(chatId, message.MessageId); // 撤回用户命令
+            }
+            catch (ApiRequestException ex)
+            {
+                Log.Error($"群组翻译关闭时撤回消息失败: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"群组翻译关闭时发生未知错误: {ex.Message}");
+                await botClient.SendTextMessageAsync(chatId, "处理关闭翻译命令时发生错误，请稍后重试。");
+            }
+            return;
+        }
+        else if (command == "开启翻译")
+        {
+            try
+            {
+                TranslationSettingsManager.SetTranslationStatus(chatId, true); // 开启群组翻译
+                var sentMessageOpen = await botClient.SendTextMessageAsync(chatId, "已开启群组自动翻译功能");
+                await Task.Delay(1000); // 延迟3秒
+                await botClient.DeleteMessageAsync(chatId, sentMessageOpen.MessageId); // 撤回机器人消息
+                await botClient.DeleteMessageAsync(chatId, message.MessageId); // 撤回用户命令
+            }
+            catch (ApiRequestException ex)
+            {
+                Log.Error($"群组翻译开启时撤回消息失败: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"群组翻译开启时发生未知错误: {ex.Message}");
+                await botClient.SendTextMessageAsync(chatId, "处理开启翻译命令时发生错误，请稍后重试。");
+            }
+            return;
+        }
     }
-    else if (command == "开启翻译")
+    // 处理私聊的翻译开关
+    else if (message.Chat.Type == ChatType.Private)
     {
-        groupTranslationSettings[groupId] = true;
-        var sentMessage2 = await botClient.SendTextMessageAsync(groupId, "已开启翻译功能。");
-        await Task.Delay(1000); // 等待5秒
-        await botClient.DeleteMessageAsync(groupId, sentMessage2.MessageId); // 撤回机器人的消息
-        await botClient.DeleteMessageAsync(groupId, message.MessageId); // 尝试撤回开启翻译命令
+        if (command == "关闭翻译")
+        {
+            try
+            {
+                TranslationSettingsManager.SetTranslationStatus(userId, false); // 将用户加入黑名单
+                await botClient.SendTextMessageAsync(chatId, "已关闭您的自动翻译功能。");
+            }
+            catch (ApiRequestException ex)
+            {
+                Log.Error($"私聊翻译关闭时发送消息失败: {ex.Message}");
+                await botClient.SendTextMessageAsync(chatId, "无法发送关闭确认消息，请稍后重试。");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"私聊翻译关闭时发生未知错误: {ex.Message}");
+                await botClient.SendTextMessageAsync(chatId, "处理关闭翻译命令时发生错误，请稍后重试。");
+            }
+            return;
+        }
+        else if (command == "开启翻译")
+        {
+            try
+            {
+                TranslationSettingsManager.SetTranslationStatus(userId, true); // 将用户移出黑名单
+                await botClient.SendTextMessageAsync(chatId, "已开启您的自动翻译功能。");
+            }
+            catch (ApiRequestException ex)
+            {
+                Log.Error($"私聊翻译开启时发送消息失败: {ex.Message}");
+                await botClient.SendTextMessageAsync(chatId, "无法发送开启确认消息，请稍后重试。");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"私聊翻译开启时发生未知错误: {ex.Message}");
+                await botClient.SendTextMessageAsync(chatId, "处理开启翻译命令时发生错误，请稍后重试。");
+            }
+            return;
+        }
     }
 }
 if (messageText.StartsWith("代绑") && message.From.Id == 1427768220)
