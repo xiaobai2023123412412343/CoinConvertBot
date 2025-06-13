@@ -17093,13 +17093,6 @@ try
     // 确定消息来源ID（私聊使用用户ID，群聊使用群组ID）
     long sourceId = message.Chat.Type == ChatType.Private ? message.From.Id : message.Chat.Id;
 
-    // 检查是否在黑名单中
-    if (PriceCalculationBlacklistManager.IsBlacklisted(sourceId))
-    {
-        //Console.WriteLine($"ID {sourceId} 在黑名单中，忽略价格涨跌计算请求");
-        return; // 在黑名单中，直接返回，不回复
-    }
-
     // 创建内联按钮：关闭自动计算
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
@@ -17109,6 +17102,13 @@ try
     // 检查消息是否为纯数字
     if (decimal.TryParse(messageText, out decimal number))
     {
+        // 检查是否在黑名单中
+        if (PriceCalculationBlacklistManager.IsBlacklisted(sourceId))
+        {
+            //Console.WriteLine($"ID {sourceId} 在黑名单中，忽略单数字涨跌幅计算请求");
+            return; // 在黑名单中，忽略涨跌幅计算
+        }
+
         // 构建 1-10% 涨跌幅表格
         var responseText = new StringBuilder($"{number} 涨跌 1-10% 数据\n\n");
 
@@ -17141,6 +17141,13 @@ try
     // 检查消息是否为范围格式（包含 ~ 或 ～）
     else if (messageText.Contains("~") || messageText.Contains("～"))
     {
+        // 检查是否在黑名单中
+        if (PriceCalculationBlacklistManager.IsBlacklisted(sourceId))
+        {
+            //Console.WriteLine($"ID {sourceId} 在黑名单中，忽略范围格式涨跌幅计算请求");
+            return; // 在黑名单中，忽略涨跌幅计算
+        }
+
         var parts = messageText.Split(new[] { '~', '～' }, StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 2 && decimal.TryParse(parts[0], out decimal start) && decimal.TryParse(parts[1], out decimal end))
         {
