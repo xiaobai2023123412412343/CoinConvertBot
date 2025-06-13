@@ -16462,8 +16462,16 @@ if (message.Type == MessageType.Text && (message.Text.Equals("询千百度", Str
 
 示例：直接发送地址如：<code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code></blockquote>
 
-支持查询TGid、欧易USDT汇率、新(农)历、历史加密货币价格等N多功能，欢迎体验！
-<blockquote expandable>示例：直接发送如：<code>ID</code>, <code>z0</code>, <code>时间</code>, <code>btc 2024/04/04 00.00</code></blockquote>
+支持查询TGid、欧易USDT汇率、新(农)历、历史加密货币价格、自动谷歌翻译及发音等N多功能，欢迎体验！
+<blockquote expandable>示例：直接发送如：<code>ID</code>, <code>z0</code>, <code>时间</code>, <code>btc 2024/04/04 00.00</code>
+
+发送<b>任意外语</b>自动转换成简体中文；
+发送 <code>转+语种+文本</code>，自动将文本转换成对应的语种。
+例如发送：<code>转日语 你好</code>，机器人会将 <code>你好</code> 翻译成日语：<code>こんにちは</code> 且附带发音！
+
+目前支持翻译的语种有：
+<code>英语</code>, <code>日语</code>, <code>韩语</code>, <code>越南语</code>, <code>高棉语</code>, <code>泰语</code>, <code>菲律宾语</code>, <code>阿拉伯语</code>, <code>老挝语</code>, <code>马来西亚语</code> 等超过62个主流语种及发音！</blockquote>
+
 
 <a href=""https://t.me/yifanfubot"">欢迎各位老板前来兑换能量或开通电报会员！
 也可以直接打赏作者！谢谢大家的支持厚爱！</a>";
