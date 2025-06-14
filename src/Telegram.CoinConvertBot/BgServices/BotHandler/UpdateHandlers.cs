@@ -1060,7 +1060,8 @@ if (fromUser != null)
                     messageId: infoMessage.MessageId,
                     text: captionText.ToString(),
                     parseMode: ParseMode.Html,
-                    replyMarkup: inlineKeyboard
+                    replyMarkup: inlineKeyboard,
+		    disableWebPagePreview: true // 添加：关闭链接预览以避免显示图片链接预览	
                 );
             }
             catch (Exception textEx)
@@ -1072,7 +1073,8 @@ if (fromUser != null)
                         chatId: chatId,
                         text: captionText.ToString(),
                         parseMode: ParseMode.Html,
-                        replyMarkup: inlineKeyboard
+                        replyMarkup: inlineKeyboard,
+			disableWebPagePreview: true // 添加：关闭链接预览以避免显示图片链接预览  
                     );
                 }
                 catch (Exception finalEx)
@@ -11121,7 +11123,8 @@ media: new InputMediaPhoto(gifUrl)
                     messageId: infoMessage.MessageId,
                     text: resultText,
                     parseMode: ParseMode.Html,
-                    replyMarkup: inlineKeyboard
+                    replyMarkup: inlineKeyboard,
+		    disableWebPagePreview: true // 添加：关闭链接预览以避免显示GIF链接预览	
                 );
             }
             catch (Exception textEx)
@@ -11133,7 +11136,8 @@ media: new InputMediaPhoto(gifUrl)
                         chatId: chatId,
                         text: resultText,
                         parseMode: ParseMode.Html,
-                        replyMarkup: inlineKeyboard
+                        replyMarkup: inlineKeyboard,
+			disableWebPagePreview: true // 添加：关闭链接预览以避免显示GIF链接预览    
                     );
                 }
                 catch (Exception finalEx)
