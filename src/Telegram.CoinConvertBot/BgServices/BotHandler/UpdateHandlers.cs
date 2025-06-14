@@ -17378,8 +17378,9 @@ if (messageText.StartsWith("/jisuzhangdie") || messageText.Contains("市场异�
 // 检查是否接收到了 /ucard 消息或文本包含特定关键词，收到就回复用户
 if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || messageText.Contains("yhk") || messageText.Contains("消费卡") || messageText.Contains("信用卡") || messageText.Contains("虚拟"))
 {
-    // 首先发送一张图片
+    // 定义图片URL和文本内容
     var imageUrl = "https://i.postimg.cc/mgVmPfrW/photo-2024-06-30-14-06-02.jpg";
+    var captionText = "年轻人的第一张u卡，<b>免实名  无冻卡风险</b> ！\n充值 <b>USDT</b> 即可绑定美团/微信/支付宝消费！！\n同时支持包括苹果商店/谷歌商店等一切平台！！！\n\n注册邀请码： <b>625174</b>\n注册链接：https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\n\n使用邀请码或链接注册，即可享受 <b>0手续费！</b> 随用随充，随心所欲！";
     var inlineKeyboard = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(
         new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardButton[][]
         {
@@ -17390,13 +17391,46 @@ if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || mes
         }
     );
 
-    _ = botClient.SendPhotoAsync(
-        chatId: message.Chat.Id,
-        photo: imageUrl,
-        caption: "年轻人的第一张u卡，<b>免实名  无冻卡风险</b> ！\n充值 <b>USDT</b> 即可绑定美团/微信/支付宝消费！！\n同时支持包括苹果商店/谷歌商店等一切平台！！！\n\n注册邀请码： <b>625174</b>\n注册链接：https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\n\n使用邀请码或链接注册，即可享受 <b>0手续费！</b> 随用随充，随心所欲！",
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-        replyMarkup: inlineKeyboard
-    );
+    try
+    {
+        // 新增：检查图片URL是否有效
+        using (var httpClient = new HttpClient())
+        {
+            var response = await httpClient.GetAsync(imageUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                // 图片URL有效，发送图片消息
+                await botClient.SendPhotoAsync(
+                    chatId: message.Chat.Id,
+                    photo: imageUrl,
+                    caption: captionText,
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                    replyMarkup: inlineKeyboard
+                );
+            }
+            else
+            {
+                // 新增：图片URL失效，发送纯文本消息
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: captionText,
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                    replyMarkup: inlineKeyboard
+                );
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        // 新增：异常处理，记录错误并发送纯文本消息
+        Console.WriteLine($"发送消息失败: {ex.Message}");
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: captionText,
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
+    }
 }
 // 检查是否接收到了 /feixiaohao 消息，收到就启动数据获取
 if (messageText.StartsWith("/feixiaohao"))
