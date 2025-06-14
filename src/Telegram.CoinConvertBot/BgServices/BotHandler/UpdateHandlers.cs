@@ -1008,7 +1008,7 @@ if (fromUser != null)
     });
 
     // 尝试编辑为媒体消息
-    const string imageUrl = "https://i.postimg.cc/L8SG81Tx/111.png";
+    const string imageUrl = "https://i.postimg.cc/vm1W2cRw/111.png";
     bool mediaEditSuccess = false;
     try
     {
