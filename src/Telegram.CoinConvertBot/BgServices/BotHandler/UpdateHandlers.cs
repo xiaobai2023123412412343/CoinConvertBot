@@ -986,13 +986,13 @@ if (fromUser != null)
     }
     captionText.AppendLine($"当前 Gas  ：<b>{gasPriceGweiEth:N3} Gwei ≈ ${gasPriceUsdEth:N2}</b>\n");
     captionText.AppendLine($"  ETH 余额：<b>{ethBalance:N4} ETH</b>{(ethCnyValue > 0 ? $" ≈ <b>{ethCnyValue:N2}元人民币</b>" : "")}");
-    captionText.AppendLine($"USDT余额：<b>{usdtBalanceEth:N2} ≈ {cnyUsdtBalanceEth:N2}元人民币</b>");
-    captionText.AppendLine($"USDC余额：<b>{usdcBalanceEth:N2} ≈ {cnyUsdcBalanceEth:N2}元人民币</b>");
+    captionText.AppendLine($"USDT余额：<b>{usdtBalanceEth:N2} USDT</b>{(usdtBalanceEth > 0 ? $" ≈ <b>{cnyUsdtBalanceEth:N2}元人民币</b>" : "")}");
+    captionText.AppendLine($"USDC余额：<b>{usdcBalanceEth:N2} USDC</b>{(usdcBalanceEth > 0 ? $" ≈ <b>{cnyUsdcBalanceEth:N2}元人民币</b>" : "")}");
     captionText.AppendLine("——————————————");
     captionText.AppendLine($"<b>BNB Smart Chain</b>（币安智能链）\n");
     captionText.AppendLine($"  BNB余额：<b>{bnbBalance:N4} BNB</b>{(bnbCnyValue > 0 ? $" ≈ <b>{bnbCnyValue:N2}元人民币</b>" : "")}");
-    captionText.AppendLine($"USDT余额：<b>{usdtBalanceBsc:N2} ≈ {cnyUsdtBalanceBsc:N2}元人民币</b>");
-    captionText.AppendLine($"USDC余额：<b>{usdcBalanceBsc:N2} ≈ {cnyUsdcBalanceBsc:N2}元人民币</b>");
+    captionText.AppendLine($"USDT余额：<b>{usdtBalanceBsc:N2} USDT</b>{(usdtBalanceBsc > 0 ? $" ≈ <b>{cnyUsdtBalanceBsc:N2}元人民币</b>" : "")}");
+    captionText.AppendLine($"USDC余额：<b>{usdcBalanceBsc:N2} USDC</b>{(usdcBalanceBsc > 0 ? $" ≈ <b>{cnyUsdcBalanceBsc:N2}元人民币</b>" : "")}");
     captionText.AppendLine($"\n<a href=\"t.me/yifanfu\">代开会员 | TRX兑换 | 点击购买：\nTRC-20、ERC-20、BEP-20 能量！ </a>");
 
     var shareLink = "https://t.me/yifanfuBot?startgroup=true";
