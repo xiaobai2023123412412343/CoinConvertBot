@@ -16530,6 +16530,8 @@ if (message.Type == MessageType.Text && (message.Text.Equals("询千百度", Str
 币安智能链(BSC)地址示例：
 <code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code>
 
+注释：BSC是与以太坊虚拟机（EVM）<b>兼容</b>的区块链，继承了以太坊的地址生成规则，所以双方地址<b>都一样</b>。
+
 示例：直接发送地址如：<code>0xdAC17F958D2ee523a2206206994597C13D831ec6</code></blockquote>
 
 支持查询TGid、欧易USDT汇率、新(农)历、历史加密货币价格、自动谷歌翻译及发音等N多功能，欢迎体验！
