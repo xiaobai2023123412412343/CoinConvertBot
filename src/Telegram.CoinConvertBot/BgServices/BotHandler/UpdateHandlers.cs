@@ -16120,10 +16120,14 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
         // 如果机器人没有权限，忽略异常
     }
 }
-if (messageText.Contains("费用") || messageText.Contains("能量") || messageText.Contains("/tron") || messageText.Contains("手续费") || messageText.Contains("能量租赁"))
+// 处理包含特定关键词的消息，发送波场手续费说明并附带图片
+try
 {
-    // 向用户发送能量介绍
-    string multisigText = @$"波场手续费说明（⚠️务必仔细阅读⚠️）
+    if (messageText.Contains("费用") || messageText.Contains("能量") || messageText.Contains("/tron") || 
+        messageText.Contains("手续费") || messageText.Contains("能量租赁"))
+    {
+        // 波场手续费说明文本
+        string multisigText = @$"波场手续费说明（⚠️务必仔细阅读⚠️）
 
 波场具有独特的资源模型，分为【带宽】和【能量】，每个账户初始具有 600 带宽 和 0 能量。
 转账USDT主要消耗能量，当账户可用能量不足时，燃烧TRX获取能量，燃烧的TRX就是我们常说的转账手续费。
@@ -16132,70 +16136,86 @@ if (messageText.Contains("费用") || messageText.Contains("能量") || messageT
 
 转账给有U的地址，消耗约 3.2万 能量；转账给没U的地址，消耗约 6.5万 能量。
 
-如果通过燃烧TRX获取3.2万能量，约需燃烧 {fixedCost} TRX；
-如果通过燃烧TRX获取6.5万能量，约需燃烧 {fixedCost * 2} TRX。
+如果通过燃烧TRX获取3.2万能量，约需燃烧 14.00 TRX；
+如果通过燃烧TRX获取6.5万能量，约需燃烧 28.00 TRX。
 
 通过提前租赁能量，可以避免燃烧TRX来获取能量，为您的转账节省大量TRX：
 
-租赁3.2万能量/日，仅需 {TransactionFee} TRX，节省 {savings} TRX (节省约{savingsPercentage}%)
-租赁6.5万能量/日，仅需{noUFee}TRX，节省{noUSavings} TRX (节省约{noUSavingsPercentage}%)";
+租赁3.2万能量/日，仅需 7.00 TRX，节省 7.00 TRX (节省约50%)
+租赁6.5万能量/日，仅需 13.00 TRX，节省 15.00 TRX (节省约54%)";
 
-    // 创建内联键盘按钮
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
-    {
-        new [] // first row
+        // 创建内联键盘按钮
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-	    InlineKeyboardButton.WithCallbackData("能量消耗对比", "energyComparison"),
-            InlineKeyboardButton.WithCallbackData("立即租赁能量", "contactAdmin"),
-        }
-    });
-
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: multisigText,
-        parseMode: ParseMode.Html,
-        replyMarkup: inlineKeyboard
-    );
-    // 如果发送者是管理员且消息文本为“能量租赁”，则额外发送管理员菜单
-    if (message.From.Id == AdminUserId && messageText.Contains("能量租赁"))
-    {
-        string adminMenuText = "兑换TRX机器人 管理员菜单:";
-        var adminInlineKeyboard = new InlineKeyboardMarkup(new[]
-        {
-            new [] // first row
+            new [] // 第一行按钮
             {
-                InlineKeyboardButton.WithCallbackData("网址收藏", "shoucang"), 	
-		InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_recordds"),   		
-            },
-            new [] // second row
-            {
-                InlineKeyboardButton.WithCallbackData("操作指令", "mingling"),	
-                InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info"),	    
-            },
-            new [] // second row
-            {
-		InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info"), 			    
-                InlineKeyboardButton.WithCallbackData("关注列表", "shiyong"),		    
-            },
-            new [] // second row
-            {
-		InlineKeyboardButton.WithCallbackData("用户积分", "/yonghujifen"),  
-                InlineKeyboardButton.WithCallbackData("客户余额", "ExecuteZjdhMethod"),		    	    
-            },
-            new [] // second row
-            {
-                InlineKeyboardButton.WithCallbackData("会员列表", "/huiyuanku"),	
-		InlineKeyboardButton.WithCallbackData("承兑详情", "chengdui"),  	    	    
+                InlineKeyboardButton.WithCallbackData("能量消耗对比", "energyComparison"),
+                InlineKeyboardButton.WithCallbackData("立即租赁能量", "contactAdmin"),
             }
-		
         });
 
-        await botClient.SendTextMessageAsync(
+        // 图片链接
+        string imageUrl = "https://i.postimg.cc/3JK25LMB/1.png";
+
+        // 发送图片并将文本作为图片说明
+        await botClient.SendPhotoAsync(
             chatId: message.Chat.Id,
-            text: adminMenuText,
-            replyMarkup: adminInlineKeyboard
+            photo: new InputOnlineFile(imageUrl),
+            caption: multisigText,
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
         );
-    }	
+
+        // 如果发送者是管理员且消息文本包含“能量租赁”，则额外发送管理员菜单
+        if (message.From.Id == AdminUserId && messageText.Contains("能量租赁"))
+        {
+            string adminMenuText = "兑换TRX机器人 管理员菜单:";
+            var adminInlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new [] // 第一行
+                {
+                    InlineKeyboardButton.WithCallbackData("网址收藏", "shoucang"),    
+                    InlineKeyboardButton.WithCallbackData("兑换记录", "show_transaction_recordds"),          
+                },
+                new [] // 第二行
+                {
+                    InlineKeyboardButton.WithCallbackData("操作指令", "mingling"), 
+                    InlineKeyboardButton.WithCallbackData("用户地址", "show_user_info"),        
+                },
+                new [] // 第三行
+                {
+                    InlineKeyboardButton.WithCallbackData("群聊资料", "show_group_info"),               
+                    InlineKeyboardButton.WithCallbackData("关注列表", "shiyong"),           
+                },
+                new [] // 第四行
+                {
+                    InlineKeyboardButton.WithCallbackData("用户积分", "/yonghujifen"),  
+                    InlineKeyboardButton.WithCallbackData("客户余额", "ExecuteZjdhMethod"),                  
+                },
+                new [] // 第五行
+                {
+                    InlineKeyboardButton.WithCallbackData("会员列表", "/huiyuanku"), 
+                    InlineKeyboardButton.WithCallbackData("承兑详情", "chengdui"),            
+                }
+            });
+
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: adminMenuText,
+                replyMarkup: adminInlineKeyboard
+            );
+        }
+    }
+}
+catch (Exception ex)
+{
+    // 错误处理：记录异常并向用户发送错误提示
+    Console.WriteLine($"发送消息或图片时发生错误: {ex.Message}");
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "抱歉，发送消息时发生错误，请稍后重试或联系管理员。",
+        parseMode: ParseMode.Html
+    );
 }
 if (messageText.Contains("作者") || messageText.Contains("管理") || messageText.Contains("你好") || messageText.Contains("在吗")|| messageText.Contains("？")|| messageText.Contains("如何")|| messageText.Contains("怎么")|| messageText.Contains("?"))
 {
