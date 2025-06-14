@@ -1008,7 +1008,7 @@ if (fromUser != null)
     });
 
     // 尝试编辑为媒体消息
-    const string imageUrl = "https://i.postimg.cc/vB4VKgQN/unnamed.png";
+    const string imageUrl = "https://i.postimg.cc/PrTCb6rh/erc20-bep20-trc20-token.jpg";
     bool mediaEditSuccess = false;
     try
     {
