@@ -11101,7 +11101,7 @@ media: new InputMediaPhoto(gifUrl)
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"编辑为GIF消息失败：{ex.Message}");
+        //Console.WriteLine($"编辑为GIF消息失败：{ex.Message}");
         try
         {
             await botClient.SendPhotoAsync(
@@ -11115,7 +11115,7 @@ media: new InputMediaPhoto(gifUrl)
         }
         catch (Exception sendEx)
         {
-            Console.WriteLine($"发送GIF消息失败：{sendEx.Message}");
+            //Console.WriteLine($"发送GIF消息失败：{sendEx.Message}");
             try
             {
                 await botClient.EditMessageTextAsync(
@@ -11129,7 +11129,7 @@ media: new InputMediaPhoto(gifUrl)
             }
             catch (Exception textEx)
             {
-                Console.WriteLine($"编辑为文本消息失败：{textEx.Message}");
+               // Console.WriteLine($"编辑为文本消息失败：{textEx.Message}");
                 try
                 {
                     await botClient.SendTextMessageAsync(
@@ -11142,7 +11142,7 @@ media: new InputMediaPhoto(gifUrl)
                 }
                 catch (Exception finalEx)
                 {
-                    Console.WriteLine($"发送文本消息失败：{finalEx.Message}");
+                   // Console.WriteLine($"发送文本消息失败：{finalEx.Message}");
                 }
             }
         }
@@ -14331,7 +14331,7 @@ else if (update.CallbackQuery.Data == "fancyNumbers")
     catch (Exception ex)
     {
         // 图片发送失败时，记录错误并回退到发送纯文本
-        Console.WriteLine($"发送图片失败：{ex.Message}");
+       // Console.WriteLine($"发送图片失败：{ex.Message}");
         await botClient.SendTextMessageAsync(
             chatId: update.CallbackQuery.Message.Chat.Id,
             text: captionText,
@@ -16206,7 +16206,7 @@ try
         catch (Exception photoEx)
         {
             // 图片发送失败时，记录错误并回退到发送文字内容和按钮
-            Console.WriteLine($"发送图片失败: {photoEx.Message}");
+            //Console.WriteLine($"发送图片失败: {photoEx.Message}");
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: multisigText,
@@ -17424,7 +17424,7 @@ if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || mes
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"发送图片失败: {ex.Message}");
+       // Console.WriteLine($"发送图片失败: {ex.Message}");
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: captionText,
