@@ -14393,12 +14393,28 @@ else if(update.CallbackQuery.Data == "energyComparison")
         }
     });
 
-    await botClient.SendTextMessageAsync(
-        chatId: update.CallbackQuery.Message.Chat.Id,
-        text: comparisonText,
-        parseMode: ParseMode.Html, // 确保解析模式设置为HTML
-        replyMarkup: comparisonKeyboard
-    );
+    // 尝试发送带图片的消息
+    const string imageUrl = "https://i.postimg.cc/3JK25LMB/1.png";
+    try
+    {
+        await botClient.SendPhotoAsync(
+            chatId: update.CallbackQuery.Message.Chat.Id,
+            photo: new InputOnlineFile(imageUrl),
+            caption: comparisonText,
+            parseMode: ParseMode.Html,
+            replyMarkup: comparisonKeyboard
+        );
+    }
+    catch (Exception)
+    {
+        // 图片发送失败（例如链接失效），回退到发送纯文本消息
+        await botClient.SendTextMessageAsync(
+            chatId: update.CallbackQuery.Message.Chat.Id,
+            text: comparisonText,
+            parseMode: ParseMode.Html, // 确保解析模式设置为HTML
+            replyMarkup: comparisonKeyboard
+        );
+    }
 }
 else if(update.CallbackQuery.Data == "contactAdmin")
 {
