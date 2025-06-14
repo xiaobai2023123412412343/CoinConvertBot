@@ -17411,43 +17411,25 @@ if (messageText.StartsWith("/ucard") || messageText.Contains("银行卡") || mes
         }
     );
 
+    // 尝试发送图片，失败则发送纯文本
     try
     {
-        // 新增：检查图片URL是否有效
-        using (var httpClient = new HttpClient())
-        {
-            var response = await httpClient.GetAsync(imageUrl);
-            if (response.IsSuccessStatusCode)
-            {
-                // 图片URL有效，发送图片消息
-                await botClient.SendPhotoAsync(
-                    chatId: message.Chat.Id,
-                    photo: imageUrl,
-                    caption: captionText,
-                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-                    replyMarkup: inlineKeyboard
-                );
-            }
-            else
-            {
-                // 新增：图片URL失效，发送纯文本消息
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: captionText,
-                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-                    replyMarkup: inlineKeyboard
-                );
-            }
-        }
+        await botClient.SendPhotoAsync(
+            chatId: message.Chat.Id,
+            photo: new InputOnlineFile(imageUrl),
+            caption: captionText,
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
     }
     catch (Exception ex)
     {
-        // 新增：异常处理，记录错误并发送纯文本消息
-        Console.WriteLine($"发送消息失败: {ex.Message}");
+        Console.WriteLine($"发送图片失败: {ex.Message}");
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: captionText,
             parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+            disableWebPagePreview: true,
             replyMarkup: inlineKeyboard
         );
     }
