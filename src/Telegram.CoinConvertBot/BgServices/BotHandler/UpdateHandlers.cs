@@ -21859,13 +21859,48 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
      //    disableWebPagePreview: true
    //  );
 
-    // 发送图片和原本的文字作为图片说明
-    await botClient.SendPhotoAsync(
-        chatId: message.Chat.Id,
-        photo: "https://i.postimg.cc/sgF9Jd9g/Untitled.png", // 图片链接
-        caption: msg, // 原本要发的文字作为图片说明
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
-    );
+    // 新增：定义图片URL
+    const string photoUrl = "https://i.postimg.cc/sgF9Jd9g/Untitled.png";
+
+    // 新增：检查图片URL是否有效
+    try
+    {
+        using (var httpClient = new HttpClient())
+        {
+            var response = await httpClient.GetAsync(photoUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                // 图片URL有效，发送图片消息
+                await botClient.SendPhotoAsync(
+                    chatId: message.Chat.Id,
+                    photo: photoUrl,
+                    caption: msg, // 原本要发的文字作为图片说明
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+                );
+            }
+            else
+            {
+                // 新增：图片URL失效，发送纯文本消息
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: msg,
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                    disableWebPagePreview: true
+                );
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        // 新增：异常处理，记录错误并发送纯文本消息
+        Console.WriteLine($"发送消息失败：{ex.Message}");
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: msg,
+            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+            disableWebPagePreview: true
+        );
+    }
 
     // 延迟100毫秒后发送接收地址
     await Task.Delay(10);  // 延迟0.01秒
