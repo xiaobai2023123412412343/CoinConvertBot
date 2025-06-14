@@ -22114,12 +22114,19 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         }
         else
         {
-            // 用户没有头像或无法获取，发送默认GIF
+            // 用户没有头像或无法获取，尝试发送默认GIF
             string gifUrl = "https://i.postimg.cc/0QKYJ0Cb/333.gif";
-            await botClient.SendAnimationAsync(
-                chatId: message.Chat.Id,
-                animation: gifUrl
-            );
+            try
+            {
+                await botClient.SendAnimationAsync(
+                    chatId: message.Chat.Id,
+                    animation: gifUrl
+                );
+            }
+            catch (Exception)
+            {
+                // GIF链接失效或发送失败，不做任何操作，继续执行后续逻辑
+            }
         }
 
         // 发送欢迎消息和键盘
