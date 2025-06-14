@@ -14277,10 +14277,8 @@ else if (update.CallbackQuery.Data == "fancyNumbers")
         }
     });
 
-    await botClient.SendPhotoAsync(
-        chatId: update.CallbackQuery.Message.Chat.Id,
-        photo: "https://i.postimg.cc/rpg41NWV/photo-2023-05-03-14-15-51.jpg",
-        caption: @$"出售TRX靓号生成器： 本地生成 不保存秘钥 支持断网生成
+    // 定义文本内容
+    string captionText = @$"出售TRX靓号生成器： 本地生成 不保存秘钥 支持断网生成
 同时支持直接购买 ： 尾号4连-5连-6连-7连-8连-9连-10连
 
 <blockquote expandable>【6连靓号】
@@ -14313,10 +14311,30 @@ else if (update.CallbackQuery.Data == "fancyNumbers")
 88000U  10位顺子【步步高升号】
 【顺子o-9】（波场没有数字0，o代替0）</blockquote>
 
-购买之后，可联系管理协助变更地址权限，对地址进行多签！",
-        parseMode: ParseMode.Html, // 使用 HTML 格式以支持 expandable 属性
-        replyMarkup: inlineKeyboard
-    );
+购买之后，可联系管理协助变更地址权限，对地址进行多签！";
+
+    // 尝试发送图片和文字
+    try
+    {
+        await botClient.SendPhotoAsync(
+            chatId: update.CallbackQuery.Message.Chat.Id,
+            photo: new InputOnlineFile("https://i.postimg.cc/rpg41NWV/photo-2023-05-03-14-15-51.jpg"),
+            caption: captionText,
+            parseMode: ParseMode.Html, // 使用 HTML 格式以支持 expandable 属性
+            replyMarkup: inlineKeyboard
+        );
+    }
+    catch (Exception ex)
+    {
+        // 图片发送失败时，记录错误并回退到发送纯文本
+        Console.WriteLine($"发送图片失败：{ex.Message}");
+        await botClient.SendTextMessageAsync(
+            chatId: update.CallbackQuery.Message.Chat.Id,
+            text: captionText,
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
+    }
 }
 else if(update.CallbackQuery.Data == "memberEmojis")
 {
