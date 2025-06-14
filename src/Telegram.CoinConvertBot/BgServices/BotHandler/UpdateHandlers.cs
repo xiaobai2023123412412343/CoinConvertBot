@@ -16154,14 +16154,28 @@ try
             }
         });
 
-        // 发送图片并将文本作为图片说明
-        await botClient.SendPhotoAsync(
-            chatId: message.Chat.Id,
-            photo: new InputOnlineFile("https://i.postimg.cc/3JK25LMB/1.png"),
-            caption: multisigText,
-            parseMode: ParseMode.Html,
-            replyMarkup: inlineKeyboard
-        );
+        // 尝试发送图片并将文本作为图片说明
+        try
+        {
+            await botClient.SendPhotoAsync(
+                chatId: message.Chat.Id,
+                photo: new InputOnlineFile("https://i.postimg.cc/3JK25LMB/1.png"),
+                caption: multisigText,
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard
+            );
+        }
+        catch (Exception photoEx)
+        {
+            // 图片发送失败时，记录错误并回退到发送文字内容和按钮
+            Console.WriteLine($"发送图片失败: {photoEx.Message}");
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: multisigText,
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboard
+            );
+        }
 
         // 如果发送者是管理员且消息文本为“能量租赁”，则额外发送管理员菜单
         if (message.From.Id == AdminUserId && messageText.Contains("能量租赁"))
@@ -16207,11 +16221,11 @@ try
 }
 catch (Exception ex)
 {
-    // 记录异常并向用户发送错误提示
-    Console.WriteLine($"发送图片或消息时发生错误: {ex.Message}");
+    // 记录其他异常并向用户发送错误提示
+    Console.WriteLine($"处理消息时发生错误: {ex.Message}");
     await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: "抱歉，发送消息或图片时发生错误，请稍后重试或联系管理员。",
+        text: "抱歉，处理消息时发生错误，请稍后重试或联系管理员。",
         parseMode: ParseMode.Html
     );
 }
