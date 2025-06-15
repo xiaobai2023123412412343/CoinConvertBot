@@ -19136,7 +19136,21 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
         {
             InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu?text=你好，我要代开TG会员"),
             InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest"),
-            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis")
+            InlineKeyboardButton.WithSwitchInlineQuery("会员表情", 
+                "  会员开通成功，需要开通或续费会员可联系我！\n\n" +
+                "热门会员emoji表情包，点击链接即可添加：\n\n" +
+                "1：热门：https://t.me/addemoji/yifanfu\n" +
+                "2：热门：https://t.me/addemoji/YifanfuTGvip\n" +
+                "3：财神：https://t.me/addemoji/Yifanfufacai\n" +
+                "4：闪字：https://t.me/addemoji/Yifanfushanzi\n" +
+                "5：熊猫：https://t.me/addemoji/Yifanfupanda\n" +
+                "6：东南亚：https://t.me/addemoji/yifanfuDNY\n" +
+                "7：米老鼠：https://t.me/addemoji/Yifanfumilaoshu\n" +
+                "8：龙年特辑：https://t.me/addemoji/Yifanfu2024\n" +
+                "9：蛇年特辑：https://t.me/addemoji/Yifanfushenian\n" +
+                "10：币圈专用：https://t.me/addemoji/Yifanfubtc\n" +
+                "11：车队专用：https://t.me/addemoji/Yifanfuyhk\n" +
+                "12：qq经典表情：https://t.me/addemoji/Yifanfuqq")
         }
         : new[] // 普通用户：一列两个按钮
         {
