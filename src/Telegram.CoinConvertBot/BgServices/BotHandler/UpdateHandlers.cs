@@ -19094,40 +19094,57 @@ if (messageText.Equals("zztongkuan", StringComparison.OrdinalIgnoreCase))
     }
 } 
 // 检查是否接收到了包含特定关键词的消息，且不以 /vip 开头，收到符合条件的就启动会员价格表的按钮
-if ((messageText.Contains("会员") || messageText.Contains("代开") || messageText.Contains("vip") || messageText.Contains("Premium")) 
-    && !messageText.StartsWith("/vip"))
+if (messageText.Contains("代开") || messageText.Contains("vip") || messageText.Contains("Premium"))
 {
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new[] // 按钮行
+        {
+            InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu?text=你好，我要代开TG会员"),
+            InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest")
+        }
+    });
+
+    // 定义文本内容（使用 HTML 格式）
+    string captionText = @"代开 TG 会员：
+
+3个月：24.99 u 
+6个月：39.99 u 
+1 年度：70.99 u 
+<tg-spoiler><a href='https://t.me/yifanfubot?start=provip'>已是 FF Pro会员？降价为：20u/30u/65u</a></tg-spoiler>
+
+开通电报会员的好处：
+<blockquote expandable>1：会员看片秒开-不卡
+2：高级会员专属动态头像
+3：有效防止双向，注销风险
+4：手机可4开，电脑可6开账号
+5：会员专属贴纸，表情包随便用
+6：列表/群组/频道等多项功能翻倍
+7：非好友私信自动屏蔽归档，防止骚扰
+8：可以体验 Telegram 企业版 内全部功能
+9：电报目前月活跃用户超10亿，更多vip功能持续更新中</blockquote>";
+
+    // 尝试发送图片和文字
     try
     {
-        var membershipKeyboard = new InlineKeyboardMarkup(new[]
-        {
-            new [] // 第一行按钮
-            {
-                InlineKeyboardButton.WithCallbackData("3个月会员    24.99 u", "3months"),
-            },
-            new [] // 第二行按钮
-            {
-                InlineKeyboardButton.WithCallbackData("6个月会员    39.99 u", "6months"),
-            },
-            new [] // 第三行按钮
-            {
-                InlineKeyboardButton.WithCallbackData("一年会员    70.99 u", "1year"),
-            },
-            new [] // 第四行按钮
-            {
-                InlineKeyboardButton.WithCallbackData("返回", "back"),
-            }
-        });
-
-        await botClient.SendTextMessageAsync(
+        await botClient.SendPhotoAsync(
             chatId: message.Chat.Id,
-            text: "请选择会员期限：",
-            replyMarkup: membershipKeyboard
+            photo: new InputOnlineFile("https://i.postimg.cc/J0B3Tfm1/features-and-benefits-of-Telegram-Premium.webp"),
+            caption: captionText,
+            parseMode: ParseMode.Html, // 使用 HTML 支持 <tg-spoiler> 和 <blockquote expandable>
+            replyMarkup: inlineKeyboard
         );
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"发送会员价格表按钮时出现异常: {ex.Message}");
+        // 图片发送失败时，记录错误并回退到发送纯文本
+        Console.WriteLine($"发送图片失败：{ex.Message}");
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: captionText,
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard
+        );
     }
 }
 if (Regex.IsMatch(messageText, @"^/zijinhy\b", RegexOptions.IgnoreCase))
