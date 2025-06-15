@@ -19145,7 +19145,7 @@ if (messageText.Contains("代开") || messageText.Contains("vip") || messageText
 3个月：<b>24.99 u </b>
 6个月：<b>39.99 u </b>
 1年度：<b>70.99 u </b>
-<tg-spoiler><a href='https://t.me/yifanfubot?start=provip'>已是 FF Pro会员？降价为：20u/30u/65u</a></tg-spoiler>
+<tg-spoiler><a href='https://t.me/yifanfubot?start=provip'>已是 FF Pro会员？降价为：20u/35u/65u</a></tg-spoiler>
 
 开通电报会员的好处：
 <blockquote expandable>1：会员看片秒开-不卡
