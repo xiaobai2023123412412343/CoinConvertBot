@@ -16589,8 +16589,8 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
         },
         new [] // 第一行按钮
         {
-            InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
-            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),
+            InlineKeyboardButton.WithCallbackData("合约助手", "/cny"),
+            InlineKeyboardButton.WithCallbackData("财富密码", "财富密码"),
             InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
         },	    
         new [] // 第二行按钮
@@ -21348,8 +21348,8 @@ if (UserId != AdminUserId)
         },
         new [] // 第一行按钮
         {
-            InlineKeyboardButton.WithCallbackData("会员代开", "membershipOptions"),
-            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis"),
+            InlineKeyboardButton.WithCallbackData("合约助手", "/cny"),
+            InlineKeyboardButton.WithCallbackData("财富密码", "财富密码"),
             InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
         },	    
         new [] // 第二行按钮
