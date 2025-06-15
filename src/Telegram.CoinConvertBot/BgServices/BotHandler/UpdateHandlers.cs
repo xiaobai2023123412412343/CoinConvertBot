@@ -53,6 +53,8 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 11： 波场官网api修改：  369e85e5-68d3-4299-a602-9d8d93ad026a   0c138945-fd9f-4390-b015-6b93368de1fd   https://tronscan.org/#/myaccount/apiKeys  都是免费的api，随便注册即可
 12：  以太坊api： WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4   DIPNHXE6J4IA1NS57ZFYRGRMSWVVCM9GXI    https://etherscan.io/apidashboard   都是免费的api，随便注册即可
 13： 防盗版授权
+14： 替换管理员链接：t.me/yifanfu 或 @yifanfu
+15： 替换机器人链接：t.me/yifanfubot 或 @yifanfubot
 */
 
 //yifanfu或@yifanfu或t.me/yifanfu为管理员ID
@@ -13795,7 +13797,7 @@ if (update.Type == UpdateType.Message)
             if (!string.IsNullOrWhiteSpace(inputText))
             {
                 // 修改正则表达式以匹配带小数点的数字计算
-                var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|qiand|shiwukxian|music|mairumaichu|charsi|provip|huiyuanku|zdcrsi|usd|more|usdt|tron|z0|cny|trc|home|jiankong|caifu|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|ucard|jisuzhangdie|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|询千百度|地址监听|加密货币|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
+                var containsKeywordsOrCommandsOrNumbersOrAtSign = Regex.IsMatch(inputText, @"^\/(start|yi|fan|qdgg|yccl|fu|btc|xamzhishu|xgzhishu|lamzhishu|about|qiand|shiwukxian|music|mairumaichu|charsi|provip|huiyuanku|zdcrsi|usd|more|usdt|tron|z0|cny|trc|home|jiankong|caifu|help|qunliaoziliao|baocunqunliao|bangdingdizhi|zijin|faxian|chaxun|xuni|ucard|jisuzhangdie|bijiacha|jkbtc)|更多功能|人民币|能量租赁|实时汇率|U兑TRX|合约助手|询千百度|地址监听|加密货币|外汇助手|监控|汇率|^[\d\+\-\*/\.\s]+$|^@");
                 // 检查输入文本是否为数字+货币的组合
                 var isNumberCurrency = Regex.IsMatch(inputText, @"(^\d+\s*[A-Za-z\u4e00-\u9fa5]+$)|(^\d+(\.\d+)?(btc|比特币|eth|以太坊|usdt|泰达币|币安币|bnb|bgb|币记-BGB|okb|欧易-okb|ht|火币积分-HT|瑞波币|xrp|艾达币|ada|狗狗币|doge|shib|sol|莱特币|ltc|link|电报币|ton|比特现金|bch|以太经典|etc|uni|avax|门罗币|xmr)$)", RegexOptions.IgnoreCase);
                 // 检查输入文本是否为纯中文文本带空格
@@ -14502,6 +14504,8 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 11： 波场api修改： 10609102-669a-4cf4-8c36-cc3ed97f9a30    2f9385ef-2820-4caa-9f74-e720e1a39a75    https://www.trongrid.io/dashboard   都是免费的api，随便注册即可
 12： 波场官网api修改：  369e85e5-68d3-4299-a602-9d8d93ad026a   0c138945-fd9f-4390-b015-6b93368de1fd   https://tronscan.org/#/myaccount/apiKeys  都是免费的api，随便注册即可
 13：  以太坊api： WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4    https://etherscan.io/apidashboard   都是免费的api，随便注册即可
+14： 替换管理员链接：t.me/yifanfu 或 @yifanfu
+15： 替换机器人链接：t.me/yifanfubot 或 @yifanfubot
 
 启动机器人先：先开启保存群聊资料：<code>/baocunqunliao</code>
 储存之前的用户资料 代绑地址 可以代解 储存群聊资料
@@ -15028,7 +15032,7 @@ const string BOT_USERNAME = "yifanfubot";//机器人用户名
 const long ADMIN_ID = 1427768220L;//指定管理员ID不转发
 
 // 存储机器人的所有命令
-string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/more","/music", "/cny","/lamzhishu","/xgzhishu","/xamzhishu", "/trc","/caifu","/qiand", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni","/ucard","/bijiacha", "/jkbtc", "更多功能", "能量租赁", "实时汇率", "U兑TRX", "合约助手", "询千百度", "地址监听", "加密货币", "外汇助手","能量","energyComparison", "监控" };    
+string[] botCommands = { "/start", "/yi", "/fan", "/qdgg", "/yccl", "/fu", "/btc", "/usd", "/more","/music", "/cny","/about","/lamzhishu","/xgzhishu","/xamzhishu", "/trc","/caifu","/qiand", "/usdt","/tron", "/home", "/jiankong", "/help", "/qunliaoziliao", "/baocunqunliao", "/bangdingdizhi", "/zijin", "/faxian", "/chaxun", "/xuni","/ucard","/bijiacha", "/jkbtc", "更多功能", "能量租赁", "实时汇率", "U兑TRX", "合约助手", "询千百度", "地址监听", "加密货币", "外汇助手","能量","energyComparison", "监控" };    
 
 if (message.Type == MessageType.Text)
 {	
@@ -19209,6 +19213,55 @@ if (Regex.IsMatch(messageText, @"^/zijinhy\b", RegexOptions.IgnoreCase))
             chatId: message.Chat.Id,
             text: result,
             parseMode: ParseMode.Html // 改为 Html
+        );
+    }
+}
+// 检查是否收到 /about 命令
+if (messageText.Equals("/about", StringComparison.OrdinalIgnoreCase))
+{
+    // 定义内联键盘按钮，仅一个按钮
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new[] // 按钮行
+        {
+            InlineKeyboardButton.WithUrl("联系管理员", "https://t.me/yifanfu?text=你好")
+        }
+    });
+
+    // 定义文本内容（使用 HTML 格式以支持加粗）
+    string captionText = @"<b>关于本机器人</b>：
+
+本机器人始于 <b>2023年3月</b>，已持续安全运营多年，兑换记录链上可查，累计换出超 <b>百万TRX</b>，欢迎有TRX兑换需求的用户来本机器人兑换！
+
+<b>7×24小时营业</b>，从不间断，全程自动兑换，无需人工干预，安全，放心！
+
+<b>注意</b>：请不要从交易所或汇旺提币兑换！
+如需其它能量（例如 ERC-20）欢迎咨询管理员！
+
+<b>功能预览</b>：
+换能量、查地址、钱包监听、汇率换算、加密货币，一个机器人通通搞定！还有更多实用功能等你来探究！";
+
+    // 尝试发送图片和文字
+    try
+    {
+        await botClient.SendAnimationAsync( // 使用 SendAnimationAsync 因为图片是 GIF
+            chatId: message.Chat.Id,
+            animation: new InputOnlineFile("https://i.postimg.cc/13PpcScy/123.gif"),
+            caption: captionText,
+            parseMode: ParseMode.Html, // 使用 HTML 格式支持加粗
+            replyMarkup: inlineKeyboard
+        );
+    }
+    catch (Exception ex)
+    {
+        // 图片发送失败时，记录错误并回退到发送纯文本
+        Console.WriteLine($"发送 GIF 失败：{ex.Message}");
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: captionText,
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard,
+            disableWebPagePreview: true // 关闭链接预览
         );
     }
 }
