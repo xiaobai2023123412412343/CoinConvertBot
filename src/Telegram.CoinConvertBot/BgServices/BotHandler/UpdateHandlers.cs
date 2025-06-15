@@ -14481,9 +14481,9 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 <code>监控 eth </code>可选
 <code>/zdcrsi</code> 启动定时查询rsi
 
-<code>绑定 TXkRT6uxoMJksnMpahcs19bF7sJB7f2zdv TRX 备注 开会员地址</code>
-<code>绑定 TWs6YaFusBbL6UYPjfK9XxpffNGCDu1ApF TRX 备注 安卓抹茶</code>
-<code>绑定 TLowmih1pMgmeUGTAg3Z7Fdk1CZ5KP5ZgB TRX 备注 iOS抹茶</code>
+<code>绑定 TXkRT6uxo*******JB7f2zdv TRX 备注 开会员地址</code>
+<code>绑定 TWs6YaFus*******NGDu1ApF TRX 备注 安卓抹茶</code>
+<code>绑定 TLowmaah1*******dk1C5ZgB TRX 备注 iOS抹茶</code>
 
 <code>添加群聊：群名字：24小时营业 群ID：-1001691868771 群链接：https://t.me/+2hxPc3RySbRkNDZl</code>
 ";
@@ -19143,7 +19143,8 @@ if (messageText.Contains("代开") || messageText.Contains("vip") || messageText
             chatId: message.Chat.Id,
             text: captionText,
             parseMode: ParseMode.Html,
-            replyMarkup: inlineKeyboard
+            replyMarkup: inlineKeyboard,
+	    disableWebPagePreview: true  // 关闭链接预览	
         );
     }
 }
