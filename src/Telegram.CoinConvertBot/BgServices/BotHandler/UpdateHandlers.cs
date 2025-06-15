@@ -19130,14 +19130,21 @@ if (messageText.Equals("zztongkuan", StringComparison.OrdinalIgnoreCase))
 // 检查是否接收到了包含特定关键词的消息，且不以 /vip 开头，收到符合条件的就启动会员价格表的按钮
 if (messageText.Contains("代开") || messageText.Contains("Premium"))
 {
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
-    {
-        new[] // 按钮行
+    // 根据是否为管理员决定按钮内容
+    var buttons = message.From.Id == AdminUserId
+        ? new[] // 管理员：一列三个按钮
+        {
+            InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu?text=你好，我要代开TG会员"),
+            InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest"),
+            InlineKeyboardButton.WithCallbackData("会员表情", "memberEmojis")
+        }
+        : new[] // 普通用户：一列两个按钮
         {
             InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu?text=你好，我要代开TG会员"),
             InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest")
-        }
-    });
+        };
+
+    var inlineKeyboard = new InlineKeyboardMarkup(new[] { buttons });
 
     // 定义文本内容（使用 HTML 格式）
     string captionText = @"<b>代开 TG 会员：</b>
