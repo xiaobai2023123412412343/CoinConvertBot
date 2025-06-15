@@ -13037,7 +13037,7 @@ case "shiyong": // 当用户点击“简体中文”按钮
 case "send_huansuan": // 当用户点击“简体中文”按钮
     fakeMessage = new Message
     {
-        Text = "/fu",
+        Text = "/qiand",
         Chat = callbackQuery.Message.Chat,
         From = callbackQuery.From
     };
@@ -18144,7 +18144,7 @@ if (message.Text.StartsWith("/provip") || message.Text.StartsWith("/start provip
     }
 }
 // 检查是否接收到了 "签到" 消息或 "/qiand" 命令
-if (message.Text.Equals("签到", StringComparison.OrdinalIgnoreCase) || message.Text.Equals("/qiand", StringComparison.OrdinalIgnoreCase))
+if (message.Text.Equals("签到", StringComparison.OrdinalIgnoreCase) || message.Text.Equals("/fu", StringComparison.OrdinalIgnoreCase))
 {
     try
     {
@@ -21034,7 +21034,7 @@ else
         var action = messageText.Split(' ')[0] switch
         {
             "/start" => Start(botClient, message),
-            "/fu" => Valuation(botClient, message),
+            "/qiand" => Valuation(botClient, message),
             "U兑TRX" => ConvertCoinTRX(botClient, message), // 添加这一行
             "实时汇率" => PriceTRX(botClient, message), // 添加这一行
             "能量租赁" => zulin(botClient, message), // 添加这一行
