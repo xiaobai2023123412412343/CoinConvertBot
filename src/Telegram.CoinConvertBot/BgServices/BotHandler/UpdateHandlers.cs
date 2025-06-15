@@ -19174,7 +19174,7 @@ if (messageText.Contains("代开") || messageText.Contains("vip") || messageText
     {
         await botClient.SendPhotoAsync(
             chatId: message.Chat.Id,
-            photo: new InputOnlineFile("https://i.postimg.cc/J0B3Tfm1/features-and-benefits-of-Telegram-Premium.webp"),
+            photo: new InputOnlineFile("https://i.postimg.cc/RZfwz8PW/features-and-benefits-of-Telegram-Premium.webp"),
             caption: captionText,
             parseMode: ParseMode.Html, // 使用 HTML 支持 <tg-spoiler> 和 <blockquote expandable>
             replyMarkup: inlineKeyboard
