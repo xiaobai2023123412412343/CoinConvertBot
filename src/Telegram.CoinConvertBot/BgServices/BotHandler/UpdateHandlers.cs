@@ -19106,11 +19106,11 @@ if (messageText.Contains("代开") || messageText.Contains("vip") || messageText
     });
 
     // 定义文本内容（使用 HTML 格式）
-    string captionText = @"代开 TG 会员：
+    string captionText = @"<b>代开 TG 会员：</b>
 
-3个月：24.99 u 
-6个月：39.99 u 
-1 年度：70.99 u 
+3个月：<b>24.99 u </b>
+6个月：<b>39.99 u </b>
+1年度：<b>70.99 u </b>
 <tg-spoiler><a href='https://t.me/yifanfubot?start=provip'>已是 FF Pro会员？降价为：20u/30u/65u</a></tg-spoiler>
 
 开通电报会员的好处：
@@ -19122,7 +19122,22 @@ if (messageText.Contains("代开") || messageText.Contains("vip") || messageText
 6：列表/群组/频道等多项功能翻倍
 7：非好友私信自动屏蔽归档，防止骚扰
 8：可以体验 Telegram 企业版 内全部功能
-9：电报目前月活跃用户超10亿，更多vip功能持续更新中</blockquote>";
+9：电报目前月活跃用户超10亿，更多vip功能持续更新中</blockquote>
+
+热门会员emoji表情包，点击链接即可添加：
+<blockquote expandable>1：热门：<a href='https://t.me/addemoji/yifanfu'>https://t.me/addemoji/yifanfu</a>
+2：热门：<a href='https://t.me/addemoji/YifanfuTGvip'>https://t.me/addemoji/YifanfuTGvip</a>
+3：财神：<a href='https://t.me/addemoji/Yifanfufacai'>https://t.me/addemoji/Yifanfufacai</a>
+4：闪字：<a href='https://t.me/addemoji/Yifanfushanzi'>https://t.me/addemoji/Yifanfushanzi</a>
+5：熊猫：<a href='https://t.me/addemoji/Yifanfupanda'>https://t.me/addemoji/Yifanfupanda</a>
+6：东南亚：<a href='https://t.me/addemoji/yifanfuDNY'>https://t.me/addemoji/yifanfuDNY</a>
+7：米老鼠：<a href='https://t.me/addemoji/Yifanfumilaoshu'>https://t.me/addemoji/Yifanfumilaoshu</a>
+8：龙年特辑：<a href='https://t.me/addemoji/Yifanfu2024'>https://t.me/addemoji/Yifanfu2024</a>
+9：蛇年特辑：<a href='https://t.me/addemoji/Yifanfushenian'>https://t.me/addemoji/Yifanfushenian</a>
+10：币圈专用：<a href='https://t.me/addemoji/Yifanfubtc'>https://t.me/addemoji/Yifanfubtc</a>
+11：车队专用：<a href='https://t.me/addemoji/Yifanfuyhk'>https://t.me/addemoji/Yifanfuyhk</a>
+12：qq经典表情：<a href='https://t.me/addemoji/Yifanfuqq'>https://t.me/addemoji/Yifanfuqq</a></blockquote>";
+
 
     // 尝试发送图片和文字
     try
