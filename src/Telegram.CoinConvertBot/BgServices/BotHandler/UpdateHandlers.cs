@@ -12291,33 +12291,33 @@ public static async Task<decimal> GetOkxPriceAsync(string baseCurrency, string q
     Console.WriteLine("无法从OKX API获取价格。");
     return default; // 返回默认值（0）
 }
-
+//合约助手
 static async Task SendAdvertisementOnce(ITelegramBotClient botClient, CancellationToken cancellationToken, IBaseRepository<TokenRate> rateRepository, decimal FeeRate, long chatId)
 {    
     // 获取大户持仓量多空比信息
-static async Task<string> GetTopTradersRatio(string symbol)
-{
-    using (var httpClient = new HttpClient())
+    static async Task<string> GetTopTradersRatio(string symbol)
     {
-        try
+        using (var httpClient = new HttpClient())
         {
-            var topTradersResponse = await httpClient.GetAsync($"https://fapi.binance.com/futures/data/topLongShortPositionRatio?symbol={symbol}USDT&period=1h");
-            var topTradersData = JsonSerializer.Deserialize<List<TopTradersRatio>>(await topTradersResponse.Content.ReadAsStringAsync());
-            if (topTradersData != null && topTradersData.Any())
+            try
             {
-                var latestData = topTradersData.Last();
-                var longRatio = Math.Round(double.Parse(latestData.longAccount) * 100, 2);
-                var shortRatio = Math.Round(double.Parse(latestData.shortAccount) * 100, 2);
-                return $" {longRatio}% / {shortRatio}%";
+                var topTradersResponse = await httpClient.GetAsync($"https://fapi.binance.com/futures/data/topLongShortPositionRatio?symbol={symbol}USDT&period=1h");
+                var topTradersData = JsonSerializer.Deserialize<List<TopTradersRatio>>(await topTradersResponse.Content.ReadAsStringAsync());
+                if (topTradersData != null && topTradersData.Any())
+                {
+                    var latestData = topTradersData.Last();
+                    var longRatio = Math.Round(double.Parse(latestData.longAccount) * 100, 2);
+                    var shortRatio = Math.Round(double.Parse(latestData.shortAccount) * 100, 2);
+                    return $" {longRatio}% / {shortRatio}%";
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error when calling API: {ex.Message}");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error when calling API: {ex.Message}");
+            }
+            return " 0% / 0%"; // 返回0%的多空比
         }
     }
-    return " 0% / 0%"; // 返回0%的多空比
-}
 
     // 启动所有异步任务
     var btcTopTradersRatioTask = GetTopTradersRatio("BTC");
@@ -12358,66 +12358,96 @@ static async Task<string> GetTopTradersRatio(string symbol)
     var bitcoinChange = changes[0];
     var ethereumChange = changes[1];
 
-    if (!currencyRates.TryGetValue("美元 (USD)", out var usdRateTuple)) 
+    bool hasValidData = false; // 跟踪是否至少有一个数据有效
+
+    string usdRateText = "无数据";
+    if (currencyRates.TryGetValue("美元 (USD)", out var usdRateTuple)) 
+    {
+        var usdRate = 1 / usdRateTuple.Item1;
+        usdRateText = $"{usdRate:#.####}";
+        hasValidData = true;
+    }
+    else
     {
         Console.WriteLine("Could not find USD rate in response.");
-        return; // 或者你可以选择继续，只是不显示美元汇率
     }
-    var usdRate = 1 / usdRateTuple.Item1;
-        
-        string channelLink = "tg://resolve?domain=yifanfu"; // 使用 'tg://' 协议替换为你的频道链接
-string advertisementText = $"—————————<b>合约大数据</b>—————————\n" +
-    $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####}</b>\n" +
-    $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +
-    $"<b>\U0001F4B0 专属兑换汇率：100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
-    $"<code>\U0001F4B8 币圈今日恐惧与贪婪指数：{today} {fearGreedDescription}</code>\n" +                 
-    $"<code>\U0001F4B8 比特币价格 ≈ {bitcoinPrice} USDT    {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </code>\n" +
-    //$"<code>\U0001F4B8 比特币合约多空比：{btcTopTradersRatio}</code>\n" +
-    $"<code>\U0001F4B8 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </code>\n" +
-    $"<code>\U0001F4B8 比特币合约多空比：{btcTopTradersRatio}</code>\n" +    
-    $"<code>\U0001F4B8 以太坊合约多空比：{ethTopTradersRatio}</code>\n";
-    //$"<code>\U0001F4B8 全网24小时合约爆仓 ≈ {h24TotalVolUsd:#,0} USDT</code>\n" +     
-   // $"<code>\U0001F4B8 以太坊1小时合约： {ethLongRate:#.##}% 做多  {ethShortRate:#.##}% 做空</code>\n" +
-   // $"<code>\U0001F4B8 比特币24小时合约：{btcLongRate:#.##}% 做多  {btcShortRate:#.##}% 做空</code>\n" ;
-            
-            
-string botUsername = "yifanfubot"; // 替换为你的机器人的用户名
-string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
-string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
-// 你想要发送的照片的URL或file_id
-//string photoUrl = "https://i.postimg.cc/jjK3vbsS/What-is-Bitcoin-Cash.jpg"; // 替换为你的图片URL或file_id
+    string usdtToTrxText = rate != 0 ? $"{usdtToTrx:#.####}" : "无数据";
+    if (rate != 0) hasValidData = true;
 
-// 创建 InlineKeyboardButton 并设置文本和回调数据
-var visitButton1 = new InlineKeyboardButton("\U0000267B 进交流群")
-{
-    Url = "https://t.me/+b4NunT6Vwf0wZWI1" // 将此链接替换为你想要跳转的左侧链接
-};
+    string okxPriceText = okxPrice != 0 ? $"{okxPrice} CNY" : "无数据";
+    if (okxPrice != 0) hasValidData = true;
 
-var shareToGroupButton = InlineKeyboardButton.WithUrl("\U0001F449 分享到群组 \U0001F448", shareLink);
+    string fearGreedText = today != 0 ? $"{today} {fearGreedDescription}" : "无数据";
+    if (today != 0) hasValidData = true;
 
-// 创建 InlineKeyboardMarkup 并添加按钮
-var inlineKeyboard = new InlineKeyboardMarkup(new[]
-{
-    new[] { visitButton1, shareToGroupButton }, // 一行按钮
-});
+    string bitcoinPriceText = bitcoinPrice != 0 ? $"{bitcoinPrice} USDT    {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}%" : "无数据";
+    if (bitcoinPrice != 0) hasValidData = true;
 
-// 发送带有说明的照片到指定的聊天
-//await botClient.SendPhotoAsync(
-//    chatId: chatId,
-//    photo: photoUrl,
-//    caption: advertisementText,
-//    parseMode: ParseMode.Html,
-//    replyMarkup: inlineKeyboard, // 使用新的inlineKeyboard对象
-//    cancellationToken: cancellationToken);
-    
+    string ethereumPriceText = ethereumPrice != 0 ? $"{ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}%" : "无数据";
+    if (ethereumPrice != 0) hasValidData = true;
+
+    string btcRatioText = btcTopTradersRatio != " 0% / 0%" ? btcTopTradersRatio : "无数据";
+    if (btcTopTradersRatio != " 0% / 0%") hasValidData = true;
+
+    string ethRatioText = ethTopTradersRatio != " 0% / 0%" ? ethTopTradersRatio : "无数据";
+    if (ethTopTradersRatio != " 0% / 0%") hasValidData = true;
+
+    // 如果所有数据都无效，返回错误消息
+    if (!hasValidData)
+    {
+        try
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: "查询合约数据失败，请稍后重试！",
+                parseMode: ParseMode.Html,
+                replyMarkup: null,
+                cancellationToken: cancellationToken
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to send error message to chat {chatId}: {ex.Message}");
+        }
+        return;
+    }
+
+    // 构建消息
+    string advertisementText = $"—————————<b>合约大数据</b>—————————\n" +
+        $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRateText}</b>\n" +
+        $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPriceText}</b>\n" +
+        $"<b>\U0001F4B0 专属兑换汇率：100 USDT = {usdtToTrxText} TRX</b>\n\n" +
+        $"<code>\U0001F4B8 币圈今日恐惧与贪婪指数：{fearGreedText}</code>\n" +
+        $"<code>\U0001F4B8 比特币价格 ≈ {bitcoinPriceText}</code>\n" +
+        $"<code>\U0001F4B8 以太坊价格 ≈ {ethereumPriceText}</code>\n" +
+        $"<code>\U0001F4B8 比特币合约多空比：{btcRatioText}</code>\n" +
+        $"<code>\U0001F4B8 以太坊合约多空比：{ethRatioText}</code>\n";
+
+    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    {
+        new[]
+        {
+            InlineKeyboardButton.WithUrl("\U0000267B 进交流群", "https://t.me/+b4NunT6Vwf0wZWI1"),
+            InlineKeyboardButton.WithUrl("\U0001F449 分享到群组 \U0001F448", $"https://t.me/yifanfubot?startgroup=")
+        }
+    });
+
     // 发送广告到指定的聊天
-    await botClient.SendTextMessageAsync(
-        chatId: chatId,
-        text: advertisementText,
-        parseMode: ParseMode.Html,
-        replyMarkup: inlineKeyboard, // 使用新的inlineKeyboard对象
-        cancellationToken: cancellationToken);    
+    try
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: chatId,
+            text: advertisementText,
+            parseMode: ParseMode.Html,
+            replyMarkup: inlineKeyboard,
+            cancellationToken: cancellationToken
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failed to send advertisement to chat {chatId}: {ex.Message}");
+    }
 }
 
 //获取24小时全网合约爆仓
