@@ -103,7 +103,7 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
         botClient.SetMyCommandsAsync(new BotCommand[]
         {
         new BotCommand(){Command="start",Description="开始使用"},
-        new BotCommand(){Command="Swap",Description="U兑TRX"},
+        new BotCommand(){Command="swap",Description="U兑TRX"},
         new BotCommand(){Command="usdt",Description="欧易时价"},                            
         new BotCommand(){Command="help",Description="使用帮助"},   
         new BotCommand(){Command="about",Description="关于本机"},             
