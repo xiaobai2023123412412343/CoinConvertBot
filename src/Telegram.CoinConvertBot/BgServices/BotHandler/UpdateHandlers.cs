@@ -15966,50 +15966,35 @@ if (messageText.StartsWith("/xgzhishu"))
 // 检查是否接收到了 /hangqingshuju 消息，收到就返回网址收藏
 if (messageText.StartsWith("/hangqingshuju"))
 {
-    var imageUrl = "https://i.postimg.cc/rwN7mKHL/a4ea-kqpyfha0836373.jpg";
-    var imageStream = await IndexDataFetcher.FetchImageAsync(imageUrl);
-
-    // 准备币圈网址基础内容
-    var baseContent = @"一些炒币常用网址收录，持续更新中...
+    try
+    {
+        // 准备币圈网址基础内容
+        var baseContent = @"一些炒币常用网址收录，持续更新中...
 
 meme交易：https://m.avedex.cc/shareLink/
 合约安全检测：https://tokensecurity.tokenpocket.pro/#/
 山寨币解锁时间表：https://tokenomist.ai/
 Bitcoin ETF 资金动态：https://farside.co.uk/btc/";
 
-    // 获取当前日期并判断夏令时和周末
-    var today = DateTime.Today;
-    var isDST = today >= new DateTime(today.Year, 3, 9) && today <= new DateTime(today.Year, 11, 2);
-    var isWeekend = today.DayOfWeek == DayOfWeek.Saturday || today.DayOfWeek == DayOfWeek.Sunday;
+        // 获取当前日期并判断夏令时和周末
+        var today = DateTime.Today;
+        var isDST = today >= new DateTime(today.Year, 3, 9) && today <= new DateTime(today.Year, 11, 2);
+        var isWeekend = today.DayOfWeek == DayOfWeek.Saturday || today.DayOfWeek == DayOfWeek.Sunday;
 
-    var marketHours = isWeekend
-        ? "美股开盘时间：周末休市"
-        : isDST
-            ? "美股开盘时间：21:30 | 收盘：次日 04:00"
-            : "美股开盘时间：22:30 | 收盘：次日 05:00";
+        var marketHours = isWeekend
+            ? "美股开盘时间：周末休市"
+            : isDST
+                ? "美股开盘时间：21:30 | 收盘：次日 04:00"
+                : "美股开盘时间：22:30 | 收盘：次日 05:00";
 
-    var messageContent = $@"{baseContent}
+        var messageContent = $@"{baseContent}
 ——————————————
 {marketHours}";
 
-    // 创建内联按钮
-    var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("关闭", "back"));
+        // 创建内联按钮
+        var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("关闭", "back"));
 
-    // 尝试发送图片和文字
-    try
-    {
-        await botClient.SendPhotoAsync(
-            chatId: message.Chat.Id,
-            photo: new Telegram.Bot.Types.InputFiles.InputOnlineFile(imageStream),
-            caption: messageContent,
-            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-            replyMarkup: keyboard
-        );
-    }
-    catch (Exception ex)
-    {
-        // 图片发送失败时，记录错误并回退到发送纯文本
-        Console.WriteLine($"发送图片失败：{ex.Message}");
+        // 直接发送文本消息
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: messageContent,
@@ -16017,6 +16002,25 @@ Bitcoin ETF 资金动态：https://farside.co.uk/btc/";
             disableWebPagePreview: true,
             replyMarkup: keyboard
         );
+    }
+    catch (Exception ex)
+    {
+        // 捕获所有异常，记录日志并发送友好提示
+       // Console.WriteLine($"处理 /hangqingshuju 失败：{ex.Message}");
+        try
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "服务暂时不可用，请稍后再试！",
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                disableWebPagePreview: true
+            );
+        }
+        catch (Exception innerEx)
+        {
+            // 即使提示消息发送失败，也只记录日志，不抛出异常
+           // Console.WriteLine($"发送错误提示失败：{innerEx.Message}");
+        }
     }
 }
 // 检查是否接收到了 /zhishu 消息，收到就查询指数数据和沪深两市上涨下跌数概览
