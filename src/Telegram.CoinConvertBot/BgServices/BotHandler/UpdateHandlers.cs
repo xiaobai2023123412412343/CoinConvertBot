@@ -15970,9 +15970,9 @@ if (messageText.StartsWith("/hangqingshuju"))
     var imageStream = await IndexDataFetcher.FetchImageAsync(imageUrl);
 
     // 准备币圈网址基础内容
-    var baseContent = @"一些炒币常用网址收藏，持续更新中...
+    var baseContent = @"一些炒币常用网址收藏，持续优化中...
 
-meme 交易：https://m.avedex.cc/shareLink/
+meme交易：https://m.avedex.cc/shareLink/
 合约安全检测：https://tokensecurity.tokenpocket.pro/#/
 山寨币解锁时间表：https://tokenomist.ai/
 Bitcoin ETF 资金动态：https://farside.co.uk/btc/";
@@ -16009,9 +16009,9 @@ Bitcoin ETF 资金动态：https://farside.co.uk/btc/";
     // 创建内联按钮
     var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("关闭", "back"));
 
-    if (imageStream != null && imageStream.Length > 0)
+    // 尝试发送图片和文字
+    try
     {
-        // 图片获取成功，发送图片和文字说明
         await botClient.SendPhotoAsync(
             chatId: message.Chat.Id,
             photo: new Telegram.Bot.Types.InputFiles.InputOnlineFile(imageStream),
@@ -16020,9 +16020,10 @@ Bitcoin ETF 资金动态：https://farside.co.uk/btc/";
             replyMarkup: keyboard
         );
     }
-    else
+    catch (Exception ex)
     {
-        // 图片获取失败，只发送文字
+        // 图片发送失败时，记录错误并回退到发送纯文本
+        Console.WriteLine($"发送图片失败：{ex.Message}");
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: messageContent,
