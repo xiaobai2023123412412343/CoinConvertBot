@@ -19238,7 +19238,8 @@ if (Regex.IsMatch(messageText, @"^/zijinhy\b", RegexOptions.IgnoreCase))
     }
 }
 // 检查是否收到 /about 命令
-if (messageText.Equals("/about", StringComparison.OrdinalIgnoreCase))
+if (messageText.Equals("/about", StringComparison.OrdinalIgnoreCase) ||
+    messageText.StartsWith("/about@", StringComparison.OrdinalIgnoreCase))
 {
     // 定义内联键盘按钮，仅一个按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
