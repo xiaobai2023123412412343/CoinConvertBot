@@ -15970,41 +15970,27 @@ if (messageText.StartsWith("/hangqingshuju"))
     var imageStream = await IndexDataFetcher.FetchImageAsync(imageUrl);
 
     // 准备币圈网址基础内容
-    var baseContent = @"一些炒币常用网址收藏，持续优化中...
+    var baseContent = @"一些炒币常用网址收录，持续更新中...
 
 meme交易：https://m.avedex.cc/shareLink/
 合约安全检测：https://tokensecurity.tokenpocket.pro/#/
 山寨币解锁时间表：https://tokenomist.ai/
 Bitcoin ETF 资金动态：https://farside.co.uk/btc/";
 
-    // 获取美东时间并判断是否为夏令时和周末
-    string timeZoneId = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
-        ? "Eastern Standard Time"
-        : "America/New_York";
+    // 获取当前日期并判断夏令时和周末
+    var today = DateTime.Today;
+    var isDST = today >= new DateTime(today.Year, 3, 9) && today <= new DateTime(today.Year, 11, 2);
+    var isWeekend = today.DayOfWeek == DayOfWeek.Saturday || today.DayOfWeek == DayOfWeek.Sunday;
 
-    string messageContent;
-    try
-    {
-        var easternTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-        var easternTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, easternTimeZone);
-        var isWeekend = easternTime.DayOfWeek == DayOfWeek.Saturday || easternTime.DayOfWeek == DayOfWeek.Sunday;
-        var isDST = easternTimeZone.IsDaylightSavingTime(easternTime);
+    var marketHours = isWeekend
+        ? "美股开盘时间：周末休市"
+        : isDST
+            ? "美股开盘时间：21:30 | 收盘：次日 04:00"
+            : "美股开盘时间：22:30 | 收盘：次日 05:00";
 
-        var marketHours = isWeekend
-            ? "美股开盘时间：周末休市"
-            : isDST
-                ? "美股开盘时间：21:30 | 收盘：次日 04:00"
-                : "美股开盘时间：22:30 | 收盘：次日 05:00";
-
-        messageContent = $@"{baseContent}
+    var messageContent = $@"{baseContent}
 ——————————————
 {marketHours}";
-    }
-    catch (TimeZoneNotFoundException)
-    {
-        // 无法获取时区时，只保留币圈网址部分
-        messageContent = baseContent;
-    }
 
     // 创建内联按钮
     var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("关闭", "back"));
