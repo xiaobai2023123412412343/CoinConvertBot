@@ -16665,7 +16665,7 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
         {
             InlineKeyboardButton.WithCallbackData("合约助手", "/cny"),
             InlineKeyboardButton.WithCallbackData("财富密码", "财富密码"),
-            InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
+            InlineKeyboardButton.WithCallbackData("币海神探", "/hangqingshuju")
         },	    
         new [] // 第二行按钮
         {
@@ -16681,9 +16681,9 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
         },
         new [] // 新增第四行按钮
         {
-            InlineKeyboardButton.WithCallbackData("指数行情", "/hangqingshuju"),
             InlineKeyboardButton.WithCallbackData("在线音频", "onlineAudio"),
-            InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading")
+            InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading"),
+            InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
         },
         new [] // 新增第四行按钮
         {
@@ -21494,7 +21494,7 @@ if (UserId != AdminUserId)
         {
             InlineKeyboardButton.WithCallbackData("合约助手", "/cny"),
             InlineKeyboardButton.WithCallbackData("财富密码", "财富密码"),
-            InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
+            InlineKeyboardButton.WithCallbackData("币海神探", "/hangqingshuju")
         },	    
         new [] // 第二行按钮
         {
@@ -21510,9 +21510,9 @@ if (UserId != AdminUserId)
         },
         new [] // 新增第四行按钮
         {
-            InlineKeyboardButton.WithCallbackData("指数行情", "/hangqingshuju"),
             InlineKeyboardButton.WithCallbackData("在线音频", "onlineAudio"),
-            InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading")
+            InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading"),
+            InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
         },
         new [] // 新增第四行按钮
         {
