@@ -14047,6 +14047,10 @@ else if(update.CallbackQuery.Data == "smsVerification")
 }
 else if (update.CallbackQuery.Data == "onlineAudio")
 {
+    var keyboard = new InlineKeyboardMarkup(
+        InlineKeyboardButton.WithCallbackData("关闭", "back")
+    );
+    
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: @"欧乐网：https://www.olevod.com/
@@ -14067,11 +14071,16 @@ fofo影院：https://www.fofoyy.com/
 高清影视下载：https://www.seedhub.cc/
 全球各大地区电视台同步直播：https://tv.garden/
 在线音乐推荐使用洛雪播放器：https://lxmusic.toside.cn/download",
-        disableWebPagePreview: true // 关闭链接预览
+        disableWebPagePreview: true, // 关闭链接预览
+        replyMarkup: keyboard // 添加键盘
     );
 }
 else if (update.CallbackQuery.Data == "onlineReading")
 {
+    var keyboard = new InlineKeyboardMarkup(
+        InlineKeyboardButton.WithCallbackData("关闭", "back")
+    );
+    
     await botClient.SendTextMessageAsync(
         chatId: update.CallbackQuery.Message.Chat.Id,
         text: @"新闻类：
@@ -14097,8 +14106,9 @@ bbc：https://www.bbc.com/zhongwen/simp
 华人网：https://usa.huarenca.com/
 
 天涯神贴：https://tianya.at/?s=9635
-	    ",
-        disableWebPagePreview: true // 关闭链接预览
+        ",
+        disableWebPagePreview: true, // 关闭链接预览
+        replyMarkup: keyboard // 添加键盘
     );
 }	    
 else if (update.CallbackQuery.Data == "queryByColor")
