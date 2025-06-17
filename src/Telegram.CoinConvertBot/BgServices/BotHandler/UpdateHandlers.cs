@@ -19167,10 +19167,8 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
 {
     // 根据是否为管理员决定按钮内容
     var buttons = message.From.Id == AdminUserId
-        ? new[] // 管理员：一列三个按钮
+        ? new[] // 管理员：一个按钮
         {
-            InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu?text=你好，我要代开TG会员"),
-            InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest"),
             InlineKeyboardButton.WithSwitchInlineQuery("会员表情", 
                 "  会员开通成功，需要开通或续费会员可联系我！\n\n" +
                 "热门会员emoji表情包，点击链接即可添加：\n\n" +
@@ -19187,10 +19185,12 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
                 "11：车队专用：https://t.me/addemoji/Yifanfuyhk\n" +
                 "12：qq经典表情：https://t.me/addemoji/Yifanfuqq")
         }
-        : new[] // 普通用户：一列两个按钮
+        : new[] // 普通用户：一列四个按钮
         {
-            InlineKeyboardButton.WithUrl("直接联系作者", "https://t.me/yifanfu?text=你好，我要代开TG会员"),
-            InlineKeyboardButton.WithCallbackData("由作者联系您", "authorContactRequest")
+            InlineKeyboardButton.WithUrl("开3个月", "https://t.me/yifanfu?text=你好，我要代开 3个月 TG会员 | $24.99"),
+            InlineKeyboardButton.WithUrl("开6个月", "https://t.me/yifanfu?text=你好，我要代开 6个月 TG会员 | $39.99"),
+            InlineKeyboardButton.WithUrl("开1年", "https://t.me/yifanfu?text=你好，我要代开 1年 TG会员 | $70.99"),
+            InlineKeyboardButton.WithCallbackData("双向用户", "authorContactRequest")
         };
 
     var inlineKeyboard = new InlineKeyboardMarkup(new[] { buttons });
