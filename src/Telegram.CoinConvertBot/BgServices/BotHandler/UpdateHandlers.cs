@@ -16580,6 +16580,54 @@ if (messageText.StartsWith("z0") || messageText.StartsWith("/usdt")| messageText
             );
         });
 }
+// 检查是否是"汇率换算"或包含"汇率换算"的消息
+if (message.Type == MessageType.Text && (message.Text.Equals("汇率换算", StringComparison.OrdinalIgnoreCase) || message.Text.Contains("汇率换算", StringComparison.OrdinalIgnoreCase)))
+{
+    string usage = @$"如需换算请直接发送<b>金额+币种</b>
+如发送：<code>10 USDT</code>
+回复：<b>10 USDT = xxx TRX</b>
+
+如发送：<code>100 TRX</code>
+回复：<b>100 TRX = xxx USDT</b>
+
+查外汇直接发送<b>金额+货币或代码</b>
+如发送：<code>100美元</code>或<code>100usd</code>
+回复：<b>100美元 ≈ xxx 元人民币</b>
+
+查数字货币价值直接发送<b>金额+代码</b>
+如发送：<code>1btc</code>或<code>1比特币</code>
+回复：<b>1枚比特币的价值是：****</b>        
+
+数字计算<b>直接对话框发送</b>
+如发送：<code>1+1</code>
+回复：<code>1+1=2</code>
+        
+<b>注：群内使用需要回复机器人或设置机器人为管理</b>";
+
+    // 创建内联键盘并添加关闭按钮
+    var keyboard = new InlineKeyboardMarkup(
+        InlineKeyboardButton.WithCallbackData("关闭", "back")
+    );
+
+    try
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: usage,
+            parseMode: ParseMode.Html, // 使用 HTML 格式以支持加粗和点击复制
+            disableWebPagePreview: true, // 关闭链接预览
+            replyMarkup: keyboard
+        );
+    }
+    catch (Exception ex)
+    {
+        // 调试用：发送错误信息给用户或记录日志
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"发生错误，请稍后重试：{ex.Message}"
+        );
+    }
+}
 // 检查是否是"询千百度"命令或 "/trc"
 if (message.Type == MessageType.Text && (message.Text.Equals("询千百度", StringComparison.OrdinalIgnoreCase) || message.Text.StartsWith("/trc")))
 {
@@ -16676,7 +16724,7 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
         },
         new [] // 第三行按钮
         {
-            InlineKeyboardButton.WithCallbackData("汇率换算", "send_huansuan"),
+            InlineKeyboardButton.WithCallbackData("汇率换算", "汇率换算"),
             InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),
             InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
         },
@@ -21505,7 +21553,7 @@ if (UserId != AdminUserId)
         },
         new [] // 第三行按钮
         {
-            InlineKeyboardButton.WithCallbackData("汇率换算", "send_huansuan"),
+            InlineKeyboardButton.WithCallbackData("汇率换算", "汇率换算"),
             InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),
             InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
         },
