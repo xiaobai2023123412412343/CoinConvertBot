@@ -19167,33 +19167,42 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
 {
     // 根据是否为管理员决定按钮内容
     var buttons = message.From.Id == AdminUserId
-        ? new[] // 管理员：一个按钮
+        ? new[] // 管理员：一个按钮，包装成单行二维数组
         {
-            InlineKeyboardButton.WithSwitchInlineQuery("会员表情", 
-                "  会员开通成功，需要开通或续费会员可联系我！\n\n" +
-                "热门会员emoji表情包，点击链接即可添加：\n\n" +
-                "1：热门：https://t.me/addemoji/yifanfu\n" +
-                "2：热门：https://t.me/addemoji/YifanfuTGvip\n" +
-                "3：财神：https://t.me/addemoji/Yifanfufacai\n" +
-                "4：闪字：https://t.me/addemoji/Yifanfushanzi\n" +
-                "5：熊猫：https://t.me/addemoji/Yifanfupanda\n" +
-                "6：东南亚：https://t.me/addemoji/yifanfuDNY\n" +
-                "7：米老鼠：https://t.me/addemoji/Yifanfumilaoshu\n" +
-                "8：龙年特辑：https://t.me/addemoji/Yifanfu2024\n" +
-                "9：蛇年特辑：https://t.me/addemoji/Yifanfushenian\n" +
-                "10：币圈专用：https://t.me/addemoji/Yifanfubtc\n" +
-                "11：车队专用：https://t.me/addemoji/Yifanfuyhk\n" +
-                "12：qq经典表情：https://t.me/addemoji/Yifanfuqq")
+            new[] // 单行
+            {
+                InlineKeyboardButton.WithSwitchInlineQuery("会员表情", 
+                    "  会员开通成功，需要开通或续费会员可联系我！\n\n" +
+                    "热门会员emoji表情包，点击链接即可添加：\n\n" +
+                    "1：热门：https://t.me/addemoji/yifanfu\n" +
+                    "2：热门：https://t.me/addemoji/YifanfuTGvip\n" +
+                    "3：财神：https://t.me/addemoji/Yifanfufacai\n" +
+                    "4：闪字：https://t.me/addemoji/Yifanfushanzi\n" +
+                    "5：熊猫：https://t.me/addemoji/Yifanfupanda\n" +
+                    "6：东南亚：https://t.me/addemoji/yifanfuDNY\n" +
+                    "7：米老鼠：https://t.me/addemoji/Yifanfumilaoshu\n" +
+                    "8：龙年特辑：https://t.me/addemoji/Yifanfu2024\n" +
+                    "9：蛇年特辑：https://t.me/addemoji/Yifanfushenian\n" +
+                    "10：币圈专用：https://t.me/addemoji/Yifanfubtc\n" +
+                    "11：车队专用：https://t.me/addemoji/Yifanfuyhk\n" +
+                    "12：qq经典表情：https://t.me/addemoji/Yifanfuqq")
+            }
         }
-        : new[] // 普通用户：一列四个按钮
+        : new[] // 普通用户：两排按钮
         {
-            InlineKeyboardButton.WithUrl("开3个月", "https://t.me/yifanfu?text=你好，我要代开 3个月 TG会员 | $24.99"),
-            InlineKeyboardButton.WithUrl("开6个月", "https://t.me/yifanfu?text=你好，我要代开 6个月 TG会员 | $39.99"),
-            InlineKeyboardButton.WithUrl("开1年", "https://t.me/yifanfu?text=你好，我要代开 1年 TG会员 | $70.99"),
-            InlineKeyboardButton.WithCallbackData("双向用户", "authorContactRequest")
+            new[] // 第一排：一个按钮
+            {
+                InlineKeyboardButton.WithCallbackData("双向用户？点击后由作者联系你", "authorContactRequest")
+            },
+            new[] // 第二排：三个按钮
+            {
+                InlineKeyboardButton.WithUrl("开3个月", "https://t.me/yifanfu?text=你好，我要代开3个月的TG会员（$24.99）"),
+                InlineKeyboardButton.WithUrl("开6个月", "https://t.me/yifanfu?text=你好，我要代开6个月的TG会员（$39.99）"),
+                InlineKeyboardButton.WithUrl("开1年", "https://t.me/yifanfu?text=你好，我要代开1年的TG会员（$70.99）")
+            }
         };
 
-    var inlineKeyboard = new InlineKeyboardMarkup(new[] { buttons });
+    var inlineKeyboard = new InlineKeyboardMarkup(buttons);
 
     // 定义文本内容（使用 HTML 格式）
     string captionText = @"<b>代开 TG 会员：</b>
