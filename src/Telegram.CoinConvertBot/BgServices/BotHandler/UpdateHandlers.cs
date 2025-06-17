@@ -19193,7 +19193,7 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
         {
             new[] // 第一排：一个按钮
             {
-                InlineKeyboardButton.WithCallbackData("双向用户？点击后由作者联系你", "authorContactRequest")
+                InlineKeyboardButton.WithCallbackData("双向用户？点击后由商家联系你", "authorContactRequest")
             },
             new[] // 第二排：三个按钮
             {
