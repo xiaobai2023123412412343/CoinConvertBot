@@ -13042,16 +13042,7 @@ case "send_huansuan": // 当用户点击“简体中文”按钮
         From = callbackQuery.From
     };
     await BotOnMessageReceived(botClient, fakeMessage);
-    break;			    
-case "indexMarket": // 当用户点击“简体中文”按钮
-    fakeMessage = new Message
-    {
-        Text = "/zhishu",
-        Chat = callbackQuery.Message.Chat,
-        From = callbackQuery.From
-    };
-    await BotOnMessageReceived(botClient, fakeMessage);
-    break;		    
+    break;			    		    
 case "laoaomen": // 当用户点击“简体中文”按钮
     fakeMessage = new Message
     {
@@ -16032,51 +16023,6 @@ Bitcoin ETF 资金动态：https://farside.co.uk/btc/";
            // Console.WriteLine($"发送错误提示失败：{innerEx.Message}");
         }
     }
-}
-// 检查是否接收到了 /zhishu 消息，收到就查询指数数据和沪深两市上涨下跌数概览
-if (messageText.StartsWith("/zhishu"))
-{
-    bool allRequestsFailed = true; // 新增标志位
-
-    // 查询指数数据
-    var indexData = await IndexDataFetcher.FetchIndexDataAsync();
-    // 查询沪深两市上涨下跌数概览
-    var marketOverview = await IndexDataFetcher.FetchMarketOverviewAsync();
-
-    // 检查是否所有API请求都失败了
-    if (!indexData.Contains("数据获取失败") && !marketOverview.Contains("数据获取失败"))
-    {
-        allRequestsFailed = false; // 如果有任何一个请求成功，就更新标志位
-    }
-
-    var messageContent = "";
-
-    if (allRequestsFailed)
-    {
-        // 如果所有API请求都失败了，只添加额外的链接文本
-        messageContent = @"
-<a href='https://www.google.com/finance/quote/.IXIC:INDEXNASDAQ'>谷歌财经</a>  <a href='https://m.cn.investing.com/markets/'>英为财情</a>  <a href='https://www.jin10.com/'>金十数据 </a> <a href='https://rili.jin10.com/'>金十日历 </a>";
-    }
-    else
-    {
-        // 如果API请求成功，将指数数据和市场概览整合到一条消息中
-        messageContent = $"{indexData}\n————————————————————\n{marketOverview}";
-
-        // 添加额外的链接文本
-        var additionalText = @"
-<a href='https://www.google.com/finance/quote/.IXIC:INDEXNASDAQ'>谷歌财经</a>  <a href='https://m.cn.investing.com/markets/'>英为财情</a>  <a href='https://www.jin10.com/'>金十数据 </a> <a href='https://rili.jin10.com/'>金十日历 </a>";
-
-        // 将additionalText添加到messageContent
-        messageContent += $"{additionalText}";
-    }
-
-    // 向用户发送整合后的数据，确保使用ParseMode.Html以正确解析HTML标签，并关闭链接预览
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: messageContent,
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-        disableWebPagePreview: true // 关闭链接预览
-    );
 }
 // 检查消息是否以“汇率”开头，并跟随一个数字
 var userMessageText = message.Text;
