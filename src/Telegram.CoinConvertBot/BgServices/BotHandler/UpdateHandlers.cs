@@ -10851,7 +10851,14 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
             chatId: chatId,
             text: "此地址为 Tether（泰达）公司在波场网络的 <b>USDT</b> 智能合约地址！\n" +
                   "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！",
-            parseMode: ParseMode.Html
+            parseMode: ParseMode.Html,
+            replyMarkup: new InlineKeyboardMarkup(new[]
+            {
+                new InlineKeyboardButton[]
+                {
+                    InlineKeyboardButton.WithCallbackData("什么是智能合约地址？", "智能合约地址")
+                }
+            })
         );
         return;
     }
@@ -10861,7 +10868,14 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
             chatId: chatId,
             text: "此地址为 Circle 公司在波场网络的 <b>USDC</b> 智能合约地址！\n" +
                   "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！",
-            parseMode: ParseMode.Html
+            parseMode: ParseMode.Html,
+            replyMarkup: new InlineKeyboardMarkup(new[]
+            {
+                new InlineKeyboardButton[]
+                {
+                    InlineKeyboardButton.WithCallbackData("什么是智能合约地址？", "智能合约地址")
+                }
+            })
         );
         return;
     }
