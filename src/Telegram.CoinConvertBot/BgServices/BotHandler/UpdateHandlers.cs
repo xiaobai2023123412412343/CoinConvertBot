@@ -19405,6 +19405,80 @@ if (messageText.Equals("/about", StringComparison.OrdinalIgnoreCase) ||
         );
     }
 }
+if (messageText.Trim() == "智能合约地址" || messageText.Trim().Equals("智能合约地址", StringComparison.OrdinalIgnoreCase))
+{
+    string contractInfo = @"智能合约地址，简单来说，就是区块链上一种特殊的“账户地址”，但它不是给普通用户存钱或转账用的，而是用来运行一段程序代码的“地址”。
+
+<b>USDT（Tether USD）智能合约地址</b>：
+<blockquote expandable><b>以太坊（Ethereum，ERC-20）</b>
+地址：<code>0xdAC17F958D2ee523a2206206994597C13D831ec7</code>
+
+<b>波场（TRON，TRC-20）</b>
+地址：<code>TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</code>
+
+<b>BNB 智能链（BNB Smart Chain，BEP-20）</b>
+地址：<code>0x55d398326f99059fF775485246999027B3197955</code>
+
+<b>Polygon（MATIC，ERC-20）</b>
+地址：<code>0xc2132D05D31c914a87C6611C10748AEb04B58e8F</code>
+
+<b>Solana</b>
+地址：<code>Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB</code>
+
+<b>Avalanche（C-Chain）</b>
+地址：<code>0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7</code>
+
+<b>Arbitrum One（ERC-20）</b>
+地址：<code>0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9</code>
+
+<b>Optimism（ERC-20）</b>
+地址：<code>0x94b008aA00579c1307B0EF2c499aD98a8ce58e58</code>
+
+<b>Fantom（FTM）</b>
+地址：<code>0xC931f61B070E9bdfa63E7f2a02d39F4B3B75ED16</code>
+</blockquote>
+<b>USDC（USD Coin）智能合约地址</b>：
+<blockquote expandable><b>以太坊（Ethereum，ERC-20）</b>
+地址：<code>0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48</code>
+
+<b>波场（TRON，TRC-20）</b>
+地址：<code>TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8</code>
+
+<b>BNB 智能链（BNB Smart Chain，BEP-20）</b>
+地址：<code>0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d</code>
+
+<b>Polygon（MATIC，ERC-20）</b>
+地址：<code>0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174</code>
+
+<b>Solana</b>
+地址：<code>8L8pDf3jutdpdr4m3np68CL9ZroLActrqwxi6s9Ah5xU</code>
+
+<b>Avalanche（C-Chain）</b>
+地址：<code>0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E</code>
+
+<b>Arbitrum One（ERC-20）</b>
+地址：<code>0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8</code>
+
+<b>Optimism（ERC-20）</b>
+地址：<code>0x7F5c764cBc14f9669B88837ca1490cCa17c31607</code>
+
+<b>Fantom（FTM）</b>
+地址：<code>0x04068DA6C83AFCFA0e13ba15A6696662335D5B75</code>
+</blockquote>";
+
+    var inlineKeyboard = new InlineKeyboardMarkup(
+        InlineKeyboardButton.WithCallbackData("关闭", "back")
+    );
+
+    await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: contractInfo,
+        parseMode: ParseMode.Html,
+        replyMarkup: inlineKeyboard,
+        disableWebPagePreview: true
+    );
+    return;
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
