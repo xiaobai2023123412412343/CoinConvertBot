@@ -839,6 +839,58 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
         return;
     }
 
+    // 检查是否为 USDT 或 USDC 智能合约地址
+    string warningText = null;
+    if (ethAddress.Equals("0xdAC17F958D2ee523a2206206994597C13D831ec7", StringComparison.OrdinalIgnoreCase))
+    {
+        warningText = "此地址为 Tether 公司在以太坊网络的 <b>USDT</b> 智能合约地址！\n" +
+                      "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
+    }
+    else if (ethAddress.Equals("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", StringComparison.OrdinalIgnoreCase))
+    {
+        warningText = "此地址为 Circle 公司在以太坊网络的 <b>USDC</b> 智能合约地址！\n" +
+                      "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
+    }
+    else if (ethAddress.Equals("0x55d398326f99059fF775485246999027B3197955", StringComparison.OrdinalIgnoreCase))
+    {
+        warningText = "此地址为 Tether 公司在 BNB Smart Chain 网络的 <b>USDT</b> 智能合约地址！\n" +
+                      "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
+    }
+    else if (ethAddress.Equals("0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", StringComparison.OrdinalIgnoreCase))
+    {
+        warningText = "此地址为 Circle 公司在 BNB Smart Chain 网络的 <b>USDC</b> 智能合约地址！\n" +
+                      "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
+    }
+
+    // 如果是智能合约地址，直接返回警告信息
+    if (warningText != null)
+    {
+        try
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: chatId,
+                text: warningText,
+                parseMode: ParseMode.Html,
+                replyMarkup: new InlineKeyboardMarkup(new[]
+                {
+                    new InlineKeyboardButton[]
+                    {
+                        InlineKeyboardButton.WithUrl("ETH 详细信息", $"https://etherscan.io/address/{ethAddress}"),
+                        InlineKeyboardButton.WithUrl("BSC 详细信息", $"https://bscscan.com/address/{ethAddress}"),
+                        InlineKeyboardButton.WithUrl("进群使用", "https://t.me/yifanfuBot?startgroup=true")
+                    }
+                })
+            );
+        }
+        catch (Exception ex)
+        {
+            //Console.WriteLine($"发送智能合约警告消息失败：{ex.Message}");
+        }
+        // 记录查询时间，即使是智能合约地址也记录
+        QueryCooldownManager.RecordQueryTime(userId);
+        return;
+    }
+
     // 发送正在查询的消息
     Telegram.Bot.Types.Message infoMessage;
     try
