@@ -19409,7 +19409,7 @@ if (messageText.Trim() == "智能合约地址" || messageText.Trim().Equals("智
 {
     string contractInfo = @"智能合约地址，简单来说，就是区块链上一种特殊的“账户地址”，但它不是给普通用户存钱或转账用的，而是用来运行一段程序代码的“地址”。
 
-<b>USDT（Tether USD）智能合约地址</b>：
+<b>USDT（Tether USD）智能合约地址（主流）</b>：
 <blockquote expandable><b>以太坊（Ethereum，ERC-20）</b>
 地址：<code>0xdAC17F958D2ee523a2206206994597C13D831ec7</code>
 
@@ -19437,7 +19437,7 @@ if (messageText.Trim() == "智能合约地址" || messageText.Trim().Equals("智
 <b>Fantom（FTM）</b>
 地址：<code>0xC931f61B070E9bdfa63E7f2a02d39F4B3B75ED16</code>
 </blockquote>
-<b>USDC（USD Coin）智能合约地址</b>：
+<b>USDC（USD Coin）智能合约地址（主流）</b>：
 <blockquote expandable><b>以太坊（Ethereum，ERC-20）</b>
 地址：<code>0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48</code>
 
@@ -19464,7 +19464,9 @@ if (messageText.Trim() == "智能合约地址" || messageText.Trim().Equals("智
 
 <b>Fantom（FTM）</b>
 地址：<code>0x04068DA6C83AFCFA0e13ba15A6696662335D5B75</code>
-</blockquote>";
+</blockquote>
+把普通钱包地址看成你的银行账户，智能合约地址就像银行的ATM机地址。你可以和ATM机交互（存取钱），但ATM机本身不是某个人的账户，而是运行银行程序的工具。如果乱给ATM机的“地址”转账，钱就没了，因为它不属于任何一个人。
+";
 
     var inlineKeyboard = new InlineKeyboardMarkup(
         InlineKeyboardButton.WithCallbackData("关闭", "back")
