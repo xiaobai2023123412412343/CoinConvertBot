@@ -875,9 +875,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
                 {
                     new InlineKeyboardButton[]
                     {
-                        InlineKeyboardButton.WithUrl("ETH 详细信息", $"https://etherscan.io/address/{ethAddress}"),
-                        InlineKeyboardButton.WithUrl("BSC 详细信息", $"https://bscscan.com/address/{ethAddress}"),
-                        InlineKeyboardButton.WithUrl("进群使用", "https://t.me/yifanfuBot?startgroup=true")
+                        InlineKeyboardButton.WithCallbackData("什么是智能合约地址？", "智能合约地址")
                     }
                 })
             );
