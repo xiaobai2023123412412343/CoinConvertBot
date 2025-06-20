@@ -843,7 +843,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     string warningText = null;
     if (ethAddress.Equals("0xdAC17F958D2ee523a2206206994597C13D831ec7", StringComparison.OrdinalIgnoreCase))
     {
-        warningText = "此地址为 Tether 公司在以太坊网络的 <b>USDT</b> 智能合约地址！\n" +
+        warningText = "此地址为 Tether（泰达）公司在以太坊网络的 <b>USDT</b> 智能合约地址！\n" +
                       "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
     }
     else if (ethAddress.Equals("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", StringComparison.OrdinalIgnoreCase))
@@ -853,7 +853,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     }
     else if (ethAddress.Equals("0x55d398326f99059fF775485246999027B3197955", StringComparison.OrdinalIgnoreCase))
     {
-        warningText = "此地址为 Tether 公司在 BNB Smart Chain 网络的 <b>USDT</b> 智能合约地址！\n" +
+        warningText = "此地址为 Tether（泰达）公司在 BNB Smart Chain 网络的 <b>USDT</b> 智能合约地址！\n" +
                       "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
     }
     else if (ethAddress.Equals("0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", StringComparison.OrdinalIgnoreCase))
@@ -863,27 +863,27 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
     }
     else if (ethAddress.Equals("0xc2132D05D31c914a87C6611C10748AEb04B58e8F", StringComparison.OrdinalIgnoreCase))
     {
-        warningText = "此地址为 Tether 公司在 Polygon 网络的 <b>USDT</b> 智能合约地址！\n" +
+        warningText = "此地址为 Tether（泰达）公司在 Polygon 网络的 <b>USDT</b> 智能合约地址！\n" +
                       "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
     }
     else if (ethAddress.Equals("0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7", StringComparison.OrdinalIgnoreCase))
     {
-        warningText = "此地址为 Tether 公司在 Avalanche C-Chain 网络的 <b>USDT</b> 智能合约地址！\n" +
+        warningText = "此地址为 Tether（泰达）公司在 Avalanche C-Chain 网络的 <b>USDT</b> 智能合约地址！\n" +
                       "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
     }
     else if (ethAddress.Equals("0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", StringComparison.OrdinalIgnoreCase))
     {
-        warningText = "此地址为 Tether 公司在 Arbitrum One 网络的 <b>USDT</b> 智能合约地址！\n" +
+        warningText = "此地址为 Tether（泰达）公司在 Arbitrum One 网络的 <b>USDT</b> 智能合约地址！\n" +
                       "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
     }
     else if (ethAddress.Equals("0x94b008aA00579c1307B0EF2c499aD98a8ce58e58", StringComparison.OrdinalIgnoreCase))
     {
-        warningText = "此地址为 Tether 公司在 Optimism 网络的 <b>USDT</b> 智能合约地址！\n" +
+        warningText = "此地址为 Tether（泰达）公司在 Optimism 网络的 <b>USDT</b> 智能合约地址！\n" +
                       "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
     }
     else if (ethAddress.Equals("0xC931f61B070E9bdfa63E7f2a02d39F4B3B75ED16", StringComparison.OrdinalIgnoreCase))
     {
-        warningText = "此地址为 Tether 公司在 Fantom 网络的 <b>USDT</b> 智能合约地址！\n" +
+        warningText = "此地址为 Tether（泰达）公司在 Fantom 网络的 <b>USDT</b> 智能合约地址！\n" +
                       "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！";
     }
     else if (ethAddress.Equals("0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", StringComparison.OrdinalIgnoreCase))
