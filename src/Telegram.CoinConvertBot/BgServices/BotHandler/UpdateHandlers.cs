@@ -10744,6 +10744,27 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     }
     var tronAddress = match.Groups[1].Value;
 
+    // 检查是否为 USDT 或 USDC 智能合约地址
+    if (tronAddress == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: chatId,
+            text: "此地址为 Tether（泰达）公司在波场网络的 <b>USDT</b> 智能合约地址！\n" +
+                  "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！",
+            parseMode: ParseMode.Html
+        );
+        return;
+    }
+    if (tronAddress == "TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8")
+    {
+        await botClient.SendTextMessageAsync(
+            chatId: chatId,
+            text: "此地址为 Tether（泰达）公司在波场网络的 <b>USDC</b> 智能合约地址！\n" +
+                  "该地址非用户地址，向该地址转账任意币种将造成资金永久丢失！",
+            parseMode: ParseMode.Html
+        );
+        return;
+    }
     // 如果查询的地址是TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6，直接返回错误信息
     if (tronAddress == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6")
     {
