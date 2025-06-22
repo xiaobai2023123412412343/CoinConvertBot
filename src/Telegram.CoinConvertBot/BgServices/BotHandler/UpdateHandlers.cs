@@ -22587,9 +22587,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
 var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
     InlineKeyboardButton.WithCallbackData("简体中文", "中文"),
-    InlineKeyboardButton.WithCallbackData("实时u价", "/usdt"),
-    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/yifanfubot"),
-    InlineKeyboardButton.WithCallbackData("关于本机", "/about")
+    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/yifanfubot")
 });
 
 // 发送分享按钮消息
