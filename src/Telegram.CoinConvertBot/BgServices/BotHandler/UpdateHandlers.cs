@@ -22246,55 +22246,31 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 ";
             }
 
-   //特别说明，不想单独发地址，下列段落删除，直到  // 创建包含三行，每行4个按钮的虚拟键盘
-
-    // 发送完整的消息 无图片版本
-    // await botClient.SendTextMessageAsync(
-     //    chatId: message.Chat.Id,
-     //    text: msg,
-     //    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-     //    disableWebPagePreview: true
-   //  );
-
-    // 定义图片 URL
-    const string photoUrl = "https://i.postimg.cc/sgF9Jd9g/Untitled.png";
-
-    // 尝试发送图片，失败则发送纯文本
+    // 发送主消息（带图片或纯文本）
     try
     {
+        const string photoUrl = "https://i.postimg.cc/sgF9Jd9g/Untitled.png";
         await botClient.SendPhotoAsync(
             chatId: message.Chat.Id,
             photo: new InputOnlineFile(photoUrl),
             caption: msg,
-            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+            parseMode: ParseMode.Html
         );
+      //  Console.WriteLine("Main message with photo sent successfully.");
     }
     catch (Exception ex)
     {
-        //Console.WriteLine($"发送图片失败：{ex.Message}");
+        //Console.WriteLine($"Failed to send photo: {ex.Message}");
         await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: msg,
             parseMode: ParseMode.Html,
             disableWebPagePreview: true
         );
+       // Console.WriteLine("Fallback text message sent successfully.");
     }
 
-    // 延迟100毫秒后发送接收地址
-    await Task.Delay(10);  // 延迟0.01秒
-
-    // 单独发送接收地址
-    await botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: $"<code>{ReciveAddress}</code>",
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-        disableWebPagePreview: true
-    );
-
-    return null; // 返回null或适当的响应
-
-
-    // 创建包含三行，每行4个按钮的虚拟键盘
+    // 创建键盘
     var keyboard = new ReplyKeyboardMarkup(new[]
     {
         new [] // 第一行
@@ -22303,14 +22279,14 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
             new KeyboardButton("实时汇率"),
             new KeyboardButton("询千百度"),
             new KeyboardButton("能量租赁"),
-        },   
+        },
         new [] // 第二行
         {
             new KeyboardButton("外汇助手"),
             new KeyboardButton("加密货币"),
             new KeyboardButton("行情监控"),
             new KeyboardButton("地址监听"),
-        },   
+        },
         new [] // 第三行
         {
             new KeyboardButton("龙虎榜单"),
@@ -22318,14 +22294,34 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
             new KeyboardButton("代开会员"),
             new KeyboardButton("更多功能"),
         }
-    });		
-            keyboard.ResizeKeyboard = true; // 将键盘高度设置为最低
-            keyboard.OneTimeKeyboard = false; // 添加这一行，确保虚拟键盘在用户与其交互后保持可见            
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: msg,
-                                                        parseMode: ParseMode.Html,
-                                                        disableWebPagePreview: true, // 添加这一行来禁用链接预览
-                                                        replyMarkup: keyboard);
+    })
+    {
+        ResizeKeyboard = true,
+        OneTimeKeyboard = false
+    };
+
+    // 检查是否为私聊
+    bool isPrivateChat = message.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Private;
+   // Console.WriteLine($"ConvertCoinTRX: IsPrivateChat: {isPrivateChat}, Sending keyboard: {isPrivateChat}");
+
+    // 延迟后发送单独的地址（私聊中附加键盘）
+    await Task.Delay(10); // 延迟0.01秒
+    try
+    {
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"<code>{ReciveAddress}</code>",
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true,
+            replyMarkup: isPrivateChat ? keyboard : null // 私聊附加键盘，群聊不附加
+        );
+       // Console.WriteLine("Separate address message sent successfully with keyboard (if private chat).");
+    }
+    catch (Exception ex)
+    {
+        //Console.WriteLine($"Failed to send separate address: {ex.Message}");
+        return null;
+    }	
         }
 async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 {
