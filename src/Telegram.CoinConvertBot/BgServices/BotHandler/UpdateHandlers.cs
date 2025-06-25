@@ -16354,7 +16354,7 @@ try
         {
             await botClient.SendPhotoAsync(
                 chatId: message.Chat.Id,
-                photo: new InputOnlineFile("https://i.postimg.cc/3JK25LMB/1.png"),
+                photo: new InputOnlineFile("https://i.postimg.cc/rpcfKBgy/25.png"),
                 caption: multisigText,
                 parseMode: ParseMode.Html,
                 replyMarkup: inlineKeyboard
