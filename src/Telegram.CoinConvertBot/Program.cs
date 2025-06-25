@@ -19,7 +19,7 @@ using TronNet;
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console(
-        outputTemplate: "[{Timestamp:yyyy/MM/dd HH:mm:ss}] [{Level:u3}] {Message:lj}{NewLine}{Exception}") // 修改日期格式
+        outputTemplate: "[{Timestamp:yyyy/MM/dd HH:mm:ss}][{Level:u3}] {Message:lj}{NewLine}{Exception}") // 修改日期格式
     .CreateBootstrapLogger();
 
 var host = Host.CreateDefaultBuilder(args);
@@ -29,7 +29,7 @@ host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Services(services)
     .Enrich.FromLogContext()
     .WriteTo.Console(
-        outputTemplate: "[{Timestamp:yyyy/MM/dd HH:mm:ss}] [{Level:u3}] {Message:lj}{NewLine}{Exception}")); // 修改日期格式
+        outputTemplate: "[{Timestamp:yyyy/MM/dd HH:mm:ss}][{Level:u3}] {Message:lj}{NewLine}{Exception}")); // 修改日期格式
 
 host.ConfigureServices(ConfigureServices);
 using var app = host.Build();
