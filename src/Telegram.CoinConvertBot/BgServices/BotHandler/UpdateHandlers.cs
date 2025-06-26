@@ -127,6 +127,138 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
+
+// 处理用户发送的媒体（贴图或 GIF/动画）
+private static async Task HandleMediaDownload(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken = default)
+{
+    // 检查消息是否为空
+    if (message == null)
+    {
+        //Log.Warning("Received null message in HandleMediaDownload.");
+        return;
+    }
+
+    try
+    {
+        // 获取媒体信息（贴图或 GIF）
+        var (fileId, fileExtension, fileName, mediaType) = await GetMediaInfo(botClient, message);
+        if (fileId == null || mediaType == null)
+        {
+            // 没有支持的媒体类型，忽略处理
+            //Log.Information($"No supported media (Sticker or Animation) found in message from chat {message.Chat.Id}");
+            return;
+        }
+
+        // 发送提示消息
+        string promptMessage = mediaType.Contains("GIF") ? "正在为您下载GIF..." : "正在为您下载贴纸...";
+        var sentMessage = await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: promptMessage,
+            replyToMessageId: message.MessageId,
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken
+        );
+
+        // 生成临时文件路径
+        string tempFilePath = Path.Combine(Path.GetTempPath(), fileName);
+
+        // 下载文件到临时路径
+        Telegram.Bot.Types.File file = await botClient.GetFileAsync(fileId, cancellationToken);
+        await using (var fileStream = new System.IO.FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
+        {
+            await botClient.DownloadFileAsync(file.FilePath, fileStream, cancellationToken);
+        }
+
+        // 发送文件给用户
+        await using (var fileStream = new System.IO.FileStream(tempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            await botClient.SendDocumentAsync(
+                chatId: message.Chat.Id,
+                document: new InputOnlineFile(fileStream, fileName),
+                replyToMessageId: message.MessageId,
+                parseMode: ParseMode.Html,
+                cancellationToken: cancellationToken
+            );
+        }
+
+        // 撤回提示消息
+        await botClient.DeleteMessageAsync(
+            chatId: message.Chat.Id,
+            messageId: sentMessage.MessageId,
+            cancellationToken: cancellationToken
+        );
+
+        // 立即删除临时文件
+        System.IO.File.Delete(tempFilePath);
+        //Log.Information($"Media processed. FileId: {fileId}, Type: {mediaType}, ChatId: {message.Chat.Id}");
+    }
+    catch (ApiRequestException ex)
+    {
+        //Log.Error(ex, $"Telegram API error while handling media download for chat {message.Chat.Id}");
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "处理媒体文件时发生 Telegram API 错误，请稍后重试。",
+            replyToMessageId: message.MessageId,
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken
+        );
+    }
+    catch (IOException ex)
+    {
+        //Log.Error(ex, $"File I/O error while handling media download for chat {message.Chat.Id}");
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "处理媒体文件时发生文件错误，请稍后重试。",
+            replyToMessageId: message.MessageId,
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken
+        );
+    }
+    catch (Exception ex)
+    {
+        //Log.Error(ex, $"Unexpected error while handling media download for chat {message.Chat.Id}");
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "处理媒体文件时发生未知错误，请稍后重试。",
+            replyToMessageId: message.MessageId,
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken
+        );
+    }
+}
+
+// 获取媒体信息（贴图或 GIF）
+private static async Task<(string? FileId, string? FileExtension, string? FileName, string? MediaType)> GetMediaInfo(ITelegramBotClient botClient, Message message)
+{
+    // 检查贴图
+    if (message.Sticker != null)
+    {
+        var sticker = message.Sticker;
+        string fileExtension = GetStickerFileExtension(sticker);
+        string mediaType = sticker.IsAnimated ? "Animated Sticker (TGS)" :
+                          sticker.IsVideo ? "Video Sticker (WebM)" : "Static Sticker (WebP)";
+        return (sticker.FileId, fileExtension, $"{sticker.FileId}{fileExtension}", mediaType);
+    }
+
+    // 检查 GIF/动画
+    if (message.Animation != null)
+    {
+        var animation = message.Animation;
+        string fileExtension = animation.MimeType == "image/gif" ? ".gif" : ".mp4";
+        return (animation.FileId, fileExtension, $"{animation.FileId}{fileExtension}", "GIF/Animation");
+    }
+
+    // 不支持其他类型（例如文本中的自定义 Emoji）
+    return (null, null, null, null);
+}
+
+// 获取贴图文件扩展名
+private static string GetStickerFileExtension(Sticker sticker)
+{
+    if (sticker.IsAnimated) return ".tgs"; // 动画贴图（TGS 格式）
+    if (sticker.IsVideo) return ".webm"; // 视频贴图（WebM 格式）
+    return ".webp"; // 静态贴图（WebP 格式）
+}
 	
 //群发消息代码
 public static class BroadcastHelper
@@ -15217,6 +15349,10 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
     {
         return;
     }
+
+ // 处理贴图、GIF 或自定义 Emoji
+await HandleMediaDownload(botClient, message);
+
 // 新增：检查消息是否来自群聊（群ID为负数），并自动更新或添加群聊信息以及更新群广告仓库
 if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
 {
