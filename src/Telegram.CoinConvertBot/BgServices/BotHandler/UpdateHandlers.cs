@@ -14909,9 +14909,10 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 14： 替换管理员链接： t.me/yifanfu 或 @yifanfu
 15： 替换机器人链接： t.me/yifanfubot 或 @yifanfubot
 
-启动机器人先：先开启保存群聊资料：<code>/baocunqunliao</code>
+启动机器人先：
 储存之前的用户资料 代绑地址 可以代解 储存群聊资料
 <code>/qdgg</code> 启动广告
+<code>关闭广告</code> 关闭广告
 <code>关闭翻译</code> <code>/xuni</code>
 <code>监控 btc </code>可选
 <code>监控 eth </code>可选
