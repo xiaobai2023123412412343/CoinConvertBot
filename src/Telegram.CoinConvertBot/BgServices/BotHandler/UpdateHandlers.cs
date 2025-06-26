@@ -175,9 +175,20 @@ public static class BroadcastHelper
         // 从消息中移除按钮标记
         messageToSend = Regex.Replace(messageToSend, buttonPattern, "").Trim();
 
+        // 调试：记录原始消息和按钮
+        //Log.Information($"Original message: {originalMessage}");
+        //Log.Information($"Message after button removal: {messageToSend}");
+        //Log.Information($"Buttons found: {buttons.Count}");
+
         // 处理消息中的格式（加粗、斜体、链接等）
         if (message.Entities != null && message.Entities.Any())
         {
+            // 调试：记录实体信息
+            //foreach (var entity in message.Entities)
+            //{
+            //    Log.Information($"Entity: Type={entity.Type}, Offset={entity.Offset}, Length={entity.Length}, Url={entity.Url}");
+            //}
+
             // 过滤与“群发 ”前缀无关的实体
             var relevantEntities = message.Entities
                 .Where(e => e.Offset >= prefixLength)
@@ -194,12 +205,16 @@ public static class BroadcastHelper
             {
                 messageToSend = ConvertEntitiesToHtml(messageToSend, relevantEntities);
             }
+
+            // 调试：记录转换后的消息
+            //Log.Information($"Message after entity conversion: {messageToSend}");
         }
 
         // 如果消息为空，添加默认文本以避免发送空消息
         if (string.IsNullOrWhiteSpace(messageToSend))
         {
             messageToSend = " ";
+            //Log.Information("Message was empty, set to single space.");
         }
 
         // 创建内联键盘
@@ -295,56 +310,86 @@ public static class BroadcastHelper
         // 如果没有实体，返回原始文本
         if (entities == null || !entities.Any())
         {
+            //Log.Information("No entities found, returning original text.");
             return text;
         }
 
-        // 按实体从后向前处理，防止索引偏移
-        var sortedEntities = entities.OrderByDescending(e => e.Offset).ToList();
-        string result = text;
+        // 按偏移量和长度排序，确保正确处理嵌套实体
+        var sortedEntities = entities
+            .OrderBy(e => e.Offset)
+            .ThenByDescending(e => e.Length) // 较长的实体（外层）优先
+            .ToList();
+
+        var result = new StringBuilder(text);
+        int offsetAdjustment = 0; // 跟踪因插入标签导致的偏移变化
 
         foreach (var entity in sortedEntities)
         {
             // 确保偏移量和长度有效
-            if (entity.Offset + entity.Length > result.Length || entity.Offset < 0)
+            if (entity.Offset + entity.Length > text.Length || entity.Offset < 0)
             {
-                continue; // 跳过无效实体
+                //Log.Warning($"Invalid entity: Type={entity.Type}, Offset={entity.Offset}, Length={entity.Length}, TextLength={text.Length}");
+                continue;
             }
 
-            var entityText = result.Substring(entity.Offset, entity.Length);
-            string replacement;
+            string entityText = text.Substring(entity.Offset, entity.Length);
+            string openTag = string.Empty, closeTag = string.Empty;
 
             switch (entity.Type)
             {
                 case MessageEntityType.Bold:
-                    replacement = $"<b>{entityText}</b>";
+                    openTag = "<b>";
+                    closeTag = "</b>";
                     break;
                 case MessageEntityType.Italic:
-                    replacement = $"<i>{entityText}</i>";
+                    openTag = "<i>";
+                    closeTag = "</i>";
                     break;
                 case MessageEntityType.TextLink:
-                    replacement = $"<a href='{entity.Url}'>{entityText}</a>";
+                    if (Uri.IsWellFormedUriString(entity.Url, UriKind.Absolute))
+                    {
+                        openTag = $"<a href='{entity.Url}'>";
+                        closeTag = "</a>";
+                    }
+                    else
+                    {
+                        //Log.Warning($"Invalid URL in TextLink entity: {entity.Url}");
+                        continue;
+                    }
                     break;
                 case MessageEntityType.Underline:
-                    replacement = $"<u>{entityText}</u>";
+                    openTag = "<u>";
+                    closeTag = "</u>";
                     break;
                 case MessageEntityType.Strikethrough:
-                    replacement = $"<s>{entityText}</s>";
+                    openTag = "<s>";
+                    closeTag = "</s>";
                     break;
                 case MessageEntityType.Code:
-                    replacement = $"<code>{entityText}</code>";
+                    openTag = "<code>";
+                    closeTag = "</code>";
                     break;
                 case MessageEntityType.Pre:
-                    replacement = $"<pre>{entityText}</pre>";
+                    openTag = "<pre>";
+                    closeTag = "</pre>";
                     break;
                 default:
-                    continue; // 忽略不支持的实体类型
+                    //Log.Information($"Unsupported entity type: {entity.Type}");
+                    continue;
             }
 
-            // 替换原始文本中的对应部分
-            result = result.Remove(entity.Offset, entity.Length).Insert(entity.Offset, replacement);
+            // 插入结束标签（从后向前）
+            result.Insert(entity.Offset + entity.Length + offsetAdjustment, closeTag);
+            // 插入开始标签
+            result.Insert(entity.Offset + offsetAdjustment, openTag);
+
+            // 更新偏移调整量
+            offsetAdjustment += openTag.Length + closeTag.Length;
+
+            //Log.Information($"Applied entity: Type={entity.Type}, Offset={entity.Offset}, Length={entity.Length}, Text={entityText}, Result={result}");
         }
 
-        return result;
+        return result.ToString();
     }
 }
 // 新增一个类来管理价格涨跌计算的黑名单
