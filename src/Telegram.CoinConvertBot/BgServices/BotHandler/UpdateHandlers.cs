@@ -19421,14 +19421,30 @@ if (Regex.IsMatch(messageText, @"^/zijinhy\b", RegexOptions.IgnoreCase))
 if (messageText.Equals("/about", StringComparison.OrdinalIgnoreCase) ||
     messageText.StartsWith("/about@", StringComparison.OrdinalIgnoreCase))
 {
-    // 定义内联键盘按钮，仅一个按钮
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    // 根据聊天类型设置内联键盘按钮
+    InlineKeyboardMarkup inlineKeyboard;
+    if (message.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Private)
     {
-        new[] // 按钮行
+        // 私聊：保留“作者”按钮
+        inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-            InlineKeyboardButton.WithUrl("联系管理员", "https://t.me/yifanfu?text=你好")
-        }
-    });
+            new[]
+            {
+                InlineKeyboardButton.WithUrl("联系作者", "https://t.me/yifanfu?text=你好")
+            }
+        });
+    }
+    else // 群聊或超级群
+    {
+        // 群聊：打开指定机器人
+        inlineKeyboard = new InlineKeyboardMarkup(new[]
+        {
+            new[]
+            {
+                InlineKeyboardButton.WithUrl("开始使用", "https://t.me/yifanfubot")
+            }
+        });
+    }
 
     // 定义文本内容（使用 HTML 格式以支持加粗）
     string captionText = @"<b>关于本机器人</b>：
