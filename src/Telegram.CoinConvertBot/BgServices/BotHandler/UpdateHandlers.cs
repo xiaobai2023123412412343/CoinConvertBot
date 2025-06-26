@@ -16480,19 +16480,34 @@ Bitcoin ETF 资金动态：https://farside.co.uk/btc/";
         // 创建内联按钮
         var keyboard = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("关闭", "back"));
 
-        // 直接发送文本消息
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: messageContent,
-            parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-            disableWebPagePreview: true,
-            replyMarkup: keyboard
-        );
+        // 尝试发送图片并将文本作为图片说明
+        try
+        {
+            await botClient.SendPhotoAsync(
+                chatId: message.Chat.Id,
+                photo: new InputOnlineFile("https://i.postimg.cc/T1fHGW40/photo-2025-06-23-20-55-44.jpg"),
+                caption: messageContent,
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                replyMarkup: keyboard
+            );
+        }
+        catch (Exception photoEx)
+        {
+            // 图片发送失败时，记录错误并回退到发送文字内容和按钮
+            //Console.WriteLine($"发送图片失败: {photoEx.Message}");
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: messageContent,
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                disableWebPagePreview: true,
+                replyMarkup: keyboard
+            );
+        }
     }
     catch (Exception ex)
     {
         // 捕获所有异常，记录日志并发送友好提示
-       // Console.WriteLine($"处理 /hangqingshuju 失败：{ex.Message}");
+        //Console.WriteLine($"处理 /hangqingshuju 失败：{ex.Message}");
         try
         {
             await botClient.SendTextMessageAsync(
@@ -16505,7 +16520,7 @@ Bitcoin ETF 资金动态：https://farside.co.uk/btc/";
         catch (Exception innerEx)
         {
             // 即使提示消息发送失败，也只记录日志，不抛出异常
-           // Console.WriteLine($"发送错误提示失败：{innerEx.Message}");
+            //Console.WriteLine($"发送错误提示失败：{innerEx.Message}");
         }
     }
 }
