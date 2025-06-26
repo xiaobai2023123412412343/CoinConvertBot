@@ -128,7 +128,7 @@ public static class UpdateHandlers
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
 
-// 处理用户发送的媒体（贴图或 GIF/动画）
+// 处理用户发送的媒体（贴图或 GIF/动画） 18.0库不支持自定义emoji表情，升级后可支持
 private static async Task HandleMediaDownload(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken = default)
 {
     // 检查消息是否为空
