@@ -15293,35 +15293,58 @@ if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
     {
         await HandleUserJoinOrLeave(botClient, message);
     }    
-    // 检查消息是否为图片类型
-    if (message.Type == MessageType.Photo)
+// 检查消息是否为图片类型
+if (message.Type == MessageType.Photo)
+{
+    var caption = message.Caption;
+
+    if (!string.IsNullOrEmpty(caption))
     {
-        var caption = message.Caption;
+        // 如果存在caption，输出到操作台
+        // Log.Information($"Photo caption: {caption}");
 
-        if (!string.IsNullOrEmpty(caption))
+        // 创建一个模拟的文本消息，其内容为图片的caption
+        var fakeMessage = new Message
         {
-            // 如果存在caption，输出到操作台
-            Log.Information($"Photo caption: {caption}");
-
-            // 创建一个模拟的文本消息，其内容为图片的caption
-            var fakeMessage = new Message
+            Text = caption,
+            Chat = message.Chat,
+            From = message.From,
+            Date = message.Date,
+            MessageId = message.MessageId,
+            Entities = message.CaptionEntities?.Select(e => new MessageEntity
             {
-                Text = caption,
-                Chat = message.Chat,
-                From = message.From,
-                Date = message.Date,
-                MessageId = message.MessageId // 根据需要设置更多属性
-            };
+                Type = e.Type,
+                Offset = e.Offset,
+                Length = e.Length,
+                Url = e.Url // 保留链接等信息
+            }).ToArray()
+        };
 
+        // 如果有格式实体，记录实体信息（用于调试）
+        // if (fakeMessage.Entities != null && fakeMessage.Entities.Any())
+        // {
+        //     foreach (var entity in fakeMessage.Entities)
+        //     {
+        //         Log.Information($"Caption entity: Type={entity.Type}, Offset={entity.Offset}, Length={entity.Length}, Url={entity.Url}");
+        //     }
+        // }
+
+        try
+        {
             // 使用模拟的文本消息调用BotOnMessageReceived方法
             await BotOnMessageReceived(botClient, fakeMessage);
         }
-        else
+        catch (Exception ex)
         {
-            // 如果不存在caption，输出提示信息
-            Log.Information("图片没有附带文字");
+            Log.Error($"Error processing photo caption: {ex.Message}");
         }
-    }	    
+    }
+    else
+    {
+        // 如果不存在caption，输出提示信息
+        // Log.Information("图片没有附带文字");
+    }
+}   
 
 // 检查机器人是否被添加到新的群组
 if (message.Type == MessageType.ChatMembersAdded)
