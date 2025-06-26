@@ -131,10 +131,10 @@ public static class UpdateHandlers
 //群发消息代码
 public static class BroadcastHelper
 {
-    public static async Task BroadcastMessageAsync(ITelegramBotClient botClient, Message message, List<User> Followers, object _followersLock)
+    public static async Task BroadcastMessageAsync(ITelegramBotClient botClient, Message message, List<User> Followers, object _followersLock, string photoFileId = null)
     {
         // 确保消息来自指定管理员且以“群发 ”开头
-        if (message.From.Id != 1427768220 || !message.Text.StartsWith("群发 "))
+        if (message.From.Id != 1427768220 || string.IsNullOrEmpty(message.Text) || !message.Text.StartsWith("群发 "))
         {
             return;
         }
@@ -254,12 +254,26 @@ public static class BroadcastHelper
                     total++;
                     try
                     {
-                        await botClient.SendTextMessageAsync(
-                            chatId: follower.Id,
-                            text: messageToSend,
-                            parseMode: ParseMode.Html,
-                            disableWebPagePreview: true,
-                            replyMarkup: inlineKeyboard);
+                        if (photoFileId != null)
+                        {
+                            // 发送图片消息，确保使用 HTML 格式解析 caption
+                            await botClient.SendPhotoAsync(
+                                chatId: follower.Id,
+                                photo: photoFileId,
+                                caption: messageToSend,
+                                parseMode: ParseMode.Html, // 明确指定 HTML 格式
+                                replyMarkup: inlineKeyboard);
+                        }
+                        else
+                        {
+                            // 发送文本消息
+                            await botClient.SendTextMessageAsync(
+                                chatId: follower.Id,
+                                text: messageToSend,
+                                parseMode: ParseMode.Html,
+                                disableWebPagePreview: true,
+                                replyMarkup: inlineKeyboard);
+                        }
                         success++;
                     }
                     catch (ApiRequestException e)
@@ -15303,40 +15317,82 @@ if (message.Type == MessageType.Photo)
         // 如果存在caption，输出到操作台
         // Log.Information($"Photo caption: {caption}");
 
-        // 创建一个模拟的文本消息，其内容为图片的caption
-        var fakeMessage = new Message
+        // 如果 caption 以“群发 ”开头，调用群发逻辑
+        if (caption.StartsWith("群发 "))
         {
-            Text = caption,
-            Chat = message.Chat,
-            From = message.From,
-            Date = message.Date,
-            MessageId = message.MessageId,
-            Entities = message.CaptionEntities?.Select(e => new MessageEntity
+            // 获取图片（选择最高分辨率的图片）
+            var photo = message.Photo?.OrderByDescending(p => p.Width * p.Height).FirstOrDefault();
+            if (photo != null)
             {
-                Type = e.Type,
-                Offset = e.Offset,
-                Length = e.Length,
-                Url = e.Url // 保留链接等信息
-            }).ToArray()
-        };
+                try
+                {
+                    // 创建一个新的消息对象，将 Caption 复制到 Text
+                    var broadcastMessage = new Message
+                    {
+                        Text = caption, // 使用 caption 作为 Text
+                        Chat = message.Chat,
+                        From = message.From,
+                        Date = message.Date,
+                        MessageId = message.MessageId,
+                        Entities = message.CaptionEntities?.Select(e => new MessageEntity
+                        {
+                            Type = e.Type,
+                            Offset = e.Offset,
+                            Length = e.Length,
+                            Url = e.Url // 保留链接等信息
+                        }).ToArray()
+                    };
 
-        // 如果有格式实体，记录实体信息（用于调试）
-        // if (fakeMessage.Entities != null && fakeMessage.Entities.Any())
-        // {
-        //     foreach (var entity in fakeMessage.Entities)
-        //     {
-        //         Log.Information($"Caption entity: Type={entity.Type}, Offset={entity.Offset}, Length={entity.Length}, Url={entity.Url}");
-        //     }
-        // }
-
-        try
-        {
-            // 使用模拟的文本消息调用BotOnMessageReceived方法
-            await BotOnMessageReceived(botClient, fakeMessage);
+                    // 调用群发方法，传递图片 FileId
+                    await BroadcastHelper.BroadcastMessageAsync(botClient, broadcastMessage, Followers, _followersLock, photo.FileId);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Error processing photo broadcast: {ex.Message}");
+                }
+            }
+            else
+            {
+                Log.Error("No valid photo found in the message.");
+            }
         }
-        catch (Exception ex)
+        else
         {
-            Log.Error($"Error processing photo caption: {ex.Message}");
+            // 创建一个模拟的文本消息，其内容为图片的caption
+            var fakeMessage = new Message
+            {
+                Text = caption,
+                Chat = message.Chat,
+                From = message.From,
+                Date = message.Date,
+                MessageId = message.MessageId,
+                Entities = message.CaptionEntities?.Select(e => new MessageEntity
+                {
+                    Type = e.Type,
+                    Offset = e.Offset,
+                    Length = e.Length,
+                    Url = e.Url // 保留链接等信息
+                }).ToArray()
+            };
+
+            // 如果有格式实体，记录实体信息（用于调试）
+            // if (fakeMessage.Entities != null && fakeMessage.Entities.Any())
+            // {
+            //     foreach (var entity in fakeMessage.Entities)
+            //     {
+            //         Log.Information($"Caption entity: Type={entity.Type}, Offset={entity.Offset}, Length={entity.Length}, Url={entity.Url}");
+            //     }
+            // }
+
+            try
+            {
+                // 使用模拟的文本消息调用BotOnMessageReceived方法
+                await BotOnMessageReceived(botClient, fakeMessage);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error processing photo caption: {ex.Message}");
+            }
         }
     }
     else
@@ -15344,7 +15400,7 @@ if (message.Type == MessageType.Photo)
         // 如果不存在caption，输出提示信息
         // Log.Information("图片没有附带文字");
     }
-}   
+}
 
 // 检查机器人是否被添加到新的群组
 if (message.Type == MessageType.ChatMembersAdded)
