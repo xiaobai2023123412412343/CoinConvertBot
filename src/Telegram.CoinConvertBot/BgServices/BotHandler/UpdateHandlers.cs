@@ -739,7 +739,7 @@ public static class BscQuery
 // 查询以太坊主网代币信息
 public static class EthereumQuery
 {
-    private static readonly string EtherscanBaseUrl = "https://api.etherscan.io/api";
+    private static readonly string EtherscanBaseUrl = "https://api.etherscan.io/v2/api"; // 修改为 Etherscan API V2 端点
     private static readonly string[] EtherscanApiKeys = new[]
     {
         "WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4",
@@ -853,7 +853,7 @@ public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcB
     {
         try
         {
-            var url = $"{EtherscanBaseUrl}?module=account&action=balance&address={address}&tag=latest&apikey={apiKey}";
+            var url = $"{EtherscanBaseUrl}?chainid=1&module=account&action=balance&address={address}&tag=latest&apikey={apiKey}"; // 添加 chainid=1 以指定以太坊主网
             var response = await HttpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
@@ -887,7 +887,7 @@ public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcB
     {
         try
         {
-            var url = $"{EtherscanBaseUrl}?module=account&action=tokenbalance&contractaddress={contractAddress}&address={address}&tag=latest&apikey={apiKey}";
+            var url = $"{EtherscanBaseUrl}?chainid=1&module=account&action=tokenbalance&contractaddress={contractAddress}&address={address}&tag=latest&apikey={apiKey}"; // 添加 chainid=1 以指定以太坊主网
             var response = await HttpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
@@ -921,7 +921,7 @@ public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcB
     {
         try
         {
-            var url = $"{EtherscanBaseUrl}?module=account&action=txlist&address={address}&page=1&offset=1&sort=desc&apikey={apiKey}";
+            var url = $"{EtherscanBaseUrl}?chainid=1&module=account&action=txlist&address={address}&page=1&offset=1&sort=desc&apikey={apiKey}"; // 添加 chainid=1 以指定以太坊主网
             var response = await HttpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
@@ -973,7 +973,7 @@ public static async Task<(decimal ethBalance, decimal usdtBalance, decimal usdcB
         try
         {
             // 查询 Gas 价格
-            var gasUrl = $"{EtherscanBaseUrl}?module=gastracker&action=gasoracle&apikey={apiKey}";
+            var gasUrl = $"{EtherscanBaseUrl}?chainid=1&module=gastracker&action=gasoracle&apikey={apiKey}"; // 添加 chainid=1 以指定以太坊主网
             var gasResponse = await HttpClient.GetAsync(gasUrl);
             gasResponse.EnsureSuccessStatusCode();
 
