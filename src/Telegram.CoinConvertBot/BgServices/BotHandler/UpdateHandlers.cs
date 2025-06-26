@@ -128,6 +128,225 @@ public static class UpdateHandlers
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
 
+public static class BroadcastHelper
+{
+    public static async Task BroadcastMessageAsync(ITelegramBotClient botClient, Message message, List<User> Followers, object _followersLock)
+    {
+        // 确保消息来自指定管理员且以“群发 ”开头
+        if (message.From.Id != 1427768220 || !message.Text.StartsWith("群发 "))
+        {
+            return;
+        }
+
+        // 去掉“群发 ”前缀，获取原始消息内容
+        var prefixLength = "群发 ".Length; // 前缀长度
+        var originalMessage = message.Text.Substring(prefixLength).Trim();
+        var messageToSend = originalMessage;
+
+        // 处理按钮
+        var buttonPattern = @"[\(\（]按钮，(.*?)[，,](.*?)[\)\）]";
+        var buttonMatches = Regex.Matches(messageToSend, buttonPattern);
+        List<InlineKeyboardButton> buttons = new List<InlineKeyboardButton>();
+
+        foreach (Match match in buttonMatches)
+        {
+            var buttonText = match.Groups[1].Value.Trim();
+            var buttonAction = match.Groups[2].Value.Trim();
+            InlineKeyboardButton button;
+
+            // 判断按钮动作是 URL 还是回调数据
+            if (buttonAction.Contains(".") || Uri.IsWellFormedUriString(buttonAction, UriKind.Absolute))
+            {
+                // 确保 URL 以 http:// 或 https:// 开头
+                if (!buttonAction.StartsWith("http://") && !buttonAction.StartsWith("https://"))
+                {
+                    buttonAction = "http://" + buttonAction;
+                }
+                button = InlineKeyboardButton.WithUrl(buttonText, buttonAction);
+            }
+            else
+            {
+                button = InlineKeyboardButton.WithCallbackData(buttonText, buttonAction);
+            }
+
+            buttons.Add(button);
+        }
+
+        // 从消息中移除按钮标记
+        messageToSend = Regex.Replace(messageToSend, buttonPattern, "").Trim();
+
+        // 处理消息中的格式（加粗、斜体、链接等）
+        if (message.Entities != null && message.Entities.Any())
+        {
+            // 过滤与“群发 ”前缀无关的实体
+            var relevantEntities = message.Entities
+                .Where(e => e.Offset >= prefixLength)
+                .Select(e => new MessageEntity
+                {
+                    Type = e.Type,
+                    Offset = e.Offset - prefixLength, // 调整偏移量
+                    Length = e.Length,
+                    Url = e.Url
+                })
+                .ToArray();
+
+            if (relevantEntities.Any())
+            {
+                messageToSend = ConvertEntitiesToHtml(messageToSend, relevantEntities);
+            }
+        }
+
+        // 如果消息为空，添加默认文本以避免发送空消息
+        if (string.IsNullOrWhiteSpace(messageToSend))
+        {
+            messageToSend = " ";
+        }
+
+        // 创建内联键盘
+        InlineKeyboardMarkup inlineKeyboard = null;
+        if (buttons.Count > 0)
+        {
+            inlineKeyboard = new InlineKeyboardMarkup(buttons.Select(b => new[] { b }).ToArray());
+        }
+
+        // 分批发送消息
+        int total = 0, success = 0, fail = 0;
+        int batchSize = 200;
+        Random random = new Random();
+        var failedUsers = new List<User>();
+        List<User> currentBatch;
+
+        try
+        {
+            // 获取所有需要发送的用户并移除机器人用户
+            lock (_followersLock)
+            {
+                var botUsers = Followers.Where(u => u.IsBot).ToList();
+                foreach (var botUser in botUsers)
+                {
+                    Followers.RemoveAll(u => u.Id == botUser.Id);
+                }
+                currentBatch = Followers.ToList();
+            }
+
+            // 分批处理用户
+            for (int i = 0; i < currentBatch.Count; i += batchSize)
+            {
+                var batch = currentBatch.Skip(i).Take(batchSize).ToList();
+                foreach (var follower in batch)
+                {
+                    total++;
+                    try
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId: follower.Id,
+                            text: messageToSend,
+                            parseMode: ParseMode.Html,
+                            disableWebPagePreview: true,
+                            replyMarkup: inlineKeyboard);
+                        success++;
+                    }
+                    catch (ApiRequestException e)
+                    {
+                        Log.Error($"Failed to send message to {follower.Id}: {e.Message}");
+                        fail++;
+
+                        if (e.Message.Contains("bot can't send messages to bots") ||
+                            e.Message.Contains("bot was blocked by the user") ||
+                            e.Message.Contains("user is deactivated") ||
+                            e.Message.Contains("chat not found") ||
+                            e.Message.Contains("bot can't initiate conversation with a user"))
+                        {
+                            failedUsers.Add(follower);
+                        }
+                    }
+                }
+
+                await Task.Delay(random.Next(1000, 2001));
+            }
+
+            // 统一移除失败的用户
+            if (failedUsers.Count > 0)
+            {
+                lock (_followersLock)
+                {
+                    foreach (var failedUser in failedUsers)
+                    {
+                        Followers.RemoveAll(u => u.Id == failedUser.Id);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"An error occurred, stopping broadcast: {ex.Message}");
+        }
+
+        // 发送统计信息给管理员
+        await botClient.SendTextMessageAsync(
+            chatId: message.From.Id,
+            text: $"群发总数：<b>{total}</b>   成功：<b>{success}</b>  失败：<b>{fail}</b>",
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true);
+    }
+
+    private static string ConvertEntitiesToHtml(string text, MessageEntity[] entities)
+    {
+        // 如果没有实体，返回原始文本
+        if (entities == null || !entities.Any())
+        {
+            return text;
+        }
+
+        // 按实体从后向前处理，防止索引偏移
+        var sortedEntities = entities.OrderByDescending(e => e.Offset).ToList();
+        string result = text;
+
+        foreach (var entity in sortedEntities)
+        {
+            // 确保偏移量和长度有效
+            if (entity.Offset + entity.Length > result.Length || entity.Offset < 0)
+            {
+                continue; // 跳过无效实体
+            }
+
+            var entityText = result.Substring(entity.Offset, entity.Length);
+            string replacement;
+
+            switch (entity.Type)
+            {
+                case MessageEntityType.Bold:
+                    replacement = $"<b>{entityText}</b>";
+                    break;
+                case MessageEntityType.Italic:
+                    replacement = $"<i>{entityText}</i>";
+                    break;
+                case MessageEntityType.TextLink:
+                    replacement = $"<a href='{entity.Url}'>{entityText}</a>";
+                    break;
+                case MessageEntityType.Underline:
+                    replacement = $"<u>{entityText}</u>";
+                    break;
+                case MessageEntityType.Strikethrough:
+                    replacement = $"<s>{entityText}</s>";
+                    break;
+                case MessageEntityType.Code:
+                    replacement = $"<code>{entityText}</code>";
+                    break;
+                case MessageEntityType.Pre:
+                    replacement = $"<pre>{entityText}</pre>";
+                    break;
+                default:
+                    continue; // 忽略不支持的实体类型
+            }
+
+            // 替换原始文本中的对应部分
+            result = result.Remove(entity.Offset, entity.Length).Insert(entity.Offset, replacement);
+        }
+
+        return result;
+    }
+}
 // 新增一个类来管理价格涨跌计算的黑名单
 public static class PriceCalculationBlacklistManager
 {
@@ -20625,150 +20844,11 @@ if (messageText.StartsWith("/bijiacha"))
         );
     }
 }
-// 检查是否是管理员发送的 "群发" 消息
+// 检查是否为管理员发送的群发消息
 if (message.From.Id == 1427768220 && message.Text.StartsWith("群发 "))
 {
-    // 正确初始化 originalMessage 变量
-    var originalMessage = message.Text.Substring(3); // 去掉 "群发 " 前缀
-    var messageToSend = originalMessage; // 基于 originalMessage 初始化 messageToSend
-
-    // 解析并处理多个按钮
-    var buttonPattern = @"[\(\（]按钮，(.*?)[，,](.*?)[\)\）]";
-    var buttonMatches = Regex.Matches(messageToSend, buttonPattern);
-    List<InlineKeyboardButton> buttons = new List<InlineKeyboardButton>();
-
-foreach (Match match in buttonMatches)
-{
-    var buttonText = match.Groups[1].Value.Trim();
-    var buttonAction = match.Groups[2].Value.Trim();
-    InlineKeyboardButton button;
-
-    // 更严格地判断按钮动作是URL还是回调数据
-    // 如果buttonAction包含"."，则认为它是一个URL
-    if (buttonAction.Contains(".") || Uri.IsWellFormedUriString(buttonAction, UriKind.Absolute))
-    {
-        // 确保URL以http://或https://开头
-        if (!buttonAction.StartsWith("http://") && !buttonAction.StartsWith("https://"))
-        {
-            buttonAction = "http://" + buttonAction;
-        }
-        button = InlineKeyboardButton.WithUrl(buttonText, buttonAction);
-    }
-    else
-    {
-        button = InlineKeyboardButton.WithCallbackData(buttonText, buttonAction);
-    }
-
-    buttons.Add(button);
-}
-
-    // 从原始消息中移除所有按钮标记
-    messageToSend = Regex.Replace(messageToSend, buttonPattern, "");
-
-    // 创建内联键盘
-    InlineKeyboardMarkup inlineKeyboard = null;
-    if (buttons.Count > 0)
-    {
-        inlineKeyboard = new InlineKeyboardMarkup(buttons.Select(b => new[] { b }).ToArray());
-    }
-
-    // 处理加粗效果和链接
-    // 首先处理加粗效果 如（你好，加粗）
-    messageToSend = Regex.Replace(messageToSend, @"[\(\（](.*?)[，,]加粗[\)\）]", m =>
-    {
-        var textToBold = m.Groups[1].Value.Trim();
-        return $"<b>{textToBold}</b>";
-    });
-
-    // 然后处理链接 如（你好，www.google.cn）
-    messageToSend = Regex.Replace(messageToSend, @"[\(\（](.*?)[，,](.*?)[\)\）]", m =>
-    {
-        var text = m.Groups[1].Value.Trim();
-        var url = m.Groups[2].Value.Trim();
-        return $"<a href='{url}'>{text}</a>";
-    });
-
-    int total = 0, success = 0, fail = 0;
-    int batchSize = 200;
-    Random random = new Random();
-    // 创建失败用户列表，用于存储发送失败的用户
-    var failedUsers = new List<User>();
-    List<User> currentBatch;
-
-    try
-    {
-        // 先获取所有需要发送的用户
-        lock (_followersLock)
-        {
-            // 先删除所有机器人用户
-            var botUsers = Followers.Where(u => u.IsBot).ToList();
-            foreach (var botUser in botUsers)
-            {
-                Followers.RemoveAll(u => u.Id == botUser.Id);
-            }
-            currentBatch = Followers.ToList();
-        }
-
-        // 分批处理用户
-        for (int i = 0; i < currentBatch.Count; i += batchSize)
-        {
-            var batch = currentBatch.Skip(i).Take(batchSize).ToList();
-            foreach (var follower in batch)
-            {
-                total++;
-                try
-                {
-                    await botClient.SendTextMessageAsync(
-                        chatId: follower.Id, 
-                        text: messageToSend, 
-                        parseMode: ParseMode.Html,
-                        disableWebPagePreview: true,
-                        replyMarkup: inlineKeyboard);    
-                    success++;
-                }
-                catch (ApiRequestException e)
-                {
-                    Log.Error($"Failed to send message to {follower.Id}: {e.Message}");
-                    fail++;
-
-                    if (e.Message.Contains("bot can't send messages to bots") ||
-                        e.Message.Contains("bot was blocked by the user") ||
-                        e.Message.Contains("user is deactivated") ||
-                        e.Message.Contains("chat not found") ||
-                        e.Message.Contains("bot can't initiate conversation with a user"))
-                    {
-                        // 将失败的用户添加到列表中
-                        failedUsers.Add(follower);
-                    }
-                }
-            }
-
-            await Task.Delay(random.Next(1000, 2001));
-        }
-
-        // 在所有批次处理完成后，统一移除失败的用户
-        if (failedUsers.Count > 0)
-        {
-            lock (_followersLock)
-            {
-                foreach (var failedUser in failedUsers)
-                {
-                    Followers.RemoveAll(u => u.Id == failedUser.Id);
-                }
-            }
-        }
-    }
-    catch (Exception ex)
-    {
-        Log.Error($"An error occurred, stopping broadcast: {ex.Message}");
-    }
-
-    // 发送统计信息
-    await botClient.SendTextMessageAsync(
-        chatId: message.From.Id, 
-        text: $"群发总数：<b>{total}</b>   成功：<b>{success}</b>  失败：<b>{fail}</b>", 
-        parseMode: ParseMode.Html,
-        disableWebPagePreview: true);
+     await BroadcastHelper.BroadcastMessageAsync(botClient, message, Followers, _followersLock);
+     return;
 }
 if (message?.Text != null)
 {
