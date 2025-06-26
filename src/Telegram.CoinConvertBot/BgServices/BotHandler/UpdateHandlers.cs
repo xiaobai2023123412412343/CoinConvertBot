@@ -388,6 +388,10 @@ public static class BroadcastHelper
                     openTag = "<pre>";
                     closeTag = "</pre>";
                     break;
+                case MessageEntityType.Spoiler: // 添加对防剧透格式的支持
+                    openTag = "<span class=\"tg-spoiler\">";
+                    closeTag = "</span>";
+                    break;
                 default:
                     //Log.Information($"Unsupported entity type: {entity.Type}");
                     continue;
