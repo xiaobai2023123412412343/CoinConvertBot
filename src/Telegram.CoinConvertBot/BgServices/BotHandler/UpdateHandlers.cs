@@ -127,7 +127,8 @@ public static class UpdateHandlers
     /// <param name="exception"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-
+	
+//群发消息代码
 public static class BroadcastHelper
 {
     public static async Task BroadcastMessageAsync(ITelegramBotClient botClient, Message message, List<User> Followers, object _followersLock)
