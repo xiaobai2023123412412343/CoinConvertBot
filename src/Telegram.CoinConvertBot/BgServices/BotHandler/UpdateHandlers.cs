@@ -14846,7 +14846,7 @@ else if(update.CallbackQuery.Data == "energyComparison")
     });
 
     // 尝试发送带图片的消息
-    const string imageUrl = "https://i.postimg.cc/3JK25LMB/1.png";
+    const string imageUrl = "https://i.postimg.cc/rpcfKBgy/25.png";
     try
     {
         await botClient.SendPhotoAsync(
