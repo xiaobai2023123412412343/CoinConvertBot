@@ -103,14 +103,33 @@ static void ConfigureServices(HostBuilderContext Context, IServiceCollection Ser
     var SetDefaultMenu = Configuration.GetValue<bool>("SetDefaultMenu");
     if (SetDefaultMenu)
     {
-        botClient.SetMyCommandsAsync(new BotCommand[]
+        // 私聊命令列表
+        var privateCommands = new BotCommand[]
         {
-        new BotCommand(){Command="start",Description="开始使用"},
-        new BotCommand(){Command="swap",Description="U兑TRX"},
-        new BotCommand(){Command="usdt",Description="欧易u价"},                            
-        new BotCommand(){Command="help",Description="使用帮助"},   
-        new BotCommand(){Command="about",Description="关于本机"},             
-        }).GetAwaiter().GetResult();
+            new BotCommand { Command = "start", Description = "开始使用" },
+            new BotCommand { Command = "swap", Description = "U兑TRX" },
+            new BotCommand { Command = "usdt", Description = "欧易u价" },
+            new BotCommand { Command = "help", Description = "使用帮助" },
+            new BotCommand { Command = "about", Description = "关于本机" }
+        };
+
+        // 群聊命令列表（仅 /about）
+        var groupCommands = new BotCommand[]
+        {
+            new BotCommand { Command = "about", Description = "关于本机" }
+        };
+
+        // 设置私聊命令
+        botClient.SetMyCommandsAsync(
+            commands: privateCommands,
+            scope: new BotCommandScopeAllPrivateChats()
+        ).GetAwaiter().GetResult();
+
+        // 设置群聊命令
+        botClient.SetMyCommandsAsync(
+            commands: groupCommands,
+            scope: new BotCommandScopeAllGroupChats()
+        ).GetAwaiter().GetResult();
     }
     Log.Logger.Information("Telegram机器人上线！机器人ID：{Id}({username})，机器人名字：{FirstName}.", me.Id, $"@{me.Username}", me.FirstName);
     var AdminUserId = Configuration.GetValue<long>("BotConfig:AdminUserId");
