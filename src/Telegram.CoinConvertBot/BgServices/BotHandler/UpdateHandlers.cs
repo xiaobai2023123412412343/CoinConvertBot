@@ -5773,7 +5773,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" +
                               $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
                               $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
-                              $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n";
+                              $"<a href=\"https://t.me/yifanfubot?start=tron\">3️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n";
 
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
@@ -17075,7 +17075,7 @@ if (message.Type == MessageType.Text && message.Text.StartsWith("/jiankong"))
 // 处理包含特定关键词的消息，发送波场手续费说明并附带图片
 try
 {
-    if (messageText.Contains("费用") || messageText.Contains("能量") || messageText.Contains("/tron") || messageText.Contains("手续费") || messageText.Contains("能量租赁"))
+    if (messageText.Contains("费用") || messageText.Contains("能量") || messageText.Contains("/tron") || messageText.Contains("/start tron") || messageText.Contains("手续费") || messageText.Contains("能量租赁"))
     {
         // 向用户发送能量介绍
         string multisigText = @$"波场手续费说明（⚠️务必仔细阅读⚠️）
