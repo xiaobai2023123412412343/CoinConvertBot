@@ -22597,7 +22597,7 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
     }
                      // 启动定时器来监控这个地址的交易
                     StartUSDTMonitoring(botClient, UserId, address);
-                    Console.WriteLine($"用户 {UserId} 绑定地址 {address} 成功，开始监控USDT交易记录。");
+                    //Console.WriteLine($"用户 {UserId} 绑定地址 {address} 成功，开始监控USDT交易记录。");
 
                 }
                 else
@@ -22615,7 +22615,7 @@ bool skipTRXMonitoring = parts.Any(part => part.Equals("TRX", StringComparison.O
     }
                    // 启动定时器来监控这个地址的交易
                    StartUSDTMonitoring(botClient, UserId, address);
-                   Console.WriteLine($"用户 {UserId} 绑定地址 {address} 成功，开始监控USDT交易记录。");
+                 //  Console.WriteLine($"用户 {UserId} 绑定地址 {address} 成功，开始监控USDT交易记录。");
 
                 }
     // 创建包含三行，每行4个按钮的虚拟键盘
