@@ -5619,7 +5619,7 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
         var (usdtBalance, _, _) = await GetBalancesAsync(tronAddress);
         var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(tronAddress);
 
-        if (usdtBalance > 10000000m || transactions > 300000)
+        if (usdtBalance > 5000000m || transactions > 300000)
         {
           //  Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions}，不启动监控USDT交易记录。");
             return;
@@ -7531,7 +7531,7 @@ else
                "<b>一有交易就下发通知，假U，假截图，完全不起作用！</b>\n\n" +
                "<b>注意：</b>发送绑定指令每一段都需要添加空格才可以正确识别；\n" +   
                "如需添加备注：发送格式为 绑定 地址 备注 地址1（示例）；\n" +  
-               "交易所地址暂不支持监听，判断标准为：余额大于1000万USDT或累计交易笔数大于30万笔！\n\n" +  
+               "交易所地址暂不支持监听，判断标准为：余额大于500万USDT或累计交易笔数大于30万笔！\n\n" +  
                "<b>全网独家</b>：<u>机器人除了能播报交易信息，还能查询对方地址的余额以及标签！</u>\n\n" +
                "示例：  <b>新交易   \U0001F4B0  -10 USDT</b>\n\n" +
                "交易类型：<b>出账</b>\n" +
