@@ -5401,15 +5401,29 @@ private static long ToUnixTimeStamp(this DateTime dateTime)
     return ((DateTimeOffset)dateTime).ToUnixTimeMilliseconds();
 }
 
+// 存储暂停的密钥及其暂停截止时间
+private static readonly Dictionary<string, DateTime> _suspendedApiKeys = new Dictionary<string, DateTime>();
+private static readonly TimeSpan _suspensionPeriod = TimeSpan.FromHours(12);
+
 // 快速获取USDT交易记录（新方法，移除 only_to=true，确保监听收入和支出）
 private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastAsync(string tronAddress, HttpClient httpClient)
 {
     var payMinTime = DateTime.Now.AddSeconds(-60 * 5); // 最近5分钟
-    // 修改：移除 only_to=true，支持监听收入和支出
     string apiUrl = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?limit=50&min_timestamp={(long)payMinTime.ToUnixTimeStamp()}&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
     string lastError = null;
+    IEnumerable<TronTransaction> legacyTransactions = null; // 声明一次变量
 
-    foreach (var apiKey in ApiKeys)
+    // 获取当前可用的密钥（排除暂停中的密钥）
+    var availableKeys = ApiKeys.Where(k => !_suspendedApiKeys.ContainsKey(k) || _suspendedApiKeys[k] <= DateTime.Now).ToList();
+    if (!availableKeys.Any())
+    {
+        //Console.WriteLine($"所有 API 密钥均暂停，回退到免费 API，地址：{tronAddress}");
+        legacyTransactions = await GetTronTransactionsAsync(tronAddress);
+        //Console.WriteLine($"旧方法获取 {legacyTransactions.Count()} 条USDT交易记录，地址：{tronAddress}");
+        return legacyTransactions;
+    }
+
+    foreach (var apiKey in availableKeys)
     {
         try
         {
@@ -5423,26 +5437,18 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastA
             if (!response.IsSuccessStatusCode)
             {
                 lastError = content;
-                if (content.Contains("request rate exceeded"))
+                if (content.Contains("request rate exceeded") || content.Contains("Invalid API Key"))
                 {
-                    var match = Regex.Match(content, @"suspended for (\d+) s");
-                    if (match.Success)
+                    // 密钥达到上限或失效，暂停 12 小时
+                    lock (_lock)
                     {
-                        int waitTime = int.Parse(match.Groups[1].Value) * 1000;
-                       // Console.WriteLine($"TronGrid API请求频率超限，暂停 {waitTime / 1000} 秒，地址：{tronAddress}");
-                        await Task.Delay(waitTime);
+                        _suspendedApiKeys[apiKey] = DateTime.Now.Add(_suspensionPeriod);
+                        //Console.WriteLine($"API密钥 {apiKey} 达到上限或失效，暂停 12 小时，地址：{tronAddress}，错误：{content}");
                     }
-                    else
-                    {
-                       // Console.WriteLine($"TronGrid API请求频率超限，未解析到暂停时间，默认等待4秒，地址：{tronAddress}");
-                        await Task.Delay(4000);
-                    }
-                    continue;
+                    continue; // 尝试下一个密钥
                 }
-                // 修改：明确记录密钥失效或超限的错误
-              //  Console.WriteLine($"API密钥 {apiKey} 失败，错误：{content}");
-                lastError = content;
-                continue; // 尝试下一个密钥
+                //Console.WriteLine($"API密钥 {apiKey} 失败，错误：{content}");
+                continue; // 其他 HTTP 错误不暂停，直接尝试下一个密钥
             }
 
             try
@@ -5453,9 +5459,10 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastA
                 };
                 var transactionsResponse = JsonSerializer.Deserialize<TronTransactionsResponse>(content, options);
 
+                // 即使没有交易数据，也不暂停密钥，直接返回
                 if (transactionsResponse?.Data?.Any() == true)
                 {
-                   // Console.WriteLine($"新方法成功获取 {transactionsResponse.Data.Count} 条USDT交易记录，地址：{tronAddress}");
+                    //Console.WriteLine($"新方法成功获取 {transactionsResponse.Data.Count} 条USDT交易记录，地址：{tronAddress}");
                     return transactionsResponse.Data.Select(t => new TronTransaction
                     {
                         TransactionId = t.TransactionId,
@@ -5465,31 +5472,32 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastA
                         Value = ConvertFromSun(t.Value)
                     });
                 }
-               // Console.WriteLine($"新方法未获取到USDT交易记录，地址：{tronAddress}");
-                return Enumerable.Empty<TronTransaction>();
+                //Console.WriteLine($"新方法未获取到USDT交易记录，地址：{tronAddress}");
+                return Enumerable.Empty<TronTransaction>(); // 地址可能无交易，不暂停密钥
             }
             catch (JsonException ex)
             {
-              //  Console.WriteLine($"JSON解析错误，地址：{tronAddress}，API密钥：{apiKey}，错误：{ex.Message}");
+                // JSON 解析失败不暂停密钥
                 lastError = ex.Message;
+                //Console.WriteLine($"JSON解析错误，地址：{tronAddress}，API密钥：{apiKey}，错误：{ex.Message}");
                 continue;
             }
         }
         catch (Exception ex)
         {
-           // Console.WriteLine($"新方法链接失败，地址：{tronAddress}，API密钥：{apiKey}，错误：{ex.Message}");
+            // 网络或其他异常不暂停密钥
             lastError = ex.Message;
+            //Console.WriteLine($"新方法链接失败，地址：{tronAddress}，API密钥：{apiKey}，错误：{ex.Message}");
             continue;
         }
     }
 
-    // 修改：当两个密钥都失败时回退到免费 API
-   // Console.WriteLine($"新方法链接失败（两个密钥均不可用），回退到旧方法监听USDT交易，地址：{tronAddress}，最后错误：{lastError}");
-    var legacyTransactions = await GetTronTransactionsAsync(tronAddress);
-  //  Console.WriteLine($"旧方法获取 {legacyTransactions.Count()} 条USDT交易记录，地址：{tronAddress}");
+    // 当所有可用密钥都失败时回退到免费 API
+    //Console.WriteLine($"新方法链接失败（所有可用密钥均不可用），回退到旧方法监听USDT交易，地址：{tronAddress}，最后错误：{lastError}");
+    legacyTransactions = await GetTronTransactionsAsync(tronAddress);
+    //Console.WriteLine($"旧方法获取 {legacyTransactions.Count()} 条USDT交易记录，地址：{tronAddress}");
     return legacyTransactions;
 }
-
 
 // 添加锁对象以确保线程安全
 private static readonly object _lock = new object();
