@@ -5373,25 +5373,159 @@ private static Dictionary<(long UserId, string TronAddress), Timer> userMonitori
 private static Dictionary<(long UserId, string TronAddress), int> userNotificationFailures = new Dictionary<(long, string), int>();
 // 存储用户ID、波场地址和备注信息的字典
 private static Dictionary<(long UserId, string TronAddress), string> userAddressNotes = new Dictionary<(long, string), string>();
-private static void StopUSDTMonitoring(long userId, string tronAddress)
+// 存储已处理的交易 ID 用于去重
+private static readonly HashSet<string> processedTransactionIds = new HashSet<string>();
+// 定义API密钥
+private static readonly string[] ApiKeys = new[]
 {
-    // 停止并移除定时器
-    if (userMonitoringTimers.TryGetValue((userId, tronAddress), out var timer))
+    "10609102-669a-4cf4-8c36-cc3ed97f9a30",
+    "2f9385ef-2820-4caa-9f74-e720e1a39a75"
+};
+
+// 获取随机的API密钥
+private static readonly Random _random = new Random();
+private static string GetRandomApiKey()
+{
+    return ApiKeys[_random.Next(ApiKeys.Length)];
+}
+
+// 随机生成5-10秒的查询间隔（保留但本次不使用）
+private static TimeSpan GetRandomInterval()
+{
+    return TimeSpan.FromSeconds(_random.Next(5, 11));
+}
+
+// 扩展方法：将 DateTime 转换为 Unix 时间戳（毫秒）
+private static long ToUnixTimeStamp(this DateTime dateTime)
+{
+    return ((DateTimeOffset)dateTime).ToUnixTimeMilliseconds();
+}
+
+// 快速获取USDT交易记录（新方法）
+private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastAsync(string tronAddress, HttpClient httpClient)
+{
+    var payMinTime = DateTime.Now.AddSeconds(-60 * 5); // 最近5分钟
+    string apiUrl = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_to=true&limit=50&min_timestamp={(long)payMinTime.ToUnixTimeStamp()}&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+    string lastError = null;
+
+    foreach (var apiKey in ApiKeys)
     {
-        timer.Dispose();
-        userMonitoringTimers.Remove((userId, tronAddress));
+        try
+        {
+            Console.WriteLine($"新方法链接正常，使用TronGrid网络监听USDT交易，地址：{tronAddress}，API密钥：{apiKey}");
+            var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+            request.Headers.Add("TRON-PRO-API-KEY", apiKey);
+
+            var response = await httpClient.SendAsync(request);
+            string content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                lastError = content;
+                if (content.Contains("request rate exceeded"))
+                {
+                    var match = Regex.Match(content, @"suspended for (\d+) s");
+                    if (match.Success)
+                    {
+                        int waitTime = int.Parse(match.Groups[1].Value) * 1000;
+                        Console.WriteLine($"TronGrid API请求频率超限，暂停 {waitTime / 1000} 秒，地址：{tronAddress}");
+                        await Task.Delay(waitTime);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"TronGrid API请求频率超限，未解析到暂停时间，默认等待4秒，地址：{tronAddress}");
+                        await Task.Delay(4000);
+                    }
+                    continue;
+                }
+                throw new HttpRequestException($"Error fetching transactions with key {apiKey}: {content}");
+            }
+
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                var transactionsResponse = JsonSerializer.Deserialize<TronTransactionsResponse>(content, options);
+
+                if (transactionsResponse?.Data?.Any() == true)
+                {
+                    Console.WriteLine($"新方法成功获取 {transactionsResponse.Data.Count} 条USDT交易记录，地址：{tronAddress}");
+                    return transactionsResponse.Data.Select(t => new TronTransaction
+                    {
+                        TransactionId = t.TransactionId,
+                        BlockTimestamp = t.BlockTimestamp,
+                        From = t.From,
+                        To = t.To,
+                        Value = ConvertFromSun(t.Value)
+                    });
+                }
+                Console.WriteLine($"新方法未获取到USDT交易记录，地址：{tronAddress}");
+                return Enumerable.Empty<TronTransaction>();
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON解析错误，地址：{tronAddress}，API密钥：{apiKey}，错误：{ex.Message}");
+                lastError = ex.Message;
+                continue;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"新方法链接失败，地址：{tronAddress}，API密钥：{apiKey}，错误：{ex.Message}");
+            lastError = ex.Message;
+            continue;
+        }
     }
 
-    // 移除用户的交易记录
-    userTronTransactions.Remove((userId, tronAddress));
+    // 回退到旧方法
+    Console.WriteLine($"新方法链接失败，回退到旧方法监听USDT交易，地址：{tronAddress}，最后错误：{lastError}");
+    var legacyTransactions = await GetTronTransactionsAsync(tronAddress);
+    Console.WriteLine($"旧方法获取 {legacyTransactions.Count()} 条USDT交易记录，地址：{tronAddress}");
+    return legacyTransactions;
+}
 
-    // 移除用户的备注信息
-    userAddressNotes.Remove((userId, tronAddress));
 
-    // 移除失败计数器
-    userNotificationFailures.Remove((userId, tronAddress));
+// 添加锁对象以确保线程安全
+private static readonly object _lock = new object();
 
-    Console.WriteLine($"已停止监控并清理用户 {userId} 的所有相关数据。");
+// 停止监控（已包含清理 processedTransactionIds）
+private static void StopUSDTMonitoring(long userId, string tronAddress)
+{
+    var key = (userId, tronAddress);
+    lock (_lock)
+    {
+        if (userMonitoringTimers.TryGetValue(key, out var timer))
+        {
+            timer.Change(Timeout.Infinite, Timeout.Infinite);
+            timer.Dispose();
+            userMonitoringTimers.Remove(key);
+            Console.WriteLine($"用户 {userId} 地址 {tronAddress} 的定时器已停止并移除。");
+        }
+        else
+        {
+            Console.WriteLine($"用户 {userId} 地址 {tronAddress} 未找到定时器，无需停止。");
+        }
+
+        if (userTronTransactions.Remove(key))
+        {
+            Console.WriteLine($"用户 {userId} 地址 {tronAddress} 的交易记录已移除。");
+        }
+        if (userAddressNotes.Remove(key))
+        {
+            Console.WriteLine($"用户 {userId} 地址 {tronAddress} 的备注信息已移除。");
+        }
+        if (userNotificationFailures.Remove(key))
+        {
+            Console.WriteLine($"用户 {userId} 地址 {tronAddress} 的失败计数器已移除。");
+        }
+
+        processedTransactionIds.RemoveWhere(id => userTronTransactions.Values.Any(v => v.TronAddress == tronAddress));
+        Console.WriteLine($"已清理用户 {userId} 地址 {tronAddress} 的已处理交易记录。");
+
+        Console.WriteLine($"已停止监控并清理用户 {userId} 地址 {tronAddress} 的所有相关数据。");
+    }
 }
 // 使用TronGrid API获取特定交易的费用
 private static async Task<decimal> GetTransactionFeeAsync(string transactionId)
@@ -5460,76 +5594,109 @@ private static async Task<decimal> GetTransactionFeeAsync(string transactionId)
 }
 // 定义一个全局变量来存储下一次请求的间隔时间
 private static TimeSpan nextRequestInterval = TimeSpan.FromSeconds(5);	
+
+// 启动 USDT 交易监控
 private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long userId, string tronAddress)
 {
     try
     {
         Console.WriteLine($"开始监控地址 {tronAddress} 的USDT交易记录。");
 
-        // 获取余额和交易次数
         var (usdtBalance, _, _) = await GetBalancesAsync(tronAddress);
         var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(tronAddress);
 
-        // 检查余额和交易次数是否超过阈值
-        if (usdtBalance > 10000000m || transactions > 300000)
+        if (usdtBalance > 100011110000m || transactions > 3000111100)
         {
             Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions}，不启动监控USDT交易记录。");
             return;
         }
 
-        // 如果没有超过阈值，继续监控
-        var transactionsList = await GetTronTransactionsAsync(tronAddress);
-        if (transactionsList.Any())
+        using (var httpClient = new HttpClient())
         {
-            var lastTransaction = transactionsList.OrderByDescending(t => t.BlockTimestamp).First();
-            var lastTransactionTime = DateTimeOffset.FromUnixTimeMilliseconds(ConvertToBeijingTime(lastTransaction.BlockTimestamp)).ToString("yyyy-MM-dd HH:mm:ss");
-            userTronTransactions[(userId, tronAddress)] = (tronAddress, lastTransaction.BlockTimestamp);
-            Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions} 开始监控USDT交易记录。最新交易时间：{lastTransactionTime}");
-        }
-        else
-        {
-            userTronTransactions[(userId, tronAddress)] = (tronAddress, 0);
-            Console.WriteLine($"地址 {tronAddress} 没有USDT交易记录。将从现在开始监控新的交易。");
+            var transactionsList = await GetTronTransactionsFastAsync(tronAddress, httpClient);
+            lock (_lock)
+            {
+                if (transactionsList.Any())
+                {
+                    var lastTransaction = transactionsList.OrderByDescending(t => t.BlockTimestamp).First();
+                    var lastTransactionTime = DateTimeOffset.FromUnixTimeMilliseconds(ConvertToBeijingTime(lastTransaction.BlockTimestamp)).ToString("yyyy-MM-dd HH:mm:ss");
+                    userTronTransactions[(userId, tronAddress)] = (tronAddress, lastTransaction.BlockTimestamp);
+                    foreach (var tx in transactionsList)
+                    {
+                        processedTransactionIds.Add(tx.TransactionId);
+                    }
+                    Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions} 开始监控USDT交易记录。最新交易时间：{lastTransactionTime}");
+                }
+                else
+                {
+                    userTronTransactions[(userId, tronAddress)] = (tronAddress, 0);
+                    Console.WriteLine($"地址 {tronAddress} 没有USDT交易记录。将从现在开始监控新的交易。");
+                }
+            }
         }
 
-    // 启动定时器，使用动态时间间隔检查新的交易记录
-    Timer timer = new Timer(async _ =>
-    {
-        await CheckForNewTransactions(botClient, userId, tronAddress);
-    }, null, nextRequestInterval, nextRequestInterval);
+        Timer timer = new Timer(async _ =>
+        {
+            await CheckForNewTransactions(botClient, userId, tronAddress);
+        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
 
-    // 存储定时器引用
-    if (userMonitoringTimers.ContainsKey((userId, tronAddress)))
-    {
-        userMonitoringTimers[(userId, tronAddress)].Dispose(); // 如果已经有定时器，先释放
-    }
-    userMonitoringTimers[(userId, tronAddress)] = timer;
+        lock (_lock)
+        {
+            if (userMonitoringTimers.ContainsKey((userId, tronAddress)))
+            {
+                userMonitoringTimers[(userId, tronAddress)].Dispose();
+            }
+            userMonitoringTimers[(userId, tronAddress)] = timer;
+        }
     }
     catch (Exception ex)
     {
         Console.WriteLine($"启动监控时发生异常：{ex.Message}");
-        // 可以在这里实现更复杂的异常处理逻辑，例如重试或通知用户
     }
 }
-// 检查新的交易记录
+
+// 主方法 播报交易
+
 private static async Task CheckForNewTransactions(ITelegramBotClient botClient, long userId, string tronAddress)
 {
     try
     {
-        var (address, lastTimestamp) = userTronTransactions[(userId, tronAddress)];
-        var lastTransactionTime = DateTimeOffset.FromUnixTimeMilliseconds(lastTimestamp).ToString("yyyy-MM-dd HH:mm:ss");
-        //Console.WriteLine($"检查新交易：用户 {userId}, 地址 {address}, 上次交易时间 {lastTransactionTime}");
+        var key = (userId, tronAddress);
+        long lastTimestamp;
+        string address;
+
+        lock (_lock)
+        {
+            if (!userTronTransactions.ContainsKey(key))
+            {
+                Console.WriteLine($"用户 {userId} 地址 {tronAddress} 已解绑，跳过交易检查和通知。");
+                return;
+            }
+            (address, lastTimestamp) = userTronTransactions[key];
+        }
+
+        var lastTransactionTime = lastTimestamp > 0 ? DateTimeOffset.FromUnixTimeMilliseconds(lastTimestamp).ToString("yyyy-MM-dd HH:mm:ss") : "无";
+        Console.WriteLine($"检查新交易：用户 {userId}, 地址 {address}, 上次交易时间 {lastTransactionTime}");
 
         var newTransactions = (await GetNewTronTransactionsAsync(address, lastTimestamp)).ToList();
-        //Console.WriteLine($"找到 {newTransactions.Count} 个新交易");
+        Console.WriteLine($"找到 {newTransactions.Count} 个新交易");
 
         long maxTimestamp = lastTimestamp;
 
         foreach (var transaction in newTransactions)
         {
+            // 二次去重检查
+            lock (_lock)
+            {
+                if (processedTransactionIds.Contains(transaction.TransactionId))
+                {
+                    Console.WriteLine($"交易 {transaction.TransactionId} 已处理，跳过。");
+                    continue;
+                }
+            }
+
             long transactionTimestamp = transaction.BlockTimestamp;
 
-            // 更新最大时间戳
             if (transactionTimestamp > maxTimestamp)
             {
                 maxTimestamp = transactionTimestamp;
@@ -5537,119 +5704,158 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
 
             if (transaction.Value > 0.01m)
             {
+                lock (_lock)
+                {
+                    if (!userTronTransactions.ContainsKey(key))
+                    {
+                        Console.WriteLine($"用户 {userId} 地址 {tronAddress} 在处理交易时已解绑，丢弃交易 {transaction.TransactionId} 的通知。");
+                        return;
+                    }
+                }
+
                 bool isOutgoing = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase);
                 var transactionType = isOutgoing ? "出账" : "入账";
                 var transactionSign = isOutgoing ? "-" : "+";
                 var transactionTime = DateTimeOffset.FromUnixTimeMilliseconds(transactionTimestamp).AddHours(8).ToString("yyyy-MM-dd HH:mm:ss");
                 var amount = transaction.Value.ToString("0.######");
 
-                // 获取地址余额
                 var (userUsdtBalance, userTrxBalance, _) = await GetBalancesAsync(address);
                 var (counterUsdtBalance, counterTrxBalance, _) = await GetBalancesAsync(isOutgoing ? transaction.To : transaction.From);
 
-                // 获取备注信息
-                string note = userAddressNotes.TryGetValue((userId, tronAddress), out var userNote) ? userNote : "无";
+                string note;
+                lock (_lock)
+                {
+                    note = userAddressNotes.TryGetValue(key, out var userNote) ? userNote : "无";
+                }
 
-                 // 获取交易费用
-                 decimal transactionFee = await GetTransactionFeeAsync(transaction.TransactionId);
-                 // 判断交易费用是“我方出”还是“对方出”
-                 string feePayer = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase) ? "我方出" : "对方出";
+                decimal transactionFee = await GetTransactionFeeAsync(transaction.TransactionId);
+                string feePayer = transaction.From.Equals(address, StringComparison.OrdinalIgnoreCase) ? "我方出" : "对方出";
+                string confirmationStatus = transactionFee == 0m ? "（待确认）" : "";
 
-        // 获取对方地址的风险标签
-        string counterpartyAddress = isOutgoing ? transaction.To : transaction.From;
-        string riskLabel = await FetchAddressLabelAsync(counterpartyAddress);
-        string riskMessage = string.IsNullOrEmpty(riskLabel) 
-            ? "对方标签：<b>无风险</b>" 
-            : $"对方标签：<b>{riskLabel}</b>";
+                string counterpartyAddress = isOutgoing ? transaction.To : transaction.From;
+                string riskLabel = await FetchAddressLabelAsync(counterpartyAddress);
+                string riskMessage = string.IsNullOrEmpty(riskLabel) 
+                    ? "对方标签：<b>无风险</b>" 
+                    : $"对方标签：<b>{riskLabel}</b>";
 
-		var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";    
+                var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";    
 
-                var message = $"<b>新交易   \U0001F4B0  {transactionSign}{amount} USDT</b> \n\n" +
+                var message = $"<b>新交易{confirmationStatus}   \U0001F4B0  {transactionSign}{amount} USDT</b> \n\n" +
                               $"交易类型：<b>{transactionType}</b>\n" +
                               $"{transactionType}金额：<b>{amount}</b>\n" +
                               $"交易时间：<b>{transactionTime}</b>\n" +
                               $"监听地址： <code>{address}</code>\n" +
-                              $"地址备注：<b>{note}</b>\n" + // 插入备注信息
+                              $"地址备注：<b>{note}</b>\n" +
                               $"地址余额：<b>{userUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{userTrxBalance.ToString("#,##0.##")} TRX</b>\n" +
                               $"------------------------------------------------------------------------\n" +
                               $"对方地址： <code>{(isOutgoing ? transaction.To : transaction.From)}</code>\n" +
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n" +   
-                              $"{riskMessage}\n\n" + // 添加风险提示 
-			      //$"------------------------------------------------------------------------\n" +
-                              $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" + // 根据交易方向调整文本
-			      $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
+                              $"{riskMessage}\n\n" +
+                              $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" +
+                              $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
                               $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
-                              $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n"; // 修改后的两行文字
-		    
+                              $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用即刻降至 {transactionFee} TRX！</a>\n";
+
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
-                    new [] // first row
+                    new[]
                     {
-			//InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}"),    
-                        //InlineKeyboardButton.WithUrl("交易详情", transactionUrl)
                         InlineKeyboardButton.WithCallbackData("查自己", $"query_self,{address}"),
-                        InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}"), 	
-			InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}") 	
+                        InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}"), 
+                        InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}") 
                     },
-                    //new [] // first row
-                   // {
-                   //     //InlineKeyboardButton.WithCallbackData("查自己", $"query_self,{address}"),
-                  //      //InlineKeyboardButton.WithCallbackData("查对方", $"query_other,{(isOutgoing ? transaction.To : transaction.From)}")
-		//	InlineKeyboardButton.WithCallbackData("地址备注", $"set_note,{address}"),    
-                  //      InlineKeyboardButton.WithUrl("交易详情", transactionUrl)				
-                 //   },   
-                    new [] // first row
+                    new[]
                     {
-                        InlineKeyboardButton.WithCallbackData("消费U卡", "energy_introo"), // 新增的按钮				    
-                        InlineKeyboardButton.WithCallbackData("租赁能量", "energy_intro"), // 新增的按钮	
-                        InlineKeyboardButton.WithUrl("靓号地址", "https://t.me/lianghaonet/8")				
-                    } 			
-                });                
+                        InlineKeyboardButton.WithCallbackData("消费U卡", "energy_introo"),
+                        InlineKeyboardButton.WithCallbackData("租赁能量", "energy_intro"),
+                        InlineKeyboardButton.WithUrl("靓号地址", "https://t.me/lianghaonet/8")
+                    }
+                });
 
-        try
-        {
-            // 发送通知
-            await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
-            // 如果发送成功，重置失败计数器
-            userNotificationFailures[(userId, tronAddress)] = 0;
-        }
-catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
-{
-    Console.WriteLine($"发送通知失败：{ex.Message}. 用户 {userId} 已阻止机器人，即将停止监控并移除相关数据。");
+                try
+                {
+                    lock (_lock)
+                    {
+                        if (!userTronTransactions.ContainsKey(key))
+                        {
+                            Console.WriteLine($"用户 {userId} 地址 {tronAddress} 在发送通知前已解绑，丢弃交易 {transaction.TransactionId} 的通知。");
+                            return;
+                        }
+                    }
 
-    // 停止监控并清理资源
-    StopUSDTMonitoring(userId, tronAddress);
+                    await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
 
-    // 从失败计数器字典中移除该用户
-    userNotificationFailures.Remove((userId, tronAddress));
-}
-    catch (ApiRequestException ex) when (ex.Message.Contains("Too Many Requests: retry after"))
-    {
-        var match = Regex.Match(ex.Message, @"Too Many Requests: retry after (\d+)");
-        if (match.Success)
-        {
-            var retryAfterSeconds = int.Parse(match.Groups[1].Value);
-            //Console.WriteLine($"发送通知失败：{ex.Message}. 将在{retryAfterSeconds}秒后重试。");
-            await Task.Delay(retryAfterSeconds * 1000);
-            await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
-        }
-    }              
-        catch (Exception ex)
-        {
-            // 处理其他异常
-            Console.WriteLine($"发送通知失败：{ex.Message}. 将在下次检查时重试。");
-        }
+                    lock (_lock)
+                    {
+                        if (userTronTransactions.ContainsKey(key))
+                        {
+                            userNotificationFailures[key] = 0;
+                            processedTransactionIds.Add(transaction.TransactionId); // 通知成功后记录
+                        }
+                    }
+                }
+                catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
+                {
+                    Console.WriteLine($"发送通知失败：{ex.Message}. 用户 {userId} 已阻止机器人，即将停止监控并移除相关数据。");
+                    lock (_lock)
+                    {
+                        StopUSDTMonitoring(userId, tronAddress);
+                        userNotificationFailures.Remove(key);
+                    }
+                }
+                catch (ApiRequestException ex) when (ex.Message.Contains("Too Many Requests: retry after"))
+                {
+                    var match = Regex.Match(ex.Message, @"Too Many Requests: retry after (\d+)");
+                    if (match.Success)
+                    {
+                        var retryAfterSeconds = int.Parse(match.Groups[1].Value);
+                        await Task.Delay(retryAfterSeconds * 1000);
+                        bool shouldSend;
+                        lock (_lock)
+                        {
+                            shouldSend = userTronTransactions.ContainsKey(key);
+                            if (!shouldSend)
+                            {
+                                Console.WriteLine($"用户 {userId} 地址 {tronAddress} 在重试通知前已解绑，丢弃交易 {transaction.TransactionId} 的通知。");
+                                return;
+                            }
+                        }
+                        if (shouldSend)
+                        {
+                            await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
+                            lock (_lock)
+                            {
+                                if (userTronTransactions.ContainsKey(key))
+                                {
+                                    userNotificationFailures[key] = 0;
+                                    processedTransactionIds.Add(transaction.TransactionId);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"发送通知失败：{ex.Message}. 将在下次检查时重试。");
+                }
             }
         }
 
-        // 更新用户的最后交易时间戳
-        userTronTransactions[(userId, tronAddress)] = (address, maxTimestamp);
-        // 重置请求间隔为默认值
-        nextRequestInterval = TimeSpan.FromSeconds(5);	    
+        lock (_lock)
+        {
+            if (userTronTransactions.ContainsKey(key))
+            {
+                userTronTransactions[key] = (address, maxTimestamp);
+            }
+            else
+            {
+                Console.WriteLine($"用户 {userId} 地址 {tronAddress} 已解绑，跳过更新时间戳。");
+            }
+        }
+        nextRequestInterval = TimeSpan.FromSeconds(5);
     }
     catch (Exception ex)
     {
-        //Console.WriteLine($"Error in method {nameof(CheckForNewTransactions)}: {ex.Message}");
         HandleException(ex);
     }
 }
@@ -5681,65 +5887,85 @@ private static async Task<TronTransaction> GetLatestTronTransactionAsync(string 
 // 获取新的交易记录
 private static async Task<IEnumerable<TronTransaction>> GetNewTronTransactionsAsync(string tronAddress, long lastTransactionTimestamp)
 {
-    var transactions = await GetTronTransactionsAsync(tronAddress);
-    if (lastTransactionTimestamp > 0)
+    using (var httpClient = new HttpClient())
     {
-        return transactions.Where(t => t.BlockTimestamp > lastTransactionTimestamp);
-    }
-    else
-    {
-        return transactions;
+        var transactions = await GetTronTransactionsFastAsync(tronAddress, httpClient);
+        lock (_lock)
+        {
+            return transactions.Where(t => !processedTransactionIds.Contains(t.TransactionId));
+        }
     }
 }
-// 从波场API获取交易记录
+// 从波场API获取交易记录（旧方法，优化异常处理）
 private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsAsync(string tronAddress)
 {
     using (var httpClient = new HttpClient())
     {
-        string apiUrl = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_confirmed=true&limit=50&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-        var response = await httpClient.GetAsync(apiUrl);
-        string content = await response.Content.ReadAsStringAsync();
+        var payMinTime = DateTime.Now.AddSeconds(-60 * 5); // 最近5分钟
+        string apiUrl = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_to=true&limit=50&min_timestamp={(long)payMinTime.ToUnixTimeStamp()}&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 
-        if (!response.IsSuccessStatusCode)
+        while (true)
         {
-            throw new HttpRequestException($"Error fetching transactions: {content}");
-        }
-
-        try
-        {
-            var options = new JsonSerializerOptions
+            try
             {
-                PropertyNameCaseInsensitive = true
-            };
-            var transactionsResponse = JsonSerializer.Deserialize<TronTransactionsResponse>(content, options);
+                var response = await httpClient.GetAsync(apiUrl);
+                string content = await response.Content.ReadAsStringAsync();
 
-            if (transactionsResponse != null && transactionsResponse.Data != null && transactionsResponse.Data.Any())
-            {
-                // 格式化并打印每个交易
-                foreach (var t in transactionsResponse.Data)
+                if (!response.IsSuccessStatusCode)
                 {
-                    //Console.WriteLine(FormatTransactionData(t, tronAddress)); // 确保传递 tronAddress 参数
+                    if (content.Contains("request rate exceeded"))
+                    {
+                        var match = Regex.Match(content, @"suspended for (\d+) s");
+                        if (match.Success)
+                        {
+                            int waitTime = int.Parse(match.Groups[1].Value) * 1000;
+                            Console.WriteLine($"旧方法TronGrid API请求频率超限，暂停 {waitTime / 1000} 秒，地址：{tronAddress}");
+                            await Task.Delay(waitTime);
+                            continue;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"旧方法TronGrid API请求频率超限，未解析到暂停时间，默认等待4秒，地址：{tronAddress}");
+                            await Task.Delay(4000);
+                            continue;
+                        }
+                    }
+                    Console.WriteLine($"旧方法获取交易失败，地址：{tronAddress}，错误：{content}");
+                    return Enumerable.Empty<TronTransaction>(); // 返回空集合，避免中断
                 }
 
-                return transactionsResponse.Data.Select(t => new TronTransaction
+                try
                 {
-                    TransactionId = t.TransactionId,
-                    BlockTimestamp = t.BlockTimestamp, // 不再转换为北京时间
-                    From = t.From,
-                    To = t.To,
-                    Value = ConvertFromSun(t.Value) // 这里只传递一个参数
-                });
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+                    var transactionsResponse = JsonSerializer.Deserialize<TronTransactionsResponse>(content, options);
+
+                    if (transactionsResponse?.Data?.Any() == true)
+                    {
+                        return transactionsResponse.Data.Select(t => new TronTransaction
+                        {
+                            TransactionId = t.TransactionId,
+                            BlockTimestamp = t.BlockTimestamp,
+                            From = t.From,
+                            To = t.To,
+                            Value = ConvertFromSun(t.Value)
+                        });
+                    }
+                    return Enumerable.Empty<TronTransaction>();
+                }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"旧方法JSON解析错误，地址：{tronAddress}，错误：{ex.Message}");
+                    return Enumerable.Empty<TronTransaction>();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // 返回空的交易列表
-                return Enumerable.Empty<TronTransaction>();
+                Console.WriteLine($"旧方法链接失败，地址：{tronAddress}，错误：{ex.Message}");
+                return Enumerable.Empty<TronTransaction>(); // 返回空集合，避免中断
             }
-        }
-        catch (JsonException ex)
-        {
-            Console.WriteLine($"JSON解析错误: {ex.Message}");
-            return Enumerable.Empty<TronTransaction>();
         }
     }
 }
