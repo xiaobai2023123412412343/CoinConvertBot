@@ -5401,11 +5401,12 @@ private static long ToUnixTimeStamp(this DateTime dateTime)
     return ((DateTimeOffset)dateTime).ToUnixTimeMilliseconds();
 }
 
-// 快速获取USDT交易记录（新方法）
+// 快速获取USDT交易记录（新方法，移除 only_to=true，确保监听收入和支出）
 private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastAsync(string tronAddress, HttpClient httpClient)
 {
     var payMinTime = DateTime.Now.AddSeconds(-60 * 5); // 最近5分钟
-    string apiUrl = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_to=true&limit=50&min_timestamp={(long)payMinTime.ToUnixTimeStamp()}&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+    // 修改：移除 only_to=true，支持监听收入和支出
+    string apiUrl = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?limit=50&min_timestamp={(long)payMinTime.ToUnixTimeStamp()}&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
     string lastError = null;
 
     foreach (var apiKey in ApiKeys)
@@ -5438,7 +5439,10 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastA
                     }
                     continue;
                 }
-                throw new HttpRequestException($"Error fetching transactions with key {apiKey}: {content}");
+                // 修改：明确记录密钥失效或超限的错误
+                Console.WriteLine($"API密钥 {apiKey} 失败，错误：{content}");
+                lastError = content;
+                continue; // 尝试下一个密钥
             }
 
             try
@@ -5479,8 +5483,8 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastA
         }
     }
 
-    // 回退到旧方法
-    Console.WriteLine($"新方法链接失败，回退到旧方法监听USDT交易，地址：{tronAddress}，最后错误：{lastError}");
+    // 修改：当两个密钥都失败时回退到免费 API
+    Console.WriteLine($"新方法链接失败（两个密钥均不可用），回退到旧方法监听USDT交易，地址：{tronAddress}，最后错误：{lastError}");
     var legacyTransactions = await GetTronTransactionsAsync(tronAddress);
     Console.WriteLine($"旧方法获取 {legacyTransactions.Count()} 条USDT交易记录，地址：{tronAddress}");
     return legacyTransactions;
@@ -5635,10 +5639,11 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
             }
         }
 
+        // 修改：使用随机5-9秒间隔
         Timer timer = new Timer(async _ =>
         {
             await CheckForNewTransactions(botClient, userId, tronAddress);
-        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+        }, null, TimeSpan.FromSeconds(5), GetRandomInterval());
 
         lock (_lock)
         {
@@ -5654,7 +5659,6 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
         Console.WriteLine($"启动监控时发生异常：{ex.Message}");
     }
 }
-
 // 主方法 播报交易
 
 private static async Task CheckForNewTransactions(ITelegramBotClient botClient, long userId, string tronAddress)
@@ -5896,13 +5900,15 @@ private static async Task<IEnumerable<TronTransaction>> GetNewTronTransactionsAs
         }
     }
 }
-// 从波场API获取交易记录（旧方法，优化异常处理）
+
+// 从波场API获取交易记录（旧方法，移除 only_to=true，确保监听收入和支出）
 private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsAsync(string tronAddress)
 {
     using (var httpClient = new HttpClient())
     {
         var payMinTime = DateTime.Now.AddSeconds(-60 * 5); // 最近5分钟
-        string apiUrl = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?only_to=true&limit=50&min_timestamp={(long)payMinTime.ToUnixTimeStamp()}&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        // 修改：移除 only_to=true，支持监听收入和支出
+        string apiUrl = $"https://api.trongrid.io/v1/accounts/{tronAddress}/transactions/trc20?limit=50&min_timestamp={(long)payMinTime.ToUnixTimeStamp()}&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 
         while (true)
         {
