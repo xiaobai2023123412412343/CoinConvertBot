@@ -7531,7 +7531,7 @@ else
                "<b>一有交易就下发通知，假U，假截图，完全不起作用！</b>\n\n" +
                "<b>注意：</b>发送绑定指令每一段都需要添加空格才可以正确识别；\n" +   
                "如需添加备注：发送格式为 绑定 地址 备注 地址1（示例）；\n" +  
-               "交易所地址暂不支持监听，判断标准为：余额大于500万USDT或累计交易笔数大于30万笔！\n\n" +  
+               "高频交易地址暂不支持监听，判断标准为：余额大于500万USDT或累计交易笔数大于30万笔！\n\n" +  
                "<b>全网独家</b>：<u>机器人除了能播报交易信息，还能查询对方地址的余额以及标签！</u>\n\n" +
                "示例：  <b>新交易   \U0001F4B0  -10 USDT</b>\n\n" +
                "交易类型：<b>出账</b>\n" +
@@ -22685,9 +22685,9 @@ try
         // 等待0.5秒
         await Task.Delay(500);
         // 然后发送疑似交易所地址的警告消息
-        string warningMessage = $"疑似交易所地址：\n" +
+        string warningMessage = $"疑似高频交易地址：\n" +
                                 $"余额：<b>{usdtBalance.ToString("#,##0.##")} USDT，" +
-                                $"{transactions}次交易</b>\n暂不支持监听交易所地址！";
+                                $"{transactions}次交易</b>\n受限于电报官方，暂不支持监听此类地址！";
         await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: warningMessage, parseMode: ParseMode.Html);
     }
     else
