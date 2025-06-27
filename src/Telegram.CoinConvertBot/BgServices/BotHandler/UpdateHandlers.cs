@@ -5624,7 +5624,7 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
         var (usdtBalance, _, _) = await GetBalancesAsync(tronAddress);
         var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(tronAddress);
 
-        if (usdtBalance > 50011110000m || transactions > 3011110000)
+        if (usdtBalance > 5000000m || transactions > 300000)
         {
           //  Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions}，不启动监控USDT交易记录。");
             return;
@@ -5759,7 +5759,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
 
                 var transactionUrl = $"https://tronscan.org/#/transaction/{transaction.TransactionId}";    
 
-                var message = $"<b>新交易{confirmationStatus}   \U0001F4B0  {transactionSign}{amount} USDT</b> \n\n" +
+                var message = $"<b>新交易{confirmationStatus}  \U0001F4B0  {transactionSign}{amount} USDT</b> \n\n" +
                               $"交易类型：<b>{transactionType}</b>\n" +
                               $"{transactionType}金额：<b>{amount}</b>\n" +
                               $"交易时间：<b>{transactionTime}</b>\n" +
