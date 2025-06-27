@@ -22675,7 +22675,7 @@ try
     await Task.Delay(500);
 
     // 根据余额和交易笔数判断发送哪条文本消息
-    if (usdtBalance > 10000000m || transactions > 300000)
+    if (usdtBalance > 5000000m || transactions > 300000)
     {
         // 如果超过阈值，先发送TRX余额监控启动的消息
         if (!skipTRXMonitoring)
