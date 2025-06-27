@@ -5437,17 +5437,19 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastA
             if (!response.IsSuccessStatusCode)
             {
                 lastError = content;
-                if (content.Contains("request rate exceeded") || content.Contains("Invalid API Key"))
+                // 使用 HTTP 状态码和错误信息判断密钥失效或达到上限
+                if (response.StatusCode == HttpStatusCode.TooManyRequests || content.Contains("request rate exceeded", StringComparison.OrdinalIgnoreCase) ||
+                    response.StatusCode == HttpStatusCode.Forbidden || content.Contains("Invalid API Key", StringComparison.OrdinalIgnoreCase))
                 {
                     // 密钥达到上限或失效，暂停 12 小时
                     lock (_lock)
                     {
                         _suspendedApiKeys[apiKey] = DateTime.Now.Add(_suspensionPeriod);
-                        //Console.WriteLine($"API密钥 {apiKey} 达到上限或失效，暂停 12 小时，地址：{tronAddress}，错误：{content}");
+                        //Console.WriteLine($"API密钥 {apiKey} 达到上限或失效，暂停 12 小时，地址：{tronAddress}，状态码：{response.StatusCode}，错误：{content}");
                     }
                     continue; // 尝试下一个密钥
                 }
-                //Console.WriteLine($"API密钥 {apiKey} 失败，错误：{content}");
+                //Console.WriteLine($"API密钥 {apiKey} 失败，状态码：{response.StatusCode}，错误：{content}");
                 continue; // 其他 HTTP 错误不暂停，直接尝试下一个密钥
             }
 
@@ -5617,7 +5619,7 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
         var (usdtBalance, _, _) = await GetBalancesAsync(tronAddress);
         var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(tronAddress);
 
-        if (usdtBalance > 100011110000m || transactions > 3000111100)
+        if (usdtBalance > 10000000m || transactions > 300000)
         {
           //  Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions}，不启动监控USDT交易记录。");
             return;
