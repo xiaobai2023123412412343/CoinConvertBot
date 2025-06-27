@@ -15307,6 +15307,8 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 13：  以太坊api： WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4    https://etherscan.io/apidashboard   都是免费的api，随便注册即可
 14： 替换管理员链接： t.me/yifanfu 或 @yifanfu
 15： 替换机器人链接： t.me/yifanfubot 或 @yifanfubot
+16： 会员价格如有需要也可以修改
+17：// 定义API密钥   private static readonly string[] ApiKeys = new[]   监听USDT 秘钥需修改，随便注册  https://www.trongrid.io/dashboard
 
 启动机器人先：
 储存之前的用户资料 代绑地址 可以代解 储存群聊资料
