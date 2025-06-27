@@ -5624,7 +5624,7 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
         var (usdtBalance, _, _) = await GetBalancesAsync(tronAddress);
         var (_, _, _, _, _, _, transactions, _, _, _) = await GetBandwidthAsync(tronAddress);
 
-        if (usdtBalance > 5000000m || transactions > 300000)
+        if (usdtBalance > 50011110000m || transactions > 3011110000)
         {
           //  Console.WriteLine($"用户 {userId} 绑定地址 {tronAddress} 成功，余额：{usdtBalance} 交易笔数：{transactions}，不启动监控USDT交易记录。");
             return;
@@ -5773,7 +5773,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" +
                               $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
                               $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
-                              $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用即刻降至 {transactionFee} TRX！</a>\n";
+                              $"<a href=\"https://t.me/yifanfubot\">3️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n";
 
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
