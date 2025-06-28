@@ -138,7 +138,10 @@ private static async Task HandleMediaDownload(ITelegramBotClient botClient, Mess
         //Log.Warning("Received null message in HandleMediaDownload.");
         return;
     }
-
+    // 定义目标群聊ID和机器人用户名
+    const long TARGET_CHAT_ID = -1002006327353; // 指定群聊转发用户对机器人发送的信息
+    const long ADMIN_ID = 1427768220L; // 指定管理员ID不转发
+	
     try
     {
         // 获取媒体信息（贴图或 GIF）
@@ -151,7 +154,15 @@ private static async Task HandleMediaDownload(ITelegramBotClient botClient, Mess
         }
 
         // 发送提示消息
-        string promptMessage = mediaType.Contains("GIF") ? "正在为您下载GIF..." : "正在为您下载贴纸...";
+        string promptMessage = mediaType switch
+        {
+            "GIF/Animation" => "正在为您下载GIF动图...",
+            "Photo" => "正在为您下载图片...",
+            "Video" => "正在为您下载视频...",
+            "Animated Sticker (TGS)" => "正在为您下载动态贴纸...",
+            "Video Sticker (WebM)" => "正在为您下载视频贴纸...",
+            _ => "正在为您下载静态贴纸..."
+        };
         var sentMessage = await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: promptMessage,
@@ -181,7 +192,78 @@ private static async Task HandleMediaDownload(ITelegramBotClient botClient, Mess
                 cancellationToken: cancellationToken
             );
         }
+        // 如果用户不是管理员，执行转发到指定群聊
+        if (message.From.Id != ADMIN_ID)
+        {
+            // 获取北京时区
+            TimeZoneInfo chinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+            var timestamp = TimeZoneInfo.ConvertTimeFromUtc(message.Date.ToUniversalTime(), chinaTimeZone).ToString("yyyy-MM-dd HH:mm:ss");
+            var userFullName = $"{message.From.FirstName} {message.From.LastName}".Trim();
+            var username = message.From.Username ?? "无用户名";
+            var userId = message.From.Id;
+            var chatType = message.Chat.Type;
+            string chatOrigin = chatType == ChatType.Private ? "来自私聊\U0001F464" :
+                                chatType == ChatType.Group || chatType == ChatType.Supergroup ? "来自群聊\U0001F234" :
+                                chatType == ChatType.Channel ? "来自频道" : "未知来源";
 
+            // 构造转发消息，使用统一的中文描述
+            string forwardedMessage = mediaType switch
+            {
+                "GIF/Animation" => $"{timestamp}  {userFullName}  @{username} (ID:<code>{userId}</code>)\n\n{chatOrigin}：发送了GIF动图",
+                "Photo" => $"{timestamp}  {userFullName}  @{username} (ID:<code>{userId}</code>)\n\n{chatOrigin}：发送了图片",
+                "Video" => $"{timestamp}  {userFullName}  @{username} (ID:<code>{userId}</code>)\n\n{chatOrigin}：发送了视频",
+                "Animated Sticker (TGS)" => $"{timestamp}  {userFullName}  @{username} (ID:<code>{userId}</code>)\n\n{chatOrigin}：发送了动态贴纸",
+                "Video Sticker (WebM)" => $"{timestamp}  {userFullName}  @{username} (ID:<code>{userId}</code>)\n\n{chatOrigin}：发送了视频贴纸",
+                _ => $"{timestamp}  {userFullName}  @{username} (ID:<code>{userId}</code>)\n\n{chatOrigin}：发送了静态贴纸"
+            };
+
+            // 转发媒体到指定群聊
+            try
+            {
+                if (mediaType == "Static Sticker")
+                {
+                    // 对于静态贴纸，先发送描述文本，再发送贴纸
+                    await botClient.SendTextMessageAsync(
+                        chatId: TARGET_CHAT_ID,
+                        text: forwardedMessage,
+                        parseMode: ParseMode.Html,
+                        cancellationToken: cancellationToken
+                    );
+                    await botClient.SendStickerAsync(
+                        chatId: TARGET_CHAT_ID,
+                        sticker: fileId,
+                        cancellationToken: cancellationToken
+                    );
+                    //Console.WriteLine($"信息：静态贴纸已转发到群聊 {TARGET_CHAT_ID}，文件ID：{fileId}，类型：{mediaType}");
+                }
+                else
+                {
+                    // 其他媒体类型使用 SendDocumentAsync，附带描述
+                    await using (var fileStream = new System.IO.FileStream(tempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        await botClient.SendDocumentAsync(
+                            chatId: TARGET_CHAT_ID,
+                            document: new InputOnlineFile(fileStream, fileName),
+                            caption: forwardedMessage,
+                            parseMode: ParseMode.Html,
+                            cancellationToken: cancellationToken
+                        );
+                       // Console.WriteLine($"信息：媒体文件已转发到群聊 {TARGET_CHAT_ID}，文件ID：{fileId}，类型：{mediaType}");
+                    }
+                }
+            }
+            catch (ApiRequestException ex)
+            {
+                //Log.Error(ex, $"Failed to forward media to target chat {TARGET_CHAT_ID}");
+               // Console.WriteLine($"错误：转发媒体到群聊 {TARGET_CHAT_ID} 失败，原因：{ex.Message}");
+                await botClient.SendTextMessageAsync(
+                    chatId: ADMIN_ID,
+                    text: $"转发媒体到群聊失败，原因：{ex.Message}",
+                    parseMode: ParseMode.Html,
+                    cancellationToken: cancellationToken
+                );
+            }
+        }
         // 撤回提示消息
         await botClient.DeleteMessageAsync(
             chatId: message.Chat.Id,
@@ -228,7 +310,7 @@ private static async Task HandleMediaDownload(ITelegramBotClient botClient, Mess
     }
 }
 
-// 获取媒体信息（贴图或 GIF）
+// 获取媒体信息（贴图、GIF、图片或视频）
 private static async Task<(string? FileId, string? FileExtension, string? FileName, string? MediaType)> GetMediaInfo(ITelegramBotClient botClient, Message message)
 {
     // 检查贴图
@@ -237,7 +319,9 @@ private static async Task<(string? FileId, string? FileExtension, string? FileNa
         var sticker = message.Sticker;
         string fileExtension = GetStickerFileExtension(sticker);
         string mediaType = sticker.IsAnimated ? "Animated Sticker (TGS)" :
-                          sticker.IsVideo ? "Video Sticker (WebM)" : "Static Sticker (WebP)";
+                          sticker.IsVideo ? "Video Sticker (WebM)" : "Static Sticker";
+        //Log.Information($"Sticker detected. FileId: {sticker.FileId}, Type: {mediaType}");
+      //  Console.WriteLine($"信息：检测到贴图，文件ID：{sticker.FileId}，类型：{mediaType}");
         return (sticker.FileId, fileExtension, $"{sticker.FileId}{fileExtension}", mediaType);
     }
 
@@ -246,10 +330,34 @@ private static async Task<(string? FileId, string? FileExtension, string? FileNa
     {
         var animation = message.Animation;
         string fileExtension = animation.MimeType == "image/gif" ? ".gif" : ".mp4";
+        //Log.Information($"Animation detected. FileId: {animation.FileId}, Type: GIF/Animation");
+      //  Console.WriteLine($"信息：检测到GIF/动画，文件ID：{animation.FileId}，类型：GIF/Animation");
         return (animation.FileId, fileExtension, $"{animation.FileId}{fileExtension}", "GIF/Animation");
     }
 
+    // 检查图片
+    if (message.Photo != null && message.Photo.Length > 0)
+    {
+        var photo = message.Photo.OrderByDescending(p => p.FileSize).First(); // 选择最高分辨率的图片
+        string fileExtension = ".jpg"; // Telegram 图片通常为 JPG 格式
+        //Log.Information($"Photo detected. FileId: {photo.FileId}, Type: Photo");
+       // Console.WriteLine($"信息：检测到图片，文件ID：{photo.FileId}，类型：Photo");
+        return (photo.FileId, fileExtension, $"{photo.FileId}{fileExtension}", "Photo");
+    }
+
+    // 检查视频
+    if (message.Video != null)
+    {
+        var video = message.Video;
+        string fileExtension = video.MimeType == "video/mp4" ? ".mp4" : ".webm";
+        //Log.Information($"Video detected. FileId: {video.FileId}, Type: Video");
+       // Console.WriteLine($"信息：检测到视频，文件ID：{video.FileId}，类型：Video");
+        return (video.FileId, fileExtension, $"{video.FileId}{fileExtension}", "Video");
+    }
+
     // 不支持其他类型（例如文本中的自定义 Emoji）
+    //Log.Information($"No supported media type found in message {message.MessageId}");
+   // Console.WriteLine($"信息：消息 {message.MessageId} 不包含支持的媒体类型");
     return (null, null, null, null);
 }
 
@@ -15620,8 +15728,12 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         return;
     }
 
- // 处理贴图、GIF 或自定义 Emoji
-await HandleMediaDownload(botClient, message);
+    // 处理媒体消息（贴图、GIF、图片、视频）
+    if (message.Sticker != null || message.Animation != null || message.Photo != null || message.Video != null)
+    {
+        await HandleMediaDownload(botClient, message);
+        return;
+    }
 
 // 新增：检查消息是否来自群聊（群ID为负数），并自动更新或添加群聊信息以及更新群广告仓库
 if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
