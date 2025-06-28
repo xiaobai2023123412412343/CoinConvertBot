@@ -11449,6 +11449,21 @@ private static async Task<string> FetchAddressLabelAsync(string tronAddress)
     }
     return null; // 如果没有找到标签或请求失败，返回null
 }
+public static async Task<List<TokenBind>> GetBoundAddressesAsync(ITelegramBotClient botClient, long userId)
+{
+    try
+    {
+        using var scope = UpdateHandlers.serviceScopeFactory.CreateScope();
+        var _bindRepository = scope.ServiceProvider.GetRequiredService<IBaseRepository<TokenBind>>();
+        var bindList = _bindRepository.Where(x => x.UserId == userId).ToList();
+        return bindList;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"查询绑定地址失败：{ex.Message}");
+        return new List<TokenBind>(); // 异常时返回空列表
+    }
+}
 // 在类的顶部定义字典来存储地址和查询统计 使用 ConcurrentDictionary 来支持线程安全的访问
 // 类级别常量和字段（添加冷却相关字段）
 private static readonly ConcurrentDictionary<long, DateTime> _queryCooldowns = new ConcurrentDictionary<long, DateTime>();
@@ -11547,6 +11562,11 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
         await botClient.SendTextMessageAsync(message.Chat.Id, "此为机器人收款地址，转账USDT自动返回TRX！");
         return;
     }
+
+    // 检查用户绑定地址
+    bool isAddressBound = false;
+    var bindList = await GetBoundAddressesAsync(botClient, userId);
+    isAddressBound = bindList.Any(bind => bind.Address == tronAddress);
 
     // 获取USDT OTC价格
     decimal okxPrice = await GetOkxPriceAsync("usdt", "cny", "alipay");
@@ -11833,56 +11853,55 @@ resultText = headerText +
              (isPrivateChat ? groupExclusiveText : "") +
              uxiaofeikaText; 
 
-// 创建内联键盘
-InlineKeyboardMarkup inlineKeyboard;
-if (message.Chat.Type == ChatType.Private && message.From.Id != 1427768220)
-{
-    inlineKeyboard = new InlineKeyboardMarkup(new[]
+    // 创建内联键盘
+    InlineKeyboardMarkup inlineKeyboard;
+    if (message.Chat.Type == ChatType.Private && message.From.Id != 1427768220)
     {
-        new [] // 第一行按钮
+        inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-            InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithUrl("进群使用", shareLink) // 添加机器人到群组的链接		
-        },
-        new [] // 第二行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型	
-	    InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin") // 修改为打开链接的按钮   		
-        },
-        new [] // 第三行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("TRX消耗统计\U0001F4F6", $"trx_usage,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithCallbackData("USDT账单详情\U0001F50D", $"账单详情{tronAddress}"), // 添加新的按钮		    	
-        }	    
-    });
-}
-else
-{
-    inlineKeyboard = new InlineKeyboardMarkup(new[]
+            new[] // 第一行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"),
+                InlineKeyboardButton.WithUrl("进群使用", shareLink)
+            },
+            new[] // 第二行按钮
+            {
+                InlineKeyboardButton.WithCallbackData(isAddressBound ? "解绑此地址" : "监听此地址", isAddressBound ? $"解绑 {tronAddress}" : $"绑定 {tronAddress}"),
+                InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin")
+            },
+            new[] // 第三行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("TRX消耗统计\U0001F4F6", $"trx_usage,{tronAddress}"),
+                InlineKeyboardButton.WithCallbackData("USDT账单详情\U0001F50D", $"账单详情{tronAddress}")
+            }
+        });
+    }
+    else
     {
-        new [] // 第一行按钮
+        inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-            InlineKeyboardButton.WithUrl("详细信息", $"https://tronscan.org/#/address/{tronAddress}"), // 链接到Tron地址的详细信息
-            InlineKeyboardButton.WithUrl("链上天眼", $"https://www.oklink.com/cn/trx/address/{tronAddress}"), // 链接到欧意地址的详细信息
-        },
-        new [] // 第二行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithUrl("大家一起查", shareLink), // 添加机器人到群组的链接			
-        },
-        new [] // 第三行按钮
-        {
-	    InlineKeyboardButton.WithCallbackData("监听此地址", $"绑定 {tronAddress}"), // 修改为CallbackData类型	
-            InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin") // 修改为打开链接的按钮 		
-        },
-        new [] // 第四行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("TRX消耗统计\U0001F4F6", $"trx_usage,{tronAddress}"), // 添加新的按钮
-            InlineKeyboardButton.WithCallbackData("USDT账单详情\U0001F50D", $"账单详情{tronAddress}"), // 添加新的按钮		      
-        }	    
-        
-    });
-}
+            new[] // 第一行按钮
+            {
+                InlineKeyboardButton.WithUrl("详细信息", $"https://tronscan.org/#/address/{tronAddress}"),
+                InlineKeyboardButton.WithUrl("链上天眼", $"https://www.oklink.com/cn/trx/address/{tronAddress}")
+            },
+            new[] // 第二行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("再查一次", $"query_again,{tronAddress}"),
+                InlineKeyboardButton.WithUrl("大家一起查", shareLink)
+            },
+            new[] // 第三行按钮
+            {
+                InlineKeyboardButton.WithCallbackData(isAddressBound ? "解绑此地址" : "监听此地址", isAddressBound ? $"解绑 {tronAddress}" : $"绑定 {tronAddress}"),
+                InlineKeyboardButton.WithCallbackData("联系bot作者", "contactAdmin")
+            },
+            new[] // 第四行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("TRX消耗统计\U0001F4F6", $"trx_usage,{tronAddress}"),
+                InlineKeyboardButton.WithCallbackData("USDT账单详情\U0001F50D", $"账单详情{tronAddress}")
+            }
+        });
+    }
 
     // 发送GIF和带按钮的文本
     string gifUrl = "https://i.postimg.cc/Jzrm1m9c/277574078-352558983556639-7702866525169266409-n.png";
