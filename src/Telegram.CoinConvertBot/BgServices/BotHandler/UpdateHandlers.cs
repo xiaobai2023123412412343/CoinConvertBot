@@ -22078,13 +22078,7 @@ if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^\d+$"))
         }
         catch (ArgumentOutOfRangeException)
         {
-            // 如果指定日期无效（例如2月30日），发送错误消息
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: $"本月（{currentMonth}月）没有{day}号，请输入有效日期（1-31）。",
-                parseMode: ParseMode.Html,
-                replyToMessageId: message.MessageId
-            );
+            // 如果指定日期无效（例如6月31日），直接返回不发送任何消息
             return;
         }
 
@@ -22118,7 +22112,7 @@ if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^\d+$"))
             replyToMessageId: message.MessageId
         );
     }
-}   
+}
 // 添加这部分代码以处理 /crypto 和 /btc 指令 计算器
 if (messageText.StartsWith("加密货币", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
 {
