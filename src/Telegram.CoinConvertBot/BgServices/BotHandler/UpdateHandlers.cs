@@ -22779,7 +22779,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 
     var _bindRepository = provider.GetRequiredService<IBaseRepository<TokenBind>>();
     var from = message.From;
-    var UserId = message.Chat.Id;
+    var UserId = from.Id; // 修正为使用用户ID
     var bind = await _bindRepository.Where(x => x.UserId == UserId && x.Address == address).FirstAsync();
     if (bind != null)
     {
