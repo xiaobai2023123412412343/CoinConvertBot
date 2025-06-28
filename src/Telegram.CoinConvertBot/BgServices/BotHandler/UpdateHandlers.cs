@@ -22049,8 +22049,77 @@ else if (messageText.StartsWith("/cny") || messageText.StartsWith("\U0001F947合
     var cancellationTokenSource = new CancellationTokenSource();
     var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
     _ = SendAdvertisementOnce(botClient, cancellationTokenSource.Token, rateRepository, FeeRate, message.Chat.Id);
-}        
-// 添加这部分代码以处理 /crypto 和 /btc 指令
+}     
+// 处理管理员发送的纯数字（1-31，不带小数点） 计算日期
+if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^\d+$"))
+{
+    try
+    {
+        // 尝试将消息文本解析为整数
+        if (!int.TryParse(message.Text, out int day) || day < 1 || day > 31)
+        {
+            // 如果数字不在1-31范围内，或解析失败，直接返回不处理
+            return;
+        }
+
+        // 获取北京时区
+        TimeZoneInfo chinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+        DateTime beijingTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaTimeZone);
+
+        // 获取当前年份和月份
+        int currentYear = beijingTimeNow.Year;
+        int currentMonth = beijingTimeNow.Month;
+
+        // 构造本月指定日期（例如：2025/06/02）
+        DateTime startDate;
+        try
+        {
+            startDate = new DateTime(currentYear, currentMonth, day);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // 如果指定日期无效（例如2月30日），发送错误消息
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"本月（{currentMonth}月）没有{day}号，请输入有效日期（1-31）。",
+                parseMode: ParseMode.Html,
+                replyToMessageId: message.MessageId
+            );
+            return;
+        }
+
+        // 计算31天后的日期（包含起始日）
+        DateTime endDate = startDate.AddDays(30); // 加30天（31天包含当天）
+
+        // 格式化日期
+        string startDateStr = startDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+        string endDateStr = endDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+
+        // 构造回复消息
+        string replyText = $"本月{day}号往后推31天的日期是：\n\n" +
+                          $"<b>{endDateStr}</b>\n" +
+                          $"<b>{startDateStr} - {endDateStr}</b>";
+
+        // 发送回复
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: replyText,
+            parseMode: ParseMode.Html,
+            replyToMessageId: message.MessageId
+        );
+    }
+    catch (Exception ex)
+    {
+        // 处理异常，例如时区转换失败或未知错误
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"处理日期计算时发生错误：{ex.Message}",
+            parseMode: ParseMode.Html,
+            replyToMessageId: message.MessageId
+        );
+    }
+}   
+// 添加这部分代码以处理 /crypto 和 /btc 指令 计算器
 if (messageText.StartsWith("加密货币", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
 {
     await SendCryptoPricesAsync(botClient, message, 1, false);
