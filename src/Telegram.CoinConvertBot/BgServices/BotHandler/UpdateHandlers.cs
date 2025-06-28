@@ -20541,7 +20541,7 @@ if (messageText.Trim() == "智能合约地址" || messageText.Trim().Equals("智
     );
     return;
 }
-// 处理“数字+笔”格式的消息（例如：3笔），计算包月能量套餐价格
+// 处理“数字+笔”格式的消息（例如：10笔），计算包月能量套餐价格
 if (Regex.IsMatch(message.Text, @"^\d+笔$"))
 {
     try
@@ -20554,11 +20554,14 @@ if (Regex.IsMatch(message.Text, @"^\d+笔$"))
             return;
         }
 
-        // 获取全局变量 TransactionFee（租能量价格）
+        // 获取全局变量 TransactionFee（租能量价格）和 fixedCost（未租赁能量价格）
         decimal energyPrice = TransactionFee; // 7.00 TRX
+        decimal nonLeasedPrice = fixedCost; // 14.00 TRX
 
         // 计算包月能量套餐价格：笔数 × 价格 × 31天
-        decimal totalTrx = transactionCount * energyPrice * 31;
+        decimal totalTrxLeased = transactionCount * energyPrice * 31;
+        // 计算未租赁能量价格：笔数 × 未租赁单价 × 31天
+        decimal totalTrxNonLeased = transactionCount * nonLeasedPrice * 31;
 
         // 调用 ValuationAction 方法将 TRX 转换为 USDT，使用新的变量名避免冲突
         using var energyScope = serviceScopeFactory.CreateScope();
@@ -20566,20 +20569,48 @@ if (Regex.IsMatch(message.Text, @"^\d+笔$"))
         var _rateRepository = energyProvider.GetRequiredService<IBaseRepository<TokenRate>>();
         var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
 
-        // 转换为 USDT，不检查 MinUSDT 限制
-        decimal usdtPrice = totalTrx.TRX_To_USDT(rate, FeeRate, USDTFeeRate);
-
-        // 格式化 TRX 和 USDT 价格，如果小数点后为 0 则不显示小数点
-        string totalTrxStr = totalTrx == Math.Floor(totalTrx) ? totalTrx.ToString("0", CultureInfo.InvariantCulture) : totalTrx.ToString(CultureInfo.InvariantCulture);
-        string usdtPriceStr = usdtPrice == Math.Floor(usdtPrice) ? usdtPrice.ToString("0", CultureInfo.InvariantCulture) : usdtPrice.ToString(CultureInfo.InvariantCulture);
-
-        // 格式化 energyPrice，确保整数时不显示小数点
+        // 格式化价格，如果小数点后为 0 则不显示小数点
         string energyPriceStr = energyPrice == Math.Floor(energyPrice) ? energyPrice.ToString("0", CultureInfo.InvariantCulture) : energyPrice.ToString(CultureInfo.InvariantCulture);
+        string nonLeasedPriceStr = nonLeasedPrice == Math.Floor(nonLeasedPrice) ? nonLeasedPrice.ToString("0", CultureInfo.InvariantCulture) : nonLeasedPrice.ToString(CultureInfo.InvariantCulture);
 
         // 构造回复消息
-        string msg = $"套餐：<b>{transactionCount} 笔</b> | 单价：<b>{energyPriceStr} TRX</b>\n\n" +
-                     $"<b>{transactionCount} * {energyPriceStr} * 31 = {totalTrxStr} TRX</b>\n" +
-                     $"<b>{totalTrxStr} TRX = {usdtPriceStr} USDT</b>";
+        string msg;
+        if (message.From.Id == 1427768220L)
+        {
+            // 指定用户（ID: 1427768220）的回复：仅显示租赁能量价格
+            decimal usdtPriceLeased = totalTrxLeased.TRX_To_USDT(rate, FeeRate, USDTFeeRate);
+            string totalTrxLeasedStr = totalTrxLeased == Math.Floor(totalTrxLeased) ? totalTrxLeased.ToString("0", CultureInfo.InvariantCulture) : totalTrxLeased.ToString(CultureInfo.InvariantCulture);
+            string usdtPriceLeasedStr = usdtPriceLeased == Math.Floor(usdtPriceLeased) ? usdtPriceLeased.ToString("0", CultureInfo.InvariantCulture) : usdtPriceLeased.ToString(CultureInfo.InvariantCulture);
+
+            msg = $"套餐：<b>{transactionCount} 笔</b> | 单价：<b>{energyPriceStr} TRX</b>\n\n" +
+                  $"<b>{transactionCount} * {energyPriceStr} * 31 = {totalTrxLeasedStr} TRX</b>\n" +
+                  $"<b>{totalTrxLeasedStr} TRX = {usdtPriceLeasedStr} USDT</b>";
+        }
+        else
+        {
+            // 非指定用户的回复：显示未租赁和租赁能量价格对比
+            decimal usdtPriceNonLeased = totalTrxNonLeased.TRX_To_USDT(rate, FeeRate, USDTFeeRate);
+            decimal usdtPriceLeased = totalTrxLeased.TRX_To_USDT(rate, FeeRate, USDTFeeRate);
+            decimal savings = usdtPriceNonLeased - usdtPriceLeased;
+
+            string totalTrxNonLeasedStr = totalTrxNonLeased == Math.Floor(totalTrxNonLeased) ? totalTrxNonLeased.ToString("0", CultureInfo.InvariantCulture) : totalTrxNonLeased.ToString(CultureInfo.InvariantCulture);
+            string totalTrxLeasedStr = totalTrxLeased == Math.Floor(totalTrxLeased) ? totalTrxLeased.ToString("0", CultureInfo.InvariantCulture) : totalTrxLeased.ToString(CultureInfo.InvariantCulture);
+            string usdtPriceNonLeasedStr = usdtPriceNonLeased == Math.Floor(usdtPriceNonLeased) ? usdtPriceNonLeased.ToString("0", CultureInfo.InvariantCulture) : usdtPriceNonLeased.ToString(CultureInfo.InvariantCulture);
+            string usdtPriceLeasedStr = usdtPriceLeased == Math.Floor(usdtPriceLeased) ? usdtPriceLeased.ToString("0", CultureInfo.InvariantCulture) : usdtPriceLeased.ToString(CultureInfo.InvariantCulture);
+            string savingsStr = savings == Math.Floor(savings) ? savings.ToString("0", CultureInfo.InvariantCulture) : savings.ToString(CultureInfo.InvariantCulture);
+
+            msg = $"套餐：<b>{transactionCount} 笔</b> | 单价：<b>{energyPriceStr} TRX</b>\n\n" +
+                  $"未租赁能量：\n" +
+                  $"{transactionCount} * {nonLeasedPriceStr} * 31 = {totalTrxNonLeasedStr} TRX\n" +
+                  $"{totalTrxNonLeasedStr} TRX = {usdtPriceNonLeasedStr} USDT\n" +
+                  $"————————————\n" +
+                  $"租赁能量后：\n" +
+                  $"<b>{transactionCount} * {energyPriceStr} * 31 = {totalTrxLeasedStr} TRX</b>\n" +
+                  $"<b>{totalTrxLeasedStr} TRX = {usdtPriceLeasedStr} USDT</b>\n\n" +
+                  $"省钱小妙招：：\n" +
+                  $"每日转账{transactionCount}笔，提前租赁能量的话：\n" +
+                  $"<b>一个月下来可以节省：{savingsStr} USDT</b>";
+        }
 
         // 发送回复，不附带虚拟键盘
         await botClient.SendTextMessageAsync(
