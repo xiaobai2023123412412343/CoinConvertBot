@@ -133,7 +133,7 @@ public static class UpdateHandlers
 // 定义一个静态字典，用于存储用户每日下载次数，键为用户ID+日期（格式：userId:yyyyMMdd），值为下载次数
 private static readonly Dictionary<string, int> UserDownloadCounts = new Dictionary<string, int>();
 // 定义每日下载次数上限（非会员）
-private const int DAILY_DOWNLOAD_LIMIT = 3;
+private const int DAILY_DOWNLOAD_LIMIT = 20;
 
 private static async Task HandleMediaDownload(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken = default)
 {
@@ -180,7 +180,7 @@ private static async Task HandleMediaDownload(ITelegramBotClient botClient, Mess
 
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: "免费下载3次已用完，请次日再重试！\nFF Pro会员可无限次下载，诚邀开通！",
+                text: $"免费下载{DAILY_DOWNLOAD_LIMIT}次已用完，请次日再重试！\nFF Pro会员可无限次下载，诚邀开通！",
                 replyToMessageId: message.MessageId,
                 parseMode: ParseMode.Html,
                 replyMarkup: inlineKeyboard,
