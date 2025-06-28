@@ -211,12 +211,12 @@ private static async Task HandleMediaDownload(ITelegramBotClient botClient, Mess
         // 发送提示消息，包含下载次数（非VIP用户）
         string promptMessage = mediaType switch
         {
-            "GIF/Animation" => isVip ? "正在为您下载GIF动图..." : $"正在为您下载GIF动图...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}",
-            "Photo" => isVip ? "正在为您下载图片..." : $"正在为您下载图片...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}",
-            "Video" => isVip ? "正在为您下载视频..." : $"正在为您下载视频...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}",
-            "Animated Sticker (TGS)" => isVip ? "正在为您下载动态贴纸..." : $"正在为您下载动态贴纸...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}",
-            "Video Sticker (WebM)" => isVip ? "正在为您下载视频贴纸..." : $"正在为您下载视频贴纸...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}",
-            _ => isVip ? "正在为您下载静态贴纸..." : $"正在为您下载静态贴纸...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}"
+            "GIF/Animation" => isVip ? "正在为您下载GIF动图..." : $"正在为您下载GIF动图...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}\U00002705",
+            "Photo" => isVip ? "正在为您下载图片..." : $"正在为您下载图片...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}\U00002705",
+            "Video" => isVip ? "正在为您下载视频..." : $"正在为您下载视频...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}\U00002705",
+            "Animated Sticker (TGS)" => isVip ? "正在为您下载动态贴纸..." : $"正在为您下载动态贴纸...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}\U00002705",
+            "Video Sticker (WebM)" => isVip ? "正在为您下载视频贴纸..." : $"正在为您下载视频贴纸...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}\U00002705",
+            _ => isVip ? "正在为您下载静态贴纸..." : $"正在为您下载静态贴纸...{downloadCount + 1}/{DAILY_DOWNLOAD_LIMIT}\U00002705"
         };
 
         var sentMessage = await botClient.SendTextMessageAsync(
