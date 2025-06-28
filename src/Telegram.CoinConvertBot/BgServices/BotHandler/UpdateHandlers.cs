@@ -20577,9 +20577,10 @@ if (Regex.IsMatch(message.Text, @"^\d+笔$"))
         string energyPriceStr = energyPrice == Math.Floor(energyPrice) ? energyPrice.ToString("0", CultureInfo.InvariantCulture) : energyPrice.ToString(CultureInfo.InvariantCulture);
 
         // 构造回复消息
-        string msg = $"包月能量套餐价格：\n" +
-                     $"日转账：{transactionCount}笔\n\n" +
-                     $"<b>{transactionCount}×{energyPriceStr}×31={totalTrxStr} TRX</b>\n" +
+        string msg = $"波场（TRC-20）转账包月能量套餐：\n" +
+                     $"日转账套餐：<b>{transactionCount} 笔</b> | 单价：<b>{energyPriceStr} TRX</b>\n" +
+                     $"———————————————\n" +
+                     $"  <b>{transactionCount} * {energyPriceStr} * 31 = {totalTrxStr} TRX</b>\n" +
                      $"<b>{totalTrxStr} TRX = {usdtPriceStr} USDT</b>";
 
         // 发送回复，不附带虚拟键盘
