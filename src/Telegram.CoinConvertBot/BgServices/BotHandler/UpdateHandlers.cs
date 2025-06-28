@@ -20097,7 +20097,8 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
                     "9：蛇年特辑：https://t.me/addemoji/Yifanfushenian\n" +
                     "10：币圈专用：https://t.me/addemoji/Yifanfubtc\n" +
                     "11：车队专用：https://t.me/addemoji/Yifanfuyhk\n" +
-                    "12：qq经典表情：https://t.me/addemoji/Yifanfuqq")
+                    "12：qq经典表情：https://t.me/addemoji/Yifanfuqq\n" +
+                    "13：热门贴纸合集：https://t.me/addstickers/yifanfu2025")
             }
         }
         : new[] // 普通用户：两排按钮
@@ -20147,7 +20148,8 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
 9：蛇年特辑：<a href='https://t.me/addemoji/Yifanfushenian'>https://t.me/addemoji/Yifanfushenian</a>
 10：币圈专用：<a href='https://t.me/addemoji/Yifanfubtc'>https://t.me/addemoji/Yifanfubtc</a>
 11：车队专用：<a href='https://t.me/addemoji/Yifanfuyhk'>https://t.me/addemoji/Yifanfuyhk</a>
-12：qq经典表情：<a href='https://t.me/addemoji/Yifanfuqq'>https://t.me/addemoji/Yifanfuqq</a></blockquote>";
+12：qq经典表情：<a href='https://t.me/addemoji/Yifanfuqq'>https://t.me/addemoji/Yifanfuqq</a>
+13：热门贴纸合集：https://t.me/addstickers/yifanfu2025</blockquote>";
 
 
     // 尝试发送图片和文字
