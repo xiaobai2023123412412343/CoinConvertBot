@@ -20541,6 +20541,66 @@ if (messageText.Trim() == "智能合约地址" || messageText.Trim().Equals("智
     );
     return;
 }
+// 处理“数字+笔”格式的消息（例如：3笔），计算包月能量套餐价格
+if (Regex.IsMatch(message.Text, @"^\d+笔$"))
+{
+    try
+    {
+        // 提取数字部分并解析为整数
+        string inputText = message.Text.Replace("笔", "").Trim();
+        if (!int.TryParse(inputText, out int transactionCount) || transactionCount < 1)
+        {
+            // 如果数字小于1或解析失败，直接返回不处理
+            return;
+        }
+
+        // 获取全局变量 TransactionFee（租能量价格）
+        decimal energyPrice = TransactionFee; // 7.00 TRX
+
+        // 计算包月能量套餐价格：笔数 × 价格 × 31天
+        decimal totalTrx = transactionCount * energyPrice * 31;
+
+        // 调用 ValuationAction 方法将 TRX 转换为 USDT，使用新的变量名避免冲突
+        using var energyScope = serviceScopeFactory.CreateScope();
+        var energyProvider = energyScope.ServiceProvider;
+        var _rateRepository = energyProvider.GetRequiredService<IBaseRepository<TokenRate>>();
+        var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+
+        // 转换为 USDT，不检查 MinUSDT 限制
+        decimal usdtPrice = totalTrx.TRX_To_USDT(rate, FeeRate, USDTFeeRate);
+
+        // 格式化 TRX 和 USDT 价格，如果小数点后为 0 则不显示小数点
+        string totalTrxStr = totalTrx == Math.Floor(totalTrx) ? totalTrx.ToString("0", CultureInfo.InvariantCulture) : totalTrx.ToString(CultureInfo.InvariantCulture);
+        string usdtPriceStr = usdtPrice == Math.Floor(usdtPrice) ? usdtPrice.ToString("0", CultureInfo.InvariantCulture) : usdtPrice.ToString(CultureInfo.InvariantCulture);
+
+        // 格式化 energyPrice，确保整数时不显示小数点
+        string energyPriceStr = energyPrice == Math.Floor(energyPrice) ? energyPrice.ToString("0", CultureInfo.InvariantCulture) : energyPrice.ToString(CultureInfo.InvariantCulture);
+
+        // 构造回复消息
+        string msg = $"包月能量套餐价格：\n" +
+                     $"日转账：{transactionCount}笔\n\n" +
+                     $"<b>{transactionCount}×{energyPriceStr}×31={totalTrxStr} TRX</b>\n" +
+                     $"<b>{totalTrxStr} TRX = {usdtPriceStr} USDT</b>";
+
+        // 发送回复，不附带虚拟键盘
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: msg,
+            parseMode: ParseMode.Html,
+            replyToMessageId: message.MessageId
+        );
+    }
+    catch (Exception ex)
+    {
+        // 处理异常，例如数据库查询失败或转换错误
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"计算包月能量套餐价格时发生错误：{ex.Message}",
+            parseMode: ParseMode.Html,
+            replyToMessageId: message.MessageId
+        );
+    }
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
