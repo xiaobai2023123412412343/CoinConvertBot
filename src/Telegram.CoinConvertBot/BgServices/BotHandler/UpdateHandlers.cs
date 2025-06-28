@@ -180,7 +180,7 @@ private static async Task HandleMediaDownload(ITelegramBotClient botClient, Mess
 
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: $"免费下载{DAILY_DOWNLOAD_LIMIT}次已用完，请次日再重试！\nFF Pro会员可无限次下载，诚邀开通！",
+                text: $"普通用户每日免费下载{DAILY_DOWNLOAD_LIMIT}次，您已达上限！\nFF Pro 会员可无限次下载，欢迎订阅服务！",
                 replyToMessageId: message.MessageId,
                 parseMode: ParseMode.Html,
                 replyMarkup: inlineKeyboard,
