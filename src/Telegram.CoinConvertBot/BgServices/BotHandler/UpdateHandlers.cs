@@ -15431,7 +15431,8 @@ else if(update.CallbackQuery.Data == "energyComparison")
 燃烧TRX：100*{(int)fixedCost}= {(int)(100 * fixedCost)} TRX消耗；
 租赁能量：100*{(int)TransactionFee}= {(int)(100 * TransactionFee)} TRX消耗，立省 {(int)(100 * (fixedCost - TransactionFee))} TRX！
 </code>
-<b>通过对比可以看出，每日转账次数越多，提前租赁能量就更划算！</b>
+<b>通过对比发现，每日转账笔数越多，提前租赁能量就更划算！</b>
+<b>如需自定义查询，对话框直接发送数字+笔，例如发送：10笔</b>
 	    ";
 
     var comparisonKeyboard = new InlineKeyboardMarkup(new[]
