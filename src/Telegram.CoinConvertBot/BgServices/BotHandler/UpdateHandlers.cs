@@ -15818,12 +15818,14 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         return;
     }
 
-    // 处理媒体消息（贴图、GIF、图片、视频）
-    if (message.Sticker != null || message.Animation != null || message.Photo != null || message.Video != null)
-    {
-        await HandleMediaDownload(botClient, message);
-        return;
-    }
+// 处理媒体消息（贴图、GIF、图片、视频）
+if (message.Sticker != null || message.Animation != null || message.Video != null || 
+    (message.Photo != null && !(message.From.Id == 1427768220L && message.Caption != null && message.Caption.StartsWith("群发 "))))
+{
+    Log.Information($"Processing media download: Type={message.Type}, From={message.From.Id}, Caption={message.Caption}");
+    await HandleMediaDownload(botClient, message);
+    return;
+}
 
 // 新增：检查消息是否来自群聊（群ID为负数），并自动更新或添加群聊信息以及更新群广告仓库
 if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
