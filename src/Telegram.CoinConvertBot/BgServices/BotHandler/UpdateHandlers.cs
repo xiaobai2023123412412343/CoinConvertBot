@@ -57,6 +57,7 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 15： 替换机器人链接： t.me/yifanfubot 或 @yifanfubot
 16： 会员价格如有需要也可以修改
 17：// 定义API密钥   private static readonly string[] ApiKeys = new[]   监听USDT 秘钥需修改，随便注册  https://www.trongrid.io/dashboard
+18：修改配置文件里的appsettings.json  波场 www.trongrid.io 秘钥尽量不要和监听USDT的秘钥相同
 */
 
 //yifanfu或@yifanfu或t.me/yifanfu为管理员ID
@@ -15526,6 +15527,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 15： 替换机器人链接： t.me/yifanfubot 或 @yifanfubot
 16： 会员价格如有需要也可以修改
 17：// 定义API密钥   private static readonly string[] ApiKeys = new[]   监听USDT 秘钥需修改，随便注册  https://www.trongrid.io/dashboard
+18：修改配置文件里的appsettings.json  波场 www.trongrid.io 秘钥尽量不要和监听USDT的秘钥相同
 
 启动机器人先：
 储存之前的用户资料 代绑地址 可以代解 储存群聊资料
