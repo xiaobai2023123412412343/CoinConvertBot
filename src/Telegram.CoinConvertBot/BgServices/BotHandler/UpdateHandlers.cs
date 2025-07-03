@@ -20603,6 +20603,29 @@ if (Regex.IsMatch(message.Text, @"^\d+笔$"))
             msg = $"套餐：<b>{transactionCount} 笔</b> | 单价：<b>{energyPriceStr} TRX</b>\n\n" +
                   $"<b>{transactionCount} * {energyPriceStr} * 31 = {totalTrxLeasedStr} TRX</b>\n" +
                   $"<b>{totalTrxLeasedStr} TRX = {usdtPriceLeasedStr} USDT</b>";
+
+            // 发送第一段消息：租赁能量价格
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: msg,
+                parseMode: ParseMode.Html,
+                replyToMessageId: message.MessageId
+            );
+
+            // 新增第二段消息：每日套餐笔数及能量计算
+            int energyPerTransaction = 64285; // 假设每笔交易的能量为 64285
+            int totalEnergy = energyPerTransaction * transactionCount;
+            string totalEnergyWan = (totalEnergy / 10000.0).ToString(CultureInfo.InvariantCulture); // 转换为万单位
+            string additionalMsg = $"每日套餐笔数：<b>{transactionCount} 笔</b> | 总能量为：\n\n" +
+                                  $"<b>{energyPerTransaction} * {transactionCount} = {totalEnergy}（{totalEnergyWan}万）</b>";
+
+            // 发送第二段消息
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: additionalMsg,
+                parseMode: ParseMode.Html,
+                replyToMessageId: message.MessageId
+            );
         }
         else
         {
@@ -20628,15 +20651,21 @@ if (Regex.IsMatch(message.Text, @"^\d+笔$"))
                   $"省钱小妙招：：\n" +
                   $"每日转账{transactionCount}笔，提前租赁能量的话：\n" +
                   $"<b>一个月下来可以节省：{savingsStr} USDT</b>";
-        }
 
-        // 发送回复，不附带虚拟键盘
-        await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: msg,
-            parseMode: ParseMode.Html,
-            replyToMessageId: message.MessageId
-        );
+            // 新增内联按钮
+            var inlineKeyboard = new InlineKeyboardMarkup(
+                InlineKeyboardButton.WithCallbackData("立即租赁能量", "contactAdmin")
+            );
+
+            // 发送带内联按钮的回复
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: msg,
+                parseMode: ParseMode.Html,
+                replyToMessageId: message.MessageId,
+                replyMarkup: inlineKeyboard
+            );
+        }
     }
     catch (Exception ex)
     {
