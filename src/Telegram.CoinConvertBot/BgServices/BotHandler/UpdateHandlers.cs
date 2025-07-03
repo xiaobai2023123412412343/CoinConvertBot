@@ -22937,8 +22937,8 @@ var existingBindsCount = bindRepository.Where(x => x.UserId == userId).Count();
 // 检查用户是否是VIP用户
 bool isVip = VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime) && expiryTime > DateTime.UtcNow;
 
-// 如果用户已绑定地址达到2个且不是VIP用户
-if (existingBindsCount >= 2 && !isVip)
+// 如果用户已绑定地址达到1个且不是VIP用户
+if (existingBindsCount >= 1 && !isVip)
 {
     // 创建内联键盘按钮
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
@@ -22948,7 +22948,7 @@ if (existingBindsCount >= 2 && !isVip)
 
     return await botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: "绑定失败，请先解绑，单用户最多绑定2个地址！\n订阅 FF Pro会员，缓解服务器压力即可不限制绑定！",
+        text: "绑定失败，请先解绑，普通用户最多绑定1个地址！\n订阅 FF Pro会员，缓解服务器压力即可不限制绑定！",
         parseMode: ParseMode.Html,
         replyMarkup: inlineKeyboard
     );
