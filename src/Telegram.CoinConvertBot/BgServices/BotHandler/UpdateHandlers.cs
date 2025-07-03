@@ -12018,6 +12018,19 @@ if (transactions > 0) {
 // 确定是否为私聊
 bool isPrivateChat = message.Chat.Type == ChatType.Private;
 
+    // 获取备注信息
+    string note = userAddressNotes.GetValueOrDefault((userId, tronAddress), "");
+    string noteText = "";
+    if (!string.IsNullOrEmpty(note))
+    {
+        // 限制备注长度，最多5个字符，超长部分用 ... 代替
+        noteText = note.Length > 5 ? $"{note.Substring(0, 5)}..." : note;
+        noteText = $" {noteText}"; // 在备注前加一个空格，确保格式美观
+    }
+
+    // 构建用户标签行，插入备注
+    string userLabelText = $"用户标签：<b>{userLabel} {noteText}</b> {userLabelSuffix}";
+
 // 使用已有的 userLink（避免重复定义）
 string headerText = isPrivateChat
     ? $"查询地址：<code>{tronAddress}</code>\n"
@@ -12035,7 +12048,7 @@ resultText = headerText +
              $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
              $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +
              $"————————<b>资源</b>————————\n" +
-             $"用户标签：<b>{userLabel} {userLabelSuffix}</b>\n" +
+             userLabelText + "\n" + 
              addressLabelSection +
              transactionsText +
              $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
