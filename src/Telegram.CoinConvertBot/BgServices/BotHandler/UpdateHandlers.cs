@@ -14760,9 +14760,9 @@ if (update.Type == UpdateType.Message)
         // 如果消息文本符合数字货币+时间的格式，并且中间允许有多个空格，则不执行翻译
         return;
     }	
-    else if (Regex.IsMatch(message?.Text ?? "", @"^\d{4}[/-]\d{2}[/-]\d{2}$") || Regex.IsMatch(message?.Text ?? "", @"^\d{4}[/-]\d{2}[/-]\d{2}\s+\d{2}:\d{2}(:\d{2})?$") || (Regex.IsMatch(message?.Text ?? "", @"^\d+$") && int.TryParse(message.Text, out int day) && day >= 1 && day <= 31))
+    else if (Regex.IsMatch(message?.Text ?? "", @"^((\d{4}[-/\s])?\d{1,2}[-/\s]\d{1,2})(\s+\d{1,2}:\d{2}(:\d{2})?)?$") || (Regex.IsMatch(message?.Text ?? "", @"^\d+$") && int.TryParse(message.Text, out int day) && day >= 1 && day <= 31))
     {
-        // 如果消息文本符合日期（YYYY/MM/DD 或 YYYY-MM-DD）、日期时间（YYYY/MM/DD HH:MM[:SS] 或 YYYY-MM-DD HH:MM[:SS]）或纯数字日期（1-31），则不执行翻译
+        // 如果消息文本符合日期（YYYY/MM/DD、YYYY-MM-DD、MM/DD、MM-DD）、日期时间（YYYY/MM/DD HH:MM[:SS]、YYYY-MM-DD HH:MM[:SS]、MM/DD HH:MM[:SS]、MM-DD HH:MM[:SS]）或纯数字日期（1-31），则不执行翻译
         return;
     }
     else
