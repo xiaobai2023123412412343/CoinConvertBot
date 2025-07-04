@@ -20377,9 +20377,9 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
     // 尝试发送图片和文字
     try
     {
-        await botClient.SendPhotoAsync(
+        await botClient.SendAnimationAsync(
             chatId: message.Chat.Id,
-            photo: new InputOnlineFile("https://i.postimg.cc/RZfwz8PW/features-and-benefits-of-Telegram-Premium.webp"),
+            animation: new InputOnlineFile("https://i.postimg.cc/s2Tq0Zv6/4.gif"),
             caption: captionText,
             parseMode: ParseMode.Html, // 使用 HTML 支持 <tg-spoiler> 和 <blockquote expandable>
             replyMarkup: inlineKeyboard
