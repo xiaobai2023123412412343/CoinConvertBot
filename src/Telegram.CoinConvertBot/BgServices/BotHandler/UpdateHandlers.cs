@@ -15522,6 +15522,11 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 您当前监控整段发送触发批量删除监控k线
 <code>单笔价格</code> <code>设置单笔价格</code> （查询与设置）
 
+发1-31计算本月指定日期31天后的日期
+发数字+笔数自动计算能量价格
+发时间格式 自动返回30天的日期
+
+
 备忘录：
 1：管理员ID: 1427768220
 2：播报群ID： -1001862069013
