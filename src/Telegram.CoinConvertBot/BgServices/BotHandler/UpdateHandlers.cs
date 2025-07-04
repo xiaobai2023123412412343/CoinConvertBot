@@ -20678,6 +20678,69 @@ if (Regex.IsMatch(message.Text, @"^\d+笔$"))
         );
     }
 }
+// 处理管理员发送的日期时间消息，格式如：2025/07/04 13:12:51 或 2025-07-04 13:12:51
+if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^\d{4}[-/\s]\d{1,2}[-/\s]\d{1,2}\s+\d{1,2}:\d{2}:\d{2}$"))
+{
+    try
+    {
+        // 获取北京时区
+        TimeZoneInfo chinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+        DateTime beijingTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaTimeZone);
+
+        // 尝试解析输入的日期时间（支持 2025/07/04 13:12:51、2025-07-04 13:12:51 等格式）
+        string inputDateStr = message.Text.Trim();
+        DateTime inputDateTime;
+        bool isParsed = DateTime.TryParse(inputDateStr.Replace("/", "-"), CultureInfo.InvariantCulture, DateTimeStyles.None, out inputDateTime);
+
+        if (!isParsed)
+        {
+            // 如果日期时间解析失败，直接返回不发送消息
+            return;
+        }
+
+        // 验证日期是否合理（例如防止无效日期）
+        if (inputDateTime.Year < 1970 || inputDateTime > beijingTimeNow.AddYears(10))
+        {
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "输入的日期时间无效或超出合理范围。",
+                parseMode: ParseMode.Html,
+                replyToMessageId: message.MessageId
+            );
+            return;
+        }
+
+        // 计算30天后的日期时间
+        DateTime endDateTime = inputDateTime.AddDays(30);
+
+        // 格式化日期时间（统一使用 2025-07-04 13:12:51 格式）
+        string startDateStr = inputDateTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+        string endDateStr = endDateTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+
+        // 构造回复消息
+        string replyText = "30天能量周期：\n\n" +
+                          $"{startDateStr}\n" +
+                          $"<b>{endDateStr}</b>";
+
+        // 发送回复
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: replyText,
+            parseMode: ParseMode.Html,
+            replyToMessageId: message.MessageId
+        );
+    }
+    catch (Exception ex)
+    {
+        // 处理异常，例如时区转换失败或未知错误
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"处理日期时间计算时发生错误：{ex.Message}",
+            parseMode: ParseMode.Html,
+            replyToMessageId: message.MessageId
+        );
+    }
+}	    
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
