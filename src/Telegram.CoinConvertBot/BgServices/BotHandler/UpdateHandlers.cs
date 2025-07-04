@@ -20688,8 +20688,8 @@ if (Regex.IsMatch(message.Text, @"^\d+笔$"))
         );
     }
 }
-// 处理管理员发送的日期时间消息，格式如：2025/07/04 13:12:51 或 2025-07-04 13:12:51
-if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^\d{4}[-/\s]\d{1,2}[-/\s]\d{1,2}\s+\d{1,2}:\d{2}:\d{2}$"))
+// 处理管理员发送的日期时间消息，格式如：2025/07/04 17:16:03、2025-07-04 17:16:03、07-04 17:16:03 或 07/04 17:16:03
+if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^((\d{4}[-/\s])?\d{1,2}[-/\s]\d{1,2}\s+\d{1,2}:\d{2}:\d{2})$"))
 {
     try
     {
@@ -20697,10 +20697,23 @@ if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^\d{4}[-/\s]
         TimeZoneInfo chinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
         DateTime beijingTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaTimeZone);
 
-        // 尝试解析输入的日期时间（支持 2025/07/04 13:12:51、2025-07-04 13:12:51 等格式）
-        string inputDateStr = message.Text.Trim();
+        // 清理输入，统一将 / 替换为 -，去除多余空格
+        string inputDateStr = Regex.Replace(message.Text.Trim(), @"[/-]", "-").Replace("  ", " ");
+
+        // 尝试解析输入日期时间
         DateTime inputDateTime;
-        bool isParsed = DateTime.TryParse(inputDateStr.Replace("/", "-"), CultureInfo.InvariantCulture, DateTimeStyles.None, out inputDateTime);
+        bool isParsed;
+        if (Regex.IsMatch(inputDateStr, @"^\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2}:\d{2}$"))
+        {
+            // 带年份的格式
+            isParsed = DateTime.TryParseExact(inputDateStr, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out inputDateTime);
+        }
+        else
+        {
+            // 不带年份的格式，添加当前年份
+            inputDateStr = $"{beijingTimeNow.Year}-{inputDateStr}";
+            isParsed = DateTime.TryParseExact(inputDateStr, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out inputDateTime);
+        }
 
         if (!isParsed)
         {
@@ -20708,7 +20721,7 @@ if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^\d{4}[-/\s]
             return;
         }
 
-        // 验证日期是否合理（例如防止无效日期）
+        // 验证日期是否合理（防止无效日期或超出范围）
         if (inputDateTime.Year < 1970 || inputDateTime > beijingTimeNow.AddYears(10))
         {
             await botClient.SendTextMessageAsync(
@@ -20723,14 +20736,15 @@ if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^\d{4}[-/\s]
         // 计算30天后的日期时间
         DateTime endDateTime = inputDateTime.AddDays(30);
 
-        // 格式化日期时间（统一使用 2025-07-04 13:12:51 格式）
+        // 格式化日期时间
         string startDateStr = inputDateTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-        string endDateStr = endDateTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+        string endYear = endDateTime.ToString("yyyy", CultureInfo.InvariantCulture);
+        string endDateRest = endDateTime.ToString("MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
 
         // 构造回复消息
         string replyText = "30天能量周期：\n\n" +
-                          $"{startDateStr}\n" +
-                          $"<b>{endDateStr}</b>";
+                          $"<b>{startDateStr}</b>\n" +
+                          $"<b>{endYear}</b>-<code>{endDateRest}</code>";
 
         // 发送回复
         await botClient.SendTextMessageAsync(
@@ -20750,7 +20764,7 @@ if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^\d{4}[-/\s]
             replyToMessageId: message.MessageId
         );
     }
-}	    
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
