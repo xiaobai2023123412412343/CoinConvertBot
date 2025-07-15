@@ -5574,6 +5574,8 @@ private static Dictionary<(long UserId, string TronAddress), int> userNotificati
 private static Dictionary<(long UserId, string TronAddress), string> userAddressNotes = new Dictionary<(long, string), string>();
 // 存储已处理的交易 ID 用于去重
 private static readonly HashSet<string> processedTransactionIds = new HashSet<string>();
+// [新增] 存储交易哈希及时间的字典，用于去重和自动清理
+private static readonly Dictionary<string, DateTime> transactionHashStore = new Dictionary<string, DateTime>();
 // 定义API密钥
 private static readonly string[] ApiKeys = new[]
 {
@@ -5873,7 +5875,6 @@ private static async Task StartUSDTMonitoring(ITelegramBotClient botClient, long
     }
 }
 // 主方法 播报交易
-
 private static async Task CheckForNewTransactions(ITelegramBotClient botClient, long userId, string tronAddress)
 {
     try
@@ -5886,17 +5887,17 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
         {
             if (!userTronTransactions.ContainsKey(key))
             {
-               // Console.WriteLine($"用户 {userId} 地址 {tronAddress} 已解绑，跳过交易检查和通知。");
+                // Console.WriteLine($"用户 {userId} 地址 {tronAddress} 已解绑，跳过交易检查和通知。");
                 return;
             }
             (address, lastTimestamp) = userTronTransactions[key];
         }
 
         var lastTransactionTime = lastTimestamp > 0 ? DateTimeOffset.FromUnixTimeMilliseconds(lastTimestamp).ToString("yyyy-MM-dd HH:mm:ss") : "无";
-       // Console.WriteLine($"检查新交易：用户 {userId}, 地址 {address}, 上次交易时间 {lastTransactionTime}");
+        // Console.WriteLine($"检查新交易：用户 {userId}, 地址 {address}, 上次交易时间 {lastTransactionTime}");
 
         var newTransactions = (await GetNewTronTransactionsAsync(address, lastTimestamp)).ToList();
-       // Console.WriteLine($"找到 {newTransactions.Count} 个新交易");
+        // Console.WriteLine($"找到 {newTransactions.Count} 个新交易");
 
         long maxTimestamp = lastTimestamp;
 
@@ -5907,7 +5908,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
             {
                 if (processedTransactionIds.Contains(transaction.TransactionId))
                 {
-                   // Console.WriteLine($"交易 {transaction.TransactionId} 已处理，跳过。");
+                    // Console.WriteLine($"交易 {transaction.TransactionId} 已处理，跳过。");
                     continue;
                 }
             }
@@ -5925,7 +5926,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                 {
                     if (!userTronTransactions.ContainsKey(key))
                     {
-                      //  Console.WriteLine($"用户 {userId} 地址 {tronAddress} 在处理交易时已解绑，丢弃交易 {transaction.TransactionId} 的通知。");
+                        // Console.WriteLine($"用户 {userId} 地址 {tronAddress} 在处理交易时已解绑，丢弃交易 {transaction.TransactionId} 的通知。");
                         return;
                     }
                 }
@@ -5989,71 +5990,109 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                     }
                 });
 
+                // [新增] 发送交易前检查交易哈希
+                bool shouldBroadcast = true;
                 try
                 {
                     lock (_lock)
                     {
-                        if (!userTronTransactions.ContainsKey(key))
+                        if (transactionHashStore.ContainsKey(transaction.TransactionId))
                         {
-                           // Console.WriteLine($"用户 {userId} 地址 {tronAddress} 在发送通知前已解绑，丢弃交易 {transaction.TransactionId} 的通知。");
-                            return;
+                            shouldBroadcast = false; // 交易哈希已存在，跳过播报
                         }
-                    }
-
-                    await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
-
-                    lock (_lock)
-                    {
-                        if (userTronTransactions.ContainsKey(key))
+                        else
                         {
-                            userNotificationFailures[key] = 0;
-                            processedTransactionIds.Add(transaction.TransactionId); // 通知成功后记录
-                        }
-                    }
-                }
-                catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
-                {
-                   // Console.WriteLine($"发送通知失败：{ex.Message}. 用户 {userId} 已阻止机器人，即将停止监控并移除相关数据。");
-                    lock (_lock)
-                    {
-                        StopUSDTMonitoring(userId, tronAddress);
-                        userNotificationFailures.Remove(key);
-                    }
-                }
-                catch (ApiRequestException ex) when (ex.Message.Contains("Too Many Requests: retry after"))
-                {
-                    var match = Regex.Match(ex.Message, @"Too Many Requests: retry after (\d+)");
-                    if (match.Success)
-                    {
-                        var retryAfterSeconds = int.Parse(match.Groups[1].Value);
-                        await Task.Delay(retryAfterSeconds * 1000);
-                        bool shouldSend;
-                        lock (_lock)
-                        {
-                            shouldSend = userTronTransactions.ContainsKey(key);
-                            if (!shouldSend)
+                            // [新增] 交易哈希不存在，存储交易哈希
+                            transactionHashStore[transaction.TransactionId] = DateTime.UtcNow;
+                            // [新增] 自动清理24小时前的交易哈希
+                            var expired = transactionHashStore.Where(kvp => (DateTime.UtcNow - kvp.Value).TotalHours >= 24).ToList();
+                            foreach (var item in expired)
                             {
-                              //  Console.WriteLine($"用户 {userId} 地址 {tronAddress} 在重试通知前已解绑，丢弃交易 {transaction.TransactionId} 的通知。");
-                                return;
-                            }
-                        }
-                        if (shouldSend)
-                        {
-                            await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
-                            lock (_lock)
-                            {
-                                if (userTronTransactions.ContainsKey(key))
+                                if (!transactionHashStore.Remove(item.Key))
                                 {
-                                    userNotificationFailures[key] = 0;
-                                    processedTransactionIds.Add(transaction.TransactionId);
+                                    // [新增] 清理失败，暂停本次操作
+                                    shouldBroadcast = false;
+                                    break;
                                 }
                             }
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                  //  Console.WriteLine($"发送通知失败：{ex.Message}. 将在下次检查时重试。");
+                    // [新增] 检查交易哈希失败，直接触发播报
+                    shouldBroadcast = true;
+                }
+
+                if (shouldBroadcast)
+                {
+                    try
+                    {
+                        // [修改] 仅在 shouldBroadcast 为 true 时发送通知
+                        lock (_lock)
+                        {
+                            if (!userTronTransactions.ContainsKey(key))
+                            {
+                                // Console.WriteLine($"用户 {userId} 地址 {tronAddress} 在发送通知前已解绑，丢弃交易 {transaction.TransactionId} 的通知。");
+                                return;
+                            }
+                        }
+
+                        await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
+
+                        lock (_lock)
+                        {
+                            if (userTronTransactions.ContainsKey(key))
+                            {
+                                userNotificationFailures[key] = 0;
+                                processedTransactionIds.Add(transaction.TransactionId); // 通知成功后记录
+                            }
+                        }
+                    }
+                    catch (ApiRequestException ex) when (ex.Message.Contains("bot was blocked by the user"))
+                    {
+                        // Console.WriteLine($"发送通知失败：{ex.Message}. 用户 {userId} 已阻止机器人，即将停止监控并移除相关数据。");
+                        lock (_lock)
+                        {
+                            StopUSDTMonitoring(userId, tronAddress);
+                            userNotificationFailures.Remove(key);
+                        }
+                    }
+                    catch (ApiRequestException ex) when (ex.Message.Contains("Too Many Requests: retry after"))
+                    {
+                        var match = Regex.Match(ex.Message, @"Too Many Requests: retry after (\d+)");
+                        if (match.Success)
+                        {
+                            var retryAfterSeconds = int.Parse(match.Groups[1].Value);
+                            await Task.Delay(retryAfterSeconds * 1000);
+                            bool shouldSend;
+                            lock (_lock)
+                            {
+                                shouldSend = userTronTransactions.ContainsKey(key);
+                                if (!shouldSend)
+                                {
+                                    // Console.WriteLine($"用户 {userId} 地址 {tronAddress} 在重试通知前已解绑，丢弃交易 {transaction.TransactionId} 的通知。");
+                                    return;
+                                }
+                            }
+                            if (shouldSend)
+                            {
+                                await botClient.SendTextMessageAsync(userId, message, ParseMode.Html, replyMarkup: inlineKeyboard, disableWebPagePreview: true);
+                                lock (_lock)
+                                {
+                                    if (userTronTransactions.ContainsKey(key))
+                                    {
+                                        userNotificationFailures[key] = 0;
+                                        processedTransactionIds.Add(transaction.TransactionId);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Console.WriteLine($"发送通知失败：{ex.Message}. 将在下次检查时重试。");
+                    }
                 }
             }
         }
@@ -6066,7 +6105,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
             }
             else
             {
-               // Console.WriteLine($"用户 {userId} 地址 {tronAddress} 已解绑，跳过更新时间戳。");
+                // Console.WriteLine($"用户 {userId} 地址 {tronAddress} 已解绑，跳过更新时间戳。");
             }
         }
         nextRequestInterval = TimeSpan.FromSeconds(5);
@@ -6076,6 +6115,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
         HandleException(ex);
     }
 }
+
 private static void HandleException(Exception ex)
 {
     if (ex.Message.Contains("request rate exceeded"))
