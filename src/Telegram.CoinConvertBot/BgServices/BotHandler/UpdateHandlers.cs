@@ -33,6 +33,7 @@ using System.Numerics;
 using System.Globalization;
 using System.Collections.Concurrent;
 using System.Threading;
+using TronNet.Protocol;
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 
@@ -22513,99 +22514,54 @@ else
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
         };
-async Task<decimal> GetTotalUSDTIncomeAsync(string ReciveAddress, string contractAddress)
+// 通用方法：获取年度 USDT 交易记录，并按今日、本月、年度分类
+async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> GetUSDTIncomeAsync(string receiveAddress, string contractAddress)
 {
     const int PageSize = 200; // 每页查询的交易记录数量，最大值为 200
     int currentPage = 0;
-    const int MaxPages = 10; // 假设最多查询10页，防止无限循环
-    decimal usdtIncome = 0;
+    const int MaxRetries = 3; // 最多重试3次
+    int currentRetry = 0;
+
+    // 获取本年第一天零点的时间戳（毫秒）
+    var firstDayOfYear = new DateTime(DateTime.Today.Year, 1, 1);
+    var startTimestamp = new DateTimeOffset(firstDayOfYear).ToUnixTimeSeconds() * 1000;
+
+    // 获取今日和本月第一天的时间，用于本地分类
+    var today = DateTime.Today;
+    var firstDayOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    decimal todayIncome = 0;
+    decimal monthlyIncome = 0;
+    decimal yearlyIncome = 0;
     bool hasMoreData = true;
 
     using (var httpClient = new HttpClient())
     {
         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        // 如果有 TronGrid API 密钥，取消注释以下行并替换为你的密钥
+        // httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", "your-api-key");
 
-        while (hasMoreData && currentPage < MaxPages)
+        while (hasMoreData)
         {
-            string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{ReciveAddress}/transactions/trc20?only_confirmed=true&only_to=true&contract_address={contractAddress}&limit={PageSize}&start={(currentPage * PageSize) + 1}";
+            string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{receiveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={startTimestamp}&contract_address={contractAddress}&limit={PageSize}&start={(currentPage * PageSize) + 1}";
             try
             {
                 var response = await httpClient.GetAsync(apiEndpoint);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    // 请求失败，记录错误，返回当前累计的收入
-                    Console.WriteLine($"API Request Failed: {response.StatusCode}");
-                    break;
-                }
-
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                JObject transactions = JObject.Parse(jsonResponse);
-
-                foreach (var tx in transactions["data"])
-                {
-                    if ((string)tx["type"] != "Transfer")
-                    {
-                        continue;
-                    }
-
-                    var rawAmount = (decimal)tx["value"];
-                    usdtIncome += rawAmount / 1_000_000L; // 假设value是以最小单位（如wei）表示的
-                }
-
-                hasMoreData = transactions["data"].Count() == PageSize;
-                currentPage++;
-            }
-            catch (Exception ex)
-            {
-                // 处理异常，记录错误，然后跳出循环
-                Console.WriteLine($"Error while fetching transactions: {ex.Message}");
-                break;
-            }
-        }
-    }
-
-    return usdtIncome;
-}
-//获取本月承兑数据
-async Task<decimal> GetMonthlyUSDTIncomeAsync(string ReciveAddress, string contractAddress)
-{
-    const int PageSize = 200; // 每页查询的交易记录数量，最大值为 200
-    int currentPage = 0;
-    const int MaxRetries = 1; // 最多重试1次
-    int currentRetry = 0;
-
-    // 获取本月1号零点的时间戳
-    var firstDayOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-    var firstDayOfMonthMidnight = new DateTimeOffset(firstDayOfMonth).ToUnixTimeSeconds();
-
-    decimal usdtIncome = 0;
-    bool hasMoreData = true;
-
-    while (hasMoreData)
-    {
-        using (var httpClient = new HttpClient())
-        {
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{ReciveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={firstDayOfMonthMidnight * 1000}&contract_address={contractAddress}&limit={PageSize}&start={(currentPage * PageSize) + 1}";
-            try
-            {
-                var response = await httpClient.GetAsync(apiEndpoint);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine($"API Request Failed: {response.StatusCode} - {response.ReasonPhrase}");
+                    Console.WriteLine($"API请求失败: {response.StatusCode} - {response.ReasonPhrase}");
                     if (currentRetry < MaxRetries)
                     {
-                        // 随机暂停0.5到1秒后重试
-                        await Task.Delay(new Random().Next(500, 1001));
+                        // 随机暂停1到2秒后重试
+                        await Task.Delay(new Random().Next(1000, 2001));
                         currentRetry++;
                         continue; // 重试当前请求
                     }
                     else
                     {
                         // 请求失败，返回0
-                        return 0;
+                        return (0, 0, 0);
                     }
                 }
 
@@ -22613,7 +22569,7 @@ async Task<decimal> GetMonthlyUSDTIncomeAsync(string ReciveAddress, string contr
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 JObject transactions = JObject.Parse(jsonResponse);
 
-                // 遍历交易记录并累计 USDT 收入
+                // 遍历交易记录并按时间分类累计 USDT 收入
                 foreach (var tx in transactions["data"])
                 {
                     if ((string)tx["type"] != "Transfer")
@@ -22622,7 +22578,21 @@ async Task<decimal> GetMonthlyUSDTIncomeAsync(string ReciveAddress, string contr
                     }
 
                     var rawAmount = (decimal)tx["value"];
-                    usdtIncome += rawAmount / 1_000_000L;
+                    var amount = rawAmount / 1_000_000L; // 转换为 USDT 单位
+                    var timestamp = (long)tx["block_timestamp"]; // 使用 block_timestamp（毫秒）
+                    var dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(timestamp);
+                    var localDateTime = dateTimeOffset.ToOffset(TimeSpan.FromHours(8)).DateTime; // 转换为北京时间
+
+                    // 按时间范围分类
+                    yearlyIncome += amount; // 年度收入
+                    if (localDateTime.Date >= firstDayOfMonth)
+                    {
+                        monthlyIncome += amount; // 本月收入
+                    }
+                    if (localDateTime.Date == today)
+                    {
+                        todayIncome += amount; // 今日收入
+                    }
                 }
 
                 hasMoreData = transactions["data"].Count() == PageSize;
@@ -22630,190 +22600,28 @@ async Task<decimal> GetMonthlyUSDTIncomeAsync(string ReciveAddress, string contr
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error while fetching transactions: {ex.Message}");
+                Console.WriteLine($"获取交易记录时出错: {ex.Message}");
                 if (currentRetry < MaxRetries)
                 {
-                    // 随机暂停0.5到1秒后重试
-                    await Task.Delay(new Random().Next(500, 1001));
+                    // 随机暂停1到2秒后重试
+                    await Task.Delay(new Random().Next(1000, 2001));
                     currentRetry++;
                     continue; // 重试当前请求
                 }
                 else
                 {
                     // 请求失败，返回0
-                    return 0;
+                    return (0, 0, 0);
                 }
             }
         }
     }
 
-    return usdtIncome;
+    return (todayIncome, monthlyIncome, yearlyIncome);
 }
-//获取本年度承兑数据
-async Task<decimal> GetYearlyUSDTIncomeAsync(string ReciveAddress, string contractAddress)
-{
-    const int PageSize = 200; // 每页查询的交易记录数量，最大值为 200
-    int currentPage = 0;
-    const int MaxRetries = 1; // 最多重试1次
-    int currentRetry = 0;
 
-    // 获取今年1月1号零点的时间戳
-    var firstDayOfYear = new DateTime(DateTime.Today.Year, 1, 1);
-    var firstDayOfYearMidnight = new DateTimeOffset(firstDayOfYear).ToUnixTimeSeconds();
-
-    decimal usdtIncome = 0;
-    bool hasMoreData = true;
-
-    while (hasMoreData)
-    {
-        using (var httpClient = new HttpClient())
-        {
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{ReciveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={firstDayOfYearMidnight * 1000}&contract_address={contractAddress}&limit={PageSize}&start={(currentPage * PageSize) + 1}";
-            try
-            {
-                var response = await httpClient.GetAsync(apiEndpoint);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine($"API Request Failed: {response.StatusCode} - {response.ReasonPhrase}");
-                    if (currentRetry < MaxRetries)
-                    {
-                        // 随机暂停0.5到1秒后重试
-                        await Task.Delay(new Random().Next(500, 1001));
-                        currentRetry++;
-                        continue; // 重试当前请求
-                    }
-                    else
-                    {
-                        // 请求失败，返回0
-                        return 0;
-                    }
-                }
-
-                currentRetry = 0; // 重置重试次数
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                JObject transactions = JObject.Parse(jsonResponse);
-
-                // 遍历交易记录并累计 USDT 收入
-                foreach (var tx in transactions["data"])
-                {
-                    if ((string)tx["type"] != "Transfer")
-                    {
-                        continue;
-                    }
-
-                    var rawAmount = (decimal)tx["value"];
-                    usdtIncome += rawAmount / 1_000_000L;
-                }
-
-                hasMoreData = transactions["data"].Count() == PageSize;
-                currentPage++;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error while fetching transactions: {ex.Message}");
-                if (currentRetry < MaxRetries)
-                {
-                    // 随机暂停0.5到1秒后重试
-                    await Task.Delay(new Random().Next(500, 1001));
-                    currentRetry++;
-                    continue; // 重试当前请求
-                }
-                else
-                {
-                    // 请求失败，返回0
-                    return 0;
-                }
-            }
-        }
-    }
-
-    return usdtIncome;
-}
-//查询今日承兑数据
-async Task<decimal> GetTodayUSDTIncomeAsync(string ReciveAddress, string contractAddress)
-{
-    const int PageSize = 200; // 每页查询的交易记录数量，最大值为 200
-    int currentPage = 0;
-    const int MaxRetries = 1; // 最多重试1次
-    int currentRetry = 0;
-
-    // 获取今天零点的时间戳
-    var todayMidnight = new DateTimeOffset(DateTime.Today).ToUnixTimeSeconds();
-
-    decimal usdtIncome = 0;
-    bool hasMoreData = true;
-
-    while (hasMoreData)
-    {
-        using (var httpClient = new HttpClient())
-        {
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{ReciveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={todayMidnight * 1000}&contract_address={contractAddress}&limit={PageSize}&start={(currentPage * PageSize) + 1}";
-            try
-            {
-                var response = await httpClient.GetAsync(apiEndpoint);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine($"API Request Failed: {response.StatusCode} - {response.ReasonPhrase}");
-                    if (currentRetry < MaxRetries)
-                    {
-                        // 随机暂停0.5到1秒后重试
-                        await Task.Delay(new Random().Next(500, 1001));
-                        currentRetry++;
-                        continue; // 重试当前请求
-                    }
-                    else
-                    {
-                        // 请求失败，返回0
-                        return 0;
-                    }
-                }
-
-                currentRetry = 0; // 重置重试次数
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                JObject transactions = JObject.Parse(jsonResponse);
-
-                // 遍历交易记录并累计 USDT 收入
-                foreach (var tx in transactions["data"])
-                {
-                    if ((string)tx["type"] != "Transfer")
-                    {
-                        continue;
-                    }
-
-                    var rawAmount = (decimal)tx["value"];
-                    usdtIncome += rawAmount / 1_000_000L;
-                }
-
-                hasMoreData = transactions["data"].Count() == PageSize;
-                currentPage++;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error while fetching transactions: {ex.Message}");
-                if (currentRetry < MaxRetries)
-                {
-                    // 随机暂停0.5到1秒后重试
-                    await Task.Delay(new Random().Next(500, 1001));
-                    currentRetry++;
-                    continue; // 重试当前请求
-                }
-                else
-                {
-                    // 请求失败，返回0
-                    return 0;
-                }
-            }
-        }
-    }
-
-    return usdtIncome;
-}
-//获取今日TRX转账记录
-async Task<decimal> GetTodayTRXOutAsync(string ReciveAddress)
+// 获取今日 TRX 转账记录
+async Task<decimal> GetTodayTRXOutAsync(string receiveAddress)
 {
     const int PageSize = 200; // 每页查询的交易记录数量，最大值为 200
     int currentPage = 0;
@@ -22828,15 +22636,15 @@ async Task<decimal> GetTodayTRXOutAsync(string ReciveAddress)
     {
         try
         {
-            // 调用Tronscan API以获取交易记录
+            // 调用 Tronscan API 以获取交易记录
             var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            string apiEndpoint = $"https://apilist.tronscan.org/api/transfer?sort=-timestamp&count=true&limit={PageSize}&start={(currentPage * PageSize)}&address={ReciveAddress}";
+            string apiEndpoint = $"https://apilist.tronscan.org/api/transfer?sort=-timestamp&count=true&limit={PageSize}&start={(currentPage * PageSize)}&address={receiveAddress}";
             var response = await httpClient.GetAsync(apiEndpoint);
 
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"API Request Failed: {response.StatusCode} - {response.ReasonPhrase}");
+                Console.WriteLine($"API请求失败: {response.StatusCode} - {response.ReasonPhrase}");
                 // 请求失败，返回0
                 return 0;
             }
@@ -22860,10 +22668,10 @@ async Task<decimal> GetTodayTRXOutAsync(string ReciveAddress)
 
                 // 检查是否为支出记录
                 var transferFromAddress = (string)tx["transferFromAddress"];
-                if (transferFromAddress == ReciveAddress)
+                if (transferFromAddress == receiveAddress)
                 {
                     var rawAmount = (decimal)tx["amount"];
-                    trxOut += rawAmount / 1_000_000L; // TRX的数量需要除以10^6，因为API返回的是最小单位
+                    trxOut += rawAmount / 1_000_000L; // TRX 的数量需要除以10^6
                 }
             }
 
@@ -22872,164 +22680,156 @@ async Task<decimal> GetTodayTRXOutAsync(string ReciveAddress)
         catch (Exception ex)
         {
             // 记录错误
-            Console.WriteLine($"Error getting TRX out records: {ex.Message}");
+            Console.WriteLine($"获取 TRX 转出记录时出错: {ex.Message}");
             return 0;
         }
     }
 
     return trxOut;
-}    
-        Message sentMessage = await action;
-        async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
-        {
-            if (message.From == null) return message;
-            var from = message.From;
-            var UserId = message.Chat.Id;
+}
 
-if (UserId != AdminUserId)
+// Telegram 消息处理
+async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
 {
-    // 创建内联键盘
-    var inlineKeyboard = new InlineKeyboardMarkup(new[]
+    if (message.From == null) return message;
+    var from = message.From;
+    var UserId = message.Chat.Id;
+
+    if (UserId != AdminUserId)
     {
-        new [] // 第0行按钮
+        // 创建内联键盘
+        var inlineKeyboard = new InlineKeyboardMarkup(new[]
         {
-            InlineKeyboardButton.WithCallbackData("\U0000262A FF Pro会员 \U0000262A", "/provip"),	
-        },
-        new [] // 第一行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("合约助手", "/cny"),
-            InlineKeyboardButton.WithCallbackData("财富密码", "财富密码"),
-            InlineKeyboardButton.WithCallbackData("币海神探", "/hangqingshuju")
-        },	    
-        new [] // 第二行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
-            InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers"),
-            InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese")
-        },
-        new [] // 第三行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("汇率换算", "汇率换算"),
-            InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),
-            InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
-        },
-        new [] // 新增第四行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("在线音频", "onlineAudio"),
-            InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading"),
-            InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
-        },
-        new [] // 新增第四行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("老澳门彩", "laoaomen"),
-            InlineKeyboardButton.WithCallbackData("新澳门彩", "xinaomen"),
-            InlineKeyboardButton.WithCallbackData("香港六合", "xianggang")
-        },
-        new [] // 新增第5行按钮
-        {
-            InlineKeyboardButton.WithCallbackData("一键签到", "签到"),
-            InlineKeyboardButton.WithCallbackData("签到后台", "签到积分"),
-            InlineKeyboardButton.WithCallbackData("积分商城", "/jifensc")
-        },	    
-        new [] // 新增第6行按钮
-        {	
-            InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo"),
-            InlineKeyboardButton.WithCallbackData("克隆同款机器人 \U0001F916", "zztongkuan")
-        }
-    });
+            new [] // 第0行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("\U0000262A FF Pro会员 \U0000262A", "/provip"),
+            },
+            new [] // 第一行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("合约助手", "/cny"),
+                InlineKeyboardButton.WithCallbackData("财富密码", "财富密码"),
+                InlineKeyboardButton.WithCallbackData("币海神探", "/hangqingshuju")
+            },
+            new [] // 第二行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("短信接码", "smsVerification"),
+                InlineKeyboardButton.WithCallbackData("靓号地址", "fancyNumbers"),
+                InlineKeyboardButton.WithCallbackData("简体中文", "send_chinese")
+            },
+            new [] // 第三行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("汇率换算", "汇率换算"),
+                InlineKeyboardButton.WithCallbackData("指令大全", "commandList"),
+                InlineKeyboardButton.WithCallbackData("使用帮助", "send_help")
+            },
+            new [] // 新增第四行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("在线音频", "onlineAudio"),
+                InlineKeyboardButton.WithCallbackData("在线阅读", "onlineReading"),
+                InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin")
+            },
+            new [] // 新增第四行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("老澳门彩", "laoaomen"),
+                InlineKeyboardButton.WithCallbackData("新澳门彩", "xinaomen"),
+                InlineKeyboardButton.WithCallbackData("香港六合", "xianggang")
+            },
+            new [] // 新增第5行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("一键签到", "签到"),
+                InlineKeyboardButton.WithCallbackData("签到后台", "签到积分"),
+                InlineKeyboardButton.WithCallbackData("积分商城", "/jifensc")
+            },
+            new [] // 新增第6行按钮
+            {
+                InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo"),
+                InlineKeyboardButton.WithCallbackData("克隆同款机器人 \U0001F916", "zztongkuan")
+            }
+        });
 
-    // 向用户发送一条消息，告知他们可以选择下方按钮操作
-    _ = botClient.SendTextMessageAsync(
-        chatId: message.Chat.Id,
-        text: "欢迎使用本机器人，请选择下方按钮操作：",
-        replyMarkup: inlineKeyboard
-    );
+        // 向用户发送一条消息，告知他们可以选择下方按钮操作
+        _ = botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "欢迎使用本机器人，请选择下方按钮操作：",
+            replyMarkup: inlineKeyboard
+        );
 
-    return message;
-}
-var _myTronConfig = provider.GetRequiredService<IOptionsSnapshot<MyTronConfig>>();
-var _wallet = provider.GetRequiredService<IWalletClient>();
-var _transactionClient = provider.GetRequiredService<ITransactionClient>();
-var _contractClientFactory = provider.GetRequiredService<IContractClientFactory>();
-var protocol = _wallet.GetProtocol();
-var Address = _myTronConfig.Value.Address;
-var addr = _wallet.ParseAddress(Address);
+        return message;
+    }
 
-// 这两个变量需要在使用它们的任务之前声明
-string targetReciveAddress = "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6";
-var contractAddress = _myTronConfig.Value.USDTContractAddress;            
+    var _myTronConfig = provider.GetRequiredService<IOptionsSnapshot<MyTronConfig>>();
+    var _wallet = provider.GetRequiredService<IWalletClient>();
+    var _transactionClient = provider.GetRequiredService<ITransactionClient>();
+    var _contractClientFactory = provider.GetRequiredService<IContractClientFactory>();
+    var protocol = _wallet.GetProtocol();
+    var Address = _myTronConfig.Value.Address;
+    var addr = _wallet.ParseAddress(Address);
 
-// 同时运行获取账户资源和账户信息的任务
-Task<TronNet.Protocol.AccountResourceMessage> resourceTask = protocol.GetAccountResourceAsync(new TronNet.Protocol.Account
-{
-    Address = addr
-}).ResponseAsync;
-Task<TronNet.Protocol.Account> accountTask = protocol.GetAccountAsync(new TronNet.Protocol.Account
-{
-    Address = addr
-}).ResponseAsync;
+    // 这两个变量需要在使用它们的任务之前声明
+    string targetReceiveAddress = "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6";
+    var contractAddress = _myTronConfig.Value.USDTContractAddress;
 
-// 同时运行获取剩余的质押能量的任务
-var bandwidthTask = GetBandwidthAsync(Address);
+    // 同时运行获取账户资源和账户信息的任务
+    Task<TronNet.Protocol.AccountResourceMessage> resourceTask = protocol.GetAccountResourceAsync(new TronNet.Protocol.Account
+    {
+        Address = addr
+    }).ResponseAsync;
+    Task<TronNet.Protocol.Account> accountTask = protocol.GetAccountAsync(new TronNet.Protocol.Account
+    {
+        Address = addr
+    }).ResponseAsync;
 
-// 同时运行获取账户余额的任务
-var contractClient = _contractClientFactory.CreateClient(ContractProtocol.TRC20);
-Task<decimal> USDTTask = contractClient.BalanceOfAsync(contractAddress, _wallet.GetAccount(_myTronConfig.Value.PrivateKey));
+    // 同时运行获取剩余的质押能量的任务
+    var bandwidthTask = GetBandwidthAsync(Address);
 
-// 同时运行获取今日、本月和总收入的任务
-Task<decimal> todayIncomeTask = GetTodayUSDTIncomeAsync(targetReciveAddress, contractAddress);
-Task<decimal> monthlyIncomeTask = GetMonthlyUSDTIncomeAsync(targetReciveAddress, contractAddress);
-//Task<decimal> totalIncomeTask = GetTotalUSDTIncomeAsync(targetReciveAddress, contractAddress);  累计收入注释掉了
-Task<decimal> yearlyIncomeTask = GetYearlyUSDTIncomeAsync(targetReciveAddress, contractAddress); // 同时运行获取今年收入的任务   
-Task<decimal> todayTRXOutTask = GetTodayTRXOutAsync(Address);//获取TRX今日支出            
+    // 同时运行获取账户余额的任务
+    var contractClient = _contractClientFactory.CreateClient(ContractProtocol.TRC20);
+    Task<decimal> USDTTask = contractClient.BalanceOfAsync(contractAddress, _wallet.GetAccount(_myTronConfig.Value.PrivateKey));
 
-// 等待所有任务完成
-await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, todayIncomeTask, monthlyIncomeTask, yearlyIncomeTask, todayTRXOutTask);   //totalIncomeTask,  这个是累计收入
+    // 运行获取 USDT 收入的任务（一次 API 调用，返回今日、本月、年度收入）
+    Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> incomeTask = GetUSDTIncomeAsync(targetReceiveAddress, contractAddress);
+    Task<decimal> todayTRXOutTask = GetTodayTRXOutAsync(Address); // 获取 TRX 今日支出
 
+    // 等待所有任务完成
+    await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, incomeTask, todayTRXOutTask);
 
+    // 获取任务的结果
+    var resource = resourceTask.Result;
+    var account = accountTask.Result;
+    var (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, isError) = bandwidthTask.Result;
+    var TRX = Convert.ToDecimal(account.Balance) / 1_000_000L;
+    var USDT = USDTTask.Result;
+    decimal todayIncome = Math.Round(incomeTask.Result.todayIncome, 2);
+    decimal monthlyIncome = Math.Round(incomeTask.Result.monthlyIncome, 2);
+    decimal yearlyIncome = Math.Round(incomeTask.Result.yearlyIncome, 2);
+    decimal todayTRXOut = Math.Round(todayTRXOutTask.Result, 2);
 
-// 获取任务的结果
-var resource = resourceTask.Result;
-var account = accountTask.Result;
-var (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, isError) = bandwidthTask.Result;
-var TRX = Convert.ToDecimal(account.Balance) / 1_000_000L;
-var USDT = USDTTask.Result;
-decimal todayIncome = Math.Round(todayIncomeTask.Result, 2);
-decimal monthlyIncome = Math.Round(monthlyIncomeTask.Result, 2);
-//decimal totalIncome = Math.Round(totalIncomeTask.Result - 42632, 2); 累计收入注释掉了
-decimal yearlyIncome = Math.Round(yearlyIncomeTask.Result, 2); // 新增年度收入结果            
+    decimal requiredEnergy1 = 64285;
+    decimal requiredEnergy2 = 130285;
+    decimal energyPer100TRX = resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100;
+    decimal requiredTRX1 = Math.Floor(requiredEnergy1 / (energyPer100TRX / 100)) + 1;
+    decimal requiredTRX2 = Math.Floor(requiredEnergy2 / (energyPer100TRX / 100)) + 1;
+    decimal requiredBandwidth = 345;
+    decimal bandwidthPer100TRX = resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100;
+    decimal requiredTRXForBandwidth = Math.Floor(requiredBandwidth / (bandwidthPer100TRX / 100)) + 1;
 
-decimal requiredEnergy1 = 64285;
-decimal requiredEnergy2 = 130285;
-decimal energyPer100TRX = resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100;
-decimal requiredTRX1 = Math.Floor(requiredEnergy1 / (energyPer100TRX / 100)) + 1;
-decimal requiredTRX2 = Math.Floor(requiredEnergy2 / (energyPer100TRX / 100)) + 1;  
-decimal requiredBandwidth = 345;
-decimal bandwidthPer100TRX = resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100;
-decimal requiredTRXForBandwidth = Math.Floor(requiredBandwidth / (bandwidthPer100TRX / 100)) + 1;
-decimal todayTRXOut = Math.Round(todayTRXOutTask.Result, 2);            
+    // 从 _rateRepository 获取 USDT 到 TRX 的汇率
+    var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+    var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+    // 计算手续费后的兑换汇率
+    decimal usdtToTrxRateAfterFees = rate * (1 - FeeRate);
 
-// 从_rateRepository获取USDT到TRX的汇率
-var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-// 计算手续费后的兑换汇率
-decimal usdtToTrxRateAfterFees = rate * (1 - FeeRate);
+    decimal TRXInUSDT;
+    if (usdtToTrxRateAfterFees != 0)
+    {
+        TRXInUSDT = TRX / usdtToTrxRateAfterFees;
+    }
+    else
+    {
+        TRXInUSDT = 0; // 汇率为0时的处理
+    }
 
-decimal TRXInUSDT;
-if (usdtToTrxRateAfterFees != 0)
-{
-    TRXInUSDT = TRX / usdtToTrxRateAfterFees;
-}
-else
-{
-    // 根据你的需求处理这种情况，例如设置为0，或者抛出一个异常
-    TRXInUSDT = 0; // 或者其他逻辑处理
-    // throw new InvalidOperationException("usdtToTrxRateAfterFees cannot be zero.");
-}
-
-//累计承兑：<b>{totalIncome} USDT</b>    注释掉了 需要可以放到下面
-		
-var msg = @$"当前账户资源如下：
+    var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
 TRX余额： <b>{TRX}</b> | 可兑：<b>{TRXInUSDT:0.00} USDT</b>
 USDT余额： <b>{USDT}</b>
@@ -23037,7 +22837,7 @@ USDT余额： <b>{USDT}</b>
 质押带宽： <b>{resource.NetLimit - resource.NetUsed}/{resource.NetLimit}</b>
 质押能量： <b>{energyRemaining}/{resource.EnergyLimit}</b>    
 ——————————————————————    
-带宽质押比：<b>100 TRX = {resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100:0.000}  带宽</b>
+带宽质押比：<b>100 TRX = {resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100:0.000} 带宽</b>
 能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>       
  
 质押 {requiredTRXForBandwidth} TRX = 345 带宽   
