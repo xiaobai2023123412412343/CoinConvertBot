@@ -10530,7 +10530,7 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
             var response = await httpClient.GetAsync(currentUrl);
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Trongrid API request failed with status code: {response.StatusCode}");
+                //Console.WriteLine($"Trongrid API request failed with status code: {response.StatusCode}");
                 break;
             }
 
