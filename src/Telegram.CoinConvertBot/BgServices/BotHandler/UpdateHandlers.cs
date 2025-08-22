@@ -21725,20 +21725,42 @@ if (messageText.StartsWith("谷歌 "))
 // 检查是否接收到了 /qdgg 消息，收到就启动广告
 if (messageText.StartsWith("/qdgg"))
 {
-    // 取消当前正在运行的广告任务（如果有）
-    if (isAdvertisementRunning && cancellationTokenSource != null)
+    // 限制只有特定用户 ID 可以执行
+    if (message.From.Id != 1427768220)
     {
-        cancellationTokenSource.Cancel();
-        Console.WriteLine("当前广告任务已取消，准备启动新任务。");
+        return; // 非指定用户，直接返回，不处理也不回复
+    }
+
+    // 确保旧任务被清理
+    if (isAdvertisementRunning || cancellationTokenSource != null)
+    {
+        try
+        {
+            if (cancellationTokenSource != null)
+            {
+                cancellationTokenSource.Cancel(); // 尝试取消旧任务
+                cancellationTokenSource.Dispose(); // 释放旧的 CancellationTokenSource
+                cancellationTokenSource = null; // 清空引用
+                Console.WriteLine("旧广告任务已取消并清理，准备启动新任务。");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"清理旧任务时发生错误：{ex.Message}");
+        }
+        finally
+        {
+            isAdvertisementRunning = false; // 强制重置状态
+        }
     }
 
     // 创建新的 CancellationTokenSource
     cancellationTokenSource = new CancellationTokenSource();
-    isAdvertisementRunning = true; // 将变量设置为 true，表示广告正在运行
+    isAdvertisementRunning = true; // 标记广告任务为运行状态
 
     var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
     _ = SendAdvertisement(botClient, cancellationTokenSource.Token, rateRepository, FeeRate)
-        .ContinueWith(task => 
+        .ContinueWith(task =>
         {
             if (task.IsCanceled)
             {
@@ -21746,16 +21768,22 @@ if (messageText.StartsWith("/qdgg"))
             }
             else if (task.IsFaulted)
             {
-                Console.WriteLine($"广告任务出现错误：{task.Exception.InnerException.Message}");
+                Console.WriteLine($"广告任务出现错误：{task.Exception?.InnerException?.Message}");
             }
-            isAdvertisementRunning = false; // 广告结束后将变量设置为 false
+            // 清理状态
+            isAdvertisementRunning = false;
+            if (cancellationTokenSource != null)
+            {
+                cancellationTokenSource.Dispose();
+                cancellationTokenSource = null;
+            }
         });
 
-    // 向用户发送一条消息，告知他们广告已经启动
+    // 向用户发送启动确认消息
     _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: "群广告已启动！"
-    );     
+    );
 }
 
 // 检查是否为指定用户并执行相应的操作
