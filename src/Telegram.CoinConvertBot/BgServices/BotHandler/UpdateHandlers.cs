@@ -20921,15 +20921,36 @@ if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^((\d{4}[-/\
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
-    string responseMessage;
-    // 取消当前正在运行的虚拟广告任务（如果有）
-    if (isVirtualAdvertisementRunning)
+    // 限制只有特定用户 ID 可以执行
+    if (message.From.Id != 1427768220)
     {
-        virtualAdCancellationTokenSource.Cancel();
-        virtualAdCancellationTokenSource.Dispose(); // 释放资源
-        Console.WriteLine("之前的兑换通知任务被正确取消");
-        responseMessage = "兑换通知已重新启动！";
-        isVirtualAdvertisementRunning = false; // 将变量设置为 false，表示虚拟广告已停止
+        return; // 非指定用户，直接返回，不处理也不回复
+    }
+
+    string responseMessage;
+    // 确保旧任务被清理
+    if (isVirtualAdvertisementRunning || virtualAdCancellationTokenSource != null)
+    {
+        try
+        {
+            if (virtualAdCancellationTokenSource != null)
+            {
+                virtualAdCancellationTokenSource.Cancel(); // 尝试取消旧任务
+                virtualAdCancellationTokenSource.Dispose(); // 释放旧的 CancellationTokenSource
+                virtualAdCancellationTokenSource = null; // 清空引用
+                Console.WriteLine("之前的兑换通知任务被正确取消并清理，准备启动新任务。");
+            }
+            responseMessage = "兑换通知已重新启动！";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"清理旧兑换通知任务时发生错误：{ex.Message}");
+            responseMessage = "兑换通知已重新启动（清理旧任务时有错误）！";
+        }
+        finally
+        {
+            isVirtualAdvertisementRunning = false; // 强制重置状态
+        }
     }
     else
     {
@@ -20938,26 +20959,35 @@ if (messageText.StartsWith("/xuni"))
 
     // 创建新的 CancellationTokenSource
     virtualAdCancellationTokenSource = new CancellationTokenSource();
-    isVirtualAdvertisementRunning = true; // 将变量设置为 true，表示虚拟广告正在运行
+    isVirtualAdvertisementRunning = true; // 标记虚拟广告任务为运行状态
 
     var rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
     _ = SendVirtualAdvertisement(botClient, virtualAdCancellationTokenSource.Token, rateRepository, FeeRate)
-        .ContinueWith(task => 
+        .ContinueWith(task =>
         {
             isVirtualAdvertisementRunning = false;
+            if (virtualAdCancellationTokenSource != null)
+            {
+                virtualAdCancellationTokenSource.Dispose();
+                virtualAdCancellationTokenSource = null;
+            }
             if (task.IsFaulted)
             {
-                Console.WriteLine("兑换通知任务异常结束");
+                Console.WriteLine($"兑换通知任务异常结束：{task.Exception?.InnerException?.Message}");
             }
-        }); // 广告结束后将变量设置为 false
+            else if (task.IsCanceled)
+            {
+                Console.WriteLine("兑换通知任务因取消操作而终止。");
+            }
+        });
 
-    // 向用户发送一条消息，告知他们虚拟广告的启动状态
+    // 向用户发送启动确认消息
     _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
         text: responseMessage
     );
 
-    Console.WriteLine("重新启动兑换通知");
+    Console.WriteLine("兑换通知任务已启动");
 }
 // 检查是否为指定用户并执行相应的操作
 //if (message.From.Id == 1427768220 && (message.Chat.Type == ChatType.Group || message.Chat.Type == ChatType.Supergroup))
