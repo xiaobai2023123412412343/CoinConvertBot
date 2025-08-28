@@ -15577,6 +15577,8 @@ else if(update.CallbackQuery.Data == "memberEmojis")
 11：车队专用：https://t.me/addemoji/Yifanfuyhk
 12：像素符号：https://t.me/addemoji/Yifanfu9527
 13：qq经典表情：https://t.me/addemoji/Yifanfuqq
+14：Snoop Dogg：https://t.me/addemoji/Yifanfu520
+15：印尼小胖贴纸：https://t.me/addstickers/yifanfu2025
 ",
         disableWebPagePreview: true // 关闭链接预览
     );
@@ -20482,7 +20484,8 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
                     "11：车队专用：https://t.me/addemoji/Yifanfuyhk\n" +
                     "12：像素符号：https://t.me/addemoji/Yifanfu9527\n" +
                     "13：qq经典表情：https://t.me/addemoji/Yifanfuqq\n" +							   
-                    "14：热门贴纸合集：https://t.me/addstickers/yifanfu2025")
+                    "14：Snoop Dogg：https://t.me/addemoji/Yifanfu520\n" +	
+                    "15：印尼小胖贴纸：https://t.me/addstickers/yifanfu2025")					
             }
         }
         : new[] // 普通用户：两排按钮
@@ -20534,7 +20537,8 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
 11：车队专用：<a href='https://t.me/addemoji/Yifanfuyhk'>https://t.me/addemoji/Yifanfuyhk</a>
 12：像素符号：<a href='https://t.me/addemoji/Yifanfu9527'>https://t.me/addemoji/Yifanfu9527</a>
 13：qq经典表情：<a href='https://t.me/addemoji/Yifanfuqq'>https://t.me/addemoji/Yifanfuqq</a>
-13：热门贴纸合集：https://t.me/addstickers/yifanfu2025</blockquote>";
+14：Snoop Dogg：<a href='https://t.me/addemoji/Yifanfu520'>https://t.me/addemoji/Yifanfu520</a>
+15：印尼小胖贴纸：https://t.me/addstickers/yifanfu2025</blockquote>";
 
 
     // 尝试发送图片和文字
