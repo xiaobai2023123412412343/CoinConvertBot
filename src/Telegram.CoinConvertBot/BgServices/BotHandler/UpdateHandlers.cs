@@ -10901,8 +10901,19 @@ public static async Task<(DateTime LastTransactionTime, bool IsError)> GetLastTr
     }
 }
     
+// 新增：在类的顶部定义缓存地址激活时间的字典
+private static readonly ConcurrentDictionary<string, DateTime> _addressCreationTimeCache = new ConcurrentDictionary<string, DateTime>();
+
 public static async Task<(DateTime CreationTime, bool IsError)> GetAccountCreationTimeAsync(string address)
 {
+    // 检查缓存中是否已有该地址的激活时间
+    if (_addressCreationTimeCache.TryGetValue(address, out var cachedCreationTime))
+    {
+        // 调试输出：记录从缓存获取数据
+        //Console.WriteLine($"该地址 {address} 字典有数据，直接从字典调用");
+        return (cachedCreationTime, false); // 从缓存返回结果
+    }
+
     try
     {
         using var httpClient = new HttpClient();
@@ -10923,15 +10934,22 @@ public static async Task<(DateTime CreationTime, bool IsError)> GetAccountCreati
         }
 
         var utcDateTime = DateTimeOffset.FromUnixTimeMilliseconds(creationTimestamp).DateTime;
-        return (ConvertToBeijingTime(utcDateTime), false); // 如果没有发生错误，返回结果和IsError=false
+        var beijingTime = ConvertToBeijingTime(utcDateTime);
+
+        // 将查询结果存入缓存
+        _addressCreationTimeCache.TryAdd(address, beijingTime);
+        // 调试输出：记录 API 查询结果
+        //Console.WriteLine($"地址 {address} 无缓存数据，API 查询并缓存激活时间: {beijingTime:yyyy-MM-dd HH:mm:ss}");
+
+        return (beijingTime, false); // 如果没有发生错误，返回结果和 IsError=false
     }
     catch (Exception ex)
     {
-        // 发生错误时，返回默认值和IsError=true
-        Console.WriteLine($"Error in method {nameof(GetAccountCreationTimeAsync)}: {ex.Message}");
+        // 发生错误时，返回默认值和 IsError=true
+        Console.WriteLine($"Error in method {nameof(GetAccountCreationTimeAsync)} for address {address}: {ex.Message}");
         return (DateTime.MinValue, true);
     }
-} 
+}
    
 public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)> GetBalancesAsync(string address)
 {
@@ -12195,7 +12213,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     }
     else
     {
-        incomeOutcomeText = $"<a href=\"https://t.me/yifanfubot?start=provip\">USDT收支汇总为 FF Pro 会员专享！欢迎开通体验！</a>\n\n";
+        incomeOutcomeText = $"<a href=\"https://t.me/yifanfubot?start=provip\">收支汇总为 FF Pro会员专享！欢迎开通体验！</a>\n\n";
     }
 
     // 私聊广告
