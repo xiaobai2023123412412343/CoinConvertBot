@@ -11131,7 +11131,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
 {
     string tokenContractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
     int limit = 20;
-    string apiKey = "369e85e5-68d3-4299-a602-9d8d93ad026a";
+    string apiKey = "305cb06c-9c01-42ad-8a87-6ff7acfdffb8"; // 修改：使用新的 API Key
 
     // 分别查询转入和转出的交易
     string urlIn = $"https://apilist.tronscanapi.com/api/token_trc20/transfers?limit={limit}&start=0&contract_address={tokenContractAddress}&toAddress={tronAddress}&confirm=true";
@@ -11144,21 +11144,59 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
 
         try
         {
-            // 获取转入交易
-            //Console.WriteLine($"正在请求转入交易API: {urlIn}");
-            HttpResponseMessage responseIn = await httpClient.GetAsync(urlIn);
-            string jsonStringIn = await responseIn.Content.ReadAsStringAsync();
-            //Console.WriteLine($"转入交易API返回数据: {jsonStringIn}");
+            // 新增：随机数生成器
+            Random random = new Random();
 
-            // 获取转出交易
-           // Console.WriteLine($"正在请求转出交易API: {urlOut}");
-            HttpResponseMessage responseOut = await httpClient.GetAsync(urlOut);
-            string jsonStringOut = await responseOut.Content.ReadAsStringAsync();
-           // Console.WriteLine($"转出交易API返回数据: {jsonStringOut}");
-
-            if (!responseIn.IsSuccessStatusCode || !responseOut.IsSuccessStatusCode)
+            // 获取转入交易（带重试机制）
+            string jsonStringIn = null;
+            for (int retry = 0; retry < 2; retry++) // 最多重试 1 次（总共 2 次尝试）
             {
-               // Console.WriteLine($"API请求失败，转入状态码: {responseIn.StatusCode}，转出状态码: {responseOut.StatusCode}");
+                //Console.WriteLine($"正在请求转入交易API (尝试 {retry + 1}): {urlIn}");
+                HttpResponseMessage responseIn = await httpClient.GetAsync(urlIn);
+                if (responseIn.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    double delayMs = 1000 + random.NextDouble() * 200; // 随机延迟 1-1.2 秒
+                    //Console.WriteLine($"转入交易API 返回 429 TooManyRequests，等待 {delayMs:F2} 毫秒后重试");
+                    await Task.Delay((int)delayMs);
+                    continue;
+                }
+                jsonStringIn = await responseIn.Content.ReadAsStringAsync();
+                //Console.WriteLine($"转入交易API返回数据: {jsonStringIn}");
+                if (responseIn.IsSuccessStatusCode)
+                    break;
+                //Console.WriteLine($"转入交易API请求失败，状态码: {responseIn.StatusCode}");
+                return (string.Empty, true);
+            }
+
+            // 新增：在转入和转出请求之间添加随机延迟 0-0.3 秒
+            double requestDelayMs = random.NextDouble() * 300; // 0-0.3 秒
+            //Console.WriteLine($"转入和转出请求之间延迟 {requestDelayMs:F2} 毫秒");
+            await Task.Delay((int)requestDelayMs);
+
+            // 获取转出交易（带重试机制）
+            string jsonStringOut = null;
+            for (int retry = 0; retry < 2; retry++) // 最多重试 1 次（总共 2 次尝试）
+            {
+                //Console.WriteLine($"正在请求转出交易API (尝试 {retry + 1}): {urlOut}");
+                HttpResponseMessage responseOut = await httpClient.GetAsync(urlOut);
+                if (responseOut.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    double delayMs = 1000 + random.NextDouble() * 200; // 1-1.2 秒
+                    //Console.WriteLine($"转出交易API 返回 429 TooManyRequests，等待 {delayMs:F2} 毫秒后重试");
+                    await Task.Delay((int)delayMs);
+                    continue;
+                }
+                jsonStringOut = await responseOut.Content.ReadAsStringAsync();
+                //Console.WriteLine($"转出交易API返回数据: {jsonStringOut}");
+                if (responseOut.IsSuccessStatusCode)
+                    break;
+                //Console.WriteLine($"转出交易API请求失败，状态码: {responseOut.StatusCode}");
+                return (string.Empty, true);
+            }
+
+            if (string.IsNullOrEmpty(jsonStringIn) || string.IsNullOrEmpty(jsonStringOut))
+            {
+                //Console.WriteLine("API 请求失败，未获取到有效数据");
                 return (string.Empty, true);
             }
 
@@ -11180,7 +11218,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
 
             if (allTransactions.Count == 0)
             {
-               // Console.WriteLine("没有找到任何交易记录");
+                //Console.WriteLine("没有找到任何交易记录");
                 return (string.Empty, false);
             }
 
@@ -11192,7 +11230,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
 
             if (!filteredTransactions.Any())
             {
-               // Console.WriteLine("没有找到大于1USDT的交易记录");
+                //Console.WriteLine("没有找到大于1USDT的交易记录");
                 return (string.Empty, false);
             }
 
@@ -11210,18 +11248,19 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
                 string toAddress = (string)transaction["to_address"];
                 string type = tronAddress.Equals(toAddress, StringComparison.OrdinalIgnoreCase) ? "入 " : "出 ";
 
-                decimal usdtAmount = decimal.Parse((string)transaction["quant"]) / 1000000m;
+                decimal usdtAmount = decimal.Parse((string)transaction["quant"]) / 1000000m; // 修复：将 t 改为 transaction
 
                 transactionTextBuilder.AppendLine($"{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}<a href=\"https://tronscan.org/#/transaction/{txHash}\">{usdtAmount:N2} U</a>");
             }
 
-            //Console.WriteLine($"生成的账单文本: {transactionTextBuilder}");
-            return (transactionTextBuilder.ToString(), false);
+            string transactionText = transactionTextBuilder.ToString();
+            //Console.WriteLine($"生成的账单文本: {transactionText}");
+            return (transactionText, false);
         }
         catch (Exception ex)
         {
-           // Console.WriteLine($"处理API请求时发生错误: {ex.Message}");
-           // Console.WriteLine($"错误详情: {ex.StackTrace}");
+            //Console.WriteLine($"处理API请求时发生错误: {ex.Message}");
+            //Console.WriteLine($"错误详情: {ex.StackTrace}");
             return (string.Empty, true);
         }
     }
