@@ -12195,7 +12195,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     }
     else
     {
-        incomeOutcomeText = "USDT收支汇总为 FF Pro 会员专享！欢迎开通体验！\n\n";
+        incomeOutcomeText = $"<a href=\"https://t.me/yifanfubot?start=provip\">USDT收支汇总为 FF Pro 会员专享！欢迎开通体验！</a>\n\n";
     }
 
     // 私聊广告
