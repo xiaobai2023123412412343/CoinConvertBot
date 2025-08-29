@@ -11818,6 +11818,8 @@ private static readonly ConcurrentDictionary<long, DateTime> _queryCooldowns = n
 private const int QueryCooldownSeconds = 10; // 冷却时间10秒
 private const long BotAdminUserId = 1427768220; // 机器人管理员ID
 private static ConcurrentDictionary<string, ConcurrentDictionary<long, int>> addressQueryStats = new ConcurrentDictionary<string, ConcurrentDictionary<long, int>>(); // 已有字段，保留
+// 新增：存储用户ID和查询时间的字典（北京时间）
+private static readonly ConcurrentDictionary<long, DateTime> _userQueryTimes = new ConcurrentDictionary<long, DateTime>();
 
 public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, Message message)
 {
@@ -11861,6 +11863,43 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
             _queryCooldowns.TryRemove(userId, out _);
         });
     }
+
+    // 新增：清理北京时间今日之前的查询记录
+    TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+    DateTime beijingTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaZone);
+    DateTime beijingTodayStart = beijingTimeNow.Date; // 今日0点
+    foreach (var entry in _userQueryTimes)
+    {
+        if (entry.Value < beijingTodayStart)
+        {
+            _userQueryTimes.TryRemove(entry.Key, out _);
+        }
+    }
+
+    // 新增：检查会员状态和查询次数
+    bool isVip = false;
+    if (VipAuthorizationHandler.TryGetVipExpiryTime(userId, out var expiryTime))
+    {
+        DateTime beijingTimeExpiry = TimeZoneInfo.ConvertTimeFromUtc(expiryTime, chinaZone);
+        if (beijingTimeNow <= beijingTimeExpiry)
+        {
+            isVip = true; // 用户是有效会员
+        }
+    }
+
+    bool shouldQueryFullData = true; // 是否执行完整查询
+    if (!isVip && _userQueryTimes.ContainsKey(userId))
+    {
+        // 非会员且今日已查询过，限制查询
+        shouldQueryFullData = false;
+    }
+
+    // 新增：记录本次查询时间（北京时间）
+    if (!isVip)
+    {
+        _userQueryTimes.AddOrUpdate(userId, beijingTimeNow, (key, oldValue) => beijingTimeNow);
+    }
+
     var match = Regex.Match(text, @"(T[A-Za-z0-9]{33})"); // 验证Tron地址格式
     if (!match.Success)
     {
@@ -11918,7 +11957,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
 
     // 获取USDT OTC价格
     decimal okxPrice = await GetOkxPriceAsync("usdt", "cny", "alipay");
-    
+
     // 回复用户正在查询
     Telegram.Bot.Types.Message infoMessage;
     try
@@ -11936,16 +11975,22 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
         return;
     }
 
-// 同时启动所有任务
-var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6");
-var getBalancesTask = GetBalancesAsync(tronAddress);
-var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
-var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
-var getTotalIncomeTask = GetTotalIncomeAsync(tronAddress, false);
-var getBandwidthTask = GetBandwidthAsync(tronAddress);
-var getLastFiveTransactionsTask = GetLastFiveTransactionsAsync(tronAddress);
-var getOwnerPermissionTask = GetOwnerPermissionAsync(tronAddress);
-var usdtAuthorizedListTask = GetUsdtAuthorizedListAsync(tronAddress);    
+    // 同时启动所有任务（根据会员状态决定是否启动完整查询）
+    var getUsdtTransferTotalTask = GetUsdtTransferTotalAsync(tronAddress, "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6");
+    var getBalancesTask = GetBalancesAsync(tronAddress);
+    var getAccountCreationTimeTask = GetAccountCreationTimeAsync(tronAddress);
+    var getLastTransactionTimeTask = GetLastTransactionTimeAsync(tronAddress);
+    var getBandwidthTask = GetBandwidthAsync(tronAddress);
+    var getOwnerPermissionTask = GetOwnerPermissionAsync(tronAddress);
+    var usdtAuthorizedListTask = GetUsdtAuthorizedListAsync(tronAddress);
+    Task<(string, bool)> getLastFiveTransactionsTask = null;
+    Task<(decimal, decimal, decimal, decimal, decimal, decimal, bool)> getTotalIncomeTask = null;
+
+    if (shouldQueryFullData)
+    {
+        getLastFiveTransactionsTask = GetLastFiveTransactionsAsync(tronAddress);
+        getTotalIncomeTask = GetTotalIncomeAsync(tronAddress, false);
+    }
 
     // 等待所有任务完成
     try
@@ -11955,11 +12000,11 @@ var usdtAuthorizedListTask = GetUsdtAuthorizedListAsync(tronAddress);
             getBalancesTask,
             getAccountCreationTimeTask,
             getLastTransactionTimeTask,
-            getTotalIncomeTask,
             getBandwidthTask,
-            getLastFiveTransactionsTask,
             getOwnerPermissionTask,
-            usdtAuthorizedListTask
+            usdtAuthorizedListTask,
+            getLastFiveTransactionsTask ?? Task.FromResult<(string, bool)>((string.Empty, false)),
+            getTotalIncomeTask ?? Task.FromResult<(decimal, decimal, decimal, decimal, decimal, decimal, bool)>((0m, 0m, 0m, 0m, 0m, 0m, false))
         );
     }
     catch (Exception ex)
@@ -11980,58 +12025,66 @@ var usdtAuthorizedListTask = GetUsdtAuthorizedListAsync(tronAddress);
         }
         return;
     }
-    
 
-// 处理结果
-var usdtTransferTotalResult = getUsdtTransferTotalTask.Result;
-var (usdtTotal, transferCount, isErrorUsdtTransferTotal) = usdtTransferTotalResult;
+    // 处理结果
+    var usdtTransferTotalResult = getUsdtTransferTotalTask.Result;
+    var (usdtTotal, transferCount, isErrorUsdtTransferTotal) = usdtTransferTotalResult;
 
-var getBandwidthResult = getBandwidthTask.Result;
-var (remainingBandwidth, totalBandwidth, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, isErrorGetBandwidth) = getBandwidthResult;
+    var getBandwidthResult = getBandwidthTask.Result;
+    var (remainingBandwidth, totalBandwidth, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, isErrorGetBandwidth) = getBandwidthResult;
 
-var getLastFiveTransactionsResult = getLastFiveTransactionsTask.Result;
-var (lastFiveTransactions, isErrorGetLastFiveTransactions) = getLastFiveTransactionsResult;
+    var getBalancesResult = getBalancesTask.Result;
+    var (usdtBalance, trxBalance, isErrorGetBalances) = getBalancesResult;
 
-var getBalancesResult = getBalancesTask.Result;
-var (usdtBalance, trxBalance, isErrorGetBalances) = getBalancesResult;
+    var getAccountCreationTimeResult = getAccountCreationTimeTask.Result;
+    var (creationTime, isErrorGetAccountCreationTime) = getAccountCreationTimeResult;
 
-var getAccountCreationTimeResult = getAccountCreationTimeTask.Result;
-var (creationTime, isErrorGetAccountCreationTime) = getAccountCreationTimeResult;
+    var getLastTransactionTimeResult = getLastTransactionTimeTask.Result;
+    var (lastTransactionTime, isErrorGetLastTransactionTime) = getLastTransactionTimeResult;
 
-var getLastTransactionTimeResult = getLastTransactionTimeTask.Result;
-var (lastTransactionTime, isErrorGetLastTransactionTime) = getLastTransactionTimeResult;
+    var getOwnerPermissionResult = getOwnerPermissionTask.Result;
+    var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResult;
 
-var getTotalIncomeResult = getTotalIncomeTask.Result;
-var (usdtTotalIncome, usdtTotalOutcome, monthlyIncome, monthlyOutcome, dailyIncome, dailyOutcome, isErrorGetTotalIncome) = getTotalIncomeResult;
+    var usdtAuthorizedListResult = usdtAuthorizedListTask.Result;
 
-var getOwnerPermissionResult = getOwnerPermissionTask.Result;
-var (ownerPermissionAddress, isErrorGetOwnerPermission) = getOwnerPermissionResult;
+    // 新增：初始化 USDT 账单和收支数据
+    string lastFiveTransactions = string.Empty;
+    decimal usdtTotalIncome = 0m, usdtTotalOutcome = 0m, monthlyIncome = 0m, monthlyOutcome = 0m, dailyIncome = 0m, dailyOutcome = 0m;
+    bool isErrorGetLastFiveTransactions = false, isErrorGetTotalIncome = false;
 
-var usdtAuthorizedListResult = usdtAuthorizedListTask.Result;
-    
- // 计算人民币余额
- decimal cnyBalance = usdtBalance * okxPrice;
-// 计算可供转账的次数
-int availableTransferCount = (int)(trxBalance / 13.3959m);    
-    
-// 计算地址中连续相同字符的数量（忽略大小写）
-int maxConsecutiveIdenticalCharsCount = 0;
-int currentConsecutiveIdenticalCharsCount = 0;
-char previousChar = '\0';
-
-foreach (char c in tronAddress)
-{
-    if (char.ToUpperInvariant(c) == char.ToUpperInvariant(previousChar))
+    if (shouldQueryFullData)
     {
-        currentConsecutiveIdenticalCharsCount++;
-        maxConsecutiveIdenticalCharsCount = Math.Max(maxConsecutiveIdenticalCharsCount, currentConsecutiveIdenticalCharsCount);
+        var getLastFiveTransactionsResult = getLastFiveTransactionsTask.Result;
+        (lastFiveTransactions, isErrorGetLastFiveTransactions) = getLastFiveTransactionsResult;
+
+        var getTotalIncomeResult = getTotalIncomeTask.Result;
+        (usdtTotalIncome, usdtTotalOutcome, monthlyIncome, monthlyOutcome, dailyIncome, dailyOutcome, isErrorGetTotalIncome) = getTotalIncomeResult;
     }
-    else
+
+    // 计算人民币余额
+    decimal cnyBalance = usdtBalance * okxPrice;
+    // 计算可供转账的次数
+    int availableTransferCount = (int)(trxBalance / 13.3959m);
+
+    // 计算地址中连续相同字符的数量（忽略大小写）
+    int maxConsecutiveIdenticalCharsCount = 0;
+    int currentConsecutiveIdenticalCharsCount = 0;
+    char previousChar = '\0';
+
+    foreach (char c in tronAddress)
     {
-        currentConsecutiveIdenticalCharsCount = 1;
-        previousChar = c;
+        if (char.ToUpperInvariant(c) == char.ToUpperInvariant(previousChar))
+        {
+            currentConsecutiveIdenticalCharsCount++;
+            maxConsecutiveIdenticalCharsCount = Math.Max(maxConsecutiveIdenticalCharsCount, currentConsecutiveIdenticalCharsCount);
+        }
+        else
+        {
+            currentConsecutiveIdenticalCharsCount = 1;
+            previousChar = c;
+        }
     }
-}
+
     // 更新查询统计
     UpdateQueryStats(message.From.Id, tronAddress);
 
@@ -12045,45 +12098,46 @@ foreach (char c in tronAddress)
     }
     catch (Exception ex)
     {
-        // 在日志中记录异常信息，这里可以使用 Console.WriteLine 或其他日志库
         Console.WriteLine($"Error retrieving query stats: {ex.Message}");
-        // 设置默认值
         totalQueries = 0;
         uniqueUsers = 0;
     }
+
     // 获取地址标签
     var addressLabel = await FetchAddressLabelAsync(tronAddress);
-	
-// 构建结果文本时，根据条件决定是否添加地址标签信息
-string addressLabelSection = "";
-if (!string.IsNullOrEmpty(addressLabel)) {
-    addressLabelSection = $"地址标签：<b>{addressLabel}</b>\n";
-}
-	
-// 当连续相同字符数量大于等于4时，添加“靓号”信息
-string fireEmoji = "\uD83D\uDD25";
-string buyLink = "https://t.me/lianghaonet/8";
-string userLabelSuffix = $" <a href=\"{buyLink}\">购买靓号</a>";
 
-if (maxConsecutiveIdenticalCharsCount >= 4)
-{
-    userLabelSuffix = $" {fireEmoji}{maxConsecutiveIdenticalCharsCount}连靓号{fireEmoji} <a href=\"{buyLink}\">我也要靓号</a>";
-}
-    
-// 添加地址权限的信息
-string addressPermissionText;
-if (string.IsNullOrEmpty(ownerPermissionAddress) || ownerPermissionAddress == "查询超时或地址未激活！")
-{
-    addressPermissionText = $"<b>查询超时或地址未激活！</b>";
-}
-else if (ownerPermissionAddress == "当前地址未多签")
-{
-    addressPermissionText = "当前地址未多签";
-}
-else
-{
-    addressPermissionText = $"<code>{ownerPermissionAddress}</code>";
-}
+    // 构建结果文本时，根据条件决定是否添加地址标签信息
+    string addressLabelSection = "";
+    if (!string.IsNullOrEmpty(addressLabel))
+    {
+        addressLabelSection = $"地址标签：<b>{addressLabel}</b>\n";
+    }
+
+    // 当连续相同字符数量大于等于4时，添加“靓号”信息
+    string fireEmoji = "\uD83D\uDD25";
+    string buyLink = "https://t.me/lianghaonet/8";
+    string userLabelSuffix = $" <a href=\"{buyLink}\">购买靓号</a>";
+
+    if (maxConsecutiveIdenticalCharsCount >= 4)
+    {
+        userLabelSuffix = $" {fireEmoji}{maxConsecutiveIdenticalCharsCount}连靓号{fireEmoji} <a href=\"{buyLink}\">我也要靓号</a>";
+    }
+
+    // 添加地址权限的信息
+    string addressPermissionText;
+    if (string.IsNullOrEmpty(ownerPermissionAddress) || ownerPermissionAddress == "查询超时或地址未激活！")
+    {
+        addressPermissionText = $"<b>查询超时或地址未激活！</b>";
+    }
+    else if (ownerPermissionAddress == "当前地址未多签")
+    {
+        addressPermissionText = "当前地址未多签";
+    }
+    else
+    {
+        addressPermissionText = $"<code>{ownerPermissionAddress}</code>";
+    }
+
     // 根据USDT余额判断用户标签
     string userLabel;
     if (usdtBalance < 100_000)
@@ -12100,73 +12154,75 @@ else
     }
 
     string resultText;
-    
-string exchangeUrl = "https://t.me/yifanfubot";
-string exchangeLink = $"<a href=\"{exchangeUrl}\">立即兑换</a>";
 
-// 获取发送消息的用户信息
-var fromUser = message.From;
-string userLink = "未知用户";
+    string exchangeUrl = "https://t.me/yifanfubot";
+    string exchangeLink = $"<a href=\"{exchangeUrl}\">立即兑换</a>";
 
-if (fromUser != null)
-{
-    string fromUsername = fromUser.Username;
-    string fromFirstName = fromUser.FirstName;
-    string fromLastName = fromUser.LastName;
+    // 获取发送消息的用户信息
+    var fromUser = message.From;
+    string userLink = "未知用户";
 
-    // 创建用户链接
-    if (!string.IsNullOrEmpty(fromUsername))
+    if (fromUser != null)
     {
-        userLink = $"<a href=\"tg://user?id={fromUser.Id}\">{fromFirstName} {fromLastName}</a>";
+        string fromUsername = fromUser.Username;
+        string fromFirstName = fromUser.FirstName;
+        string fromLastName = fromUser.LastName;
+
+        // 创建用户链接
+        if (!string.IsNullOrEmpty(fromUsername))
+        {
+            userLink = $"<a href=\"tg://user?id={fromUser.Id}\">{fromFirstName} {fromLastName}</a>";
+        }
+        else
+        {
+            userLink = $"{fromFirstName} {fromLastName}";
+        }
+    }
+
+    // 修改：根据会员状态决定是否显示USDT账单和收支数据
+    string incomeOutcomeText = "";
+    if (shouldQueryFullData)
+    {
+        // 计算月盈亏和日盈亏
+        decimal monthlyProfit = monthlyIncome - monthlyOutcome;
+        decimal dailyProfit = dailyIncome - dailyOutcome;
+
+        if (monthlyIncome != 0 || monthlyOutcome != 0 || dailyIncome != 0 || dailyOutcome != 0)
+        {
+            incomeOutcomeText = $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
+                                $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n";
+        }
     }
     else
     {
-        userLink = $"{fromFirstName} {fromLastName}";
+        incomeOutcomeText = "USDT收支汇总为 FF Pro 会员专享！欢迎开通体验！\n\n";
     }
-}
 
-// 计算月盈亏和日盈亏
-decimal monthlyProfit = monthlyIncome - monthlyOutcome;
-decimal dailyProfit = dailyIncome - dailyOutcome;
+    // 私聊广告
+    string botUsername = "yifanfubot"; // 你的机器人的用户名
+    string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
+    string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
+    string groupExclusiveText = $"<a href=\"{shareLink}\">欢迎将 bot 拉进任意群组使用，大家一起查！</a>\n";
+    string uxiaofeikaText = $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n";
 
-// 构建结果文本时，根据条件决定是否添加月/日收入支出盈亏信息
-string incomeOutcomeText = "";
-if (monthlyIncome != 0 || monthlyOutcome != 0 || dailyIncome != 0 || dailyOutcome != 0)
-{
-    incomeOutcomeText = $"本月收入：<b>{monthlyIncome.ToString("N2")}</b> | 支出：<b>-{monthlyOutcome.ToString("N2")}</b> | 盈亏：<b>{monthlyProfit.ToString("N2")}</b>\n" +
-                        $"今日收入：<b>{dailyIncome.ToString("N2")}</b> | 支出：<b>-{dailyOutcome.ToString("N2")}</b> | 盈亏：<b>{dailyProfit.ToString("N2")}</b>\n\n";
-}
+    // 添加授权列表的信息
+    string usdtAuthorizedListText = "";
+    if (!string.IsNullOrEmpty(usdtAuthorizedListResult) &&
+        !usdtAuthorizedListResult.Contains("No permission to use this API") &&
+        !usdtAuthorizedListResult.Contains("无法获取授权记录"))
+    {
+        usdtAuthorizedListText = "———————<b>授权列表</b>———————\n" + usdtAuthorizedListResult;
+    }
 
-//私聊广告    
-string botUsername = "yifanfubot"; // 你的机器人的用户名
-string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
-string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";    
-string groupExclusiveText = $"<a href=\"{shareLink}\">欢迎将 bot 拉进任意群组使用，大家一起查！</a>\n";
-string uxiaofeikaText = $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n"; 
+    // 构建结果文本时，根据条件决定是否添加交易次数信息
+    string transactionsText = "";
+    if (transactions > 0)
+    {
+        transactionsText = $"交易次数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n";
+    }
 
-
-// 添加授权列表的信息
-string usdtAuthorizedListText = "";
-if (!string.IsNullOrEmpty(usdtAuthorizedListResult) && 
-    !usdtAuthorizedListResult.Contains("No permission to use this API") &&
-    !usdtAuthorizedListResult.Contains("无法获取授权记录"))
-{
-    usdtAuthorizedListText = "———————<b>授权列表</b>———————\n" + usdtAuthorizedListResult;
-}
-else
-{
-    // 如果包含错误信息，确保不添加任何授权列表信息
-    usdtAuthorizedListText = "";
-}
-	
-// 构建结果文本时，根据条件决定是否添加交易次数信息
-string transactionsText = "";
-if (transactions > 0) {
-    transactionsText = $"交易次数：<b>{transactions} （ ↑{transactionsOut} _ ↓{transactionsIn} ）</b>\n";
-} 
-	
-// 确定是否为私聊
-bool isPrivateChat = message.Chat.Type == ChatType.Private;
+    // 确定是否为私聊
+    bool isPrivateChat = message.Chat.Type == ChatType.Private;
 
     // 获取备注信息
     string note = userAddressNotes.GetValueOrDefault((userId, tronAddress), "");
@@ -12181,38 +12237,38 @@ bool isPrivateChat = message.Chat.Type == ChatType.Private;
     // 构建用户标签行，插入备注
     string userLabelText = $"用户标签：<b>{userLabel} {noteText}</b> {userLabelSuffix}";
 
-// 使用已有的 userLink（避免重复定义）
-string headerText = isPrivateChat
-    ? $"查询地址：<code>{tronAddress}</code>\n"
-    : $"<b>来自 </b>{userLink}<b>的查询</b>\n\n查询地址：<code>{tronAddress}</code>\n";
+    // 使用已有的 userLink（避免重复定义）
+    string headerText = isPrivateChat
+        ? $"查询地址：<code>{tronAddress}</code>\n"
+        : $"<b>来自 </b>{userLink}<b>的查询</b>\n\n查询地址：<code>{tronAddress}</code>\n";
 
-// 确定 TRX 余额相关文本
-string trxBalanceText = trxBalance < 100
-    ? $"TRX余额：<b>{trxBalance.ToString("N2")}  |  TRX能量不足，请{exchangeLink}</b>\n"
-    : $"TRX余额：<b>{trxBalance.ToString("N2")}  |  可供转账{availableTransferCount}次</b>\n";
+    // 确定 TRX 余额相关文本
+    string trxBalanceText = trxBalance < 100
+        ? $"TRX余额：<b>{trxBalance.ToString("N2")}  |  TRX能量不足，请{exchangeLink}</b>\n"
+        : $"TRX余额：<b>{trxBalance.ToString("N2")}  |  可供转账{availableTransferCount}次</b>\n";
 
-// 构建 resultText
-resultText = headerText +
-             $"多签地址：<b>{addressPermissionText}</b>\n" +
-             $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-             $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
-             $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +
-             $"————————<b>资源</b>————————\n" +
-             userLabelText + "\n" + 
-             addressLabelSection +
-             transactionsText +
-             $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
-             trxBalanceText +
-             $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
-             $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
-             $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +
-             $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
-             $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
-             usdtAuthorizedListText +
-             $"{lastFiveTransactions}\n" +
-             incomeOutcomeText +
-             (isPrivateChat ? groupExclusiveText : "") +
-             uxiaofeikaText; 
+    // 构建 resultText
+    resultText = headerText +
+                 $"多签地址：<b>{addressPermissionText}</b>\n" +
+                 $"注册时间：<b>{creationTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+                 $"最后活跃：<b>{lastTransactionTime:yyyy-MM-dd HH:mm:ss}</b>\n" +
+                 $"查询数据：此地址已被 <b>{uniqueUsers}</b> 人查询 <b>{totalQueries} 次</b>\n" +
+                 $"————————<b>资源</b>————————\n" +
+                 userLabelText + "\n" +
+                 addressLabelSection +
+                 transactionsText +
+                 $"USDT余额：<b>{usdtBalance.ToString("N2")} ≈ {cnyBalance.ToString("N2")}元人民币</b>\n" +
+                 trxBalanceText +
+                 $"免费带宽：<b>{remainingBandwidth.ToString("N0")} / {totalBandwidth.ToString("N0")}</b>\n" +
+                 $"质押带宽：<b>{netRemaining.ToString("N0")} / {netLimit.ToString("N0")}</b>\n" +
+                 $"质押能量：<b>{energyRemaining.ToString("N0")} / {energyLimit.ToString("N0")}</b>\n" +
+                 $"累计兑换：<b>{usdtTotal.ToString("N2")} USDT</b>\n" +
+                 $"兑换次数：<b>{transferCount.ToString("N0")} 次</b>\n" +
+                 usdtAuthorizedListText +
+                 (shouldQueryFullData ? lastFiveTransactions : "") + "\n" +
+                 incomeOutcomeText +
+                 (isPrivateChat ? groupExclusiveText : "") +
+                 uxiaofeikaText;
 
     // 创建内联键盘
     InlineKeyboardMarkup inlineKeyboard;
@@ -12271,17 +12327,16 @@ resultText = headerText +
         await botClient.EditMessageMediaAsync(
             chatId: chatId,
             messageId: infoMessage.MessageId,
-media: new InputMediaPhoto(gifUrl)
-{
-    Caption = resultText,
-    ParseMode = ParseMode.Html
-},
+            media: new InputMediaPhoto(gifUrl)
+            {
+                Caption = resultText,
+                ParseMode = ParseMode.Html
+            },
             replyMarkup: inlineKeyboard
         );
     }
     catch (Exception ex)
     {
-        //Console.WriteLine($"编辑为GIF消息失败：{ex.Message}");
         try
         {
             await botClient.SendPhotoAsync(
@@ -12295,7 +12350,6 @@ media: new InputMediaPhoto(gifUrl)
         }
         catch (Exception sendEx)
         {
-            //Console.WriteLine($"发送GIF消息失败：{sendEx.Message}");
             try
             {
                 await botClient.EditMessageTextAsync(
@@ -12304,12 +12358,11 @@ media: new InputMediaPhoto(gifUrl)
                     text: resultText,
                     parseMode: ParseMode.Html,
                     replyMarkup: inlineKeyboard,
-		    disableWebPagePreview: true // 添加：关闭链接预览以避免显示GIF链接预览	
+                    disableWebPagePreview: true // 添加：关闭链接预览以避免显示GIF链接预览
                 );
             }
             catch (Exception textEx)
             {
-               // Console.WriteLine($"编辑为文本消息失败：{textEx.Message}");
                 try
                 {
                     await botClient.SendTextMessageAsync(
@@ -12317,12 +12370,12 @@ media: new InputMediaPhoto(gifUrl)
                         text: resultText,
                         parseMode: ParseMode.Html,
                         replyMarkup: inlineKeyboard,
-			disableWebPagePreview: true // 添加：关闭链接预览以避免显示GIF链接预览    
+                        disableWebPagePreview: true // 添加：关闭链接预览以避免显示GIF链接预览
                     );
                 }
                 catch (Exception finalEx)
                 {
-                   // Console.WriteLine($"发送文本消息失败：{finalEx.Message}");
+                    // Console.WriteLine($"发送文本消息失败：{finalEx.Message}");
                 }
             }
         }
