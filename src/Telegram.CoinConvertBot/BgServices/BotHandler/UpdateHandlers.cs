@@ -1934,7 +1934,7 @@ static decimal fixedCost = 7.00m;
 static decimal savings = fixedCost - TransactionFee;
 static decimal savingsPercentage = Math.Ceiling((savings / fixedCost) * 100);
 
-// 对方地址无u的费用计算
+// 对方地址无u的费用计算 有u费用*2-1
 static decimal noUFee = TransactionFee * 2 - 1;
 static decimal noUSavings = fixedCost * 2 - noUFee;
 static decimal noUSavingsPercentage = Math.Ceiling((noUSavings / (fixedCost * 2)) * 100);
