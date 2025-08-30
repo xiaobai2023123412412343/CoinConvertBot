@@ -15726,7 +15726,7 @@ else if(update.CallbackQuery.Data == "energyComparison")
     });
 
     // 尝试发送带图片的消息
-    const string imageUrl = "https://i.postimg.cc/zG7f5dmv/maxresdefault.jpg";
+    const string imageUrl = "https://i.postimg.cc/BQV0CdGx/1.jpg";
     try
     {
         await botClient.SendPhotoAsync(
@@ -17623,7 +17623,7 @@ try
         {
             await botClient.SendPhotoAsync(
                 chatId: message.Chat.Id,
-                photo: new InputOnlineFile("https://i.postimg.cc/zG7f5dmv/maxresdefault.jpg"),
+                photo: new InputOnlineFile("https://i.postimg.cc/BQV0CdGx/1.jpg"),
                 caption: multisigText,
                 parseMode: ParseMode.Html,
                 replyMarkup: inlineKeyboard
