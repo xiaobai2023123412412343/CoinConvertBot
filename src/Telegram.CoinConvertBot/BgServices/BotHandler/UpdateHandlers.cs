@@ -1927,10 +1927,10 @@ public static class FundingRateMonitor
 }
 	
 // 定义全局变量  租能量价格
-public static decimal TransactionFee = 7.00m;
+public static decimal TransactionFee = 5.00m;
 
-// 对方地址有u的费用计算，这里固定14TRX
-static decimal fixedCost = 14.00m;
+// 对方地址有u的费用计算，这里固定7TRX
+static decimal fixedCost = 7.00m;
 static decimal savings = fixedCost - TransactionFee;
 static decimal savingsPercentage = Math.Ceiling((savings / fixedCost) * 100);
 
@@ -23673,12 +23673,12 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 <b>如需兑换 ERC-20 手续费直接联系下方管理员！ </b> 	
 {ethRateText}—————————————————    
 转账费用：（浮动）
-对方地址有u：13.39 TRX - 14.00 TRX 
-对方地址无u：27.25 TRX - 28.00 TRX 
+对方地址有u：  6.42 TRX -  7.00  TRX 
+对方地址无u：13.03 TRX - 14.00 TRX 
 
 {adminText} 租赁能量更划算：
-对方地址有u：仅需  {TransactionFee} TRX，节省  {savings} TRX (节省约{savingsPercentage}%) 
-对方地址无u：仅需{noUFee} TRX，节省{noUSavings} TRX (节省约{noUSavingsPercentage}%)         
+对方地址有u：仅需  <b>{TransactionFee} TRX</b>，节省  {savings} TRX (节省约{savingsPercentage}%) 
+对方地址无u：仅需  <b>{noUFee} TRX</b>，节省  {noUSavings} TRX (节省约{noUSavingsPercentage}%)         
 
 
 ";
