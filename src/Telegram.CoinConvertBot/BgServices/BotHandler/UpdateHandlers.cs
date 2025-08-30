@@ -23071,8 +23071,11 @@ async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
     Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> incomeTask = GetUSDTIncomeAsync(targetReceiveAddress, contractAddress);
     Task<decimal> todayTRXOutTask = GetTodayTRXOutAsync(Address); // 获取 TRX 今日支出
 
+    // 获取当前带宽和能量的TRX价值
+    Task<(decimal burnEnergyCost, decimal burnNetCost)> resourceCostTask = GetAcquisitionCostAsync();
+
     // 等待所有任务完成
-    await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, incomeTask, todayTRXOutTask);
+    await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, incomeTask, todayTRXOutTask, resourceCostTask);
 
     // 获取任务的结果
     var resource = resourceTask.Result;
@@ -23084,6 +23087,13 @@ async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
     decimal monthlyIncome = Math.Round(incomeTask.Result.monthlyIncome, 2);
     decimal yearlyIncome = Math.Round(incomeTask.Result.yearlyIncome, 2);
     decimal todayTRXOut = Math.Round(todayTRXOutTask.Result, 2);
+
+    // 计算预设的转账能量和带宽成本
+    decimal bandwidthCost = 345 * resourceCostTask.Result.burnNetCost; // 345 带宽的 TRX 成本
+    decimal energyCost64285 = 64285 * resourceCostTask.Result.burnEnergyCost; // 64285 能量的 TRX 成本
+    decimal energyCost130285 = 130285 * resourceCostTask.Result.burnEnergyCost; // 130285 能量的 TRX 成本
+    decimal withU = Math.Round(bandwidthCost + energyCost64285, 4); // 有U地址总成本
+    decimal withoutU = Math.Round(bandwidthCost + energyCost130285, 4); // 无U地址总成本
 
     decimal requiredEnergy1 = 64285;
     decimal requiredEnergy2 = 130285;
@@ -23097,18 +23107,9 @@ async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
     // 从 _rateRepository 获取 USDT 到 TRX 的汇率
     var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
     var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-    // 计算手续费后的兑换汇率
     decimal usdtToTrxRateAfterFees = rate * (1 - FeeRate);
 
-    decimal TRXInUSDT;
-    if (usdtToTrxRateAfterFees != 0)
-    {
-        TRXInUSDT = TRX / usdtToTrxRateAfterFees;
-    }
-    else
-    {
-        TRXInUSDT = 0; // 汇率为0时的处理
-    }
+    decimal TRXInUSDT = usdtToTrxRateAfterFees != 0 ? TRX / usdtToTrxRateAfterFees : 0;
 
     var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
@@ -23118,17 +23119,21 @@ USDT余额： <b>{USDT}</b>
 质押带宽： <b>{resource.NetLimit - resource.NetUsed}/{resource.NetLimit}</b>
 质押能量： <b>{energyRemaining}/{resource.EnergyLimit}</b>    
 ——————————————————————    
+今日承兑：<b>{todayIncome} USDT  |  {todayTRXOut} TRX</b>
+本月承兑：<b>{monthlyIncome} USDT</b>
+年度承兑：<b>{yearlyIncome} USDT</b>
+——————————————————————    
 带宽质押比：<b>100 TRX = {resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100:0.000} 带宽</b>
 能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>       
  
 质押 {requiredTRXForBandwidth} TRX = 345 带宽   
 质押 {requiredTRX1} TRX = 64285 能量
 质押 {requiredTRX2} TRX = 130285 能量     
-——————————————————————    
-今日承兑：<b>{todayIncome} USDT  |  {todayTRXOut} TRX</b>
-本月承兑：<b>{monthlyIncome} USDT</b>
-年度承兑：<b>{yearlyIncome} USDT</b>                  
+
+<b>有U：{bandwidthCost:F3}+{energyCost64285:F4} = {withU} TRX</b>
+<b>无U：{bandwidthCost:F3}+{energyCost130285:F4} = {withoutU} TRX</b>
 ";
+
     // 创建包含三行，每行4个按钮的虚拟键盘
     var keyboard = new ReplyKeyboardMarkup(new[]
     {
@@ -23154,13 +23159,13 @@ USDT余额： <b>{USDT}</b>
             new KeyboardButton("更多功能"),
         }
     });		
-            keyboard.ResizeKeyboard = true;           
-            keyboard.OneTimeKeyboard = false;
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: msg,
-                                                        parseMode: ParseMode.Html,
-                                                        replyMarkup: keyboard);
-        }
+    keyboard.ResizeKeyboard = true;           
+    keyboard.OneTimeKeyboard = false;
+    return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                               text: msg,
+                                               parseMode: ParseMode.Html,
+                                               replyMarkup: keyboard);
+}
         async Task<Message> BindAddress(ITelegramBotClient botClient, Message message, bool isProxyBinding = false)
         {
             if (message.From == null) return message;
