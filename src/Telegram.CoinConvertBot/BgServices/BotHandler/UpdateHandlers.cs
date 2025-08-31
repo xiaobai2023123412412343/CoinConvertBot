@@ -12542,25 +12542,25 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
     string maxEnergyDate = "";
 
     // 解析每日转账类型的笔数
-(int withUBalanceCount, int withoutUBalanceCount) CalculateTransactionTypes(int totalTransactions, int totalEnergy, int energyWithUBalance, int energyWithoutUBalance)
-{
-    int withoutUBalanceCount = (totalEnergy - totalTransactions * energyWithUBalance) / (energyWithoutUBalance - energyWithUBalance);
-    int withUBalanceCount = totalTransactions - withoutUBalanceCount;
-
-    // 确保计算结果非负
-    if (withoutUBalanceCount < 0)
+    (int withUBalanceCount, int withoutUBalanceCount) CalculateTransactionTypes(int totalTransactions, int totalEnergy, int energyWithUBalance, int energyWithoutUBalance)
     {
-        withoutUBalanceCount = 0;
-        withUBalanceCount = totalTransactions; // 如果无余额计数为负，则假设所有交易都有余额
-    }
-    if (withUBalanceCount < 0)
-    {
-        withUBalanceCount = 0;
-        withoutUBalanceCount = totalTransactions; // 如果有余额计数为负，则假设所有交易都无余额
-    }
+        int withoutUBalanceCount = (totalEnergy - totalTransactions * energyWithUBalance) / (energyWithoutUBalance - energyWithUBalance);
+        int withUBalanceCount = totalTransactions - withoutUBalanceCount;
 
-    return (withUBalanceCount, withoutUBalanceCount);
-}
+        // 确保计算结果非负
+        if (withoutUBalanceCount < 0)
+        {
+            withoutUBalanceCount = 0;
+            withUBalanceCount = totalTransactions; // 如果无余额计数为负，则假设所有交易都有余额
+        }
+        if (withUBalanceCount < 0)
+        {
+            withUBalanceCount = 0;
+            withoutUBalanceCount = totalTransactions; // 如果有余额计数为负，则假设所有交易都无余额
+        }
+
+        return (withUBalanceCount, withoutUBalanceCount);
+    }
 
     using (var httpClient = new HttpClient())
     {
@@ -12641,91 +12641,89 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
                 throw new Exception("无法获取能量消耗数据");
             }
 
-// 构建结果字符串
-StringBuilder resultBuilder = new StringBuilder();
-resultBuilder.AppendLine("|   时 间   |     类型     |能量消耗| 实际消耗");
+            // 构建结果字符串
+            StringBuilder resultBuilder = new StringBuilder();
+            resultBuilder.AppendLine("|   时 间   |     类型     |能量消耗| 实际消耗");
 
-int maxIn = 0, maxOut = 0, maxTotalTransactions = 0;
-string maxInDate = "", maxOutDate = "", maxTotalTransactionsDate = "";
-int maxWithUBalanceCount = 0, maxWithoutUBalanceCount = 0; // 新增变量记录最大的有u和无u转账笔数
-bool firstLine = true; // 标记是否为第一行
+            int maxIn = 0, maxOut = 0, maxTotalTransactions = 0;
+            string maxInDate = "", maxOutDate = "", maxTotalTransactionsDate = "";
+            int maxWithUBalanceCount = 0, maxWithoutUBalanceCount = 0; // 新增变量记录最大的有u和无u转账笔数
+            bool firstLine = true; // 标记是否为第一行
 
-for (int i = 0; i <= days; i++)
-{
-    string date = nowInChina.AddDays(-i).ToString("yyyy/MM/dd");
-    if (!dailyCounts.ContainsKey(date))
-    {
-        dailyCounts[date] = (0, 0); // 当天没有交易
-    }
+            for (int i = 0; i <= days; i++)
+            {
+                string date = nowInChina.AddDays(-i).ToString("yyyy/MM/dd");
+                if (!dailyCounts.ContainsKey(date))
+                {
+                    dailyCounts[date] = (0, 0); // 当天没有交易
+                }
 
-    int energyWithUBalance = 64285; // 给有余额地址转账的能量消耗
-    int energyWithoutUBalance = 130285; // 给无余额地址转账的能量消耗
-    int totalTransactions = dailyCounts[date].outCount; // 当日总转出笔数
-    int totalEnergy = energyUsage.ContainsKey(date) ? energyUsage[date] : 0; // 当日能量消耗
-    var (withUBalanceCount, withoutUBalanceCount) = CalculateTransactionTypes(totalTransactions, totalEnergy, energyWithUBalance, energyWithoutUBalance);
+                int totalTransactions = dailyCounts[date].outCount; // 当日总转出笔数
+                int totalEnergy = energyUsage.ContainsKey(date) ? energyUsage[date] : 0; // 当日能量消耗
+                var (withUBalanceCount, withoutUBalanceCount) = CalculateTransactionTypes(totalTransactions, totalEnergy, EnergyWithUBalance, EnergyWithoutUBalance);
 
-    // 更新最大转入笔数
-    if (dailyCounts[date].inCount > maxIn)
-    {
-        maxIn = dailyCounts[date].inCount;
-        maxInDate = date;
-    }	
-    // 更新最大能量消耗
-    if (totalEnergy > maxEnergy)
-    {
-        maxEnergy = totalEnergy;
-        maxEnergyDate = date;
-    }
-    // 更新最大转出笔数
-    if (dailyCounts[date].outCount > maxOut)
-    {
-        maxOut = dailyCounts[date].outCount;
-        maxOutDate = date;
-        maxWithUBalanceCount = withUBalanceCount; // 更新最大有u转账笔数
-        maxWithoutUBalanceCount = withoutUBalanceCount; // 更新最大无u转账笔数
-    }
+                // 更新最大转入笔数
+                if (dailyCounts[date].inCount > maxIn)
+                {
+                    maxIn = dailyCounts[date].inCount;
+                    maxInDate = date;
+                }	
+                // 更新最大能量消耗
+                if (totalEnergy > maxEnergy)
+                {
+                    maxEnergy = totalEnergy;
+                    maxEnergyDate = date;
+                }
+                // 更新最大转出笔数
+                if (dailyCounts[date].outCount > maxOut)
+                {
+                    maxOut = dailyCounts[date].outCount;
+                    maxOutDate = date;
+                    maxWithUBalanceCount = withUBalanceCount; // 更新最大有u转账笔数
+                    maxWithoutUBalanceCount = withoutUBalanceCount; // 更新最大无u转账笔数
+                }
 
-    // 特别处理第一行数据
-    string energyDisplay;
-    if (firstLine)
-    {
-        energyDisplay = $"| 能量消耗数据未更新";
-        firstLine = false; // 更新标记，之后的行不再是第一行
-    }
-    else
-    {
-        if (withoutUBalanceCount > 0)
-        {
-            energyDisplay = $"| {totalEnergy} | {withUBalanceCount}+{withoutUBalanceCount}*2≈{withUBalanceCount + 2 * withoutUBalanceCount}笔";
-        }
-        else
-        {
-            energyDisplay = $"| {totalEnergy} | {withUBalanceCount}笔";
-        }
-    }
-    resultBuilder.AppendLine($"|{date}|入: {dailyCounts[date].inCount}笔|出: {dailyCounts[date].outCount}笔{energyDisplay}");
-}
+                // 特别处理第一行数据
+                string energyDisplay;
+                if (firstLine)
+                {
+                    energyDisplay = $"| 能量消耗数据未更新";
+                    firstLine = false; // 更新标记，之后的行不再是第一行
+                }
+                else
+                {
+                    if (withoutUBalanceCount > 0)
+                    {
+                        energyDisplay = $"| {totalEnergy} | {withUBalanceCount}+{withoutUBalanceCount}*2≈{withUBalanceCount + 2 * withoutUBalanceCount}笔";
+                    }
+                    else
+                    {
+                        energyDisplay = $"| {totalEnergy} | {withUBalanceCount}笔";
+                    }
+                }
+                resultBuilder.AppendLine($"|{date}|入: {dailyCounts[date].inCount}笔|出: {dailyCounts[date].outCount}笔{energyDisplay}");
+            }
 
-// 添加统计数据到结果
-resultBuilder.AppendLine();
-resultBuilder.AppendLine($"最多转入：{maxInDate} 转入：{maxIn} 笔");
-resultBuilder.AppendLine($"最多消耗：{maxEnergyDate} 能量消耗: {maxEnergy}");
-if (maxWithoutUBalanceCount > 0)
-{
-    resultBuilder.AppendLine($"最多转出：{maxOutDate} 转出：{maxOut} 笔 ≈ {maxWithUBalanceCount}+{maxWithoutUBalanceCount}*2 ≈ {maxWithUBalanceCount + 2 * maxWithoutUBalanceCount} 笔");
-}
-else
-{
-    resultBuilder.AppendLine($"最多转出：{maxOutDate} 转出：{maxOut} 笔");
-}
-resultBuilder.AppendLine($"实际消耗：x+y*2=给有u余额地址+无u余额地址转账笔数");
-resultBuilder.AppendLine($"温馨提示：给对方无u余额地址转账需要扣双倍能量！\n");
+            // 添加统计数据到结果
+            resultBuilder.AppendLine();
+            resultBuilder.AppendLine($"最多转入：{maxInDate} 转入：{maxIn} 笔");
+            resultBuilder.AppendLine($"最多消耗：{maxEnergyDate} 能量消耗: {maxEnergy}");
+            if (maxWithoutUBalanceCount > 0)
+            {
+                resultBuilder.AppendLine($"最多转出：{maxOutDate} 转出：{maxOut} 笔 ≈ {maxWithUBalanceCount}+{maxWithoutUBalanceCount}*2 ≈ {maxWithUBalanceCount + 2 * maxWithoutUBalanceCount} 笔");
+            }
+            else
+            {
+                resultBuilder.AppendLine($"最多转出：{maxOutDate} 转出：{maxOut} 笔");
+            }
+            resultBuilder.AppendLine($"实际消耗：x+y*2=给有u余额地址+无u余额地址转账笔数");
+            resultBuilder.AppendLine($"温馨提示：给对方无u余额地址转账需要扣双倍能量！\n");
 
-// 添加查询时间和地址
-string queryTime = nowInChina.ToString("yyyy/MM/dd HH:mm:ss");
-resultBuilder.AppendLine($"统计时间： {queryTime}");
-resultBuilder.AppendLine($"统计地址： {tronAddress}");
-		
+            // 添加查询时间和地址
+            string queryTime = nowInChina.ToString("yyyy/MM/dd HH:mm:ss");
+            resultBuilder.AppendLine($"统计时间： {queryTime}");
+            resultBuilder.AppendLine($"统计地址： {tronAddress}");
+        
             // 创建内联按钮
             InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup(
                 InlineKeyboardButton.WithCallbackData("关闭", "back")
