@@ -23093,13 +23093,13 @@ async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
 
     // 计算预设的转账能量和带宽成本
     decimal bandwidthCost = 345 * resourceCostTask.Result.burnNetCost; // 345 带宽的 TRX 成本
-    decimal energyCost64285 = 64285 * resourceCostTask.Result.burnEnergyCost; // 64285 能量的 TRX 成本
-    decimal energyCost130285 = 130285 * resourceCostTask.Result.burnEnergyCost; // 130285 能量的 TRX 成本
-    decimal withU = Math.Round(bandwidthCost + energyCost64285, 4); // 有U地址总成本
-    decimal withoutU = Math.Round(bandwidthCost + energyCost130285, 4); // 无U地址总成本
+    decimal energyCostWithUBalance = EnergyWithUBalance * resourceCostTask.Result.burnEnergyCost; // EnergyWithUBalance 能量的 TRX 成本
+    decimal energyCostWithoutUBalance = EnergyWithoutUBalance * resourceCostTask.Result.burnEnergyCost; // EnergyWithoutUBalance 能量的 TRX 成本
+    decimal withU = Math.Round(bandwidthCost + energyCostWithUBalance, 4); // 有U地址总成本
+    decimal withoutU = Math.Round(bandwidthCost + energyCostWithoutUBalance, 4); // 无U地址总成本
 
-    decimal requiredEnergy1 = 64285;
-    decimal requiredEnergy2 = 130285;
+    decimal requiredEnergy1 = EnergyWithUBalance;
+    decimal requiredEnergy2 = EnergyWithoutUBalance;
     decimal energyPer100TRX = resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100;
     decimal requiredTRX1 = Math.Floor(requiredEnergy1 / (energyPer100TRX / 100)) + 1;
     decimal requiredTRX2 = Math.Floor(requiredEnergy2 / (energyPer100TRX / 100)) + 1;
@@ -23130,11 +23130,11 @@ USDT余额： <b>{USDT}</b>
 能量质押比：<b>100 TRX = {resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100:0.000} 能量</b>       
  
 质押 {requiredTRXForBandwidth} TRX = 345 带宽   
-质押 {requiredTRX1} TRX = 64285 能量
-质押 {requiredTRX2} TRX = 130285 能量     
+质押 {requiredTRX1} TRX = {EnergyWithUBalance} 能量
+质押 {requiredTRX2} TRX = {EnergyWithoutUBalance} 能量   
 
-<b>有U：{bandwidthCost:F3}+{energyCost64285:F4} = {withU} TRX</b>
-<b>无U：{bandwidthCost:F3}+{energyCost130285:F4} = {withoutU} TRX</b>
+<b>有U：{bandwidthCost:F3}+{energyCostWithUBalance:F4} = {withU} TRX</b>
+<b>无U：{bandwidthCost:F3}+{energyCostWithoutUBalance:F4} = {withoutU} TRX</b>
 ";
 
     // 创建包含三行，每行4个按钮的虚拟键盘
