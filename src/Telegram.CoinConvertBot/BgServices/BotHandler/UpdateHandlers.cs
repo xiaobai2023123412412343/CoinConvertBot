@@ -11187,9 +11187,21 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, doub
 }
 public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tronAddress)
 {
+    // 定义 USDT 合约地址和查询参数
     string tokenContractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
     int limit = 20;
-    string apiKey = "305cb06c-9c01-42ad-8a87-6ff7acfdffb8"; // 修改：使用新的 API Key
+
+    // 定义转入和转出 API 的密钥列表
+    string[] apiKeysIn = new[]
+    {
+        "305cb06c-9c01-42ad-8a87-6ff7acfdffb8", // 转入 API 密钥 1
+        "0c496ad5-a1aa-495f-ac89-d49345ad9431"  // 转入 API 密钥 2
+    };
+    string[] apiKeysOut = new[]
+    {
+        "6a41bce4-6fe6-4210-9e03-1cde965e6ee0", // 转出 API 密钥 1
+        "9d98324c-db84-48da-be18-307825d44e43"  // 转出 API 密钥 2
+    };
 
     // 分别查询转入和转出的交易
     string urlIn = $"https://apilist.tronscanapi.com/api/token_trc20/transfers?limit={limit}&start=0&contract_address={tokenContractAddress}&toAddress={tronAddress}&confirm=true";
@@ -11198,32 +11210,39 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
     using (var httpClient = new HttpClient())
     {
         httpClient.DefaultRequestHeaders.Clear();
-        httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKey);
+        // 新增：随机数生成器，用于延迟
+        Random random = new Random();
 
         try
         {
-            // 新增：随机数生成器
-            Random random = new Random();
-
-            // 获取转入交易（带重试机制）
+            // 获取转入交易（带重试机制，切换密钥）
             string jsonStringIn = null;
-            for (int retry = 0; retry < 2; retry++) // 最多重试 1 次（总共 2 次尝试）
+            for (int attempt = 0; attempt < 2; attempt++) // 最多尝试2次（每次使用不同密钥）
             {
-                //Console.WriteLine($"正在请求转入交易API (尝试 {retry + 1}): {urlIn}");
+                // 设置当前尝试的密钥
+                string currentApiKey = apiKeysIn[attempt];
+                httpClient.DefaultRequestHeaders.Remove("TRON-PRO-API-KEY");
+                httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", currentApiKey);
+                //Console.WriteLine($"正在请求转入交易API (尝试 {attempt + 1}，密钥: {currentApiKey}): {urlIn}");
+
                 HttpResponseMessage responseIn = await httpClient.GetAsync(urlIn);
-                if (responseIn.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                if (responseIn.StatusCode == System.Net.HttpStatusCode.TooManyRequests && attempt < 1)
                 {
-                    double delayMs = 1000 + random.NextDouble() * 200; // 随机延迟 1-1.2 秒
-                    //Console.WriteLine($"转入交易API 返回 429 TooManyRequests，等待 {delayMs:F2} 毫秒后重试");
+                    // 遇到频率限制，等待随机 1.1-1.2 秒后使用下一个密钥重试
+                    double delayMs = 1100 + random.NextDouble() * 100; // 随机延迟 1.1-1.2 秒
+                    //Console.WriteLine($"转入交易API 返回 429 TooManyRequests，等待 {delayMs:F2} 毫秒后使用密钥 {apiKeysIn[attempt + 1]} 重试");
                     await Task.Delay((int)delayMs);
                     continue;
                 }
+                if (!responseIn.IsSuccessStatusCode)
+                {
+                    //Console.WriteLine($"转入交易API 请求失败，状态码: {responseIn.StatusCode}");
+                    return (string.Empty, true);
+                }
+
                 jsonStringIn = await responseIn.Content.ReadAsStringAsync();
-                //Console.WriteLine($"转入交易API返回数据: {jsonStringIn}");
-                if (responseIn.IsSuccessStatusCode)
-                    break;
-                //Console.WriteLine($"转入交易API请求失败，状态码: {responseIn.StatusCode}");
-                return (string.Empty, true);
+                //Console.WriteLine($"转入交易API 返回数据: {jsonStringIn}");
+                break; // 成功获取数据，跳出重试循环
             }
 
             // 新增：在转入和转出请求之间添加随机延迟 0-0.3 秒
@@ -11231,25 +11250,34 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
             //Console.WriteLine($"转入和转出请求之间延迟 {requestDelayMs:F2} 毫秒");
             await Task.Delay((int)requestDelayMs);
 
-            // 获取转出交易（带重试机制）
+            // 获取转出交易（带重试机制，切换密钥）
             string jsonStringOut = null;
-            for (int retry = 0; retry < 2; retry++) // 最多重试 1 次（总共 2 次尝试）
+            for (int attempt = 0; attempt < 2; attempt++) // 最多尝试2次（每次使用不同密钥）
             {
-                //Console.WriteLine($"正在请求转出交易API (尝试 {retry + 1}): {urlOut}");
+                // 设置当前尝试的密钥
+                string currentApiKey = apiKeysOut[attempt];
+                httpClient.DefaultRequestHeaders.Remove("TRON-PRO-API-KEY");
+                httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", currentApiKey);
+                //Console.WriteLine($"正在请求转出交易API (尝试 {attempt + 1}，密钥: {currentApiKey}): {urlOut}");
+
                 HttpResponseMessage responseOut = await httpClient.GetAsync(urlOut);
-                if (responseOut.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                if (responseOut.StatusCode == System.Net.HttpStatusCode.TooManyRequests && attempt < 1)
                 {
-                    double delayMs = 1000 + random.NextDouble() * 200; // 1-1.2 秒
-                    //Console.WriteLine($"转出交易API 返回 429 TooManyRequests，等待 {delayMs:F2} 毫秒后重试");
+                    // 遇到频率限制，等待随机 1.1-1.2 秒后使用下一个密钥重试
+                    double delayMs = 1100 + random.NextDouble() * 100; // 随机延迟 1.1-1.2 秒
+                    //Console.WriteLine($"转出交易API 返回 429 TooManyRequests，等待 {delayMs:F2} 毫秒后使用密钥 {apiKeysOut[attempt + 1]} 重试");
                     await Task.Delay((int)delayMs);
                     continue;
                 }
+                if (!responseOut.IsSuccessStatusCode)
+                {
+                    //Console.WriteLine($"转出交易API 请求失败，状态码: {responseOut.StatusCode}");
+                    return (string.Empty, true);
+                }
+
                 jsonStringOut = await responseOut.Content.ReadAsStringAsync();
-                //Console.WriteLine($"转出交易API返回数据: {jsonStringOut}");
-                if (responseOut.IsSuccessStatusCode)
-                    break;
-                //Console.WriteLine($"转出交易API请求失败，状态码: {responseOut.StatusCode}");
-                return (string.Empty, true);
+                //Console.WriteLine($"转出交易API 返回数据: {jsonStringOut}");
+                break; // 成功获取数据，跳出重试循环
             }
 
             if (string.IsNullOrEmpty(jsonStringIn) || string.IsNullOrEmpty(jsonStringOut))
@@ -11306,7 +11334,7 @@ public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tro
                 string toAddress = (string)transaction["to_address"];
                 string type = tronAddress.Equals(toAddress, StringComparison.OrdinalIgnoreCase) ? "入 " : "出 ";
 
-                decimal usdtAmount = decimal.Parse((string)transaction["quant"]) / 1000000m; // 修复：将 t 改为 transaction
+                decimal usdtAmount = decimal.Parse((string)transaction["quant"]) / 1000000m;
 
                 transactionTextBuilder.AppendLine($"{transactionTimeBeijing:yyyy-MM-dd HH:mm:ss}  {type}<a href=\"https://tronscan.org/#/transaction/{txHash}\">{usdtAmount:N2} U</a>");
             }
