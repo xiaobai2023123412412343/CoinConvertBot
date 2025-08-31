@@ -20893,7 +20893,7 @@ if (Regex.IsMatch(message.Text, @"^\d+笔$"))
             );
 
             // 新增第二段消息：每日套餐笔数及能量计算
-            int energyPerTransaction = 64285; // 假设每笔交易的能量为 64285
+            int energyPerTransaction = EnergyWithUBalance; // 假设每笔交易的能量为 EnergyWithUBalance
             int totalEnergy = energyPerTransaction * transactionCount;
             string totalEnergyWan = (totalEnergy / 10000.0).ToString(CultureInfo.InvariantCulture); // 转换为万单位
             string additionalMsg = $"每日套餐笔数：<b>{transactionCount} 笔</b> | 总能量为：\n\n" +
