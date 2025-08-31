@@ -1929,6 +1929,10 @@ public static class FundingRateMonitor
 // 定义全局变量  租能量价格
 public static decimal TransactionFee = 5.00m;
 
+// 能量消耗常量
+public static int EnergyWithUBalance = 64285;    // 给有余额地址转账的能量消耗
+public static int EnergyWithoutUBalance = 130285; // 给无余额地址转账的能量消耗	
+
 // 对方地址有u的费用计算，这里固定7TRX
 static decimal fixedCost = 7.00m;
 static decimal savings = fixedCost - TransactionFee;
