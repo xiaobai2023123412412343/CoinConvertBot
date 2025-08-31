@@ -11185,6 +11185,7 @@ public static async Task<(double remainingBandwidth, double totalBandwidth, doub
         return (0, 0, 0, 0, 0, 0, 0, 0, 0, true);
     }
 }
+//查询 USDT账单 秘钥官网注册 https://tronscan.org/#/myaccount/apiKeys
 public static async Task<(string, bool)> GetLastFiveTransactionsAsync(string tronAddress)
 {
     // 定义 USDT 合约地址和查询参数
