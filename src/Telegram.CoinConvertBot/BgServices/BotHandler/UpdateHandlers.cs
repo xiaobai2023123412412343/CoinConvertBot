@@ -10507,107 +10507,132 @@ public static DateTime ConvertToBeijingTime(DateTime utcDateTime)
 public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal MonthlyIncome, decimal MonthlyOutcome, decimal DailyIncome, decimal DailyOutcome, bool IsError)> GetTotalIncomeAsync(string address, bool isTrx)
 {
     // 初始化返回变量
-    decimal totalIncome = 0m; // 保留字段，但始终返回 0（不计算历史数据）
-    decimal totalOutcome = 0m; // 保留字段，但始终返回 0（不计算历史数据）
-    decimal monthlyIncome = 0m;
-    decimal monthlyOutcome = 0m;
-    decimal dailyIncome = 0m;
-    decimal dailyOutcome = 0m;
+    decimal totalIncome = 0m; // 总收入（当前始终返回0，不计算历史数据）
+    decimal totalOutcome = 0m; // 总支出（当前始终返回0，不计算历史数据）
+    decimal monthlyIncome = 0m; // 本月收入
+    decimal monthlyOutcome = 0m; // 本月支出
+    decimal dailyIncome = 0m; // 今日收入
+    decimal dailyOutcome = 0m; // 今日支出
 
     // 获取北京时间当月1号和今日的日期
-    DateTime nowInUtc = DateTime.UtcNow;
-    DateTime nowInBeijing = nowInUtc.AddHours(8); // 北京时间（UTC+8）
+    TimeZoneInfo chinaZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+    DateTime nowInBeijing = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaZone);
     DateTime firstDayOfMonth = new DateTime(nowInBeijing.Year, nowInBeijing.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
     DateTime today = nowInBeijing.Date;
 
+    // 用于生成随机等待时间（1.1-1.3秒）
+    Random random = new Random();
+
+    // 定义 Trongrid API 和密钥
+    var apiUrl = $"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20?only_confirmed=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+    string trongridApiKey = "2f9385ef-2820-4caa-9f74-e720e1a39a75";
+
     try
     {
-        // 默认使用 Trongrid API
-        var apiUrl = $"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20?only_confirmed=true&limit=200&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        // 使用 Trongrid API 查询
         using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", trongridApiKey);
         string fingerprint = null;
         bool hasData = false;
 
         while (true)
         {
             var currentUrl = apiUrl + (fingerprint != null ? $"&fingerprint={fingerprint}" : "");
-            var response = await httpClient.GetAsync(currentUrl);
-            if (!response.IsSuccessStatusCode)
-            {
-                //Console.WriteLine($"Trongrid API request failed with status code: {response.StatusCode}");
-                break;
-            }
+            bool hasNext = false; // 用于判断是否需要继续分页
+            JsonDocument jsonDocument = null; // 提前声明 jsonDocument
 
-            string json = await response.Content.ReadAsStringAsync();
-            var jsonDocument = JsonDocument.Parse(json);
-
-            if (!jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) || dataElement.GetArrayLength() == 0)
+            for (int attempt = 0; attempt < 2; attempt++) // 最多尝试2次（首次 + 1次重试）
             {
-                Console.WriteLine("Trongrid API returned no data.");
-                break;
-            }
-
-            foreach (var transactionElement in dataElement.EnumerateArray())
-            {
-                if (!transactionElement.TryGetProperty("type", out var typeElement) || typeElement.GetString() != "Transfer")
+                var response = await httpClient.GetAsync(currentUrl);
+                if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests && attempt < 1)
                 {
+                    // 遇到频率限制，等待随机1.1-1.3秒后重试
+                    double delaySeconds = 1.1 + (random.NextDouble() * 0.2);
+                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                     continue;
                 }
-
-                if (!transactionElement.TryGetProperty("value", out var valueElement))
+                if (!response.IsSuccessStatusCode)
                 {
-                    continue;
+                    Console.WriteLine($"Trongrid API 请求失败，状态码: {response.StatusCode}");
+                    break; // 其他错误，跳出重试循环
                 }
 
-                decimal amount = decimal.Parse(valueElement.GetString()) / 1_000_000; // USDT 6位小数
-                if (amount <= 0)
+                string json = await response.Content.ReadAsStringAsync();
+                jsonDocument = JsonDocument.Parse(json);
+
+                if (!jsonDocument.RootElement.TryGetProperty("data", out JsonElement dataElement) || dataElement.GetArrayLength() == 0)
                 {
-                    continue;
+                    Console.WriteLine("Trongrid API 未返回数据");
+                    break;
                 }
 
-                // 获取交易时间（北京时间）
-                DateTime transactionTime = DateTime.MinValue;
-                if (transactionElement.TryGetProperty("block_timestamp", out var timestampElement))
+                foreach (var transactionElement in dataElement.EnumerateArray())
                 {
-                    var timestamp = timestampElement.GetInt64();
-                    DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).UtcDateTime;
-                    transactionTime = transactionTimeUtc.AddHours(8); // 转换为北京时间
-                }
-
-                // 只处理本月数据
-                if (transactionTime < firstDayOfMonth)
-                {
-                    continue; // 跳过早于本月的交易
-                }
-
-                hasData = true; // 标记有有效数据
-                bool isIncome = transactionElement.GetProperty("to").GetString().Equals(address, StringComparison.OrdinalIgnoreCase);
-
-                if (isIncome)
-                {
-                    monthlyIncome += amount;
-                    if (transactionTime.Date == today)
+                    if (!transactionElement.TryGetProperty("type", out var typeElement) || typeElement.GetString() != "Transfer")
                     {
-                        dailyIncome += amount;
+                        continue;
+                    }
+
+                    if (!transactionElement.TryGetProperty("value", out var valueElement))
+                    {
+                        continue;
+                    }
+
+                    decimal amount = decimal.Parse(valueElement.GetString()) / 1_000_000; // USDT 6位小数
+                    if (amount <= 0)
+                    {
+                        continue;
+                    }
+
+                    DateTime transactionTime = DateTime.MinValue;
+                    if (transactionElement.TryGetProperty("block_timestamp", out var timestampElement))
+                    {
+                        var timestamp = timestampElement.GetInt64();
+                        DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).UtcDateTime;
+                        transactionTime = TimeZoneInfo.ConvertTimeFromUtc(transactionTimeUtc, chinaZone);
+                    }
+
+                    if (transactionTime < firstDayOfMonth)
+                    {
+                        continue; // 跳过早于本月的交易
+                    }
+
+                    hasData = true; // 标记有有效数据
+                    bool isIncome = transactionElement.GetProperty("to").GetString().Equals(address, StringComparison.OrdinalIgnoreCase);
+
+                    if (isIncome)
+                    {
+                        monthlyIncome += amount;
+                        if (transactionTime.Date == today)
+                        {
+                            dailyIncome += amount;
+                        }
+                    }
+                    else
+                    {
+                        monthlyOutcome += amount;
+                        if (transactionTime.Date == today)
+                        {
+                            dailyOutcome += amount;
+                        }
+                    }
+
+                    if (transactionElement.TryGetProperty("transaction_id", out var transactionIdElement))
+                    {
+                        fingerprint = transactionIdElement.GetString();
                     }
                 }
-                else
-                {
-                    monthlyOutcome += amount;
-                    if (transactionTime.Date == today)
-                    {
-                        dailyOutcome += amount;
-                    }
-                }
 
-                // 更新 fingerprint 用于分页
-                if (transactionElement.TryGetProperty("transaction_id", out var transactionIdElement))
-                {
-                    fingerprint = transactionIdElement.GetString();
-                }
+                // 检查是否还有下一页
+                hasNext = jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) && hasNextElement.GetBoolean();
+                break; // 成功获取数据，跳出重试循环
             }
 
-            if (!jsonDocument.RootElement.TryGetProperty("has_next", out JsonElement hasNextElement) || !hasNextElement.GetBoolean())
+            // 释放 jsonDocument
+            jsonDocument?.Dispose();
+
+            // 如果没有数据或没有下一页，退出分页循环
+            if (!hasData || !hasNext)
             {
                 break;
             }
@@ -10621,56 +10646,86 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Trongrid API error in {nameof(GetTotalIncomeAsync)}: {ex.Message}");
+        Console.WriteLine($"Trongrid API 在 {nameof(GetTotalIncomeAsync)} 中发生错误: {ex.Message}");
     }
 
     // 回退到 Tronscan API
     try
     {
         string tokenContractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-        int limit = 200; // 与 Trongrid 保持一致，获取更多数据
-        string apiKey = "369e85e5-68d3-4299-a602-9d8d93ad026a";
+        int limit = 200;
+        string apiKeyIn = "369e85e5-68d3-4299-a602-9d8d93ad026a";
+        string apiKeyOut = "0c138945-fd9f-4390-b015-6b93368de1fd";
 
         string urlIn = $"https://apilist.tronscanapi.com/api/token_trc20/transfers?limit={limit}&start=0&contract_address={tokenContractAddress}&toAddress={address}&confirm=true";
         string urlOut = $"https://apilist.tronscanapi.com/api/token_trc20/transfers?limit={limit}&start=0&contract_address={tokenContractAddress}&fromAddress={address}&confirm=true";
 
         using var httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKey);
-
-        // 获取转入交易
-        var responseIn = await httpClient.GetAsync(urlIn);
-        if (!responseIn.IsSuccessStatusCode)
-        {
-            Console.WriteLine($"Tronscan API (in) request failed with status code: {responseIn.StatusCode}");
-            return (0m, 0m, 0m, 0m, 0m, 0m, true);
-        }
-
-        var responseOut = await httpClient.GetAsync(urlOut);
-        if (!responseOut.IsSuccessStatusCode)
-        {
-            Console.WriteLine($"Tronscan API (out) request failed with status code: {responseOut.StatusCode}");
-            return (0m, 0m, 0m, 0m, 0m, 0m, true);
-        }
-
-        string jsonStringIn = await responseIn.Content.ReadAsStringAsync();
-        string jsonStringOut = await responseOut.Content.ReadAsStringAsync();
-
-        JObject jsonResponseIn = JObject.Parse(jsonStringIn);
-        JObject jsonResponseOut = JObject.Parse(jsonStringOut);
-
         JArray allTransactions = new JArray();
-        if (jsonResponseIn["token_transfers"] != null)
+
+        // 查询转入
+        for (int attempt = 0; attempt < 2; attempt++) // 最多尝试2次
         {
-            allTransactions.Merge((JArray)jsonResponseIn["token_transfers"]);
+            httpClient.DefaultRequestHeaders.Remove("TRON-PRO-API-KEY");
+            httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKeyIn);
+            var responseIn = await httpClient.GetAsync(urlIn);
+            if (responseIn.StatusCode == System.Net.HttpStatusCode.TooManyRequests && attempt < 1)
+            {
+                // 遇到频率限制，等待随机1.1-1.3秒后重试
+                double delaySeconds = 1.1 + (random.NextDouble() * 0.2);
+                await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                continue;
+            }
+            if (!responseIn.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Tronscan API (转入) 请求失败，状态码: {responseIn.StatusCode}");
+                return (0m, 0m, 0m, 0m, 0m, 0m, true);
+            }
+
+            string jsonStringIn = await responseIn.Content.ReadAsStringAsync();
+            JObject jsonResponseIn = JObject.Parse(jsonStringIn);
+            if (jsonResponseIn["token_transfers"] != null)
+            {
+                allTransactions.Merge((JArray)jsonResponseIn["token_transfers"]);
+            }
+            break; // 成功后跳出重试循环
         }
-        if (jsonResponseOut["token_transfers"] != null)
+
+        // 等待随机1.1-1.3秒后查询转出
+        double delayBetweenRequests = 1.1 + (random.NextDouble() * 0.2);
+        await Task.Delay(TimeSpan.FromSeconds(delayBetweenRequests));
+
+        // 查询转出
+        for (int attempt = 0; attempt < 2; attempt++) // 最多尝试2次
         {
-            allTransactions.Merge((JArray)jsonResponseOut["token_transfers"]);
+            httpClient.DefaultRequestHeaders.Remove("TRON-PRO-API-KEY");
+            httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKeyOut);
+            var responseOut = await httpClient.GetAsync(urlOut);
+            if (responseOut.StatusCode == System.Net.HttpStatusCode.TooManyRequests && attempt < 1)
+            {
+                // 遇到频率限制，等待随机1.1-1.3秒后重试
+                double delaySeconds = 1.1 + (random.NextDouble() * 0.2);
+                await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                continue;
+            }
+            if (!responseOut.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Tronscan API (转出) 请求失败，状态码: {responseOut.StatusCode}");
+                return (0m, 0m, 0m, 0m, 0m, 0m, true);
+            }
+
+            string jsonStringOut = await responseOut.Content.ReadAsStringAsync();
+            JObject jsonResponseOut = JObject.Parse(jsonStringOut);
+            if (jsonResponseOut["token_transfers"] != null)
+            {
+                allTransactions.Merge((JArray)jsonResponseOut["token_transfers"]);
+            }
+            break; // 成功后跳出重试循环
         }
 
         if (allTransactions.Count == 0)
         {
-            Console.WriteLine("Tronscan API returned no transactions.");
+            Console.WriteLine("Tronscan API 未返回交易数据");
             return (0m, 0m, 0m, 0m, 0m, 0m, false);
         }
 
@@ -10684,9 +10739,8 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
 
             long timestamp = (long)transaction["block_ts"];
             DateTime transactionTimeUtc = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).UtcDateTime;
-            DateTime transactionTime = transactionTimeUtc.AddHours(8); // 北京时间
+            DateTime transactionTime = TimeZoneInfo.ConvertTimeFromUtc(transactionTimeUtc, chinaZone);
 
-            // 只处理本月数据
             if (transactionTime < firstDayOfMonth)
             {
                 continue;
@@ -10715,7 +10769,7 @@ public static async Task<(decimal TotalIncome, decimal TotalOutcome, decimal Mon
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Tronscan API error in {nameof(GetTotalIncomeAsync)}: {ex.Message}");
+        Console.WriteLine($"Tronscan API 在 {nameof(GetTotalIncomeAsync)} 中发生错误: {ex.Message}");
         return (0m, 0m, 0m, 0m, 0m, 0m, true);
     }
 }
