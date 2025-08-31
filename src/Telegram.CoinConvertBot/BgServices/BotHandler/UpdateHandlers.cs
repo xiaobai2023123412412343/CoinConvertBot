@@ -14121,7 +14121,7 @@ var totalBurnedTrxLastWeek = burnEnergyCost * lastWeekEnergyBurn + burnNetCost *
 var totalBurnedTrxLastMonth = burnEnergyCost * lastMonthEnergyBurn + burnNetCost * lastMonthNetBurn;
 		
 // 定义固定能量单价
-decimal fixedEnergyPrice = Math.Round(TransactionFee / 64285, 8);
+decimal fixedEnergyPrice = Math.Round(TransactionFee / EnergyWithUBalance, 8);
 
 // 计算现在的价格，为燃烧TRX获得的能量乘以优惠汇率，加上获得带宽燃烧了多少TRX
 var currentPriceYesterday = Math.Round(fixedEnergyPrice * yesterdayEnergyBurn + burnNetCost * yesterdayNetBurn, 2);
