@@ -17606,7 +17606,7 @@ try
 通过提前租赁能量，可以避免燃烧TRX来获取能量，为您的转账节省大量TRX：
 
 租赁6.5万能量/日，仅需 {TransactionFee} TRX，节省 {savings} TRX (节省约{savingsPercentage}%)
-租赁 13万能量/日，仅需 {noUFee}TRX， 节省 {noUSavings} TRX (节省约{noUSavingsPercentage}%)";
+租赁 13万能量/日，仅需 {noUFee} TRX，节省 {noUSavings} TRX (节省约{noUSavingsPercentage}%)";
 
         // 创建内联键盘按钮
         var inlineKeyboard = new InlineKeyboardMarkup(new[]
