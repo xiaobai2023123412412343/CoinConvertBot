@@ -23759,7 +23759,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 <b>如需兑换 ERC-20 手续费直接联系下方管理员！ </b> 	
 {ethRateText}—————————————————    
 转账费用：（浮动）
-对方地址有u：  6.42 TRX -  7.00  TRX 
+对方地址有u：  6.43 TRX -  7.00  TRX 
 对方地址无u：13.03 TRX - 14.00 TRX 
 
 {adminText} 租赁能量更划算：
