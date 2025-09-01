@@ -21409,7 +21409,6 @@ else if (Regex.IsMatch(messageText, @"^取消监控\s*\S+", RegexOptions.IgnoreC
         await PriceMonitor.Unmonitor(botClient, message.Chat.Id, symbol);
     }
 }
-// 检查是否接收到了 "时间"、"shijian"、"日期" 或 "sj" 中的任意一个消息，收到就返回当前北京时间
 if (messageText.Contains("时间") || messageText.Contains("shijian") || messageText.Contains("日期") || messageText.Contains("sj"))
 {
     try
@@ -21418,24 +21417,140 @@ if (messageText.Contains("时间") || messageText.Contains("shijian") || message
         DateTime beijingTime = DateTime.UtcNow.AddHours(8);
         string weekDay = beijingTime.ToString("dddd", new System.Globalization.CultureInfo("zh-CN"));
 
-        // 获取当前中国农历日期
-        System.Globalization.ChineseLunisolarCalendar chineseCalendar = new System.Globalization.ChineseLunisolarCalendar();
-        int lunarYear = chineseCalendar.GetYear(beijingTime);
-        int lunarMonth = chineseCalendar.GetMonth(beijingTime);
-        int lunarDay = chineseCalendar.GetDayOfMonth(beijingTime);
-        string lunarDate = $"{lunarYear.ToString("D4")}/{lunarMonth.ToString("D2")}/{lunarDay.ToString("D2")}";
+        string lunarDate = "";
+        string ganZhiYear = "";
+        string ganZhiMonth = "";
+        bool isApiSuccessful = false;
 
-        string responseText = $"北京时间：<b>{beijingTime:yyyy/MM/dd}</b>\n\n" +
-                              $"       <b>{beijingTime:HH:mm:ss} {weekDay}</b>\n\n农历日期：<b>{lunarDate}</b>\n———————————\n" +
-                              "一月：  <b>Jan</b>\n二月：  <b>Feb</b>\n三月：  <b>Mar</b>\n四月：  <b>Apr</b>\n五月：  <b>May</b>\n六月：  <b>Jun</b>\n" +
-                              "七月：  <b>Jul</b>\n八月：  <b>Aug</b>\n九月：  <b>Sep</b>\n十月：  <b>Oct</b>\n十一月：  <b>Nov</b>\n十二月：  <b>Dec</b>";
+        // 尝试调用 API
+        try
+        {
+            using (var client = new HttpClient())
+            {
+                // 使用文档指定的查询参数格式
+                string apiUrl = $"https://api.tiax.cn/almanac/?year={beijingTime.Year}&month={beijingTime.Month}&day={beijingTime.Day}";
+                client.Timeout = TimeSpan.FromSeconds(10); // 设置超时
+                var response = await client.GetAsync(apiUrl);
+                string responseContent = await response.Content.ReadAsStringAsync();
+
+                // 检查响应状态
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"API 返回非成功状态码: {response.StatusCode}, 内容: {responseContent.Substring(0, Math.Min(100, responseContent.Length))}");
+                }
+
+                // 尝试截取有效 JSON 部分（预防附加内容）
+                int jsonEndIndex = responseContent.LastIndexOf('}');
+                if (jsonEndIndex > 0 && responseContent.Length > jsonEndIndex + 1)
+                {
+                    responseContent = responseContent.Substring(0, jsonEndIndex + 1);
+                }
+
+                // 解析 JSON
+                try
+                {
+                    using JsonDocument doc = JsonDocument.Parse(responseContent);
+                    JsonElement root = doc.RootElement;
+
+                    // 提取并处理 API 数据
+                    lunarDate = root.GetProperty("农历日期").GetString().Replace("农历二零二五年 ", "");
+                    var ganZhiParts = root.GetProperty("干支日期").GetString().Split(' ');
+                    ganZhiYear = ganZhiParts[0]; // 乙巳年
+                    ganZhiMonth = ganZhiParts[1]; // 甲申月
+                    isApiSuccessful = true;
+                }
+                catch (JsonException jsonEx)
+                {
+                    throw new Exception($"JSON 解析失败: {jsonEx.Message}, 响应内容: {responseContent.Substring(0, Math.Min(100, responseContent.Length))}");
+                }
+            }
+        }
+        catch (Exception apiEx)
+        {
+            Console.WriteLine($"API 调用失败: {apiEx.Message}, 回退到本地计算");
+
+            // 回退到 ChineseLunisolarCalendar
+            System.Globalization.ChineseLunisolarCalendar chineseCalendar = new System.Globalization.ChineseLunisolarCalendar();
+            int lunarYear = chineseCalendar.GetYear(beijingTime);
+            int lunarMonth = chineseCalendar.GetMonth(beijingTime);
+            int lunarDay = chineseCalendar.GetDayOfMonth(beijingTime);
+
+            string[] chineseMonths = { "正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月" };
+            string[] chineseDays = { "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十", 
+                                     "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十", 
+                                     "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十" };
+
+            // 校正闰月逻辑
+            int leapMonth = chineseCalendar.GetLeapMonth(lunarYear); // 获取闰月（例如 2025 年的闰六月是 7）
+            bool isLeapMonth = chineseCalendar.IsLeapMonth(lunarYear, lunarMonth);
+            int adjustedMonth = lunarMonth;
+            if (isLeapMonth)
+            {
+                adjustedMonth = lunarMonth - 1; // 闰月时，月份减 1
+            }
+            else if (leapMonth > 0 && lunarMonth > leapMonth)
+            {
+                adjustedMonth = lunarMonth - 1; // 非闰月但在闰月之后，月份减 1
+            }
+
+            string lunarMonthStr = chineseMonths[adjustedMonth - 1];
+            if (isLeapMonth)
+            {
+                lunarMonthStr = $"闰{chineseMonths[adjustedMonth - 1]}";
+            }
+            string lunarDayStr = chineseDays[lunarDay - 1];
+            lunarDate = $"{lunarMonthStr}{lunarDayStr}{(isLeapMonth ? $"（闰{chineseMonths[adjustedMonth - 1]}）" : "")}";
+        }
+
+        // 构建返回的文本
+        string responseText;
+        if (isApiSuccessful)
+        {
+            // API 成功时的格式（干支年月和农历日期合并一行，无缩进）
+            responseText = $"北京时间：<b>{beijingTime:yyyy/MM/dd}</b>\n\n" +
+                           $"       <b>{beijingTime:HH:mm:ss} {weekDay}</b>\n\n" +
+                           $"<b>{ganZhiYear}  {ganZhiMonth}：{lunarDate}</b>\n" +
+                           "———————————\n" +
+                           "一月：  <b>Jan</b>\n" +
+                           "二月：  <b>Feb</b>\n" +
+                           "三月：  <b>Mar</b>\n" +
+                           "四月：  <b>Apr</b>\n" +
+                           "五月：  <b>May</b>\n" +
+                           "六月：  <b>Jun</b>\n" +
+                           "七月：  <b>Jul</b>\n" +
+                           "八月：  <b>Aug</b>\n" +
+                           "九月：  <b>Sep</b>\n" +
+                           "十月：  <b>Oct</b>\n" +
+                           "十一月： <b>Nov</b>\n" +
+                           "十二月： <b>Dec</b>";
+        }
+        else
+        {
+            // API 失败时的回退格式（保持原有格式）
+            responseText = $"北京时间：<b>{beijingTime:yyyy/MM/dd}</b>\n\n" +
+                           $"       <b>{beijingTime:HH:mm:ss} {weekDay}</b>\n\n" +
+                           $"农历日期：<b>{lunarDate}</b>\n" +
+                           "———————————\n" +
+                           "一月：  <b>Jan</b>\n" +
+                           "二月：  <b>Feb</b>\n" +
+                           "三月：  <b>Mar</b>\n" +
+                           "四月：  <b>Apr</b>\n" +
+                           "五月：  <b>May</b>\n" +
+                           "六月：  <b>Jun</b>\n" +
+                           "七月：  <b>Jul</b>\n" +
+                           "八月：  <b>Aug</b>\n" +
+                           "九月：  <b>Sep</b>\n" +
+                           "十月：  <b>Oct</b>\n" +
+                           "十一月： <b>Nov</b>\n" +
+                           "十二月： <b>Dec</b>";
+        }
 
         // 向用户发送当前北京时间、农历日期和月份对照表，使用HTML格式以支持加粗
         _ = botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: responseText,
             parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-            replyToMessageId: message.MessageId//回复用户的文本    
+            replyToMessageId: message.MessageId
         );
     }
     catch (Exception ex)
@@ -21443,7 +21558,6 @@ if (messageText.Contains("时间") || messageText.Contains("shijian") || message
         Console.WriteLine($"发送时间信息时出现异常: {ex.Message}");
     }
 }
-
 // 检查是否接收到了包含“绑定”和“备注”的消息
 if (messageText.Contains("绑定") && messageText.Contains("备注"))
 {
