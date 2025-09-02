@@ -23238,80 +23238,106 @@ async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
         return message;
     }
 
-    var _myTronConfig = provider.GetRequiredService<IOptionsSnapshot<MyTronConfig>>();
-    var _wallet = provider.GetRequiredService<IWalletClient>();
-    var _transactionClient = provider.GetRequiredService<ITransactionClient>();
-    var _contractClientFactory = provider.GetRequiredService<IContractClientFactory>();
-    var protocol = _wallet.GetProtocol();
-    var Address = _myTronConfig.Value.Address;
-    var addr = _wallet.ParseAddress(Address);
+    // 发送“正在查询，请稍后...”消息
+    Message loadingMessage = await botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: "正在查询，请稍后..."
+    );
 
-    // 这两个变量需要在使用它们的任务之前声明
-    string targetReceiveAddress = "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6";
-    var contractAddress = _myTronConfig.Value.USDTContractAddress;
-
-    // 同时运行获取账户资源和账户信息的任务
-    Task<TronNet.Protocol.AccountResourceMessage> resourceTask = protocol.GetAccountResourceAsync(new TronNet.Protocol.Account
+    // 延迟1秒后尝试撤回“正在查询”消息
+    _ = Task.Run(async () =>
     {
-        Address = addr
-    }).ResponseAsync;
-    Task<TronNet.Protocol.Account> accountTask = protocol.GetAccountAsync(new TronNet.Protocol.Account
+        await Task.Delay(1000); // 延迟1秒
+        try
+        {
+            await botClient.DeleteMessageAsync(
+                chatId: message.Chat.Id,
+                messageId: loadingMessage.MessageId
+            );
+        }
+        catch (Exception ex)
+        {
+            // 撤回失败，记录日志但不影响后续操作
+            Console.WriteLine($"Failed to delete loading message: {ex.Message}");
+        }
+    });
+
+    try
     {
-        Address = addr
-    }).ResponseAsync;
+        var _myTronConfig = provider.GetRequiredService<IOptionsSnapshot<MyTronConfig>>();
+        var _wallet = provider.GetRequiredService<IWalletClient>();
+        var _transactionClient = provider.GetRequiredService<ITransactionClient>();
+        var _contractClientFactory = provider.GetRequiredService<IContractClientFactory>();
+        var protocol = _wallet.GetProtocol();
+        var Address = _myTronConfig.Value.Address;
+        var addr = _wallet.ParseAddress(Address);
 
-    // 同时运行获取剩余的质押能量的任务
-    var bandwidthTask = GetBandwidthAsync(Address);
+        // 这两个变量需要在使用它们的任务之前声明
+        string targetReceiveAddress = "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6";
+        var contractAddress = _myTronConfig.Value.USDTContractAddress;
 
-    // 同时运行获取账户余额的任务
-    var contractClient = _contractClientFactory.CreateClient(ContractProtocol.TRC20);
-    Task<decimal> USDTTask = contractClient.BalanceOfAsync(contractAddress, _wallet.GetAccount(_myTronConfig.Value.PrivateKey));
+        // 同时运行获取账户资源和账户信息的任务
+        Task<TronNet.Protocol.AccountResourceMessage> resourceTask = protocol.GetAccountResourceAsync(new TronNet.Protocol.Account
+        {
+            Address = addr
+        }).ResponseAsync;
+        Task<TronNet.Protocol.Account> accountTask = protocol.GetAccountAsync(new TronNet.Protocol.Account
+        {
+            Address = addr
+        }).ResponseAsync;
 
-    // 运行获取 USDT 收入的任务（一次 API 调用，返回今日、本月、年度收入）
-    Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> incomeTask = GetUSDTIncomeAsync(targetReceiveAddress, contractAddress);
-    Task<decimal> todayTRXOutTask = GetTodayTRXOutAsync(Address); // 获取 TRX 今日支出
+        // 同时运行获取剩余的质押能量的任务
+        var bandwidthTask = GetBandwidthAsync(Address);
 
-    // 获取当前带宽和能量的TRX价值
-    Task<(decimal burnEnergyCost, decimal burnNetCost)> resourceCostTask = GetAcquisitionCostAsync();
+        // 同时运行获取账户余额的任务
+        var contractClient = _contractClientFactory.CreateClient(ContractProtocol.TRC20);
+        Task<decimal> USDTTask = contractClient.BalanceOfAsync(contractAddress, _wallet.GetAccount(_myTronConfig.Value.PrivateKey));
 
-    // 等待所有任务完成
-    await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, incomeTask, todayTRXOutTask, resourceCostTask);
+        // 运行获取 USDT 收入的任务（一次 API 调用，返回今日、本月、年度收入）
+        Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> incomeTask = GetUSDTIncomeAsync(targetReceiveAddress, contractAddress);
+        Task<decimal> todayTRXOutTask = GetTodayTRXOutAsync(Address); // 获取 TRX 今日支出
 
-    // 获取任务的结果
-    var resource = resourceTask.Result;
-    var account = accountTask.Result;
-    var (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, isError) = bandwidthTask.Result;
-    var TRX = Convert.ToDecimal(account.Balance) / 1_000_000L;
-    var USDT = USDTTask.Result;
-    decimal todayIncome = Math.Round(incomeTask.Result.todayIncome, 2);
-    decimal monthlyIncome = Math.Round(incomeTask.Result.monthlyIncome, 2);
-    decimal yearlyIncome = Math.Round(incomeTask.Result.yearlyIncome, 2);
-    decimal todayTRXOut = Math.Round(todayTRXOutTask.Result, 2);
+        // 获取当前带宽和能量的TRX价值
+        Task<(decimal burnEnergyCost, decimal burnNetCost)> resourceCostTask = GetAcquisitionCostAsync();
 
-    // 计算预设的转账能量和带宽成本
-    decimal bandwidthCost = 345 * resourceCostTask.Result.burnNetCost; // 345 带宽的 TRX 成本
-    decimal energyCostWithUBalance = EnergyWithUBalance * resourceCostTask.Result.burnEnergyCost; // EnergyWithUBalance 能量的 TRX 成本
-    decimal energyCostWithoutUBalance = EnergyWithoutUBalance * resourceCostTask.Result.burnEnergyCost; // EnergyWithoutUBalance 能量的 TRX 成本
-    decimal withU = Math.Round(bandwidthCost + energyCostWithUBalance, 4); // 有U地址总成本
-    decimal withoutU = Math.Round(bandwidthCost + energyCostWithoutUBalance, 4); // 无U地址总成本
+        // 等待所有任务完成
+        await Task.WhenAll(resourceTask, accountTask, bandwidthTask, USDTTask, incomeTask, todayTRXOutTask, resourceCostTask);
 
-    decimal requiredEnergy1 = EnergyWithUBalance;
-    decimal requiredEnergy2 = EnergyWithoutUBalance;
-    decimal energyPer100TRX = resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100;
-    decimal requiredTRX1 = Math.Floor(requiredEnergy1 / (energyPer100TRX / 100)) + 1;
-    decimal requiredTRX2 = Math.Floor(requiredEnergy2 / (energyPer100TRX / 100)) + 1;
-    decimal requiredBandwidth = 345;
-    decimal bandwidthPer100TRX = resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100;
-    decimal requiredTRXForBandwidth = Math.Floor(requiredBandwidth / (bandwidthPer100TRX / 100)) + 1;
+        // 获取任务的结果
+        var resource = resourceTask.Result;
+        var account = accountTask.Result;
+        var (freeNetRemaining, freeNetLimit, netRemaining, netLimit, energyRemaining, energyLimit, transactions, transactionsIn, transactionsOut, isError) = bandwidthTask.Result;
+        var TRX = Convert.ToDecimal(account.Balance) / 1_000_000L;
+        var USDT = USDTTask.Result;
+        decimal todayIncome = Math.Round(incomeTask.Result.todayIncome, 2);
+        decimal monthlyIncome = Math.Round(incomeTask.Result.monthlyIncome, 2);
+        decimal yearlyIncome = Math.Round(incomeTask.Result.yearlyIncome, 2);
+        decimal todayTRXOut = Math.Round(todayTRXOutTask.Result, 2);
 
-    // 从 _rateRepository 获取 USDT 到 TRX 的汇率
-    var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
-    var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-    decimal usdtToTrxRateAfterFees = rate * (1 - FeeRate);
+        // 计算预设的转账能量和带宽成本
+        decimal bandwidthCost = 345 * resourceCostTask.Result.burnNetCost; // 345 带宽的 TRX 成本
+        decimal energyCostWithUBalance = EnergyWithUBalance * resourceCostTask.Result.burnEnergyCost; // EnergyWithUBalance 能量的 TRX 成本
+        decimal energyCostWithoutUBalance = EnergyWithoutUBalance * resourceCostTask.Result.burnEnergyCost; // EnergyWithoutUBalance 能量的 TRX 成本
+        decimal withU = Math.Round(bandwidthCost + energyCostWithUBalance, 4); // 有U地址总成本
+        decimal withoutU = Math.Round(bandwidthCost + energyCostWithoutUBalance, 4); // 无U地址总成本
 
-    decimal TRXInUSDT = usdtToTrxRateAfterFees != 0 ? TRX / usdtToTrxRateAfterFees : 0;
+        decimal requiredEnergy1 = EnergyWithUBalance;
+        decimal requiredEnergy2 = EnergyWithoutUBalance;
+        decimal energyPer100TRX = resource.TotalEnergyLimit * 1.0m / resource.TotalEnergyWeight * 100;
+        decimal requiredTRX1 = Math.Floor(requiredEnergy1 / (energyPer100TRX / 100)) + 1;
+        decimal requiredTRX2 = Math.Floor(requiredEnergy2 / (energyPer100TRX / 100)) + 1;
+        decimal requiredBandwidth = 345;
+        decimal bandwidthPer100TRX = resource.TotalNetLimit * 1.0m / resource.TotalNetWeight * 100;
+        decimal requiredTRXForBandwidth = Math.Floor(requiredBandwidth / (bandwidthPer100TRX / 100)) + 1;
 
-    var msg = @$"当前账户资源如下：
+        // 从 _rateRepository 获取 USDT 到 TRX 的汇率
+        var _rateRepository = provider.GetRequiredService<IBaseRepository<TokenRate>>();
+        var rate = await _rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+        decimal usdtToTrxRateAfterFees = rate * (1 - FeeRate);
+
+        decimal TRXInUSDT = usdtToTrxRateAfterFees != 0 ? TRX / usdtToTrxRateAfterFees : 0;
+
+        var msg = @$"当前账户资源如下：
 地址： <code>{Address}</code>
 TRX余额： <b>{TRX}</b> | 可兑：<b>{TRXInUSDT:0.00} USDT</b>
 USDT余额： <b>{USDT}</b>
@@ -23334,37 +23360,51 @@ USDT余额： <b>{USDT}</b>
 <b>无U：{bandwidthCost:F3}+{energyCostWithoutUBalance:F4} = {withoutU} TRX</b>
 ";
 
-    // 创建包含三行，每行4个按钮的虚拟键盘
-    var keyboard = new ReplyKeyboardMarkup(new[]
+        // 创建包含三行，每行4个按钮的虚拟键盘
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new [] // 第一行
+            {
+                new KeyboardButton("U兑TRX"),
+                new KeyboardButton("实时汇率"),
+                new KeyboardButton("询千百度"),
+                new KeyboardButton("能量租赁"),
+            },   
+            new [] // 第二行
+            {
+                new KeyboardButton("外汇助手"),
+                new KeyboardButton("加密货币"),
+                new KeyboardButton("行情监控"),
+                new KeyboardButton("地址监听"),
+            },   
+            new [] // 第三行
+            {
+                new KeyboardButton("龙虎榜单"),
+                new KeyboardButton("市场异动"),
+                new KeyboardButton("代开会员"),            
+                new KeyboardButton("更多功能"),
+            }
+        });		
+        keyboard.ResizeKeyboard = true;           
+        keyboard.OneTimeKeyboard = false;
+
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: msg,
+            parseMode: ParseMode.Html,
+            replyMarkup: keyboard
+        );
+    }
+    catch (Exception ex)
     {
-        new [] // 第一行
-        {
-            new KeyboardButton("U兑TRX"),
-            new KeyboardButton("实时汇率"),
-            new KeyboardButton("询千百度"),
-            new KeyboardButton("能量租赁"),
-        },   
-        new [] // 第二行
-        {
-            new KeyboardButton("外汇助手"),
-            new KeyboardButton("加密货币"),
-            new KeyboardButton("行情监控"),
-            new KeyboardButton("地址监听"),
-        },   
-        new [] // 第三行
-        {
-            new KeyboardButton("龙虎榜单"),
-            new KeyboardButton("市场异动"),
-            new KeyboardButton("代开会员"),            
-            new KeyboardButton("更多功能"),
-        }
-    });		
-    keyboard.ResizeKeyboard = true;           
-    keyboard.OneTimeKeyboard = false;
-    return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                               text: msg,
-                                               parseMode: ParseMode.Html,
-                                               replyMarkup: keyboard);
+        // 处理查询过程中发生的异常
+        Console.WriteLine($"Error during query: {ex.Message}");
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: "查询失败，请稍后重试。",
+            parseMode: ParseMode.Html
+        );
+    }
 }
         async Task<Message> BindAddress(ITelegramBotClient botClient, Message message, bool isProxyBinding = false)
         {
