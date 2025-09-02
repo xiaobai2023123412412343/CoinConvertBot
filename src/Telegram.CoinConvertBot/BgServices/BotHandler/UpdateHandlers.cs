@@ -12208,7 +12208,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     // 计算人民币余额
     decimal cnyBalance = usdtBalance * okxPrice;
     // 计算可供转账的次数
-    int availableTransferCount = (int)(trxBalance / 13.3959m);
+    int availableTransferCount = (int)(trxBalance / fixedCost);
 
     // 计算地址中连续相同字符的数量（忽略大小写）
     int maxConsecutiveIdenticalCharsCount = 0;
