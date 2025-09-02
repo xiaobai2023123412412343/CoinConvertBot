@@ -8233,7 +8233,7 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
         var balance = await GetTronBalanceAsync(tronAddress);
         var roundedBalance = Math.Round(balance, 2); // 四舍五入到小数点后两位
         // 计算可供转账次数，这是新添加的代码
-        var transferTimes = Math.Floor(balance / (decimal)13.3959);  // 计算转账次数为用户余额除以13.3959
+        var transferTimes = Math.Floor(balance / fixedCost);  // 计算转账次数为用户余额除以13.3959
 
         // 获取地址备注信息
         string note = userAddressNotes.TryGetValue((userId, tronAddress), out var userNote) ? userNote : "";
