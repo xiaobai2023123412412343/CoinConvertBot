@@ -5568,7 +5568,7 @@ public static async Task<List<string>> FetchLotteryZodiacHistoryAsync(int year, 
     return zodiacResults.Take(count).ToList(); // 确保不超过50条数据
 }	
 }
-//USDT交易监控代码    
+//USDT交易监控代码    USDT监控 USDT监听
 // 存储用户ID、波场地址和最后一次交易时间戳的字典
 private static Dictionary<(long UserId, string TronAddress), (string TronAddress, long LastTransactionTimestamp)> userTronTransactions = new Dictionary<(long, string), (string, long)>();
 // 存储用户ID和对应的定时器
