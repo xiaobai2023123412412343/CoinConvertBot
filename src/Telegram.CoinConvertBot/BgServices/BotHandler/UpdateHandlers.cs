@@ -5674,15 +5674,33 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastA
                 // 即使没有交易数据，也不暂停密钥，直接返回
                 if (transactionsResponse?.Data?.Any() == true)
                 {
-                    //Console.WriteLine($"新方法成功获取 {transactionsResponse.Data.Count} 条USDT交易记录，地址：{tronAddress}");
-                    return transactionsResponse.Data.Select(t => new TronTransaction
+                    var usdtTransactions = transactionsResponse.Data
+                        .Where(t => t.TokenInfo?.Address == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t") // 仅保留 USDT 交易
+                        .Select(t => new TronTransaction
+                        {
+                            TransactionId = t.TransactionId,
+                            BlockTimestamp = t.BlockTimestamp,
+                            From = t.From,
+                            To = t.To,
+                            Value = ConvertFromSun(t.Value),
+                            TokenAddress = t.TokenInfo?.Address // 存储合约地址
+                        }).ToList();
+
+                    // 调试：记录非 USDT 交易
+                    var nonUsdtTransactions = transactionsResponse.Data
+                        .Where(t => t.TokenInfo?.Address != "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
+                        .ToList();
+                    if (nonUsdtTransactions.Any())
                     {
-                        TransactionId = t.TransactionId,
-                        BlockTimestamp = t.BlockTimestamp,
-                        From = t.From,
-                        To = t.To,
-                        Value = ConvertFromSun(t.Value)
-                    });
+                       // Console.WriteLine($"检测到非 USDT 交易，地址：{tronAddress}，非 USDT 交易数量：{nonUsdtTransactions.Count}");
+                        foreach (var tx in nonUsdtTransactions)
+                        {
+                           // Console.WriteLine($"非 USDT 交易：ID={tx.TransactionId}, 代币={tx.TokenInfo?.Symbol}, 合约地址={tx.TokenInfo?.Address}");
+                        }
+                    }
+
+                    //Console.WriteLine($"新方法成功获取 {usdtTransactions.Count} 条 USDT 交易记录，地址：{tronAddress}");
+                    return usdtTransactions;
                 }
                 //Console.WriteLine($"新方法未获取到USDT交易记录，地址：{tronAddress}");
                 return Enumerable.Empty<TronTransaction>(); // 地址可能无交易，不暂停密钥
@@ -5704,7 +5722,6 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsFastA
         }
     }
 
-    // 当所有可用密钥都失败时回退到免费 API
     //Console.WriteLine($"新方法链接失败（所有可用密钥均不可用），回退到旧方法监听USDT交易，地址：{tronAddress}，最后错误：{lastError}");
     legacyTransactions = await GetTronTransactionsAsync(tronAddress);
     //Console.WriteLine($"旧方法获取 {legacyTransactions.Count()} 条USDT交易记录，地址：{tronAddress}");
@@ -6183,18 +6200,18 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsAsync
                         if (match.Success)
                         {
                             int waitTime = int.Parse(match.Groups[1].Value) * 1000;
-                          //  Console.WriteLine($"旧方法TronGrid API请求频率超限，暂停 {waitTime / 1000} 秒，地址：{tronAddress}");
+                            //Console.WriteLine($"旧方法TronGrid API请求频率超限，暂停 {waitTime / 1000} 秒，地址：{tronAddress}");
                             await Task.Delay(waitTime);
                             continue;
                         }
                         else
                         {
-                         //   Console.WriteLine($"旧方法TronGrid API请求频率超限，未解析到暂停时间，默认等待4秒，地址：{tronAddress}");
+                            //Console.WriteLine($"旧方法TronGrid API请求频率超限，未解析到暂停时间，默认等待4秒，地址：{tronAddress}");
                             await Task.Delay(4000);
                             continue;
                         }
                     }
-                   // Console.WriteLine($"旧方法获取交易失败，地址：{tronAddress}，错误：{content}");
+                    //Console.WriteLine($"旧方法获取交易失败，地址：{tronAddress}，错误：{content}");
                     return Enumerable.Empty<TronTransaction>(); // 返回空集合，避免中断
                 }
 
@@ -6208,26 +6225,44 @@ private static async Task<IEnumerable<TronTransaction>> GetTronTransactionsAsync
 
                     if (transactionsResponse?.Data?.Any() == true)
                     {
-                        return transactionsResponse.Data.Select(t => new TronTransaction
+                        var usdtTransactions = transactionsResponse.Data
+                            .Where(t => t.TokenInfo?.Address == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t") // 仅保留 USDT 交易
+                            .Select(t => new TronTransaction
+                            {
+                                TransactionId = t.TransactionId,
+                                BlockTimestamp = t.BlockTimestamp,
+                                From = t.From,
+                                To = t.To,
+                                Value = ConvertFromSun(t.Value),
+                                TokenAddress = t.TokenInfo?.Address // 存储合约地址
+                            }).ToList();
+
+                        // 调试：记录非 USDT 交易
+                        var nonUsdtTransactions = transactionsResponse.Data
+                            .Where(t => t.TokenInfo?.Address != "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
+                            .ToList();
+                        if (nonUsdtTransactions.Any())
                         {
-                            TransactionId = t.TransactionId,
-                            BlockTimestamp = t.BlockTimestamp,
-                            From = t.From,
-                            To = t.To,
-                            Value = ConvertFromSun(t.Value)
-                        });
+                            //Console.WriteLine($"旧方法检测到非 USDT 交易，地址：{tronAddress}，非 USDT 交易数量：{nonUsdtTransactions.Count}");
+                            foreach (var tx in nonUsdtTransactions)
+                            {
+                                //Console.WriteLine($"非 USDT 交易：ID={tx.TransactionId}, 代币={tx.TokenInfo?.Symbol}, 合约地址={tx.TokenInfo?.Address}");
+                            }
+                        }
+
+                        return usdtTransactions;
                     }
                     return Enumerable.Empty<TronTransaction>();
                 }
                 catch (JsonException ex)
                 {
-                   // Console.WriteLine($"旧方法JSON解析错误，地址：{tronAddress}，错误：{ex.Message}");
+                    //Console.WriteLine($"旧方法JSON解析错误，地址：{tronAddress}，错误：{ex.Message}");
                     return Enumerable.Empty<TronTransaction>();
                 }
             }
             catch (Exception ex)
             {
-               // Console.WriteLine($"旧方法链接失败，地址：{tronAddress}，错误：{ex.Message}");
+                //Console.WriteLine($"旧方法链接失败，地址：{tronAddress}，错误：{ex.Message}");
                 return Enumerable.Empty<TronTransaction>(); // 返回空集合，避免中断
             }
         }
@@ -6264,6 +6299,7 @@ public class TronTransaction
     public string From { get; set; }
     public string To { get; set; }
     public decimal Value { get; set; }
+    public string TokenAddress { get; set; } // 新增字段，用于存储 token_info.address
 }
 
 // 波场API返回的交易记录响应的数据结构
