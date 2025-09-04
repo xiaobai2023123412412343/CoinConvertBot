@@ -9695,7 +9695,6 @@ public static class TronscanHelper
                     while (uniqueTransfers.Count < 10 && index < transferList.Data.Count)
                     {
                         var transfer = transferList.Data[index];
-                        // 检查转账金额是否大于10 TRX（这里假设API返回的金额单位是最小单位，即sun，1 TRX = 1,000,000 sun）
                         if (transfer.TransferFromAddress == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6" &&
                             !uniqueTransfers.ContainsKey(transfer.TransferToAddress) &&
                             transfer.Amount > 10_000_000) // 10 TRX
@@ -9707,7 +9706,7 @@ public static class TronscanHelper
 
                     start += transferList.Data.Count; // 更新下一次API调用的起始索引
                 }
-                attempt++; // 增加尝试次数
+                attempt++;
             }
 
             List<TransferRecord> recentTransfers = uniqueTransfers.Values.ToList();
@@ -9725,7 +9724,12 @@ public static class TronscanHelper
     public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
     {
         string apiUrlTemplate = "https://api.trongrid.io/v1/accounts/{0}";
-        string resultText = $"<b> 承兑地址：</b><code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>\n\n";
+        string resultText = $"<b>承兑地址：</b><code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>\n\n";
+
+        if (!transfers.Any())
+        {
+            return resultText + "无符合条件的转账记录！";
+        }
 
         try
         {
@@ -9734,54 +9738,69 @@ public static class TronscanHelper
                 .Select(i => transfers.Skip(i * 5).Take(5).ToList())
                 .ToList();
 
-            // 创建一个列表来存储所有的查询结果
-            List<AccountInfo> accountInfos = new List<AccountInfo>();
+            // 存储所有查询结果（成功和失败）
+            List<(TransferRecord transfer, AccountInfo accountInfo, bool success)> results = new List<(TransferRecord, AccountInfo, bool)>();
 
             // 依次处理每个部分
             foreach (var batch in batches)
             {
-                // 创建一个任务列表来存储当前部分的所有查询任务
-                List<Task<(int index, AccountInfo accountInfo)>> tasks = new List<Task<(int index, AccountInfo accountInfo)>>();
-
-                // 为当前部分的每个转账记录创建一个查询任务并添加到任务列表中
+                // 创建任务列表
+                List<Task<(int index, TransferRecord transfer, AccountInfo accountInfo, bool success)>> tasks = new List<Task<(int, TransferRecord, AccountInfo, bool)>>();
                 for (int i = 0; i < batch.Count; i++)
                 {
                     string apiUrl = string.Format(apiUrlTemplate, batch[i].TransferToAddress);
-                    tasks.Add(GetAccountInfoAsync(httpClient, apiUrl, i, trongridApiKeys[trongridKeyIndex]));
+                    tasks.Add(GetAccountInfoAsync(httpClient, apiUrl, i, batch[i], trongridApiKeys[trongridKeyIndex]));
                     trongridKeyIndex = (trongridKeyIndex + 1) % trongridApiKeys.Length; // 轮换密钥
                 }
 
                 // 等待当前部分的所有任务完成
-                var results = await Task.WhenAll(tasks);
+                var batchResults = await Task.WhenAll(tasks);
 
-                // 将查询结果按索引排序，然后添加到查询结果列表中
-                accountInfos.AddRange(results.OrderBy(r => r.index).Select(r => r.accountInfo));
+                // 收集结果（包括成功和失败）
+                results.AddRange(batchResults.Select(r => (r.transfer, r.accountInfo, r.success)));
 
-                // 等待0.5秒
+                // 等待0.5秒以避免触发API限制
                 await Task.Delay(500);
             }
 
-            // 处理查询结果并生成结果文本
-            for (int i = 0; i < transfers.Count; i++)
+            // 如果没有成功查询到任何余额
+            if (!results.Any(r => r.success))
             {
-                decimal balanceInTrx = Math.Round(accountInfos[i].Balance / 1_000_000m, 2);
-                DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfers[i].Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
-                decimal amountInTrx = transfers[i].Amount / 1_000_000m;
-                resultText += $"兑换地址：<code>{transfers[i].TransferToAddress}</code>\n";
+                return resultText + "查询余额API接口维护中，请稍后重试！";
+            }
+
+            // 生成结果文本，按原始顺序返回所有记录
+            results = results.OrderBy(r => transfers.IndexOf(r.transfer)).ToList();
+            for (int i = 0; i < results.Count; i++)
+            {
+                var (transfer, accountInfo, success) = results[i];
+                DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfer.Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
+                decimal amountInTrx = transfer.Amount / 1_000_000m;
+                string shareLink = $"https://www.oklink.com/zh-hans/tron/address/{transfer.TransferToAddress}";
+
+                resultText += $"兑换地址：<code>{transfer.TransferToAddress}</code>\n";
                 resultText += $"兑换时间：{transferTime:yyyy-MM-dd HH:mm:ss}\n";
-                resultText += $"兑换金额：{amountInTrx} trx   <b> 余额：{balanceInTrx} TRX</b>\n";
-                if (i < transfers.Count - 1)
+                if (success)
+                {
+                    decimal balanceInTrx = Math.Round(accountInfo.Balance / 1_000_000m, 2);
+                    resultText += $"兑换金额：{amountInTrx} TRX   余额：<a href=\"{shareLink}\">{balanceInTrx} TRX</a>\n";
+                }
+                else
+                {
+                    resultText += $"兑换金额：{amountInTrx} TRX   <a href=\"{shareLink}\">余额查询失败</a>\n";
+                }
+                if (i < results.Count - 1)
                 {
                     resultText += "————————————————\n";
                 }
             }
+
+            return resultText;
         }
         catch (Exception ex)
         {
-            resultText = "查询余额API接口维护中，请稍后重试！";
+            return resultText + "查询余额API接口维护中，请稍后重试！";
         }
-
-        return resultText;
     }
 
     private static async Task<HttpResponseMessage> MakeApiRequestAsync(HttpClient httpClient, string apiUrl, string apiKey)
@@ -9825,7 +9844,7 @@ public static class TronscanHelper
         throw new Exception("API请求达到最大重试次数，仍然失败！");
     }
 
-    private static async Task<(int index, AccountInfo accountInfo)> GetAccountInfoAsync(HttpClient httpClient, string apiUrl, int index, string apiKey)
+    private static async Task<(int index, TransferRecord transfer, AccountInfo accountInfo, bool success)> GetAccountInfoAsync(HttpClient httpClient, string apiUrl, int index, TransferRecord transfer, string apiKey)
     {
         await semaphore.WaitAsync(); // 限制并发数
         try
@@ -9834,15 +9853,18 @@ public static class TronscanHelper
             string jsonResult = await response.Content.ReadAsStringAsync();
             var accountInfoResponse = JsonSerializer.Deserialize<AccountInfoResponse>(jsonResult);
             var accountInfo = new AccountInfo { Balance = accountInfoResponse.Data[0].Balance };
-            return (index, accountInfo);
+            return (index, transfer, accountInfo, true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to get account info for {apiUrl}: {ex.Message}");
+            return (index, transfer, null, false);
         }
         finally
         {
             semaphore.Release(); // 释放信号量
         }
     }
-
-    // 删除重复的 GetAccountInfoAsync 方法
 }
 
 public class AccountInfoResponse
@@ -22795,14 +22817,15 @@ if (messageText.StartsWith("预支"))
     string responseText = "请发送需要预支TRX的钱包地址查询是否满足要求：\n同时满足2点即可预支：\n⚠️仅限累计兑换 500 USDT 以上地址，\n⚠️地址余额大于 500 USDT且TRX余额低于13，\n⚠️预支的TRX能量仅够您向本机器人转账一次。\n\n如果查询满足条件，可<a href=\"" + adminLink + "\">联系管理员</a>直接预支TRX能量！";
     await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: responseText, parseMode: Telegram.Bot.Types.Enums.ParseMode.Html, disableWebPagePreview: true);
 }  
-// 处理 /zjdh 命令
+// 处理 /zjdh 命令  查询客户余额 近期兑换的
 if (messageText.StartsWith("/zjdh"))
 {
     // 立即发送提示消息
     await botClient.SendTextMessageAsync(
-        message.Chat.Id,
-        "正在查询，请稍后...",
-        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+        chatId: message.Chat.Id,
+        text: "正在查询，请稍后...",
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        disableWebPagePreview: true // 禁用链接预览
     );
 
     // 调用查询方法
@@ -22819,9 +22842,10 @@ if (messageText.StartsWith("/zjdh"))
 
     // 发送带有内联按钮的消息
     await botClient.SendTextMessageAsync(
-        message.Chat.Id,
-        transferHistoryText,
+        chatId: message.Chat.Id,
+        text: transferHistoryText,
         parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        disableWebPagePreview: true, // 禁用链接预览
         replyMarkup: inlineKeyboard
     );
 }
