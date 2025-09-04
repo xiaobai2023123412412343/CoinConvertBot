@@ -9759,8 +9759,8 @@ public static class TronscanHelper
                 // 收集结果（包括成功和失败）
                 results.AddRange(batchResults.Select(r => (r.transfer, r.accountInfo, r.success)));
 
-                // 等待0.5秒以避免触发API限制
-                await Task.Delay(500);
+                // 等待0.3秒以避免触发API限制
+                await Task.Delay(300);
             }
 
             // 如果没有成功查询到任何余额
@@ -9787,7 +9787,7 @@ public static class TronscanHelper
                 }
                 else
                 {
-                    resultText += $"兑换金额：{amountInTrx} TRX   <a href=\"{shareLink}\">余额查询失败</a>\n";
+                    resultText += $"兑换金额：{amountInTrx} TRX   余额：<a href=\"{shareLink}\">查询超时</a>\n";
                 }
                 if (i < results.Count - 1)
                 {
@@ -9823,8 +9823,8 @@ public static class TronscanHelper
             else if (response.StatusCode == HttpStatusCode.TooManyRequests)
             {
                 retryCount++;
-                // 随机等待 1.1-1.3 秒
-                double delaySeconds = 1.1 + (random.NextDouble() * 0.2);
+                // 随机等待 1-1.2 秒
+                double delaySeconds = 1.0 + (random.NextDouble() * 0.2);
                 await Task.Delay((int)(delaySeconds * 1000));
                 continue;
             }
