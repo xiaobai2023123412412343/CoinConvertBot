@@ -9652,6 +9652,11 @@ public static class TronscanHelper
 {
     private static readonly HttpClient httpClient;
     private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(20); // 限制最大并发数为 20
+    private static readonly string[] tronscanApiKeys = new[] { "369e85e5-68d3-4299-a602-9d8d93ad026a", "0c138945-fd9f-4390-b015-6b93368de1fd" };
+    private static readonly string[] trongridApiKeys = new[] { "10609102-669a-4cf4-8c36-cc3ed97f9a30", "2f9385ef-2820-4caa-9f74-e720e1a39a75" };
+    private static int tronscanKeyIndex = 0;
+    private static int trongridKeyIndex = 0;
+    private static readonly Random random = new Random();
 
     static TronscanHelper()
     {
@@ -9675,33 +9680,35 @@ public static class TronscanHelper
 
             Dictionary<string, TransferRecord> uniqueTransfers = new Dictionary<string, TransferRecord>();
 
-    while (uniqueTransfers.Count < 10 && attempt < maxAttempts)
-    {
-        string recentTransfersApiUrl = string.Format(apiUrlTemplate, start);
-        var response = await httpClient.GetAsync(recentTransfersApiUrl);
-        if (response.IsSuccessStatusCode)
-        {
-            string jsonResult = await response.Content.ReadAsStringAsync();
-            var transferList = JsonSerializer.Deserialize<TransferList>(jsonResult);
-
-            int index = 0;
-            while (uniqueTransfers.Count < 10 && index < transferList.Data.Count)
+            while (uniqueTransfers.Count < 10 && attempt < maxAttempts)
             {
-                var transfer = transferList.Data[index];
-                // 检查转账金额是否大于10 TRX（这里假设API返回的金额单位是最小单位，即sun，1 TRX = 1,000,000 sun）
-                if (transfer.TransferFromAddress == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6" &&
-                    !uniqueTransfers.ContainsKey(transfer.TransferToAddress) &&
-                    transfer.Amount > 10_000_000) // 10 TRX
-                {
-                    uniqueTransfers.Add(transfer.TransferToAddress, transfer);
-                }
-                index++;
-            }
+                string recentTransfersApiUrl = string.Format(apiUrlTemplate, start);
+                var response = await MakeApiRequestAsync(httpClient, recentTransfersApiUrl, tronscanApiKeys[tronscanKeyIndex]);
+                tronscanKeyIndex = (tronscanKeyIndex + 1) % tronscanApiKeys.Length; // 轮换密钥
 
-            start += transferList.Data.Count; // 更新下一次API调用的起始索引
-        }
-        attempt++; // 增加尝试次数
-    }
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonResult = await response.Content.ReadAsStringAsync();
+                    var transferList = JsonSerializer.Deserialize<TransferList>(jsonResult);
+
+                    int index = 0;
+                    while (uniqueTransfers.Count < 10 && index < transferList.Data.Count)
+                    {
+                        var transfer = transferList.Data[index];
+                        // 检查转账金额是否大于10 TRX（这里假设API返回的金额单位是最小单位，即sun，1 TRX = 1,000,000 sun）
+                        if (transfer.TransferFromAddress == "TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6" &&
+                            !uniqueTransfers.ContainsKey(transfer.TransferToAddress) &&
+                            transfer.Amount > 10_000_000) // 10 TRX
+                        {
+                            uniqueTransfers.Add(transfer.TransferToAddress, transfer);
+                        }
+                        index++;
+                    }
+
+                    start += transferList.Data.Count; // 更新下一次API调用的起始索引
+                }
+                attempt++; // 增加尝试次数
+            }
 
             List<TransferRecord> recentTransfers = uniqueTransfers.Values.ToList();
 
@@ -9715,122 +9722,129 @@ public static class TronscanHelper
         }
     }
 
-public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
-{
-    string apiUrlTemplate = "https://api.trongrid.io/v1/accounts/{0}";
-    string resultText = $"<b> 承兑地址：</b><code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>\n\n";
-
-    try
+    public async static Task<string> GetTransferBalancesAsync(List<TransferRecord> transfers)
     {
-        // 将转账记录列表分割成多个部分，每个部分包含5个记录
-        var batches = Enumerable.Range(0, (transfers.Count + 4) / 5)
-            .Select(i => transfers.Skip(i * 5).Take(5).ToList())
-            .ToList();
+        string apiUrlTemplate = "https://api.trongrid.io/v1/accounts/{0}";
+        string resultText = $"<b> 承兑地址：</b><code>TCL7X3bbPYAY8ppCgHWResGdR8pXc38Uu6</code>\n\n";
 
-        // 创建一个列表来存储所有的查询结果
-        List<AccountInfo> accountInfos = new List<AccountInfo>();
-
-        // 依次处理每个部分
-        foreach (var batch in batches)
+        try
         {
-            // 创建一个任务列表来存储当前部分的所有查询任务
-            List<Task<(int index, AccountInfo accountInfo)>> tasks = new List<Task<(int index, AccountInfo accountInfo)>>();
+            // 将转账记录列表分割成多个部分，每个部分包含5个记录
+            var batches = Enumerable.Range(0, (transfers.Count + 4) / 5)
+                .Select(i => transfers.Skip(i * 5).Take(5).ToList())
+                .ToList();
 
-            // 为当前部分的每个转账记录创建一个查询任务并添加到任务列表中
-            for (int i = 0; i < batch.Count; i++)
+            // 创建一个列表来存储所有的查询结果
+            List<AccountInfo> accountInfos = new List<AccountInfo>();
+
+            // 依次处理每个部分
+            foreach (var batch in batches)
             {
-                string apiUrl = string.Format(apiUrlTemplate, batch[i].TransferToAddress);
-                tasks.Add(GetAccountInfoAsync(httpClient, apiUrl, i));
+                // 创建一个任务列表来存储当前部分的所有查询任务
+                List<Task<(int index, AccountInfo accountInfo)>> tasks = new List<Task<(int index, AccountInfo accountInfo)>>();
+
+                // 为当前部分的每个转账记录创建一个查询任务并添加到任务列表中
+                for (int i = 0; i < batch.Count; i++)
+                {
+                    string apiUrl = string.Format(apiUrlTemplate, batch[i].TransferToAddress);
+                    tasks.Add(GetAccountInfoAsync(httpClient, apiUrl, i, trongridApiKeys[trongridKeyIndex]));
+                    trongridKeyIndex = (trongridKeyIndex + 1) % trongridApiKeys.Length; // 轮换密钥
+                }
+
+                // 等待当前部分的所有任务完成
+                var results = await Task.WhenAll(tasks);
+
+                // 将查询结果按索引排序，然后添加到查询结果列表中
+                accountInfos.AddRange(results.OrderBy(r => r.index).Select(r => r.accountInfo));
+
+                // 等待0.5秒
+                await Task.Delay(500);
             }
 
-            // 等待当前部分的所有任务完成
-            var results = await Task.WhenAll(tasks);
-
-            // 将查询结果按索引排序，然后添加到查询结果列表中
-            accountInfos.AddRange(results.OrderBy(r => r.index).Select(r => r.accountInfo));
-
-            // 等待1秒
-            await Task.Delay(500);
-        }
-
-        // 处理查询结果并生成结果文本
-        for (int i = 0; i < transfers.Count; i++)
-        {
-            decimal balanceInTrx = Math.Round(accountInfos[i].Balance / 1_000_000m, 2);
-            DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfers[i].Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
-            decimal amountInTrx = transfers[i].Amount / 1_000_000m;
-            resultText += $"兑换地址：<code>{transfers[i].TransferToAddress}</code>\n";
-            resultText += $"兑换时间：{transferTime:yyyy-MM-dd HH:mm:ss}\n";
-            resultText += $"兑换金额：{amountInTrx} trx   <b> 余额：{balanceInTrx} TRX</b>\n";
-            if (i < transfers.Count - 1)
+            // 处理查询结果并生成结果文本
+            for (int i = 0; i < transfers.Count; i++)
             {
-                resultText += "————————————————\n";
+                decimal balanceInTrx = Math.Round(accountInfos[i].Balance / 1_000_000m, 2);
+                DateTime transferTime = DateTimeOffset.FromUnixTimeMilliseconds(transfers[i].Timestamp).ToOffset(TimeSpan.FromHours(8)).DateTime;
+                decimal amountInTrx = transfers[i].Amount / 1_000_000m;
+                resultText += $"兑换地址：<code>{transfers[i].TransferToAddress}</code>\n";
+                resultText += $"兑换时间：{transferTime:yyyy-MM-dd HH:mm:ss}\n";
+                resultText += $"兑换金额：{amountInTrx} trx   <b> 余额：{balanceInTrx} TRX</b>\n";
+                if (i < transfers.Count - 1)
+                {
+                    resultText += "————————————————\n";
+                }
             }
         }
-    }
-    catch (Exception ex)
-    {
-        resultText = "查询余额API接口维护中，请稍后重试！";
-    }
-
-    return resultText;
-}
-
-private static async Task<(int index, AccountInfo accountInfo)> GetAccountInfoAsync(HttpClient httpClient, string apiUrl, int index)
-{
-    await semaphore.WaitAsync(); // 限制并发数
-    try
-    {
-        while (true)
+        catch (Exception ex)
         {
-            var response = await httpClient.GetAsync(apiUrl);
-            Console.WriteLine($"API URL: {apiUrl}, Response status code: {response.StatusCode}");//增加调试输出
+            resultText = "查询余额API接口维护中，请稍后重试！";
+        }
+
+        return resultText;
+    }
+
+    private static async Task<HttpResponseMessage> MakeApiRequestAsync(HttpClient httpClient, string apiUrl, string apiKey)
+    {
+        int maxRetries = 3;
+        int retryCount = 0;
+
+        while (retryCount < maxRetries)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+            request.Headers.Add("TRON-PRO-API-KEY", apiKey);
+
+            var response = await httpClient.SendAsync(request);
+            Console.WriteLine($"API URL: {apiUrl}, Response status code: {response.StatusCode}"); // 调试输出
+
             if (response.IsSuccessStatusCode)
             {
-                string jsonResult = await response.Content.ReadAsStringAsync();
-                var accountInfoResponse = JsonSerializer.Deserialize<AccountInfoResponse>(jsonResult);
-                var accountInfo = new AccountInfo { Balance = accountInfoResponse.Data[0].Balance };
-                return (index, accountInfo);
+                return response;
+            }
+            else if (response.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                retryCount++;
+                // 随机等待 1.1-1.3 秒
+                double delaySeconds = 1.1 + (random.NextDouble() * 0.2);
+                await Task.Delay((int)(delaySeconds * 1000));
+                continue;
             }
             else if (response.StatusCode == HttpStatusCode.Forbidden)
             {
-                // 如果请求失败，等待半秒后重试
+                // 如果请求被禁止，等待0.5秒后重试
                 await Task.Delay(500);
+                retryCount++;
+                continue;
             }
             else
             {
-                throw new Exception("API请求失败！");
+                throw new Exception($"API请求失败，状态码：{response.StatusCode}");
             }
         }
+
+        throw new Exception("API请求达到最大重试次数，仍然失败！");
     }
-    finally
-    {
-        semaphore.Release(); // 释放信号量
-    }
-}
-    private static async ValueTask<AccountInfo> GetAccountInfoAsync(HttpClient httpClient, string apiUrl)
+
+    private static async Task<(int index, AccountInfo accountInfo)> GetAccountInfoAsync(HttpClient httpClient, string apiUrl, int index, string apiKey)
     {
         await semaphore.WaitAsync(); // 限制并发数
         try
         {
-            var response = await httpClient.GetAsync(apiUrl);
-            if (response.IsSuccessStatusCode)
-            {
-                string jsonResult = await response.Content.ReadAsStringAsync();
-                var accountInfo = JsonSerializer.Deserialize<AccountInfo>(jsonResult);
-                return accountInfo;
-            }
-            else
-            {
-                throw new Exception("API请求失败！");
-            }
+            var response = await MakeApiRequestAsync(httpClient, apiUrl, apiKey);
+            string jsonResult = await response.Content.ReadAsStringAsync();
+            var accountInfoResponse = JsonSerializer.Deserialize<AccountInfoResponse>(jsonResult);
+            var accountInfo = new AccountInfo { Balance = accountInfoResponse.Data[0].Balance };
+            return (index, accountInfo);
         }
         finally
         {
             semaphore.Release(); // 释放信号量
         }
     }
+
+    // 删除重复的 GetAccountInfoAsync 方法
 }
+
 public class AccountInfoResponse
 {
     [JsonPropertyName("data")]
@@ -9842,6 +9856,7 @@ public class AccountInfoResponse
         public long Balance { get; set; }
     }
 }
+
 public class TransferList
 {
     [JsonPropertyName("data")]
