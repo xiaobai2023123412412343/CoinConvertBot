@@ -23084,9 +23084,10 @@ else
 async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> GetUSDTIncomeAsync(string receiveAddress, string contractAddress)
 {
     const int PageSize = 200; // 每页查询的交易记录数量，最大值为 200
-    int currentPage = 0;
     const int MaxRetries = 3; // 最多重试3次
+    int currentPage = 0;
     int currentRetry = 0;
+    bool hasProcessedData = false; // 标记是否已经处理过任何数据
 
     // API 密钥列表
     var apiKeys = new List<string>
@@ -23100,8 +23101,24 @@ async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> G
     var random = new Random();
     int currentKeyIndex = random.Next(0, apiKeys.Count); // 随机选择初始密钥
 
+    // 验证输入参数
+    if (string.IsNullOrWhiteSpace(receiveAddress) || string.IsNullOrWhiteSpace(contractAddress))
+    {
+        //Console.WriteLine("接收地址或合约地址无效");
+        return (0, 0, 0);
+    }
+
     // 获取北京时区
-    var chinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+    TimeZoneInfo chinaTimeZone;
+    try
+    {
+        chinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+    }
+    catch (TimeZoneNotFoundException)
+    {
+        //Console.WriteLine("无法找到中国标准时区，尝试使用 Asia/Shanghai");
+        chinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Shanghai");
+    }
 
     // 获取当前北京时间、本月1号、今年1月1号的UTC时间戳（毫秒）
     var nowBeijing = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaTimeZone);
@@ -23140,27 +23157,29 @@ async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> G
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"API请求失败: {response.StatusCode} - {response.ReasonPhrase}");
+                    //Console.WriteLine($"API请求失败 (页 {currentPage}): {response.StatusCode} - {response.ReasonPhrase}");
                     if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests && currentRetry < MaxRetries)
                     {
                         // 遇到限频，切换密钥
-                        currentKeyIndex = (currentKeyIndex + 1) % apiKeys.Count; // 循环切换到下一个密钥
-                        await Task.Delay(new Random().Next(1000, 2001)); // 随机暂停1到2秒
+                        currentKeyIndex = (currentKeyIndex + 1) % apiKeys.Count;
+                        await Task.Delay((int)Math.Pow(2, currentRetry) * 1000); // 指数退避：1s, 2s, 4s
                         currentRetry++;
                         continue; // 重试当前请求
                     }
                     else if (currentRetry < MaxRetries)
                     {
                         // 其他错误，重试当前密钥
-                        await Task.Delay(new Random().Next(1000, 2001));
+                        await Task.Delay((int)Math.Pow(2, currentRetry) * 1000);
                         currentRetry++;
                         continue; // 重试当前请求
                     }
                     else
                     {
-                        // 达到最大重试次数，返回0
-                        Console.WriteLine("达到最大重试次数，返回0");
-                        return (0, 0, 0);
+                        // 达到最大重试次数
+                        //Console.WriteLine($"达到最大重试次数 (页 {currentPage})，返回当前累加结果");
+                        return hasProcessedData
+                            ? (todayIncome, monthlyIncome, yearlyIncome) // 返回已累加结果
+                            : (0, 0, 0); // 没有任何数据时返回0
                     }
                 }
 
@@ -23171,6 +23190,7 @@ async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> G
                 // 检查数据是否为空
                 if (!transactions["data"].Any())
                 {
+                    //Console.WriteLine($"页 {currentPage}: 无更多数据");
                     hasMoreData = false;
                     break;
                 }
@@ -23190,11 +23210,11 @@ async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> G
                     // 验证时间戳有效性
                     if (timestamp < yearStartTimestamp || timestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000)
                     {
-                        Console.WriteLine($"无效时间戳: {timestamp}");
+                        //Console.WriteLine($"无效时间戳: {timestamp}, 交易ID: {tx["transaction_id"]}");
                         continue;
                     }
 
-                    // 按时间范围分类（直接比较 UTC 时间戳）
+                    // 按时间范围分类
                     yearlyIncome += amount; // 年度收入
                     if (timestamp >= monthStartTimestamp)
                     {
@@ -23206,30 +23226,35 @@ async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> G
                     }
                 }
 
+                hasProcessedData = true; // 标记已处理过数据
+                //Console.WriteLine($"页 {currentPage}: 处理 {transactions["data"].Count()} 条记录, 今日: {todayIncome}, 本月: {monthlyIncome}, 年度: {yearlyIncome}");
                 hasMoreData = transactions["data"].Count() == PageSize;
                 currentPage++;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"获取交易记录时出错: {ex.Message}");
+                //Console.WriteLine($"获取交易记录时出错 (页 {currentPage}): {ex.Message}");
                 if (currentRetry < MaxRetries)
                 {
                     // 切换密钥并重试
                     currentKeyIndex = (currentKeyIndex + 1) % apiKeys.Count;
-                    await Task.Delay(new Random().Next(1000, 2001));
+                    await Task.Delay((int)Math.Pow(2, currentRetry) * 1000); // 指数退避
                     currentRetry++;
                     continue; // 重试当前请求
                 }
                 else
                 {
-                    // 达到最大重试次数，返回0
-                    Console.WriteLine("达到最大重试次数，返回0");
-                    return (0, 0, 0);
+                    // 达到最大重试次数
+                    //Console.WriteLine($"达到最大重试次数 (页 {currentPage})，返回当前累加结果");
+                    return hasProcessedData
+                        ? (todayIncome, monthlyIncome, yearlyIncome) // 返回已累加结果
+                        : (0, 0, 0); // 没有任何数据时返回0
                 }
             }
         }
     }
 
+    //Console.WriteLine($"查询完成: 总页数 {currentPage}, 今日: {todayIncome}, 本月: {monthlyIncome}, 年度: {yearlyIncome}");
     return (todayIncome, monthlyIncome, yearlyIncome);
 }
 
