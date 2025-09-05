@@ -12697,6 +12697,7 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
     int maxEnergy = 0;
     string maxEnergyDate = "";
 
+    /* 旧方法 批量注释，保留代码
     // 解析每日转账类型的笔数
     (int withUBalanceCount, int withoutUBalanceCount) CalculateTransactionTypes(int totalTransactions, int totalEnergy, int energyWithUBalance, int energyWithoutUBalance)
     {
@@ -12717,7 +12718,35 @@ public static async Task<(string, InlineKeyboardMarkup)> GetDailyTransactionsCou
 
         return (withUBalanceCount, withoutUBalanceCount);
     }
+    */
 
+    // 解析每日转账类型的笔数
+    (int withUBalanceCount, int withoutUBalanceCount) CalculateTransactionTypes(int totalTransactions, int totalEnergy, int energyWithUBalance, int energyWithoutUBalance)
+    {
+        int deltaEnergy = energyWithoutUBalance - energyWithUBalance; // 66000
+        int bestWithUBalanceCount = 0;
+        int bestWithoutUBalanceCount = 0;
+        int minEnergyDiff = int.MaxValue;
+
+        // 尝试所有可能的 withoutUBalanceCount 值
+        for (int withoutUBalanceCount = 0; withoutUBalanceCount <= totalTransactions; withoutUBalanceCount++)
+        {
+            int withUBalanceCount = totalTransactions - withoutUBalanceCount;
+            if (withUBalanceCount < 0) continue;
+
+            int calculatedEnergy = withUBalanceCount * energyWithUBalance + withoutUBalanceCount * energyWithoutUBalance;
+            int energyDiff = Math.Abs(totalEnergy - calculatedEnergy);
+
+            if (energyDiff < minEnergyDiff)
+            {
+                minEnergyDiff = energyDiff;
+                bestWithUBalanceCount = withUBalanceCount;
+                bestWithoutUBalanceCount = withoutUBalanceCount;
+            }
+        }
+
+        return (bestWithUBalanceCount, bestWithoutUBalanceCount);
+    }
     using (var httpClient = new HttpClient())
     {
         try
