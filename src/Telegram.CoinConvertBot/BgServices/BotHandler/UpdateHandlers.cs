@@ -23079,6 +23079,7 @@ else
             "关闭键盘" => guanbi(botClient, message),
             _ => Usage(botClient, message)
         };
+
 // 通用方法：获取年度 USDT 交易记录，并按今日、本月、年度分类
 async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> GetUSDTIncomeAsync(string receiveAddress, string contractAddress)
 {
@@ -23087,13 +23088,35 @@ async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> G
     const int MaxRetries = 3; // 最多重试3次
     int currentRetry = 0;
 
-    // 获取本年第一天零点的时间戳（毫秒）
-    var firstDayOfYear = new DateTime(DateTime.Today.Year, 1, 1);
-    var startTimestamp = new DateTimeOffset(firstDayOfYear).ToUnixTimeSeconds() * 1000;
+    // API 密钥列表
+    var apiKeys = new List<string>
+    {
+        "10609102-669a-4cf4-8c36-cc3ed97f9a30",
+        "e8c5fc2a-98c7-4706-b535-641a6a4617d2",
+        "5f89323b-b11e-449c-b0b6-b780851f9c30",
+        "7445222e-ab1b-4886-8b77-da5ba11449f9",
+        "35eccd40-0b6f-4eb0-b572-87ed1c6c63d6"
+    };
+    var random = new Random();
+    int currentKeyIndex = random.Next(0, apiKeys.Count); // 随机选择初始密钥
 
-    // 获取今日和本月第一天的时间，用于本地分类
-    var today = DateTime.Today;
-    var firstDayOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    // 获取北京时区
+    var chinaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("China Standard Time");
+
+    // 获取当前北京时间、本月1号、今年1月1号的UTC时间戳（毫秒）
+    var nowBeijing = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chinaTimeZone);
+    var todayStartBeijing = nowBeijing.Date; // 今日零点（北京时间）
+    var monthStartBeijing = new DateTime(nowBeijing.Year, nowBeijing.Month, 1); // 本月1号零点（北京时间）
+    var yearStartBeijing = new DateTime(nowBeijing.Year, 1, 1); // 今年1月1号零点（北京时间）
+
+    // 转换为UTC时间戳（毫秒）
+    var todayStartUtc = TimeZoneInfo.ConvertTimeToUtc(todayStartBeijing, chinaTimeZone);
+    var monthStartUtc = TimeZoneInfo.ConvertTimeToUtc(monthStartBeijing, chinaTimeZone);
+    var yearStartUtc = TimeZoneInfo.ConvertTimeToUtc(yearStartBeijing, chinaTimeZone);
+
+    var todayStartTimestamp = new DateTimeOffset(todayStartUtc).ToUnixTimeSeconds() * 1000;
+    var monthStartTimestamp = new DateTimeOffset(monthStartUtc).ToUnixTimeSeconds() * 1000;
+    var yearStartTimestamp = new DateTimeOffset(yearStartUtc).ToUnixTimeSeconds() * 1000;
 
     decimal todayIncome = 0;
     decimal monthlyIncome = 0;
@@ -23103,29 +23126,40 @@ async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> G
     using (var httpClient = new HttpClient())
     {
         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        // 如果有 TronGrid API 密钥，取消注释以下行并替换为你的密钥
-        // httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", "your-api-key");
 
         while (hasMoreData)
         {
-            string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{receiveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={startTimestamp}&contract_address={contractAddress}&limit={PageSize}&start={(currentPage * PageSize) + 1}";
+            string apiEndpoint = $"https://api.trongrid.io/v1/accounts/{receiveAddress}/transactions/trc20?only_confirmed=true&only_to=true&min_timestamp={yearStartTimestamp}&contract_address={contractAddress}&limit={PageSize}&start={(currentPage * PageSize) + 1}";
             try
             {
+                // 设置当前密钥
+                httpClient.DefaultRequestHeaders.Remove("TRON-PRO-API-KEY");
+                httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKeys[currentKeyIndex]);
+
                 var response = await httpClient.GetAsync(apiEndpoint);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     Console.WriteLine($"API请求失败: {response.StatusCode} - {response.ReasonPhrase}");
-                    if (currentRetry < MaxRetries)
+                    if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests && currentRetry < MaxRetries)
                     {
-                        // 随机暂停1到2秒后重试
+                        // 遇到限频，切换密钥
+                        currentKeyIndex = (currentKeyIndex + 1) % apiKeys.Count; // 循环切换到下一个密钥
+                        await Task.Delay(new Random().Next(1000, 2001)); // 随机暂停1到2秒
+                        currentRetry++;
+                        continue; // 重试当前请求
+                    }
+                    else if (currentRetry < MaxRetries)
+                    {
+                        // 其他错误，重试当前密钥
                         await Task.Delay(new Random().Next(1000, 2001));
                         currentRetry++;
                         continue; // 重试当前请求
                     }
                     else
                     {
-                        // 请求失败，返回0
+                        // 达到最大重试次数，返回0
+                        Console.WriteLine("达到最大重试次数，返回0");
                         return (0, 0, 0);
                     }
                 }
@@ -23133,6 +23167,13 @@ async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> G
                 currentRetry = 0; // 重置重试次数
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 JObject transactions = JObject.Parse(jsonResponse);
+
+                // 检查数据是否为空
+                if (!transactions["data"].Any())
+                {
+                    hasMoreData = false;
+                    break;
+                }
 
                 // 遍历交易记录并按时间分类累计 USDT 收入
                 foreach (var tx in transactions["data"])
@@ -23145,16 +23186,21 @@ async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> G
                     var rawAmount = (decimal)tx["value"];
                     var amount = rawAmount / 1_000_000L; // 转换为 USDT 单位
                     var timestamp = (long)tx["block_timestamp"]; // 使用 block_timestamp（毫秒）
-                    var dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(timestamp);
-                    var localDateTime = dateTimeOffset.ToOffset(TimeSpan.FromHours(8)).DateTime; // 转换为北京时间
 
-                    // 按时间范围分类
+                    // 验证时间戳有效性
+                    if (timestamp < yearStartTimestamp || timestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1000)
+                    {
+                        Console.WriteLine($"无效时间戳: {timestamp}");
+                        continue;
+                    }
+
+                    // 按时间范围分类（直接比较 UTC 时间戳）
                     yearlyIncome += amount; // 年度收入
-                    if (localDateTime.Date >= firstDayOfMonth)
+                    if (timestamp >= monthStartTimestamp)
                     {
                         monthlyIncome += amount; // 本月收入
                     }
-                    if (localDateTime.Date == today)
+                    if (timestamp >= todayStartTimestamp)
                     {
                         todayIncome += amount; // 今日收入
                     }
@@ -23168,14 +23214,16 @@ async Task<(decimal todayIncome, decimal monthlyIncome, decimal yearlyIncome)> G
                 Console.WriteLine($"获取交易记录时出错: {ex.Message}");
                 if (currentRetry < MaxRetries)
                 {
-                    // 随机暂停1到2秒后重试
+                    // 切换密钥并重试
+                    currentKeyIndex = (currentKeyIndex + 1) % apiKeys.Count;
                     await Task.Delay(new Random().Next(1000, 2001));
                     currentRetry++;
                     continue; // 重试当前请求
                 }
                 else
                 {
-                    // 请求失败，返回0
+                    // 达到最大重试次数，返回0
+                    Console.WriteLine("达到最大重试次数，返回0");
                     return (0, 0, 0);
                 }
             }
