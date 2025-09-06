@@ -8450,23 +8450,65 @@ private static async Task HandleBindTronAddressCommand(ITelegramBotClient botCli
     }
 }
 
+// API 密钥列表
+private static readonly List<string> apiKeys = new List<string>
+{
+    "10609102-669a-4cf4-8c36-cc3ed97f9a30",
+    "e8c5fc2a-98c7-4706-b535-641a6a4617d2",
+    "5f89323b-b11e-449c-b0b6-b780851f9c30",
+    "7445222e-ab1b-4886-8b77-da5ba11449f9",
+    "35eccd40-0b6f-4eb0-b572-87ed1c6c63d6",
+    "2f9385ef-2820-4caa-9f74-e720e1a39a75"
+};
+
 // 检查波场地址是否有效
 private static async Task<bool> IsValidTronAddress(string tronAddress)
 {
     using (var httpClient = new HttpClient())
     {
-        try
+        // 复制密钥列表并打乱顺序
+        var shuffledKeys = apiKeys.OrderBy(_ => random.Next()).ToList();
+        int keyIndex = 0;
+
+        while (keyIndex < shuffledKeys.Count)
         {
-            var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
-            var content = await response.Content.ReadAsStringAsync();
-            return content.Contains("\"success\":true");
+            string apiKey = shuffledKeys[keyIndex];
+            try
+            {
+                // 设置 API 密钥
+                httpClient.DefaultRequestHeaders.Clear();
+                httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKey);
+
+                var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
+                response.EnsureSuccessStatusCode(); // 确保请求成功
+                var content = await response.Content.ReadAsStringAsync();
+                bool isValid = content.Contains("\"success\":true");
+                if (isValid)
+                {
+                    return true;
+                }
+
+                // 如果返回内容不包含 success，可能密钥无效，尝试下一个
+                Console.WriteLine($"API key {apiKey} failed for address {tronAddress}: Invalid response");
+                keyIndex++;
+            }
+            catch (HttpRequestException ex)
+            {
+                // HTTP 请求失败，记录错误并尝试下一个密钥
+                Console.WriteLine($"Error checking Tron address with key {apiKey}: {ex.Message}");
+                keyIndex++;
+            }
+            catch (Exception ex)
+            {
+                // 其他异常，记录错误并尝试下一个密钥
+                Console.WriteLine($"Unexpected error checking Tron address with key {apiKey}: {ex.Message}");
+                keyIndex++;
+            }
         }
-        catch (Exception ex)
-        {
-            // 记录异常信息，但不中断程序运行
-            Console.WriteLine($"Error checking Tron address: {ex.Message}");
-            return false;
-        }
+
+        // 所有密钥都失败
+        Console.WriteLine($"All API keys failed to validate Tron address {tronAddress}");
+        return false;
     }
 }
 
@@ -8475,51 +8517,67 @@ private static async Task<decimal> GetTronBalanceAsync(string tronAddress)
 {
     using (var httpClient = new HttpClient())
     {
+        // 复制密钥列表并打乱顺序
+        var shuffledKeys = apiKeys.OrderBy(_ => random.Next()).ToList();
+        int keyIndex = 0;
         int retryCount = 0;
-        const int maxRetries = 3;
+        const int maxRetriesPerKey = 3; // 每个密钥的最大重试次数
 
-        while (retryCount < maxRetries)
+        while (keyIndex < shuffledKeys.Count)
         {
-            try
-            {
-                var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
-                var content = await response.Content.ReadAsStringAsync();
-                var match = Regex.Match(content, "\"balance\":(\\d+)");
-                if (match.Success)
-                {
-                    var balanceInSun = long.Parse(match.Groups[1].Value);
-                    var balanceInTrx = balanceInSun / 1_000_000.0m;
-                    return balanceInTrx;
-                }
-                else
-                {
-                    throw new Exception("无法获取波场地址的TRX余额");
-                }
-            }
-            catch (Exception ex)
-            {
-                // 记录异常信息，但不中断程序运行
-                Console.WriteLine($"Error getting Tron balance: {ex.Message}");
+            string apiKey = shuffledKeys[keyIndex];
+            retryCount = 0;
 
-                // 如果无法获取TRX余额，等待1-3秒后重试
-                if (ex.Message.Contains("无法获取波场地址的TRX余额"))
+            while (retryCount < maxRetriesPerKey)
+            {
+                try
                 {
-                    retryCount++;
-                    if (retryCount >= maxRetries)
+                    // 设置 API 密钥
+                    httpClient.DefaultRequestHeaders.Clear();
+                    httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKey);
+
+                    var response = await httpClient.GetAsync($"https://api.trongrid.io/v1/accounts/{tronAddress}");
+                    response.EnsureSuccessStatusCode(); // 确保请求成功
+                    var content = await response.Content.ReadAsStringAsync();
+                    var match = Regex.Match(content, "\"balance\":(\\d+)");
+                    if (match.Success)
                     {
-                        return 0; // 达到最大重试次数，返回 0
+                        var balanceInSun = long.Parse(match.Groups[1].Value);
+                        var balanceInTrx = balanceInSun / 1_000_000.0m;
+                        return balanceInTrx;
                     }
-                    var waitTime = new Random().Next(1000, 3000);
-                    await Task.Delay(waitTime);
+                    else
+                    {
+                        Console.WriteLine($"API key {apiKey} failed for address {tronAddress}: Unable to parse balance");
+                        retryCount++;
+                        await Task.Delay(random.Next(1000, 3000)); // 等待1-3秒后重试
+                        continue;
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    Console.WriteLine($"Error getting Tron balance with key {apiKey}: {ex.Message}");
+                    retryCount++;
+                    await Task.Delay(random.Next(1000, 3000)); // 等待1-3秒后重试
                     continue;
                 }
-                else
+                catch (Exception ex)
                 {
-                    return 0;
+                    Console.WriteLine($"Unexpected error getting Tron balance with key {apiKey}: {ex.Message}");
+                    retryCount++;
+                    await Task.Delay(random.Next(1000, 3000)); // 等待1-3秒后重试
+                    continue;
                 }
             }
+
+            // 当前密钥重试次数已达上限，尝试下一个密钥
+            Console.WriteLine($"API key {apiKey} exhausted retries for address {tronAddress}");
+            keyIndex++;
         }
-        return 0; // 确保循环外有默认返回值
+
+        // 所有密钥都失败
+        Console.WriteLine($"All API keys failed to get Tron balance for address {tronAddress}");
+        return 0;
     }
 }
 //升级管理员提醒    
