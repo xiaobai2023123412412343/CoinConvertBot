@@ -24041,13 +24041,12 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 <code>转入金额：<b>100 USDT</b>
 实时汇率：</code><del>100 USDT = {95m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</del>
 <code>您的优惠汇率：<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>    
-机器人自动向您的钱包转账：：<b>{102m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX | 加赠2%</b></code>
-    
-注意：<b>只支持 {MinUSDT} USDT以上的金额兑换！</b>    
-只限钱包转账，自动原地址返TRX，禁止<b>交易所</b>或<b>汇旺</b>提现！如需兑换到其它地址请{adminText}！
+机器人自动向您转账：：<b>{102m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX | 加赠2%</b></code>
 
-转帐前，推荐您绑定钱包地址来接收交易通知： 
-发送：<code>绑定 Txxxxxxx</code>(您的钱包地址)         {leftPointingIndex} <b>推荐使用！！！</b> 
+如需接收通知发送：<code>绑定 Txxxxxxx</code>(您的钱包地址) 
+	
+注意：<b>只支持 {MinUSDT} USDT以上的金额兑换！</b>    
+禁止<b>交易所</b>或<b>汇旺</b>提现，只限钱包转账，自动原地址返回TRX，如需兑换到其它地址请{adminText}！
 
 
 ";
