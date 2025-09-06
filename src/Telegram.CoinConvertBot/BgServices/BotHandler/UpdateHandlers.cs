@@ -24186,14 +24186,14 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 <b><del>100 USDT = {95m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</del></b>   
             
 <b>您的优惠汇率：</b>                
-<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX ≈ {(5m * 20) * usdtPrice}  CNY</b>            
+<b>100 USDT = {102m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX ≈ {(5m * 20) * usdtPrice}  CNY</b>            
 —————————————————<code>
-  10 USDT = {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}  TRX 
-  50 USDT = {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
- 100 USDT = {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
- 300 USDT = {(5m * 60).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX 	
- 500 USDT = {(5m * 100).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX
-1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00}TRX
+  10 USDT =   {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX 
+  50 USDT =  {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate) * 1.01m:0.00} TRX | 加赠1%
+ 100 USDT =  {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate) * 1.02m:0.00} TRX | 加赠2%
+ 300 USDT =  {(5m * 60).USDT_To_TRX(rate, FeeRate, USDTFeeRate) * 1.03m:0.00} TRX | 加赠3%
+ 500 USDT = {(5m * 100).USDT_To_TRX(rate, FeeRate, USDTFeeRate) * 1.03m:0.00} TRX | 加赠3%
+1000 USDT = {(5m * 200).USDT_To_TRX(rate, FeeRate, USDTFeeRate) * 1.05m:0.00} TRX | 加赠5%
 </code>
 <b>机器人收款地址:(↓点击自动复制↓</b>):
         
@@ -24209,8 +24209,8 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 对方地址无u：13.03 TRX - 14.00 TRX 
 
 {adminText} 租赁能量更划算：
-对方地址有u：仅需  <b>{TransactionFee} TRX</b>，节省  {savings} TRX (节省约{savingsPercentage}%) 
-对方地址无u：仅需  <b>{noUFee} TRX</b>，节省  {noUSavings} TRX (节省约{noUSavingsPercentage}%)         
+有u：仅需  <b>{TransactionFee} TRX</b>，节省  {savings} TRX (节省约{savingsPercentage}%) 
+无u：仅需  <b>{noUFee} TRX</b>，节省  {noUSavings} TRX (节省约{noUSavingsPercentage}%)         
 
 
 ";
