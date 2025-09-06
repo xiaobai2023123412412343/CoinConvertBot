@@ -341,7 +341,7 @@ protected override async Task ExecuteAsync()
                 {
                     try
                     {
-                        await _botClient.SendTextMessageAsync(SendTo, $@"<b>新交易 {"\U0001F4B8"} 兑换 <b>{record.ConvertAmount:#.######} {record.ConvertCurrency}{(string.IsNullOrEmpty(rateInfo) ? "" : $" | {rateInfo}")}</b></b>
+                        await _botClient.SendTextMessageAsync(SendTo, $@"<b>新交易 {"\U0001F4B8"} 兑换 <b>{record.ConvertAmount:#.######} {record.ConvertCurrency}</b></b>
 
 兑换金额：<b>{record.OriginalAmount:#.######} {record.OriginalCurrency}</b>
 兑换时间：<b>{record.ReceiveTime:yyyy-MM-dd HH:mm:ss}</b>
