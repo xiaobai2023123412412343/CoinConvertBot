@@ -24188,7 +24188,7 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
 <b>您的优惠汇率：</b>                
 <b>100 USDT = {102m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX ≈ {(5m * 20) * usdtPrice}  CNY</b>            
 —————————————————<code>
-  10 USDT =   {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX 
+  10 USDT =   {(5m * 2).USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX
   50 USDT =  {(5m * 10).USDT_To_TRX(rate, FeeRate, USDTFeeRate) * 1.01m:0.00} TRX | 加赠1%
  100 USDT =  {(5m * 20).USDT_To_TRX(rate, FeeRate, USDTFeeRate) * 1.02m:0.00} TRX | 加赠2%
  300 USDT =  {(5m * 60).USDT_To_TRX(rate, FeeRate, USDTFeeRate) * 1.03m:0.00} TRX | 加赠3%
@@ -24199,10 +24199,10 @@ async Task<Message> PriceTRX(ITelegramBotClient botClient, Message message)
         
 <code>{ReciveAddress}</code>      
     
-<b>注意：只支持 {MinUSDT} USDT以上的金额兑换！</b>   
-<b>给机器人收款地址转u自动原地址秒回TRX！</b> 
-<b>禁止从交易所或汇旺提现到机器人收款地址！ </b> 
-<b>如需兑换 ERC-20 手续费直接联系下方管理员！ </b> 	
+注意：只支持 <b>{MinUSDT} USDT </b>以上的金额兑换！
+单次兑换金额越大，额外赠送的TRX越多！
+禁止从交易所或汇旺提现到机器人收款地址！
+如需兑换 ERC-20 手续费直接联系下方管理员！  
 {ethRateText}—————————————————    
 转账费用：（浮动）
 对方地址有u：  6.43 TRX -  7.00  TRX 
