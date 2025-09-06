@@ -13938,7 +13938,7 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
     }
 
     string fearGreedDescription = GetFearGreedDescription(today);        
-    decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
+    decimal usdtToTrx = 102m.USDT_To_TRX(rate, FeeRate, 0); // 100USDT兑换TRX汇率，加赠2%
     var bitcoinPrice = prices[0];
     var ethereumPrice = prices[1];
     var bitcoinChange = changes[0];
@@ -14190,7 +14190,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
         while (!cancellationToken.IsCancellationRequested)
         {
             var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-            decimal usdtToTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
+            decimal usdtToTrx = 102m.USDT_To_TRX(rate, FeeRate, 0);// 100USDT兑换TRX汇率，加赠2%
             var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
 
             string GetFearGreedDescription(int value)
