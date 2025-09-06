@@ -24033,7 +24033,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
             if (USDTFeeRate == 0)
             {
                 msg = @$"
-<b>机器人收款地址:(↓点击自动复制↓</b>):
+<b>机器人收款地址:(↑扫码支付或点击下方地址复制↓)</b>
                 
 <code>{ReciveAddress}</code>    
 
@@ -24041,7 +24041,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 <code>转入金额：<b>100 USDT</b>
 实时汇率：</code><del>100 USDT = {95m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</del>
 <code>您的优惠汇率：<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>    
-可获得TRX：<b>100 * {1m.USDT_To_TRX(rate, FeeRate, 0):#.####} = {100m.USDT_To_TRX(rate, FeeRate, USDTFeeRate):0.00} TRX</b></code>
+机器人自动向您的钱包转账：：<b>{102m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX | 加赠2%</b></code>
     
 注意：<b>只支持 {MinUSDT} USDT以上的金额兑换！</b>    
 只限钱包转账，自动原地址返TRX，禁止<b>交易所</b>或<b>汇旺</b>提现！如需兑换到其它地址请{adminText}！
