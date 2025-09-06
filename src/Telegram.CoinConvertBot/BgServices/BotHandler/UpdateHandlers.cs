@@ -8250,9 +8250,8 @@ private static readonly Random random = new Random(); // 用于生成随机检�
 
 private static void StartMonitoring(ITelegramBotClient botClient, long userId, string tronAddress)
 {
-    // 创建一个定时器来定期检查地址的TRX余额
-    Timer timer = null;
-    timer = new Timer(async _ =>
+    // 创建定时器以定期检查地址的TRX余额
+    Timer timer = new Timer(async state =>
     {
         bool timerExists;
         lock (timerLock)
@@ -8262,138 +8261,141 @@ private static void StartMonitoring(ITelegramBotClient botClient, long userId, s
 
         if (!timerExists)
         {
-            // 如果定时器已经不存在，就不执行回调逻辑
+            // 定时器已被移除，退出回调
             return;
         }
 
-        var balance = await GetTronBalanceAsync(tronAddress);
-        var roundedBalance = Math.Round(balance, 2); // 四舍五入到小数点后两位
-        // 计算可供转账次数，这是新添加的代码
-        var transferTimes = Math.Floor(balance / fixedCost);  // 计算转账次数为用户余额除以13.3959
-
-        // 获取地址备注信息
-        string note = userAddressNotes.TryGetValue((userId, tronAddress), out var userNote) ? userNote : "";
-        string noteMessagePart = !string.IsNullOrEmpty(note) ? $"地址备注信息：<b>{note}</b>\n" : "";
-
-        if (balance < 100)
+        try
         {
-            // 检查是否在过去8小时内发送过提醒
-            bool shouldSendReminder;
-            lock (timerLock)
+            var balance = await GetTronBalanceAsync(tronAddress);
+            var roundedBalance = Math.Round(balance, 2); // 四舍五入到2位小数
+            var transferTimes = Math.Floor(balance / fixedCost); // 计算转账次数
+
+            // 获取地址备注
+            string note = userAddressNotes.TryGetValue((userId, tronAddress), out var userNote) ? userNote : "";
+            string noteMessagePart = !string.IsNullOrEmpty(note) ? $"地址备注信息：<b>{note}</b>\n" : "";
+
+            if (balance < 100)
             {
-                var key = (userId, tronAddress);
-                if (lastReminderTimes.TryGetValue(key, out var lastReminderTime))
+                // 检查是否需要发送提醒（8小时冷却时间）
+                bool shouldSendReminder;
+                lock (timerLock)
                 {
-                    shouldSendReminder = (DateTime.UtcNow - lastReminderTime).TotalHours >= 8;
-                }
-                else
-                {
-                    shouldSendReminder = true; // 首次检测到余额不足，发送提醒
-                }
-            }
-
-            if (shouldSendReminder)
-            {
-                try
-                {
-                    await botClient.SendTextMessageAsync(
-                        chatId: userId,
-                        text: $"<b>温馨提示：</b>\n您绑定的地址：<code>{tronAddress}</code>\n{noteMessagePart}\n⚠️ TRX余额只剩：{roundedBalance}，剩余可供转账：{transferTimes}次 ⚠️\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
-                        parseMode: ParseMode.Html
-                    );
-
-                    // 记录本次提醒时间
-                    lock (timerLock)
+                    var key = (userId, tronAddress);
+                    if (lastReminderTimes.TryGetValue(key, out var lastReminderTime))
                     {
-                        lastReminderTimes[(userId, tronAddress)] = DateTime.UtcNow;
-                    }
-                }
-                catch (ApiRequestException ex)
-                {
-                    if (ex.Message.Contains("Too Many Requests"))
-                    {
-                        // 解析重试时间
-                        var match = Regex.Match(ex.Message, @"retry after (\d+)");
-                        if (match.Success)
-                        {
-                            int retryAfter = int.Parse(match.Groups[1].Value);
-                            // 等待重试时间+1秒
-                            await Task.Delay((retryAfter + 1) * 1000);
-                            // 重新尝试发送消息
-                            await botClient.SendTextMessageAsync(
-                                chatId: userId,
-                                text: $"<b>温馨提示：</b>\n您绑定的地址：<code>{tronAddress}</code>\n{noteMessagePart}\n⚠️ TRX余额只剩：{roundedBalance}，剩余可供转账：{transferTimes}次 ⚠️\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
-                                parseMode: ParseMode.Html
-                            );
-
-                            // 记录本次提醒时间
-                            lock (timerLock)
-                            {
-                                lastReminderTimes[(userId, tronAddress)] = DateTime.UtcNow;
-                            }
-                        }
-                    }
-                    else if (ex.Message == "Forbidden: bot was blocked by the user" || ex.Message.Contains("user is deactivated") || ex.Message.Contains("Bad Request: chat not found"))
-                    {
-                        // 用户阻止了机器人，或者用户注销了机器人，取消定时器任务
-                        timer.Dispose();
-                        timer = null;
-                        // 从字典中移除该用户的定时器和地址
-                        var key = (userId, tronAddress);
-                        lock (timerLock)
-                        {
-                            userTimers.Remove(key);
-                            lastReminderTimes.Remove(key);
-                        }
-                        RemoveAddressFromUser(userId, tronAddress);
+                        shouldSendReminder = (DateTime.UtcNow - lastReminderTime).TotalHours >= 8;
                     }
                     else
                     {
-                        // 其他错误继续抛出
-                        throw;
+                        shouldSendReminder = true; // 首次检测到余额不足
                     }
                 }
-                catch (Exception ex)  // 捕获所有异常
+
+                if (shouldSendReminder)
                 {
-                    // 取消定时器任务
-                    timer.Dispose();
-                    timer = null;
-                    // 从字典中移除该用户的定时器和地址
-                    var key = (userId, tronAddress);
-                    lock (timerLock)
+                    try
                     {
-                        userTimers.Remove(key);
-                        lastReminderTimes.Remove(key);
+                        await botClient.SendTextMessageAsync(
+                            chatId: userId,
+                            text: $"<b>温馨提示：</b>\n您绑定的地址：<code>{tronAddress}</code>\n{noteMessagePart}\n⚠️ TRX余额只剩：{roundedBalance}，剩余可供转账：{transferTimes}次 ⚠️\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
+                            parseMode: ParseMode.Html
+                        );
+
+                        // 记录本次提醒时间
+                        lock (timerLock)
+                        {
+                            lastReminderTimes[(userId, tronAddress)] = DateTime.UtcNow;
+                        }
                     }
-                    RemoveAddressFromUser(userId, tronAddress);
+                    catch (ApiRequestException ex)
+                    {
+                        if (ex.Message.Contains("Too Many Requests"))
+                        {
+                            // 解析重试时间
+                            var match = Regex.Match(ex.Message, @"retry after (\d+)");
+                            if (match.Success)
+                            {
+                                int retryAfter = int.Parse(match.Groups[1].Value);
+                                // 等待重试时间+1秒
+                                await Task.Delay((retryAfter + 1) * 1000);
+                                // 重新尝试发送消息
+                                await botClient.SendTextMessageAsync(
+                                    chatId: userId,
+                                    text: $"<b>温馨提示：</b>\n您绑定的地址：<code>{tronAddress}</code>\n{noteMessagePart}\n⚠️ TRX余额只剩：{roundedBalance}，剩余可供转账：{transferTimes}次 ⚠️\n为了不影响您的转账，建议您立即向本机器人兑换TRX！",
+                                    parseMode: ParseMode.Html
+                                );
+
+                                // 记录本次提醒时间
+                                lock (timerLock)
+                                {
+                                    lastReminderTimes[(userId, tronAddress)] = DateTime.UtcNow;
+                                }
+                            }
+                        }
+                        else if (ex.Message.Contains("Forbidden: bot was blocked by the user") || 
+                                 ex.Message.Contains("user is deactivated") || 
+                                 ex.Message.Contains("Bad Request: chat not found"))
+                        {
+                            // 用户阻止机器人或账户失效，清理定时器和相关数据
+                            lock (timerLock)
+                            {
+                                var key = (userId, tronAddress);
+                                if (userTimers.TryGetValue(key, out var existingTimer))
+                                {
+                                    existingTimer.Dispose();
+                                    userTimers.Remove(key);
+                                }
+                                lastReminderTimes.Remove(key);
+                            }
+                            RemoveAddressFromUser(userId, tronAddress);
+                            return; // 退出回调
+                        }
+                        else
+                        {
+                            // 记录其他错误
+                            Log.Error($"发送消息时发生错误: {ex.Message}");
+                        }
+                    }
                 }
             }
 
-            // 余额不足，继续每45-60秒检查一次
-            if (timer != null)
+            // 余额不足或充足，继续随机45-60秒检查一次
+            lock (timerLock)
             {
-                int nextCheckSeconds = random.Next(45, 61); // 随机45-60秒
-                timer.Change(TimeSpan.FromSeconds(nextCheckSeconds), TimeSpan.FromSeconds(nextCheckSeconds));
+                if (userTimers.ContainsKey((userId, tronAddress)))
+                {
+                    int nextCheckSeconds = random.Next(45, 61);
+                    userTimers[(userId, tronAddress)].Change(
+                        TimeSpan.FromSeconds(nextCheckSeconds),
+                        TimeSpan.FromSeconds(nextCheckSeconds));
+                }
             }
         }
-        else
+        catch (Exception ex)
         {
-            // 余额充足，每45-60秒检查一次
-            if (timer != null)
+            // 记录错误并清理定时器
+            Log.Error($"检查TRX余额时发生错误: {ex.Message}");
+            lock (timerLock)
             {
-                int nextCheckSeconds = random.Next(45, 61); // 随机45-60秒
-                timer.Change(TimeSpan.FromSeconds(nextCheckSeconds), TimeSpan.FromSeconds(nextCheckSeconds));
+                var key = (userId, tronAddress);
+                if (userTimers.TryGetValue(key, out var existingTimer))
+                {
+                    existingTimer.Dispose();
+                    userTimers.Remove(key);
+                }
+                lastReminderTimes.Remove(key);
             }
+            RemoveAddressFromUser(userId, tronAddress);
         }
     }, null, TimeSpan.Zero, TimeSpan.FromSeconds(random.Next(45, 61)));
 
-    // 将定时器和用户ID存储起来
+    // 将定时器存储到字典
     lock (timerLock)
     {
         userTimers[(userId, tronAddress)] = timer;
     }
 }
-
 private static void RemoveAddressFromUser(long userId, string tronAddress)
 {
     if (userTronAddresses.TryGetValue(userId, out var addresses))
