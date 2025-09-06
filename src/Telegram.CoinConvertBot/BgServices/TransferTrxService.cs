@@ -274,19 +274,19 @@ protected override async Task ExecuteAsync()
         else if (order.OriginalAmount <= 299)
         {
             adjustedRate = rate * 1.02m; // 100 ≤ USDT ≤ 299：增加 2%
-            rateInfo = "加赠 2% \U00002705\U00002705";
+            rateInfo = "加赠 2% \U00002705";
             _logger.LogInformation("订单 {id} 使用调整汇率 (+2%): {rate}", order.BlockTransactionId, adjustedRate);
         }
         else if (order.OriginalAmount <= 799)
         {
             adjustedRate = rate * 1.03m; // 300 ≤ USDT ≤ 799：增加 3%
-            rateInfo = "加赠 3% \U00002705\U00002705\U00002705";
+            rateInfo = "加赠 3% \U00002705";
             _logger.LogInformation("订单 {id} 使用调整汇率 (+3%): {rate}", order.BlockTransactionId, adjustedRate);
         }
         else // order.OriginalAmount >= 800
         {
             adjustedRate = rate * 1.05m; // ≥ 800 USDT：增加 5%
-            rateInfo = "加赠 5% \U00002705\U00002705\U00002705";
+            rateInfo = "加赠 5% \U00002705";
             _logger.LogInformation("订单 {id} 使用调整汇率 (+5%): {rate}", order.BlockTransactionId, adjustedRate);
         }
 
