@@ -24044,9 +24044,10 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 机器人自动向您转账：：<b>{102m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX | 加赠2%</b></code>
 
 如需接收通知发送：<code>绑定 Txxxxxxx</code>(您的钱包地址) 
-	
-注意：<b>只支持 {MinUSDT} USDT以上的金额兑换！</b>    
-禁止<b>交易所</b>或<b>汇旺</b>提现，只限钱包转账，自动原地址返回TRX，如需兑换到其它地址请{adminText}！
+
+注意：只支持<b> {MinUSDT} USDT</b>以上的金额兑换！
+禁止<b>交易所</b>或<b>汇旺</b>提现，只接受钱包转账！
+自动原地址返回TRX，如需兑换到其它地址请{adminText}！
 
 
 ";
