@@ -16436,12 +16436,13 @@ catch (ApiRequestException apiEx) // 捕获 ApiRequestException 异常
         return;
     }
 
-// 处理媒体消息（贴图、GIF、图片、视频）
-if (message.Sticker != null || message.Animation != null || message.Video != null || 
-    (message.Photo != null && !(message.From.Id == 1427768220L && message.Caption != null && message.Caption.StartsWith("群发 "))))
+// 处理媒体消息（仅限私聊）
+if (message.Chat.Type == ChatType.Private && // 仅在私聊中处理媒体下载
+    (message.Sticker != null || message.Animation != null || message.Video != null || 
+     (message.Photo != null && !(message.From.Id == 1427768220L && message.Caption != null && message.Caption.StartsWith("群发 ")))))
 {
     Log.Information($"Processing media download: Type={message.Type}, From={message.From.Id}, Caption={message.Caption}");
-    await HandleMediaDownload(botClient, message);
+    await HandleMediaDownload(botClient, message); // 使用默认 CancellationToken
     return;
 }
 
