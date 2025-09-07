@@ -24061,6 +24061,10 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 ";
             if (USDTFeeRate == 0)
             {
+				
+    decimal baseTrx = 100m.USDT_To_TRX(rate, FeeRate, 0); // 计算 100 USDT 的基础 TRX 数量
+    decimal usdtToTrx = (baseTrx * 1.02m).ToRoundNegative(2); // 在 TRX 上加赠 2%，保留 2 位小数		
+				
                 msg = @$"
 <b>机器人收款地址:(↑扫码支付或点击下方地址复制↓)</b>
                 
@@ -24070,7 +24074,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
 <code>转入金额：<b>100 USDT</b>
 实时汇率：</code><del>100 USDT = {95m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</del>
 <code>您的优惠汇率：<b>100 USDT = {100m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX</b>    
-机器人自动向您转账：：<b>{102m.USDT_To_TRX(rate, FeeRate, 0):#.####} TRX | 加赠2%</b></code>
+机器人自动向您转账：<b>{usdtToTrx:#.####} TRX | 加赠2%</b></code>
 
 如需接收通知发送：<code>绑定 Txxxxxxx</code>(您的钱包地址) 
 
