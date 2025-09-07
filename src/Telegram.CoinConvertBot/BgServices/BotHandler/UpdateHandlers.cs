@@ -6871,26 +6871,31 @@ static async Task SendVirtualAdvertisement(ITelegramBotClient botClient, Cancell
         var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate, cancellationToken); // 确保查询支持取消
 
         // 根据 USDT 金额调整兑换金额
-        decimal adjustedAmount = amount;
-        if (amount <= 99)
+        decimal baseTrx = amount.USDT_To_TRX(rate, FeeRate, 0); // 计算基础 TRX 数量
+        decimal bonusRate;
+        if (amount <= 20)
         {
-            adjustedAmount = amount * 1.01m; // 20-99 USDT：加赠1%
+            bonusRate = 0m; // ≤ 20 USDT：无加赠
         }
-        else if (amount <= 299)
+        else if (amount <= 100)
         {
-            adjustedAmount = amount * 1.02m; // 100-299 USDT：加赠2%
+            bonusRate = 0.01m; // 20-100 USDT：加赠1%
         }
-        else if (amount <= 799)
+        else if (amount <= 300)
         {
-            adjustedAmount = amount * 1.03m; // 300-799 USDT：加赠3%
+            bonusRate = 0.02m; // 100-300 USDT：加赠2%
         }
-        else // amount >= 800
+        else if (amount <= 800)
         {
-            adjustedAmount = amount * 1.05m; // ≥800 USDT：加赠5%
+            bonusRate = 0.03m; // 300-800 USDT：加赠3%
+        }
+        else // amount > 800
+        {
+            bonusRate = 0.05m; // > 800 USDT：加赠5%
         }
 
-        // 使用调整后的金额计算 TRX
-        var trxAmount = adjustedAmount.USDT_To_TRX(rate, FeeRate, 0);
+        // 使用调整后的 TRX 数量
+        var trxAmount = (baseTrx * (1 + bonusRate)).ToRoundNegative(2);
 
         now = now.AddSeconds(-random.Next(10, 31));
         var address = "T" + new string(Enumerable.Range(0, 33).Select(_ => addressChars[random.Next(addressChars.Length)]).ToArray());
