@@ -34,6 +34,7 @@ using System.Globalization;
 using System.Collections.Concurrent;
 using System.Threading;
 using TronNet.Protocol;
+using Telegram.CoinConvertBot.Extensions;
 
 namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 
@@ -13960,7 +13961,9 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
     }
 
     string fearGreedDescription = GetFearGreedDescription(today);        
-    decimal usdtToTrx = 102m.USDT_To_TRX(rate, FeeRate, 0); // 100USDT兑换TRX汇率，加赠2%
+    //decimal usdtToTrx = 102m.USDT_To_TRX(rate, FeeRate, 0); // 100USDT兑换TRX汇率，加赠2% 
+	decimal baseTrx = 100m.USDT_To_TRX(rate, FeeRate, 0); // 计算 100 USDT 的基础 TRX 数量
+    decimal usdtToTrx = (baseTrx * 1.02m).ToRoundNegative(2); // 在 TRX 上加赠 2%，保留 2 位小数
     var bitcoinPrice = prices[0];
     var ethereumPrice = prices[1];
     var bitcoinChange = changes[0];
@@ -14212,7 +14215,11 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
         while (!cancellationToken.IsCancellationRequested)
         {
             var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-            decimal usdtToTrx = 102m.USDT_To_TRX(rate, FeeRate, 0);// 100USDT兑换TRX汇率，加赠2%
+			
+           // decimal usdtToTrx = 102m.USDT_To_TRX(rate, FeeRate, 0);// 100USDT兑换TRX汇率，加赠2% 旧版直接USDT*优惠
+			decimal baseTrx = 100m.USDT_To_TRX(rate, FeeRate, 0); // 计算 100 USDT 的基础 TRX 数量
+            decimal usdtToTrx = (baseTrx * 1.02m).ToRoundNegative(2); // 在 TRX 上加赠 2%，保留 2 位小数
+			
             var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
 
             string GetFearGreedDescription(int value)
