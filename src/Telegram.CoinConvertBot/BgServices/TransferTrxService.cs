@@ -391,7 +391,10 @@ protected override async Task ExecuteAsync()
                     });
                     var TRX = Convert.ToDecimal(account.Balance) / 1_000_000L;
 
-                    await _botClient.SendTextMessageAsync(AdminUserId, $@"<b>{record.ConvertCurrency}出账通知！({record.OriginalAmount:#.######} {record.OriginalCurrency} -> {record.ConvertAmount:#.######} {record.ConvertCurrency}{(string.IsNullOrEmpty(rateInfo) ? "" : $" | {rateInfo}")})</b>
+                    // 计算原始汇率下的 TRX 金额（不含加赠）
+                    var originalConvertAmount = order.OriginalAmount.USDT_To_TRX(rate, UpdateHandlers.FeeRate, UpdateHandlers.USDTFeeRate);
+
+                    await _botClient.SendTextMessageAsync(AdminUserId, $@"<b>{record.ConvertCurrency}出账通知！({record.OriginalAmount:#.######} {record.OriginalCurrency} -> {originalConvertAmount:#.######} {record.ConvertCurrency})</b>
 
 订单：<code>{record.BlockTransactionId}</code>
 转入：<b>{record.OriginalAmount:#.######} {record.OriginalCurrency}</b>
@@ -399,7 +402,7 @@ protected override async Task ExecuteAsync()
 时间：<b>{record.PayTime:yyyy-MM-dd HH:mm:ss}</b>
 地址：<code>{record.FromAddress}</code>
 -----------------------------
-余额：<b>{TRX} TRX{(string.IsNullOrEmpty(rateInfo) ? "" : $" | {rateInfo}")}</b>
+余额：<b>{TRX} TRX</b>
 已用带宽：<b>{account.FreeNetUsage + account.NetUsage}</b>
 ", Bot.Types.Enums.ParseMode.Html, replyMarkup: inlineKeyboard);
                 }
