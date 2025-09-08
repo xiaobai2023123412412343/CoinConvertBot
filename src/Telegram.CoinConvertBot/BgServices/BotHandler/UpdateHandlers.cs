@@ -11221,118 +11221,109 @@ public static async Task<(DateTime CreationTime, bool IsError)> GetAccountCreati
    
 public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)> GetBalancesAsync(string address)
 {
-    // 定义API密钥，如果一个失效就换下一个
-    string[] apiKeys = new string[] {
-        "4f37a8b5-870b-4a02-a33f-7dc41cb8ed8d",
-        "f49353bd-db65-4719-a56c-064b2eb231bf",
-        "587f64a1-43d5-40f2-9115-7d3c66b0459a",
-        "92854974-68da-4fd8-9e50-3948c1e6fa7e"
+    // 验证地址格式
+    if (!Regex.IsMatch(address, @"^T[A-Za-z0-9]{33}$"))
+    {
+        Console.WriteLine($"无效的波场地址: {address}");
+        return (0m, 0m, true);
+    }
+
+    // Tronscan API 密钥列表
+    string[] apiKeys = new string[]
+    {
+        "305cb06c-9c01-42ad-8a87-6ff7acfdffb8",
+        "369e85e5-68d3-4299-a602-9d8d93ad026a",
+        "0c138945-fd9f-4390-b015-6b93368de1fd"
     };
+
+    // 初始化日志变量
+    string tronscanJson = string.Empty;
 
     try
     {
         using var httpClient = new HttpClient();
-        // 设置请求头部，使用第一个有效的API密钥
-        httpClient.DefaultRequestHeaders.Add("OK-ACCESS-KEY", apiKeys[0]);
+        decimal trxBalance = 0m, usdtBalance = 0m;
+        bool isError = true;
 
-        // 获取TRX余额
-        HttpResponseMessage trxResponse;
-        string trxJson;
-        int retryCount = 0;
-        do
+        // 尝试每个 API 密钥，直到成功或全部失败
+        foreach (var apiKey in apiKeys)
         {
-            trxResponse = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/address-summary?chainShortName=tron&address={address}");
-            trxJson = await trxResponse.Content.ReadAsStringAsync();
-            if (trxJson.Contains("\"code\":\"50011\"") && retryCount < 2) // 检查是否达到API速率限制
-            {
-                //Console.WriteLine("Rate limit exceeded. Retrying after delay...");
-                await Task.Delay(new Random().Next(1000, 1500)); // 随机延迟1到1.5秒
-                retryCount++;
-            }
-            else
-            {
-                break;
-            }
-        } while (true);
+            httpClient.DefaultRequestHeaders.Remove("TRON-PRO-API-KEY");
+            httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKey);
 
-        //Console.WriteLine($"TRX API Response: {trxJson}");  // 调试输出TRX API返回的JSON
-        var trxJsonDocument = JsonDocument.Parse(trxJson);
+            int retryCount = 0;
+            do
+            {
+                // 调用 Tronscan API 查询账户信息
+                var response = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
+                tronscanJson = await response.Content.ReadAsStringAsync();
 
-        decimal trxBalance = 0m;
-        if (trxJsonDocument.RootElement.GetProperty("code").GetString() == "0" && trxJsonDocument.RootElement.GetProperty("data").GetArrayLength() > 0)
-        {
-            trxBalance = decimal.Parse(trxJsonDocument.RootElement.GetProperty("data")[0].GetProperty("balance").GetString());
-	    //Console.WriteLine("TRX余额来自主API");	
+                // 检查 HTTP 状态码和常见错误（如速率限制）
+                if (!response.IsSuccessStatusCode || tronscanJson.Contains("error") || tronscanJson.Contains("429"))
+                {
+                    if (retryCount >= 2) break; // 每个密钥重试 2 次
+                    await Task.Delay(new Random().Next(1000, 1500)); // 随机延迟 1-1.5 秒
+                    retryCount++;
+                    continue;
+                }
+
+                // 解析 JSON 数据
+                try
+                {
+                    var jsonDoc = JsonDocument.Parse(tronscanJson);
+                    if (jsonDoc.RootElement.TryGetProperty("withPriceTokens", out var tokensElement))
+                    {
+                        foreach (var token in tokensElement.EnumerateArray())
+                        {
+                            // 查询 TRX 余额
+                            if (token.TryGetProperty("tokenName", out var tokenNameElement) && tokenNameElement.GetString() == "trx" &&
+                                token.TryGetProperty("balance", out var balanceElement))
+                            {
+                                string trxBalanceStr = balanceElement.GetString();
+                                trxBalance = decimal.Parse(trxBalanceStr) / 1000000m; // 单位：sun 转换为 TRX
+                                //Console.WriteLine($"TRX余额来自Tronscan API: {trxBalance}");
+                            }
+
+                            // 查询 USDT 余额
+                            if (token.TryGetProperty("tokenId", out var tokenIdElement) && tokenIdElement.GetString() == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" &&
+                                token.TryGetProperty("tokenName", out var tokenNameElement2) && tokenNameElement2.GetString() == "Tether USD" &&
+                                token.TryGetProperty("balance", out var usdtBalanceElement))
+                            {
+                                string usdtBalanceStr = usdtBalanceElement.GetString();
+                                usdtBalance = decimal.Parse(usdtBalanceStr) / 1000000m; // 单位：sun 转换为 USDT
+                               // Console.WriteLine($"USDT余额来自Tronscan API: {usdtBalance}");
+                            }
+                        }
+                        isError = false; // 成功解析，标记为无错误
+                    }
+                    else
+                    {
+                        Console.WriteLine("Tronscan API 未返回 withPriceTokens 字段");
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"Tronscan JSON 解析失败: {ex.Message}");
+                }
+                break; // 成功获取数据或解析失败，退出重试循环
+            } while (true);
+
+            if (!isError) break; // 如果成功获取数据，退出密钥循环
         }
 
-        // 获取USDT余额
-        HttpResponseMessage usdtResponse;
-        string usdtJson;
-        retryCount = 0; // 重置重试计数器
-        do
+        // 如果所有密钥都失败，返回错误
+        if (isError)
         {
-            usdtResponse = await httpClient.GetAsync($"https://www.oklink.com/api/v5/explorer/address/address-balance-fills?chainShortName=tron&address={address}&tokenContractAddress=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t&limit=1");
-            usdtJson = await usdtResponse.Content.ReadAsStringAsync();
-            if (usdtJson.Contains("\"code\":\"50011\"") && retryCount < 2) // 检查是否达到API速率限制
-            {
-                //Console.WriteLine("Rate limit exceeded. Retrying after delay...");
-                await Task.Delay(new Random().Next(1000, 1500)); // 随机延迟1到1.5秒
-                retryCount++;
-            }
-            else
-            {
-                break;
-            }
-        } while (true);
-
-        //Console.WriteLine($"USDT API Response: {usdtJson}");  // 调试输出USDT API返回的JSON
-        var usdtJsonDocument = JsonDocument.Parse(usdtJson);
-
-        decimal usdtBalance = 0m;
-        if (usdtJsonDocument.RootElement.GetProperty("code").GetString() == "0" && usdtJsonDocument.RootElement.GetProperty("data").GetArrayLength() > 0 && usdtJsonDocument.RootElement.GetProperty("data")[0].GetProperty("tokenList").GetArrayLength() > 0)
-        {
-            usdtBalance = decimal.Parse(usdtJsonDocument.RootElement.GetProperty("data")[0].GetProperty("tokenList")[0].GetProperty("holdingAmount").GetString());
-	    //Console.WriteLine("USDT余额来自主API");	
+            Console.WriteLine("所有 Tronscan API 密钥均无法获取有效数据");
+            return (0m, 0m, true);
         }
 
-// 如果任一余额为0，尝试使用备用API
-if (trxBalance == 0m || usdtBalance == 0m)
-{
-    // 添加 TRON API 密钥到请求头
-    httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", "0c138945-fd9f-4390-b015-6b93368de1fd");
-    HttpResponseMessage backupResponse = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
-    string backupJson = await backupResponse.Content.ReadAsStringAsync();
-    //Console.WriteLine("备用API返回的JSON: " + backupJson);  // 输出API返回的完整JSON字符串
-    var backupJsonDocument = JsonDocument.Parse(backupJson);
-
-    // 遍历withPriceTokens数组，寻找TRX和USDT的余额
-    foreach (var token in backupJsonDocument.RootElement.GetProperty("withPriceTokens").EnumerateArray())
-    {
-        // 检查是否为TRX
-        if (token.GetProperty("tokenName").GetString() == "trx")
-        {
-            // 获取字符串类型的balance，然后转换为decimal，并进行单位转换
-            string trxBalanceStr = token.GetProperty("balance").GetString();
-            trxBalance = decimal.Parse(trxBalanceStr) / 1000000m;
-            //Console.WriteLine("TRX余额来自备用API: " + trxBalance);
-        }
-        // 检查是否为USDT，确保tokenId和tokenName匹配
-        if (token.GetProperty("tokenId").GetString() == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" && token.GetProperty("tokenName").GetString() == "Tether USD")
-        {
-            // 获取字符串类型的balance，然后转换为decimal，并进行单位转换
-            string usdtBalanceStr = token.GetProperty("balance").GetString();
-            usdtBalance = decimal.Parse(usdtBalanceStr) / 1000000m;
-            //Console.WriteLine("USDT余额来自备用API: " + usdtBalance);
-        }
-    }
-}
-
-        return (usdtBalance, trxBalance, false); // 如果没有发生错误，返回结果和IsError=false
+        return (usdtBalance, trxBalance, false);
     }
     catch (Exception ex)
     {
-        // 发生错误时，返回零余额和IsError=true
-        Console.WriteLine($"Error in method {nameof(GetBalancesAsync)}: {ex.Message}");
+        Console.WriteLine($"方法 {nameof(GetBalancesAsync)} 出错: {ex.Message}");
+        Console.WriteLine($"Tronscan JSON: {(tronscanJson.Length > 1000 ? tronscanJson.Substring(0, 1000) + "..." : tronscanJson)}");
         return (0m, 0m, true);
     }
 }
