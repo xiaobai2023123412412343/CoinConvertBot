@@ -436,7 +436,11 @@ protected override async Task ExecuteAsync()
                     }
                 }
                 if (AdminUserId > 0)
-                    await _botClient.SendTextMessageAsync(AdminUserId, $@"<b>{record.ConvertCurrency}出账失败！({record.OriginalAmount:#.######} {record.OriginalCurrency} -> {record.ConvertAmount:#.######} {record.ConvertCurrency}{(string.IsNullOrEmpty(rateInfo) ? "" : $" | {rateInfo}")})</b>
+                {
+                    // 计算原始汇率下的 TRX 金额（不含加赠）
+                    var originalConvertAmount = order.OriginalAmount.USDT_To_TRX(rate, UpdateHandlers.FeeRate, UpdateHandlers.USDTFeeRate);
+
+                    await _botClient.SendTextMessageAsync(AdminUserId, $@"<b>{record.ConvertCurrency}出账失败！({record.OriginalAmount:#.######} {record.OriginalCurrency} -> {originalConvertAmount:#.######} {record.ConvertCurrency})</b>
 
 订单：<code>{record.BlockTransactionId}</code>
 转入：<b>{record.OriginalAmount:#.######} {record.OriginalCurrency}</b>
@@ -445,6 +449,7 @@ protected override async Task ExecuteAsync()
 时间：<b>{record.PayTime:yyyy-MM-dd HH:mm:ss}</b>
 原因：<b>{record.Error}</b>
 ", Bot.Types.Enums.ParseMode.Html);
+                }
             }
         }
         catch (Exception e)
@@ -452,7 +457,7 @@ protected override async Task ExecuteAsync()
             _logger.LogError(e, "发送TG通知失败！");
         }
     }
-}        
+}         
         public static async Task<TransactionResult> TransferTrxAsync(IServiceProvider provider, string ToAddress, decimal Amount, string? Memo = null)
         {
             var Result = new TransactionResult()
