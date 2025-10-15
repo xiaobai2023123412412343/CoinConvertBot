@@ -16115,6 +16115,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 发数字+笔数自动计算能量价格
 发时间格式 自动返回30天的日期
 
+管理员发：退群 群ID 可让机器人退出指定群组
 
 备忘录：
 1：管理员ID: 1427768220
