@@ -21420,6 +21420,88 @@ if (message.From.Id == 1427768220L && Regex.IsMatch(message.Text, @"^((\d{4}[-/\
         );
     }
 }
+// 检查是否接收到退群指令，格式如“退群-4821289707”或“退群 -4821289707”
+if (messageText.Trim().StartsWith("退群"))
+{
+    // 限制只有管理员用户 ID 可以执行
+    if (message.From.Id != AdminUserId)
+    {
+        return; // 非管理员用户，直接返回，不处理也不回复
+    }
+
+    try
+    {
+        // 解析指令文本，提取群组 ID
+        string trimmedText = messageText.Trim().Substring(2).Trim(); // 去除“退群”前缀并修剪空格
+        long groupId;
+        
+        // 尝试解析为长整型数字，支持带空格的情况
+        if (long.TryParse(trimmedText, out groupId) || 
+            long.TryParse(trimmedText.Replace(" ", ""), out groupId)) // 处理可能的多余空格
+        {
+            // 仅处理负数群组 ID（正数忽略）
+            if (groupId >= 0)
+            {
+                Console.WriteLine("忽略正数群组 ID 的退群指令。");
+                return;
+            }
+
+            // 检查机器人是否在该群组中（通过尝试退出或本地数据检查）
+            // 这里假设通过本地 GroupChats 检查是否已记录该群
+            var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == groupId);
+            if (existingGroupChat == null)
+            {
+                // 如果本地无记录，尝试直接退出（Telegram API 会自动处理不在群的情况）
+                await botClient.LeaveChatAsync(groupId);
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: $"群组 {groupId} 未在本地记录，但已尝试退出。"
+                );
+                Console.WriteLine($"管理员指令：尝试退出未记录群组 {groupId}。");
+                return;
+            }
+
+            // 执行退出群组操作
+            await botClient.LeaveChatAsync(groupId);
+            
+            // 从本地 GroupChats 中移除该群记录
+            GroupChats.Remove(existingGroupChat);
+            
+            // 从兑换通知黑名单中移除该群 ID（如果存在）
+            if (GroupManager.BlacklistedGroupIds.Contains(groupId))
+            {
+                GroupManager.BlacklistedGroupIds.Remove(groupId);
+            }
+
+            // 向管理员发送确认消息
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"已成功退出群组：{existingGroupChat.Title} (ID: {groupId})"
+            );
+
+            Console.WriteLine($"管理员指令：成功退出群组 {groupId} ({existingGroupChat.Title}) 并清理本地记录。");
+        }
+        else
+        {
+            // 解析失败，回复错误提示
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "指令格式错误，请使用：退群-群组ID（例如：退群-4821289707）"
+            );
+            Console.WriteLine("管理员退群指令解析失败：无效的群组 ID 格式。");
+        }
+    }
+    catch (Exception ex)
+    {
+        // 处理退出群组或清理数据时的异常
+        Console.WriteLine($"退群操作过程中发生异常：{ex.Message}");
+        // 向管理员发送错误通知
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"退群操作失败：{ex.Message}"
+        );
+    }
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
