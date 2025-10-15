@@ -16640,49 +16640,114 @@ if (message.Type == MessageType.ChatMembersAdded)
     {
         if (newUser.Id == me.Id)
         {
-            // 发送欢迎消息
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: "进群成功！请给予管理员权限以体验机器人完整功能！"
-            );
-
-            var chat = await botClient.GetChatAsync(message.Chat.Id);
-            // 只有当群ID为负数时才保存
-            if (chat.Id < 0)
+            var chatId = message.Chat.Id; // 缓存chatId以便后续使用
+            try
             {
-                // 检查是否已存在该群聊信息
-                var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == chat.Id);
-                if (existingGroupChat != null)
+                // 发送欢迎消息并记录消息ID
+                var welcomeMessage = await botClient.SendTextMessageAsync(
+                    chatId: chatId,
+                    text: "进群成功！请给予管理员权限以体验机器人完整功能！"
+                );
+                int welcomeMessageId = welcomeMessage.MessageId; // 使用int类型以匹配API要求
+
+                var chat = await botClient.GetChatAsync(chatId);
+                // 只有当群ID为负数时才保存
+                if (chat.Id < 0)
                 {
-                    // 如果已存在，则更新群聊信息
-                    existingGroupChat.Title = chat.Title;
-                    existingGroupChat.InviteLink = chat.InviteLink;
+                    // 检查是否已存在该群聊信息
+                    var existingGroupChat = GroupChats.FirstOrDefault(gc => gc.Id == chat.Id);
+                    if (existingGroupChat != null)
+                    {
+                        // 如果已存在，则更新群聊信息
+                        existingGroupChat.Title = chat.Title;
+                        existingGroupChat.InviteLink = chat.InviteLink;
+                    }
+                    else
+                    {
+                        // 如果不存在，则添加新的群聊信息
+                        GroupChats.Add(new GroupChat { Id = chat.Id, Title = chat.Title, InviteLink = chat.InviteLink });
+                    }
                 }
-                else
-                {
-                    // 如果不存在，则添加新的群聊信息
-                    GroupChats.Add(new GroupChat { Id = chat.Id, Title = chat.Title, InviteLink = chat.InviteLink });
-                }
-            }
                 // 自动将群组ID添加到兑换通知黑名单
                 GroupManager.BlacklistedGroupIds.Add(chat.Id);
-                await botClient.SendTextMessageAsync(chat.Id, "升级管理员后机器人将自动删除群成员进出消息提醒！");
-		
-            // 发送带有链接的文本消息
-            string adminLink = "t.me/yifanfu"; // 管理员的Telegram链接
-            string messageWithLink = "汇率表每10分钟更新发送一次！如需关闭请" + $"<a href=\"https://{adminLink}\">联系作者</a>！";
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: messageWithLink,
-		disableWebPagePreview: true,    
-                parseMode: ParseMode.Html // 确保解析模式设置为HTML以解析链接
-            );
-            // 向管理员发送群聊信息
-            string adminMessage = $"机器人被拉到新群聊！\n\n群名：{chat.Title}\n群ID：{chat.Id}";
-            await botClient.SendTextMessageAsync(
-                chatId: AdminUserId, // 确保你已经设置了AdminUserId变量
-                text: adminMessage
-            );
+                
+                // 发送第二条消息并记录消息ID
+                var secondMessage = await botClient.SendTextMessageAsync(chatId, "升级管理员后机器人将自动删除群成员进出消息提醒！");
+                int secondMessageId = secondMessage.MessageId; // 使用int类型以匹配API要求
+        
+                // 发送带有链接的文本消息并记录消息ID
+                string adminLink = "t.me/yifanfu"; // 管理员的Telegram链接
+                string messageWithLink = "汇率表每10分钟更新发送一次！如需关闭请" + $"<a href=\"https://{adminLink}\">联系作者</a>！";
+                var thirdMessage = await botClient.SendTextMessageAsync(
+                    chatId: chatId,
+                    text: messageWithLink,
+                    disableWebPagePreview: true,    
+                    parseMode: ParseMode.Html // 确保解析模式设置为HTML以解析链接
+                );
+                int thirdMessageId = thirdMessage.MessageId; // 使用int类型以匹配API要求
+                
+                // 向管理员发送群聊信息
+                string adminMessage = $"机器人被拉到新群聊！\n\n群名：{chat.Title}\n群ID：{chat.Id}";
+                await botClient.SendTextMessageAsync(
+                    chatId: AdminUserId, // 确保你已经设置了AdminUserId变量
+                    text: adminMessage
+                );
+
+                // 等待5秒后尝试撤回三条消息
+                await Task.Delay(5000);
+                
+                // 尝试撤回消息，逐一处理以确保部分成功
+                bool deleteSuccess = true; // 标志用于跟踪是否所有撤回都成功
+                
+                try
+                {
+                    await botClient.DeleteMessageAsync(chatId, welcomeMessageId);
+                }
+                catch (Exception ex)
+                {
+                    // 记录异常（可替换为日志系统）
+                    Console.WriteLine($"撤回欢迎消息失败: {ex.Message}");
+                    deleteSuccess = false;
+                }
+                
+                try
+                {
+                    await botClient.DeleteMessageAsync(chatId, secondMessageId);
+                }
+                catch (Exception ex)
+                {
+                    // 记录异常（可替换为日志系统）
+                    Console.WriteLine($"撤回第二条消息失败: {ex.Message}");
+                    deleteSuccess = false;
+                }
+                
+                try
+                {
+                    await botClient.DeleteMessageAsync(chatId, thirdMessageId);
+                }
+                catch (Exception ex)
+                {
+                    // 记录异常（可替换为日志系统）
+                    Console.WriteLine($"撤回第三条消息失败: {ex.Message}");
+                    deleteSuccess = false;
+                }
+                
+                // 如果任何一条撤回失败，则取消进一步操作（此处已逐一尝试完成，无需额外取消）
+                if (!deleteSuccess)
+                {
+                    Console.WriteLine("部分或全部消息撤回失败，已停止尝试。");
+                }
+            }
+            catch (Exception ex)
+            {
+                // 处理发送消息或获取聊天信息时的整体异常
+                Console.WriteLine($"进群处理过程中发生异常: {ex.Message}");
+                // 可选：向管理员发送错误通知
+                await botClient.SendTextMessageAsync(
+                    chatId: AdminUserId,
+                    text: $"进群处理异常: {ex.Message}"
+                );
+            }
             return;
         }
     }
