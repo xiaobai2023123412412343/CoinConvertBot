@@ -34,7 +34,7 @@ https://codeload.github.com/xiaobai2023123412412343/CoinConvertBot/zip/refs/head
 
 <b>6 安装.NET 6.0  浏览器   </u>
 ```
-https://dotnet.microsoft.com/en-us/download/dotnet/6.0
+https://builds.dotnet.microsoft.com/dotnet/Sdk/6.0.428/dotnet-sdk-6.0.428-win-x64.exe
 ```
 
 <b>7 修改配置文件：重命名配置文件   appsettings.Example.json  改成</u>
