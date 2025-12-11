@@ -1500,7 +1500,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
                         InlineKeyboardButton.WithCallbackData("再查一次", $"eth_query:{ethAddress}"),
                         InlineKeyboardButton.WithUrl("ETH 详细信息", $"https://etherscan.io/address/{ethAddress}"),
                         InlineKeyboardButton.WithUrl("BSC 详细信息", $"https://bscscan.com/address/{ethAddress}"),
-                        InlineKeyboardButton.WithUrl("进群使用", "https://t.me/YifanfuBot?startgroup=true")
+                        InlineKeyboardButton.WithUrl("进群使用", "https://t.me/BuyTrxbot?startgroup=true")
                     }
                 })
             );
@@ -1614,7 +1614,7 @@ if (fromUser != null)
     captionText.AppendLine($"USDC余额：<b>{usdcBalanceBsc:N2} USDC</b>{(usdcBalanceBsc > 0 ? $" ≈ <b>{cnyUsdcBalanceBsc:N2}元人民币</b>" : "")}");
     captionText.AppendLine($"\n<a href=\"t.me/Yifanfu\">代开会员 | TRX兑换 | 点击购买：\nTRC-20、ERC-20、BEP-20 能量！ </a>");
 
-    var shareLink = "https://t.me/YifanfuBot?startgroup=true";
+    var shareLink = "https://t.me/BuyTrxbot?startgroup=true";
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         new InlineKeyboardButton[]
@@ -5893,7 +5893,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n" +   
                               $"{riskMessage}\n\n" +
                               $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" +
-                              $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
+                              $"<a href=\"https://t.me/GasFree8/14\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
                               $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
                               $"<a href=\"https://t.me/Yifanfu_newbot?start=tron\">3️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n";
 
@@ -5909,7 +5909,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                     {
                         InlineKeyboardButton.WithCallbackData("消费U卡", "energy_introo"),
                         InlineKeyboardButton.WithCallbackData("租赁能量", "energy_intro"),
-                        InlineKeyboardButton.WithUrl("靓号地址", "https://t.me/lianghaonet/8")
+                        InlineKeyboardButton.WithUrl("靓号地址", "https://t.me/GasFree8/14")
                     }
                 });
 
@@ -12360,7 +12360,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
 
     // 当连续相同字符数量大于等于4时，添加“靓号”信息
     string fireEmoji = "\uD83D\uDD25";
-    string buyLink = "https://t.me/lianghaonet/8";
+    string buyLink = "https://t.me/GasFree8/14";
     string userLabelSuffix = $" <a href=\"{buyLink}\">购买靓号</a>";
 
     if (maxConsecutiveIdenticalCharsCount >= 4)
@@ -14186,7 +14186,7 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
 
             var visitButton3 = new InlineKeyboardButton("私聊使用")
             {
-                Url = "https://t.me/Yifanfubot"
+                Url = "https://t.me/BuyTrxbot"
             };
 
             var shareToGroupButton = InlineKeyboardButton.WithUrl("群聊使用", shareLink);
@@ -16703,7 +16703,7 @@ if (message.Type == MessageType.ChatMembersAdded)
 await CheckUserBehavior(botClient, message);	  
 	    
 // 将这个值替换为目标群组的ID
-const long TARGET_CHAT_ID = -5038405140;//指定群聊转发用户对机器人发送的信息
+const long TARGET_CHAT_ID = -1003223313822;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
 const string BOT_USERNAME = "Yifanfu_newbot";//机器人用户名
 // 指定管理员ID
@@ -24416,9 +24416,9 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         // 用户编号，加上1000
         int displayPosition = 1000 + userPosition;	    
 
-        string usage = @$"<b>{username}</b> 您好，欢迎使用TRX自助兑换机器人！
+        string usage = @$"<b>{username}</b> 您好，欢迎使用万事通全能助手！
 
-使用方法：
+兑换流程：
    点击菜单 选择 <b>U兑TRX</b>
    转账USDT到指定地址，即可秒回TRX！
    如需了解机器人功能介绍，直接点击：/help
