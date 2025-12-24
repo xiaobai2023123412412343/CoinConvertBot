@@ -16801,7 +16801,7 @@ if (message.Type == MessageType.ChatMembersAdded)
 await CheckUserBehavior(botClient, message);	  
 	    
 // 将这个值替换为目标群组的ID
-const long TARGET_CHAT_ID = -5038405140;//指定群聊转发用户对机器人发送的信息
+const long TARGET_CHAT_ID = -1003223313822;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
 const string BOT_USERNAME = "Yifanfu_newbot";//机器人用户名
 // 指定管理员ID
