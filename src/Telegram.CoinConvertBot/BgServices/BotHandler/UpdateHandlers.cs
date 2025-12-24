@@ -7798,7 +7798,6 @@ private static void UnhandledExceptionHandler(object sender, UnhandledExceptionE
         Environment.Exit(1);
     }
 }
-//存储用户资料    
 private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, Message message)
 {
     // 检查消息是否来自指定的用户 ID（管理员）
@@ -7806,6 +7805,9 @@ private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, 
     {
         return;
     }
+
+    // 新增：管理员操作前确保已加载旧数据
+    EnsureFollowersLoaded();
 
     // 将消息文本转换为小写
     var lowerCaseMessage = message.Text.ToLower();
@@ -7827,26 +7829,22 @@ private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, 
                 // 检查是否在黑名单中
                 if (BlacklistedUserIds.Contains(id) || BlacklistedUsernames.Contains(username))
                 {
-                    // 如果在黑名单中，移除已存在的用户
                     var existingBlacklistedUser = Followers.FirstOrDefault(u => u.Id == id);
                     if (existingBlacklistedUser != null)
                     {
                         Followers.Remove(existingBlacklistedUser);
                     }
-                    continue; // 跳过黑名单用户
+                    continue;
                 }
 
-                // 检查是否已经存在相同ID的用户
                 var existingUser = Followers.FirstOrDefault(u => u.Id == id);
                 if (existingUser != null)
                 {
-                    // 如果存在，更新用户名和名字
                     existingUser.Username = username;
                     existingUser.Name = name;
                 }
                 else
                 {
-                    // 如果不存在，创建新的用户对象并添加到列表中
                     var user = new User
                     {
                         Name = name,
@@ -7859,9 +7857,7 @@ private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, 
             }
             catch (Exception ex)
             {
-                // 在这里处理异常，例如记录日志
-                // Log.Error(ex, "处理用户信息时出错");
-                continue; // 跳过当前用户，继续处理下一个用户
+                continue;
             }
         }
 
@@ -7869,41 +7865,45 @@ private static async Task HandleStoreCommandAsync(ITelegramBotClient botClient, 
         if (message.Text.StartsWith("存 用户名："))
         {
             string username = message.Text.Substring("存 用户名：".Length).Trim();
-            // 检查用户名是否在黑名单中
             if (BlacklistedUsernames.Contains(username))
             {
-                // 移除已存在的黑名单用户（如果有）
                 var existingBlacklistedUser = Followers.FirstOrDefault(u => u.Username == username);
                 if (existingBlacklistedUser != null)
                 {
                     Followers.Remove(existingBlacklistedUser);
                 }
-                return;
+                // 这里不发送回复，直接返回
             }
-            var user = new User { Username = username, FollowTime = DateTime.UtcNow.AddHours(8) };
-            Followers.Add(user);
+            else
+            {
+                var user = new User { Username = username, FollowTime = DateTime.UtcNow.AddHours(8) };
+                Followers.Add(user);
+            }
         }
         else if (message.Text.StartsWith("存 ID："))
         {
             string idText = message.Text.Substring("存 ID：".Length).Trim();
             if (long.TryParse(idText, out long id))
             {
-                // 检查ID是否在黑名单中
                 if (BlacklistedUserIds.Contains(id))
                 {
-                    // 移除已存在的黑名单用户（如果有）
                     var existingBlacklistedUser = Followers.FirstOrDefault(u => u.Id == id);
                     if (existingBlacklistedUser != null)
                     {
                         Followers.Remove(existingBlacklistedUser);
                     }
-                    return;
                 }
-                var user = new User { Id = id, FollowTime = DateTime.UtcNow.AddHours(8) };
-                Followers.Add(user);
+                else
+                {
+                    var user = new User { Id = id, FollowTime = DateTime.UtcNow.AddHours(8) };
+                    Followers.Add(user);
+                }
             }
         }
     }
+
+    // 新增：所有操作完成后立即保存到文件
+    SaveFollowersToFile();
 
     // 在处理完所有用户信息后发送一条消息
     await botClient.SendTextMessageAsync(chatId: message.Chat.Id, text: "已储存用户资料！");
@@ -9428,6 +9428,8 @@ private static readonly HashSet<string> BlacklistedUsernames = new HashSet<strin
 //完整列表
 private static async Task HandleFullListCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
+    EnsureFollowersLoaded(); // ← 新增这一行
+
     List<User> followers;
     int followersCount;
 
@@ -9456,7 +9458,87 @@ private static async Task HandleFullListCallbackAsync(ITelegramBotClient botClie
         );
     }
 }
+// ==================== 新增：持久化辅助方法 ====================
 
+private static readonly string FollowersFilePath = "关注列表.txt";
+
+/// <summary>
+/// 如果内存中的 Followers 为空，则从本地 txt 文件加载数据
+/// </summary>
+private static void EnsureFollowersLoaded()
+{
+    lock (_followersLock)
+    {
+        if (Followers.Count > 0) return; // 已经有数据，直接返回
+
+        if (!System.IO.File.Exists(FollowersFilePath)) return;
+
+        Followers.Clear();
+        var lines = System.IO.File.ReadAllLines(FollowersFilePath, Encoding.UTF8);
+
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            var parts = line.Split('|');
+            if (parts.Length < 4) continue;
+
+            try
+            {
+                var user = new User
+                {
+                    Name = parts[0] == "未知" ? null : parts[0],
+                    Username = parts[1] == "null" ? null : parts[1],
+                    Id = long.Parse(parts[2]),
+                    FollowTime = DateTime.ParseExact(parts[3], "yyyy-MM-dd HH:mm:ss", null),
+                    IsBot = parts.Length > 4 && bool.Parse(parts[4])
+                };
+
+                // 以 Id 去重
+                if (!Followers.Any(u => u.Id == user.Id))
+                {
+                    Followers.Add(user);
+                }
+            }
+            catch
+            {
+                // 解析失败的行直接忽略
+                continue;
+            }
+        }
+    }
+}
+
+/// <summary>
+/// 把当前内存中的 Followers 完整保存到 txt 文件
+/// </summary>
+private static void SaveFollowersToFile()
+{
+    lock (_followersLock)
+    {
+        try
+        {
+            // 获取目录部分，如果是纯文件名（如 "关注列表.txt"），directory 会是 null 或空
+            var directory = Path.GetDirectoryName(FollowersFilePath);
+
+            // 只有当 directory 不为空且不存在时，才创建目录
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var lines = Followers.Select(u => 
+                $"{u.Name ?? "未知"}|{u.Username ?? "null"}|{u.Id}|{u.FollowTime:yyyy-MM-dd HH:mm:ss}|{u.IsBot}"
+            );
+
+            System.IO.File.WriteAllLines(FollowersFilePath, lines, Encoding.UTF8);
+        }
+        catch (Exception ex)
+        {
+            // 可选：记录错误到控制台或你的日志文件，防止静默失败
+            Console.WriteLine($"[错误] 保存关注列表失败: {ex.Message}");
+        }
+    }
+}
 //获取关注列表   
 private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClient botClient, CallbackQuery callbackQuery)
 {
@@ -9482,11 +9564,14 @@ private static async Task HandleTransactionRecordsCallbackAsync(ITelegramBotClie
 }   
 private static void AddFollower(Message message)
 {
+    // 新增：机器人重启后第一次添加时，先从文件加载旧数据
+    EnsureFollowersLoaded();
+
     // 检查是否在黑名单中
     if (BlacklistedUserIds.Contains(message.From.Id) ||
         BlacklistedUsernames.Contains(message.From.Username ?? ""))
     {
-        // 如果在黑名单中，从仓库中移除（如果存在）
+        // 如果在黑名单中，从列表移除（如果存在）
         lock (_followersLock)
         {
             var existingUser = Followers.FirstOrDefault(x => x.Id == message.From.Id);
@@ -9495,6 +9580,7 @@ private static void AddFollower(Message message)
                 Followers.Remove(existingUser);
             }
         }
+        SaveFollowersToFile(); // 删除后也要同步保存
         return;
     }
 
@@ -9513,11 +9599,15 @@ private static void AddFollower(Message message)
             });
         }
     }
+
+    SaveFollowersToFile(); // 新增或已有用户后都立即保存
 }
 
 
 private static async Task HandleGetFollowersCommandAsync(ITelegramBotClient botClient, Message message, int page = 0, bool edit = false)
 {
+    EnsureFollowersLoaded(); // ← 新增这一行
+
     AddFollower(message);
 
     // 使用线程锁保护数据读取操作
