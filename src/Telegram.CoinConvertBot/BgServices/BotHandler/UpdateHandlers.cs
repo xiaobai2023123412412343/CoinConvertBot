@@ -16389,9 +16389,12 @@ if (message.Chat.Id < 0) // 群聊或超级群聊的ID为负数
             });
             //Log.Information($"新增群聊信息，群ID：{chat.Id}, 群名：{chat.Title}, 邀请链接：{inviteLink ?? "无"}");
 
-            // 自动将群ID添加到广告仓库
-            GroupManager.AddGroupId(chat.Id);
-            //Log.Information($"已将群ID {chat.Id} 添加到广告仓库");
+            // 自动将群ID添加到广告仓库，但排除指定的固定群ID
+            if (chat.Id != -1003223313822)
+            {
+                GroupManager.AddGroupId(chat.Id);
+                //Log.Information($"已将群ID {chat.Id} 添加到广告仓库");
+            }
         }
     }
     catch (Exception ex)
