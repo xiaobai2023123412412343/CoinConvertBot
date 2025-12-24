@@ -10224,7 +10224,12 @@ private static string FormatTransactionRecords(List<(DateTime timestamp, string 
 //谷歌翻译
 public static class TranslationSettingsManager
 {
-    private static readonly Dictionary<long, bool> TranslationSettings = new Dictionary<long, bool>();
+    private static readonly Dictionary<long, bool> TranslationSettings = new Dictionary<long, bool>
+    {
+        // 这两个群默认关闭自动翻译，需要手动发送“开启翻译”才能打开
+        { -1003210103121, false },
+        { -1003223313822, false }
+    };
 
     // 检查是否允许翻译（群组或用户）
     public static bool IsTranslationEnabled(long id)
