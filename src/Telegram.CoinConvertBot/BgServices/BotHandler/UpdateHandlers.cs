@@ -11131,9 +11131,9 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
     // Tronscan API 密钥列表
     string[] apiKeys = new string[]
     {
-        "305cb06c-9c01-42ad-8a87-6ff7acfdffb8",
-        "369e85e5-68d3-4299-a602-9d8d93ad026a",
-        "0c138945-fd9f-4390-b015-6b93368de1fd"
+        "8b51cfd2-da6f-4336-a4d4-63eb445f256b",
+        "837fbad2-6cab-4478-94bc-431eac16e8a0",
+        "378c51e9-e8c9-4b4b-b63e-bc153dcbaf22"
     };
 
     // 初始化日志变量
