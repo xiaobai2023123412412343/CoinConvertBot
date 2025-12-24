@@ -22510,7 +22510,7 @@ if (messageText.StartsWith("/qdgg"))
     // 向用户发送启动确认消息
     _ = botClient.SendTextMessageAsync(
         chatId: message.Chat.Id,
-        text: "群广告已启动！"
+        text: "群广告已启动！ /xuni "
     );
 }
 
