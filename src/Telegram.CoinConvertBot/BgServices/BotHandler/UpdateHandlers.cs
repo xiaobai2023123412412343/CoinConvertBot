@@ -21129,7 +21129,7 @@ if (messageText.Equals("/about", StringComparison.OrdinalIgnoreCase) ||
     {
         await botClient.SendAnimationAsync( // 使用 SendAnimationAsync 因为图片是 GIF
             chatId: message.Chat.Id,
-            animation: new InputOnlineFile("https://i.postimg.cc/13PpcScy/123.gif"),
+            animation: new InputOnlineFile("https://i.postimg.cc/DzmM3FgF/11.gif"),
             caption: captionText,
             parseMode: ParseMode.Html, // 使用 HTML 格式支持加粗
             replyMarkup: inlineKeyboard
