@@ -14182,7 +14182,7 @@ public static class GroupManager
 private static bool isAdvertisementRunning = false;     
 // 添加一个类级别的 CancellationTokenSource 以管理广告任务的取消
 private static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-//加密 文本
+//加密文本
 public static class TextCryptoHelper
 {
     private static readonly Random _rand = new Random();
