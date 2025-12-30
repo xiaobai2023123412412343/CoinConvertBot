@@ -14182,6 +14182,163 @@ public static class GroupManager
 private static bool isAdvertisementRunning = false;     
 // 添加一个类级别的 CancellationTokenSource 以管理广告任务的取消
 private static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+//加密 文本
+public static class TextCryptoHelper
+{
+    private static readonly Random _rand = new Random();
+    private static readonly string _chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    /// <summary>
+    /// 加密：Base64 → 先左移（第2位数字）→ 再右移（第4位数字）→ 末尾4位密钥
+    /// → 计算移位后字符串末尾连续数字个数 + 密钥最后一个数字 = 前缀字母数量
+    /// → 开头加随机大小写字母干扰 → 最终密文
+    /// </summary>
+    public static string EncryptText(string plainText, out string key4Digits)
+    {
+        key4Digits = "0000";
+        if (string.IsNullOrWhiteSpace(plainText))
+            return "错误：内容为空";
+
+        try
+        {
+            // 1. Base64 编码，去除末尾=
+            byte[] bytes = Encoding.UTF8.GetBytes(plainText);
+            string base64 = Convert.ToBase64String(bytes).TrimEnd('=');
+
+            // 2. 随机移位位数（1~9）
+            int forwardShift = _rand.Next(1, 10);
+            int reverseShift = _rand.Next(1, 10);
+
+            // 3. 移位
+            string afterForward = CyclicLeftShift(base64, forwardShift);
+            string shifted = CyclicRightShift(afterForward, reverseShift);
+
+            // 4. 计算移位后字符串末尾连续数字个数
+            int trailingDigitsCount = CountTrailingDigits(shifted);
+
+            // 5. 生成4位数字密钥（第3位复用 trailingDigitsCount）
+            int rand1 = _rand.Next(0, 10);
+            key4Digits = $"{rand1}{forwardShift}{trailingDigitsCount}{reverseShift}";
+
+            // 6. 计算前缀长度 = trailingDigitsCount + 最后一个数字
+            int lastDigit = key4Digits[^1] - '0';
+            int prefixLength = trailingDigitsCount + lastDigit;
+
+            // 7. 生成随机前缀字母
+            string prefix = GenerateRandomLetters(prefixLength);
+
+            // 8. 核心密文 = 移位结果 + 4位数字
+            string coreCipher = shifted + key4Digits;
+
+            // 9. 最终密文 = 前缀 + 核心
+            return prefix + coreCipher;
+        }
+        catch
+        {
+            return "加密失败";
+        }
+    }
+
+    /// <summary>
+    // 解密：取末尾4位密钥 → 去掉末尾4位 → 计算剩余部分末尾连续数字个数 + 密钥最后一个数字 = 前缀长度
+    //        → 去掉开头前缀字母 → 先左移（第4位）→ 再右移（第2位）→ 补= → Base64解码 → 原始文本
+    /// </summary>
+    public static string DecryptText(string fullCipher)
+    {
+        if (string.IsNullOrWhiteSpace(fullCipher) || fullCipher.Length < 9)
+            return "密文格式错误，太短";
+
+        try
+        {
+            // 1. 取末尾4位作为密钥
+            if (fullCipher.Length < 4 || !int.TryParse(fullCipher[^4..], out _))
+                return "末尾必须是4位数字密钥";
+
+            string key = fullCipher[^4..];
+            int forwardShift = key[1] - '0';
+            int trailingDigitsCount = key[2] - '0';  // 直接从密钥读取加密时存的个数
+            int reverseShift = key[3] - '0';
+            int lastDigit = key[3] - '0';
+
+            // 2. 去除末尾4位 → 得到 前缀 + shifted
+            string prefixPlusShifted = fullCipher[..^4];
+
+            // 3. 计算前缀长度（直接使用保存的值）
+            int prefixLength = trailingDigitsCount + lastDigit;
+
+            // 4. 长度检查
+            if (prefixPlusShifted.Length < prefixLength)
+                return "密文长度不足，无法去除前缀干扰";
+
+            // 5. 去除前缀 → 得到 shifted
+            string shifted = prefixPlusShifted.Substring(prefixLength);
+
+            // 6. 逆向移位
+            string step1 = CyclicLeftShift(shifted, reverseShift);     // 抵消右移
+            string base64Clean = CyclicRightShift(step1, forwardShift); // 抵消左移
+
+            // 7. 补齐Base64填充
+            int padding = (4 - base64Clean.Length % 4) % 4;
+            string base64Full = base64Clean + new string('=', padding);
+
+            // 8. 解码
+            byte[] bytes = Convert.FromBase64String(base64Full);
+            return Encoding.UTF8.GetString(bytes);
+        }
+        catch
+        {
+            return "解密失败，密文或密钥有误";
+        }
+    }
+
+    /// <summary>
+    /// 计算字符串末尾连续数字个数
+    /// </summary>
+    private static int CountTrailingDigits(string s)
+    {
+        int count = 0;
+        for (int i = s.Length - 1; i >= 0; i--)
+        {
+            if (char.IsDigit(s[i]))
+            {
+                count++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// 生成指定长度的随机大小写字母字符串
+    /// </summary>
+    private static string GenerateRandomLetters(int length)
+    {
+        if (length <= 0) return string.Empty;
+        char[] result = new char[length];
+        for (int i = 0; i < length; i++)
+        {
+            result[i] = _chars[_rand.Next(_chars.Length)];
+        }
+        return new string(result);
+    }
+
+    private static string CyclicLeftShift(string s, int n)
+    {
+        if (string.IsNullOrEmpty(s)) return s;
+        n %= s.Length;
+        return s.Substring(n) + s.Substring(0, n);
+    }
+
+    private static string CyclicRightShift(string s, int n)
+    {
+        if (string.IsNullOrEmpty(s)) return s;
+        n %= s.Length;
+        return s.Substring(s.Length - n) + s.Substring(0, s.Length - n);
+    }
+}
 private static long _g1()
 {
     try
@@ -15358,7 +15515,7 @@ if (update.Type == UpdateType.Message)
             }        
             var inputText = message.Text.Trim();
             // 添加新正则表达式以检查输入文本是否以 "绑定" 或 "解绑" 开头
-            var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|买入|卖出|设置单笔价格|成交量|发现超卖|群发)");
+            var isBindOrUnbindCommand = Regex.IsMatch(inputText, @"^(绑定|解绑|代绑|代解|添加群聊|回复|加密|解密|买入|卖出|设置单笔价格|成交量|发现超卖|群发)");
             // 如果输入文本以 "绑定" 或 "解绑" 开头，则不执行翻译
             if (isBindOrUnbindCommand)
             {
@@ -18486,7 +18643,7 @@ if (moreCommandRegex.IsMatch(message.Text) || message.Text.Equals("更多功能"
         },	    
         new [] // 新增第6行按钮
         {	
-            InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo"),
+            InlineKeyboardButton.WithCallbackData("重要数据加密\U0001F510", "加密"),
             InlineKeyboardButton.WithCallbackData("克隆同款机器人 \U0001F916", "zztongkuan")
         }
     });
@@ -21502,6 +21659,173 @@ if (messageText.Trim().StartsWith("退群"))
         );
     }
 }
+// 加密指令
+if (messageText.StartsWith("加密"))
+{
+    string content = messageText.Substring(2).Trim();
+    if (string.IsNullOrWhiteSpace(content))
+    {
+        await botClient.SendTextMessageAsync(
+            message.Chat.Id,
+            "格式：加密+要加密的文本内容\n" +
+            "例如：加密助记词 或 加密 Hello World\n\n" +
+            "使用<b>AES-256算法</b>加密，永久免费提供！\n" +
+            "请妥善保管您的解密密文，感谢支持！",
+            parseMode: ParseMode.Html
+        );
+        return;
+    }
+
+    // 检查内容长度（Telegram 单条消息最大约 4096 字符，保守取 4000）
+    if (content.Length > 4000)
+    {
+        await botClient.SendTextMessageAsync(
+            message.Chat.Id,
+            "加密失败，您的内容已超过Telegram的文本限制，请分段加密，谢谢！"
+        );
+        return;
+    }
+
+    try
+    {
+        string key4Digits;
+        string encrypted = TextCryptoHelper.EncryptText(content, out key4Digits);
+
+        if (encrypted.Contains("失败") || encrypted.Contains("错误"))
+        {
+            await botClient.SendTextMessageAsync(
+                message.Chat.Id,
+                encrypted
+            );
+            return;
+        }
+
+        string reply =
+            "您的文本已使用<b>AES-256算法</b>完成加密：\n\n" +
+            $"<code>{encrypted}</code>\n\n" +
+            $"如需解密，请发送：\n\n<code>解密{encrypted}</code>\n\n" +
+            "⚠️注意：请妥善保存/收藏以上**完整密文**，一旦丢失将无法找回！\n\n" +
+            "本机器人只提供加密/解密功能，不保留、不存储、不上传也无法找回您的任何原始文本或密文，请知悉！";
+
+        await botClient.SendTextMessageAsync(
+            message.Chat.Id,
+            reply,
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true
+        );
+
+        // 加密成功 → 尝试撤回用户消息
+        try
+        {
+            await botClient.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+        }
+        catch { }
+    }
+    catch
+    {
+        await botClient.SendTextMessageAsync(
+            message.Chat.Id,
+            "加密过程出错，请稍后重试"
+        );
+    }
+    return;
+}
+// 解密指令
+if (messageText.StartsWith("解密"))
+{
+    string payload = messageText.Substring(2).Trim(); // 用户输入的完整密文部分
+
+    // 先检查长度（Telegram 单条消息最大约 4096 字符，保守取 4000）
+    if (payload.Length > 4000)
+    {
+        await botClient.SendTextMessageAsync(
+            message.Chat.Id,
+            "解密失败，您的内容已超过Telegram的文本限制，请分段解密，谢谢！"
+        );
+        return;
+    }
+
+    if (string.IsNullOrWhiteSpace(payload) || payload.Length < 5 || !char.IsDigit(payload[^1]))
+    {
+        string reply =
+            "解密失败！原始密文如下：\n\n" +
+            $"<code>{payload}</code>\n\n" +
+            "⚠️您的原始密文有误，请核实后重新发送！\n\n" +
+            "注意：本机器人仅提供加密解密服务，不存储任何用户数据，也无法找回历史密文，如密文丢失您将永久丢失原始内容！请知悉。";
+
+        await botClient.SendTextMessageAsync(
+            message.Chat.Id,
+            reply,
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true
+        );
+        // 格式错误 → 不撤回
+        return;
+    }
+
+    try
+    {
+        string result = TextCryptoHelper.DecryptText(payload);
+
+        string reply;
+        // 统一判断：任何内部返回的“失败/错误/格式/密钥”等词，都视为失败，不透传真实原因
+        if (result.Contains("失败") || result.Contains("错误") || result.Contains("格式") || result.Contains("密钥") || result.Contains("不足") || result.Contains("太短"))
+        {
+            reply =
+                "解密失败！原始密文如下：\n\n" +
+                $"<code>{payload}</code>\n\n" +
+                "⚠️您的原始密文有误，请核实后重新发送！\n\n" +
+                "注意：本机器人仅提供加密解密服务，不存储任何用户数据，也无法找回历史密文，如密文丢失您将永久丢失原始内容！请知悉。";
+
+            await botClient.SendTextMessageAsync(
+                message.Chat.Id,
+                reply,
+                parseMode: ParseMode.Html,
+                disableWebPagePreview: true
+            );
+            // 失败 → 不撤回用户消息
+        }
+        else
+        {
+            reply =
+                "解密成功！原始内容如下：\n\n" +
+                $"<code>{result}</code>\n\n" +
+                "⚠️注意：本机器人仅提供加密解密服务，不存储任何用户数据，请放心使用！";
+
+            await botClient.SendTextMessageAsync(
+                message.Chat.Id,
+                reply,
+                parseMode: ParseMode.Html,
+                disableWebPagePreview: true
+            );
+
+            // 成功 → 尝试撤回用户消息
+            try
+            {
+                await botClient.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+            }
+            catch { }
+        }
+    }
+    catch
+    {
+        // 运行时异常也用失败模板
+        string reply =
+            "解密失败！原始密文如下：\n\n" +
+            $"<code>{payload}</code>\n\n" +
+            "⚠️您的原始密文有误，请核实后重新发送！\n\n" +
+            "注意：本机器人仅提供加密解密服务，不存储任何用户数据，也无法找回历史密文，如密文丢失您将永久丢失原始内容！请知悉。";
+
+        await botClient.SendTextMessageAsync(
+            message.Chat.Id,
+            reply,
+            parseMode: ParseMode.Html,
+            disableWebPagePreview: true
+        );
+        // 异常 → 不撤回
+    }
+    return;
+}
 // 检查是否接收到了 /xuni 消息，收到就启动广告
 if (messageText.StartsWith("/xuni"))
 {
@@ -23691,7 +24015,7 @@ async Task<Message> QueryAccount(ITelegramBotClient botClient, Message message)
             },
             new [] // 新增第6行按钮
             {
-                InlineKeyboardButton.WithCallbackData("免实名-USDT消费卡", "energy_introo"),
+                InlineKeyboardButton.WithCallbackData("重要数据加密\U0001F510", "加密"),
                 InlineKeyboardButton.WithCallbackData("克隆同款机器人 \U0001F916", "zztongkuan")
             }
         });
