@@ -21669,8 +21669,9 @@ if (messageText.StartsWith("加密"))
             message.Chat.Id,
             "格式：加密+要加密的文本内容\n" +
             "例如：加密助记词 或 加密 Hello World\n\n" +
-            "使用<b>AES-256算法</b>加密，永久免费提供！\n" +
-            "请妥善保管您的解密密文，感谢支持！",
+            "使用多重算法加密并混淆，确保无法被破解;\n" +
+            "可将密文重复加密，只需牢记重复加密次数;\n" +
+            "请妥善保管您的解密密文，丢失将无法找回！",
             parseMode: ParseMode.Html
         );
         return;
@@ -21707,11 +21708,16 @@ if (messageText.StartsWith("加密"))
             "⚠️注意：请妥善保存/收藏以上**完整密文**，一旦丢失将无法找回！\n\n" +
             "本机器人只提供加密/解密功能，不保留、不存储、不上传也无法找回您的任何原始文本或密文，请知悉！";
 
+        var keyboard = new InlineKeyboardMarkup(
+            InlineKeyboardButton.WithCallbackData("删除记录 \U0001F5D1", "back")
+        );
+
         await botClient.SendTextMessageAsync(
             message.Chat.Id,
             reply,
             parseMode: ParseMode.Html,
-            disableWebPagePreview: true
+            disableWebPagePreview: true,
+            replyMarkup: keyboard
         );
 
         // 加密成功 → 尝试撤回用户消息
@@ -21792,11 +21798,16 @@ if (messageText.StartsWith("解密"))
                 $"<code>{result}</code>\n\n" +
                 "⚠️注意：本机器人仅提供加密解密服务，不存储任何用户数据，请放心使用！";
 
+            var keyboard = new InlineKeyboardMarkup(
+                InlineKeyboardButton.WithCallbackData("删除记录 \U0001F5D1", "back")
+            );
+
             await botClient.SendTextMessageAsync(
                 message.Chat.Id,
                 reply,
                 parseMode: ParseMode.Html,
-                disableWebPagePreview: true
+                disableWebPagePreview: true,
+                replyMarkup: keyboard
             );
 
             // 成功 → 尝试撤回用户消息
