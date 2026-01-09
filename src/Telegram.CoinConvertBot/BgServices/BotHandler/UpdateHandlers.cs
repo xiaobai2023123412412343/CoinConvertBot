@@ -56,20 +56,20 @@ namespace Telegram.CoinConvertBot.BgServices.BotHandler;
 12：  以太坊api： WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4   DIPNHXE6J4IA1NS57ZFYRGRMSWVVCM9GXI    https://etherscan.io/apidashboard   都是免费的api，随便注册即可
 13： 防盗版授权
 14： 替换管理员链接： t.me/Yifanfu 或 @Yifanfu
-15： 替换机器人链接： t.me/Yifanfu_newbot 或 @Yifanfu_newbot
+15： 替换机器人链接： t.me/BuyTrxbot 或 @BuyTrxbot
 16： 会员价格如有需要也可以修改
 17：// 定义API密钥   private static readonly string[] ApiKeys = new[]   监听USDT 秘钥需修改，随便注册  https://www.trongrid.io/dashboard
 18：修改配置文件里的appsettings.json  波场 www.trongrid.io 秘钥尽量不要和监听USDT的秘钥相同
 */
 
 //Yifanfu或@Yifanfu或t.me/Yifanfu为管理员ID
-//Yifanfu_newbot或t.me/Yifanfu_newbot或@Yifanfu_newbot为机器人ID
+//BuyTrxbot或t.me/BuyTrxbot或@BuyTrxbot为机器人ID
 //TBYDJifStae1hZpzxCrxdQ8uwWdoqwe829为监控的收款地址
 //TBYDJifStae1hZpzxCrxdQ8uwWdoqwe829为监控的转账地址
 // 将这个值替换为目标群组的ID
 //const long TARGET_CHAT_ID = -1002006327353;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
-//const string BOT_USERNAME = "Yifanfu_newbot";//机器人用户名
+//const string BOT_USERNAME = "BuyTrxbot";//机器人用户名
 // 指定管理员ID
 //const int ADMIN_ID = 8229576774;//指定管理员ID不转发
 // 将这个值替换为目标群组的ID
@@ -1500,7 +1500,7 @@ public static async Task HandleEthQueryAsync(ITelegramBotClient botClient, Messa
                         InlineKeyboardButton.WithCallbackData("再查一次", $"eth_query:{ethAddress}"),
                         InlineKeyboardButton.WithUrl("ETH 详细信息", $"https://etherscan.io/address/{ethAddress}"),
                         InlineKeyboardButton.WithUrl("BSC 详细信息", $"https://bscscan.com/address/{ethAddress}"),
-                        InlineKeyboardButton.WithUrl("进群使用", "https://t.me/YifanfuBot?startgroup=true")
+                        InlineKeyboardButton.WithUrl("进群使用", "https://t.me/BuyTrxbot?startgroup=true")
                     }
                 })
             );
@@ -1614,7 +1614,7 @@ if (fromUser != null)
     captionText.AppendLine($"USDC余额：<b>{usdcBalanceBsc:N2} USDC</b>{(usdcBalanceBsc > 0 ? $" ≈ <b>{cnyUsdcBalanceBsc:N2}元人民币</b>" : "")}");
     captionText.AppendLine($"\n<a href=\"t.me/Yifanfu\">代开会员 | TRX兑换 | 点击购买：\nTRC-20、ERC-20、BEP-20 能量！ </a>");
 
-    var shareLink = "https://t.me/YifanfuBot?startgroup=true";
+    var shareLink = "https://t.me/BuyTrxbot?startgroup=true";
     var inlineKeyboard = new InlineKeyboardMarkup(new[]
     {
         new InlineKeyboardButton[]
@@ -5895,7 +5895,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" +
                               $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
                               $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
-                              $"<a href=\"https://t.me/Yifanfu_newbot?start=tron\">3️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n";
+                              $"<a href=\"https://t.me/BuyTrxbot?start=tron\">3️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n";
 
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
@@ -12495,7 +12495,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
 
     string resultText;
 
-    string exchangeUrl = "https://t.me/Yifanfu_newbot";
+    string exchangeUrl = "https://t.me/BuyTrxbot";
     string exchangeLink = $"<a href=\"{exchangeUrl}\">立即兑换</a>";
 
     // 获取发送消息的用户信息
@@ -12535,11 +12535,11 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     }
     else
     {
-        incomeOutcomeText = $"<a href=\"https://t.me/Yifanfu_newbot?start=provip\">收支汇总为 FF Pro会员专享！欢迎开通体验！</a>\n\n";
+        incomeOutcomeText = $"<a href=\"https://t.me/BuyTrxbot?start=provip\">收支汇总为 FF Pro会员专享！欢迎开通体验！</a>\n\n";
     }
 
     // 私聊广告
-    string botUsername = "Yifanfu_newbot"; // 你的机器人的用户名
+    string botUsername = "BuyTrxbot"; // 你的机器人的用户名
     string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
     string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
     string groupExclusiveText = $"<a href=\"{shareLink}\">欢迎将 bot 拉进任意群组使用，大家一起查！</a>\n";
@@ -13419,7 +13419,7 @@ public static async Task HandleCurrencyRatesCommandAsync(ITelegramBotClient botC
         count++;
     }
 
-    string botUsername = "Yifanfu_newbot"; // 替换为你的机器人的用户名
+    string botUsername = "BuyTrxbot"; // 替换为你的机器人的用户名
     string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
     string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
@@ -14031,7 +14031,7 @@ static async Task SendAdvertisementOnce(ITelegramBotClient botClient, Cancellati
         new[]
         {
             InlineKeyboardButton.WithUrl("\U0000267B 进交流群", "https://t.me/TrxPifa0"),
-            InlineKeyboardButton.WithUrl("\U0001F449 分享到群组 \U0001F448", $"https://t.me/Yifanfu_newbot?startgroup=")
+            InlineKeyboardButton.WithUrl("\U0001F449 分享到群组 \U0001F448", $"https://t.me/BuyTrxbot?startgroup=")
         }
     });
 
@@ -14362,145 +14362,173 @@ static async Task SendAdvertisement(ITelegramBotClient botClient, CancellationTo
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            var rate = await rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
-			
-           // decimal usdtToTrx = 102m.USDT_To_TRX(rate, FeeRate, 0);// 100USDT兑换TRX汇率，加赠2% 旧版直接USDT*优惠
-			decimal baseTrx = 100m.USDT_To_TRX(rate, FeeRate, 0); // 计算 100 USDT 的基础 TRX 数量
-            decimal usdtToTrx = (baseTrx * 1.02m).ToRoundNegative(2); // 在 TRX 上加赠 2%，保留 2 位小数
-			
-            var (today, yesterday, weekly, monthly) = await GetFearAndGreedIndexAsync();
+            // 并发启动所有异步任务
+            var rateTask = rateRepository.Where(x => x.Currency == Currency.USDT && x.ConvertCurrency == Currency.TRX).FirstAsync(x => x.Rate);
+            var fearAndGreedTask = GetFearAndGreedIndexAsync();
+            var currencyRatesTask = GetCurrencyRatesAsync();
+            var okxPriceTask = GetOkxPriceAsync("USDT", "CNY", "all");
 
-            string GetFearGreedDescription(int value)
+            // 确保本地缓存已初始化（用于获取 BTC/ETH 价格）
+            await CoinDataCache.EnsureCacheInitializedAsync();
+
+            var btcInfoTask = CoinDataCache.GetCoinInfoAsync("BTC");
+            var ethInfoTask = CoinDataCache.GetCoinInfoAsync("ETH");
+
+            await Task.WhenAll(rateTask, fearAndGreedTask, currencyRatesTask, okxPriceTask, btcInfoTask, ethInfoTask);
+
+            // 获取结果
+            decimal rate = await rateTask;
+            var (today, _, _, _) = await fearAndGreedTask;
+            var currencyRates = await currencyRatesTask;
+            decimal okxPrice = await okxPriceTask;
+            var btcInfo = await btcInfoTask;
+            var ethInfo = await ethInfoTask;
+
+            // 计算 TRX 兑换数量（原始逻辑完全保留）
+            decimal baseTrx = 100m.USDT_To_TRX(rate, FeeRate, 0);
+            decimal usdtToTrx = (baseTrx * 1.02m).ToRoundNegative(2);
+
+            // 恐惧贪婪描述
+            string GetFearGreedDescription(int value) => value switch
             {
-                if (value >= 0 && value <= 24)
-                    return "极度恐惧";
-                if (value >= 25 && value <= 49)
-                    return "恐惧";
-                if (value >= 50 && value <= 74)
-                    return "贪婪";
-                return "极度贪婪";
+                <= 24 => "极度恐惧",
+                <= 49 => "恐惧",
+                <= 74 => "贪婪",
+                _ => "极度贪婪"
+            };
+
+            // 从缓存提取比特币和以太坊数据（正确写法）
+            decimal bitcoinPrice = 0m;
+            decimal bitcoinChange = 0m;
+            if (btcInfo != null)
+            {
+                if (btcInfo.TryGetValue("price_usd", out JsonElement pElem) && pElem.TryGetDecimal(out decimal price))
+                    bitcoinPrice = price;
+                if (btcInfo.TryGetValue("percent_change_24h", out JsonElement cElem) && cElem.TryGetDecimal(out decimal change))
+                    bitcoinChange = change;
             }
 
-            string fearGreedDescription = GetFearGreedDescription(today);  
-
-            // 获取比特币以太坊价格和涨跌幅    
-            var cryptoSymbols = new[] { "bitcoin", "ethereum" };
-            var (prices, changes) = await GetCryptoPricesAsync(cryptoSymbols);
-            var bitcoinPrice = prices[0];
-            var ethereumPrice = prices[1];
-            var bitcoinChange = changes[0];
-            var ethereumChange = changes[1];
-
-            var currencyRates = await GetCurrencyRatesAsync();
-
-            // 获取美元汇率 
-            if (!currencyRates.TryGetValue("美元 (USD)", out var usdRateTuple)) 
+            decimal ethereumPrice = 0m;
+            decimal ethereumChange = 0m;
+            if (ethInfo != null)
             {
-                Console.WriteLine("Could not find USD rate in response.");
-                return; // 或者你可以选择继续，只是不显示美元汇率
+                if (ethInfo.TryGetValue("price_usd", out JsonElement pElem) && pElem.TryGetDecimal(out decimal price))
+                    ethereumPrice = price;
+                if (ethInfo.TryGetValue("percent_change_24h", out JsonElement cElem) && cElem.TryGetDecimal(out decimal change))
+                    ethereumChange = change;
             }
-            var usdRate = 1 / usdRateTuple.Item1;
-            decimal okxPrice = await GetOkxPriceAsync("USDT", "CNY", "all");
-            
+
+            // 获取美元汇率
+            decimal usdRate = 0m;
+            if (currencyRates.TryGetValue("美元 (USD)", out var tuple))
+            {
+                usdRate = 1 / tuple.Item1;
+            }
+
+            // 动态构建“其它汇率”部分，只显示有数据的行
+            var otherRatesLines = new List<string>();
+
+            if (usdRate > 0.1m)
+                otherRatesLines.Add($"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####}</b>");
+
+            if (okxPrice > 0.1m)
+                otherRatesLines.Add($"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>");
+
+            if (bitcoinPrice > 0.1m)
+                otherRatesLines.Add($"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}%</b>");
+
+            if (ethereumPrice > 0.1m)
+                otherRatesLines.Add($"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}%</b>");
+
+            if (today > 0)
+                otherRatesLines.Add($"<b>\U0001F4B0 币圈今日恐惧与贪婪指数：{today} {GetFearGreedDescription(today)}</b>");
+
+            string otherRatesText = otherRatesLines.Any()
+                ? "————————<b>其它汇率</b>————————\n" + string.Join("\n", otherRatesLines)
+                : "";
+
+            // 主消息文本（固定部分完全保留你的原始内容）
             string channelLink = "tg://resolve?domain=Yifanfu";
             string advertisementText = $"\U0001F4B9实时汇率：<b>100 USDT = {usdtToTrx:#.####} TRX</b>\n\n" +
                 "机器人收款地址:\n (<b>点击自动复制</b>):<code>TBYDJifStae1hZpzxCrxdQ8uwWdoqwe829</code>\n\n" +
                 "\U00002705 转U自动原地址返TRX,<b>10U</b>起兑!\n" +
                 "\U00002705 请勿使用<b>交易所或汇旺钱包</b>转账!\n" +
                 $"\U00002705 购买能量套餐，单笔转账低至 <b>{(int)TransactionFee}TRX</b>!\n" +
-                $"\U00002705 如需购买<b>ERC-20</b>手续费可联系管理员!\n" +		    
+                $"\U00002705 如需购买<b>ERC-20</b>手续费可联系管理员!\n" +
                 $"\U00002705 有任何问题,请私聊联系<a href=\"{channelLink}\">机器人管理员</a>\n\n" +
                 "<b>另代开TG高级会员</b>:\n\n" +
                 "\u2708三月高级会员：24.99 u\n" +
                 "\u2708六月高级会员：39.99 u\n" +
                 "\u2708一年高级会员：70.99 u\n" +
-                "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)\n" +  
-                $"————————<b>其它汇率</b>————————\n" +
-                $"<b>\U0001F4B0 美元汇率参考 ≈ {usdRate:#.####} </b>\n" +
-                $"<b>\U0001F4B0 USDT实时OTC价格 ≈ {okxPrice} CNY</b>\n" +            
-                $"<b>\U0001F4B0 比特币价格 ≈ {bitcoinPrice} USDT     {(bitcoinChange >= 0 ? "+" : "")}{bitcoinChange:0.##}% </b>\n" +
-                $"<b>\U0001F4B0 以太坊价格 ≈ {ethereumPrice} USDT  {(ethereumChange >= 0 ? "+" : "")}{ethereumChange:0.##}% </b>\n" +
-                $"<b>\U0001F4B0 币圈今日恐惧与贪婪指数：{today}  {fearGreedDescription}</b>\n" ;
+                "(<b>需要开通会员请联系管理,切记不要转TRX兑换地址!!!</b>)\n" +
+                otherRatesText;
 
-            string botUsername = "Yifanfu_newbot";// 替换为你的机器人的用户名
-            string startParameter = "";
-            string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
-
-            var visitButton1 = new InlineKeyboardButton("能量详情")
-            {
-                CallbackData = "能量"
-            };
-
-            var visitButton2 = new InlineKeyboardButton("开通会员")
-            {
-                Url = "https://t.me/Yifanfu"
-            };
-
-            var visitButton3 = new InlineKeyboardButton("私聊使用")
-            {
-                Url = "https://t.me/Yifanfubot"
-            };
-
-            var shareToGroupButton = InlineKeyboardButton.WithUrl("群聊使用", shareLink);
-
+            // 按钮（完全保留）
+            string botUsername = "BuyTrxbot";
+            string shareLink = $"https://t.me/{botUsername}?startgroup=";
             var inlineKeyboard = new InlineKeyboardMarkup(new[]
             {
-                new[] { visitButton1, visitButton2 },
-                new[] { visitButton3, shareToGroupButton }
+                new[] { InlineKeyboardButton.WithCallbackData("能量详情", "能量"), InlineKeyboardButton.WithUrl("开通会员", "https://t.me/Yifanfu") },
+                new[] { InlineKeyboardButton.WithUrl("私聊使用", "https://t.me/BuyTrxbot"), InlineKeyboardButton.WithUrl("群聊使用", shareLink) }
             });
 
-            // 用于存储已发送消息的字典
+            // 发送广告 + 异常踢群（原始逻辑完全保留）
             var sentMessages = new Dictionary<long, Message>();
-
-            // 遍历群组 ID 并发送广告消息
             var groupIds = GroupManager.GroupIds.ToList();
+
             foreach (var groupId in groupIds)
             {
                 try
                 {
-                    Message sentMessage = await botClient.SendTextMessageAsync(groupId, advertisementText, parseMode: ParseMode.Html, replyMarkup: inlineKeyboard);
+                    var sentMessage = await botClient.SendTextMessageAsync(
+                        chatId: groupId,
+                        text: advertisementText,
+                        parseMode: ParseMode.Html,
+                        replyMarkup: inlineKeyboard,
+                        cancellationToken: cancellationToken);
+
                     sentMessages[groupId] = sentMessage;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // 如果在尝试发送消息时出现错误，就从 groupIds 列表中移除这个群组
+                    Console.WriteLine($"发送广告失败，移除群 {groupId}: {ex.Message}");
                     GroupManager.RemoveGroupId(groupId);
-
-                    // 同时从 GroupChats 中移除对应的群聊信息
                     var groupChatToRemove = GroupChats.FirstOrDefault(gc => gc.Id == groupId);
                     if (groupChatToRemove != null)
                     {
                         GroupChats.Remove(groupChatToRemove);
-                        Console.WriteLine($"群聊信息已从 GroupChats 中移除，群ID：{groupId}");
                     }
-                    // 然后继续下一个群组，而不是停止整个任务
-                    continue;
                 }
             }
 
-            // 等待10分钟
+            // 10分钟后撤回（原始逻辑保留）
             await Task.Delay(TimeSpan.FromSeconds(600), cancellationToken);
 
-            // 遍历已发送的消息并撤回
-            foreach (var sentMessage in sentMessages)
+            foreach (var msg in sentMessages)
             {
-                await botClient.DeleteMessageAsync(sentMessage.Key, sentMessage.Value.MessageId);
+                try
+                {
+                    await botClient.DeleteMessageAsync(msg.Key, msg.Value.MessageId, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"撤回消息失败（群 {msg.Key}）: {ex.Message}");
+                }
             }
-            // 等待5秒，再次发送广告
+
+            // 5秒后下一轮
             await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
         }
     }
     catch (OperationCanceledException)
     {
         Console.WriteLine("广告发送任务被取消。");
-        throw;  // 重新抛出异常，确保调用者知道任务被取消
+        throw; // 必须抛出
     }
     catch (Exception ex)
     {
-        // 发送广告过程中出现异常
-        Console.WriteLine($"广告发送过程中出现异常：{ex.Message}");
-        
-        // 等10秒重启广告服务
+        Console.WriteLine($"广告发送过程中出现异常：{ex.Message}\n{ex.StackTrace}");
+        // 原始核心重试逻辑：异常后等10秒自动继续循环
         await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
     }
 }
@@ -15086,7 +15114,7 @@ if (update.Type == UpdateType.CallbackQuery)
    // }
     else if (callbackData[0] == "query_eye")
     {
-        string botUsername = "Yifanfu_newbot"; // 替换为你的机器人的用户名
+        string botUsername = "BuyTrxbot"; // 替换为你的机器人的用户名
         string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
         string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
 
@@ -16284,7 +16312,7 @@ else if(update.CallbackQuery.Data == "mingling" && update.CallbackQuery.From.Id 
 12： 波场官网api修改：  369e85e5-68d3-4299-a602-9d8d93ad026a   0c138945-fd9f-4390-b015-6b93368de1fd   https://tronscan.org/#/myaccount/apiKeys  都是免费的api，随便注册即可
 13：  以太坊api： WR9Z9H4MRK5CP8817WF4RDAI15PGRI2WV4    https://etherscan.io/apidashboard   都是免费的api，随便注册即可
 14： 替换管理员链接： t.me/Yifanfu 或 @Yifanfu
-15： 替换机器人链接： t.me/Yifanfu_newbot 或 @Yifanfu_newbot
+15： 替换机器人链接： t.me/BuyTrxbot 或 @BuyTrxbot
 16： 会员价格如有需要也可以修改
 17：// 定义API密钥   private static readonly string[] ApiKeys = new[]   监听USDT 秘钥需修改，随便注册  https://www.trongrid.io/dashboard
 18：修改配置文件里的appsettings.json  波场 www.trongrid.io 秘钥尽量不要和监听USDT的秘钥相同
@@ -16960,7 +16988,7 @@ await CheckUserBehavior(botClient, message);
 // 将这个值替换为目标群组的ID
 const long TARGET_CHAT_ID = -1003223313822;//指定群聊转发用户对机器人发送的信息
 // 将这个值替换为你的机器人用户名
-const string BOT_USERNAME = "Yifanfu_newbot";//机器人用户名
+const string BOT_USERNAME = "BuyTrxbot";//机器人用户名
 // 指定管理员ID
 const long ADMIN_ID = 8229576774;//8229576774指8229576774定管理
 
@@ -18562,7 +18590,7 @@ if (message.Type == MessageType.Text && (message.Text.Equals("询千百度", Str
 目前支持翻译的语种有：
 <code>英语</code>, <code>日语</code>, <code>韩语</code>, <code>越南语</code>, <code>高棉语</code>, <code>泰语</code>, <code>菲律宾语</code>, <code>阿拉伯语</code>, <code>老挝语</code>, <code>马来西亚语</code> 等超过62个主流语种及发音！</blockquote>
 
-<a href=""https://t.me/Yifanfu_newbot"">欢迎各位老板前来兑换能量或开通电报会员！
+<a href=""https://t.me/BuyTrxbot"">欢迎各位老板前来兑换能量或开通电报会员！
 也可以直接打赏作者！谢谢大家的支持厚爱！</a>";
 
     // 创建内联键盘并添加按钮
@@ -18571,7 +18599,7 @@ if (message.Type == MessageType.Text && (message.Text.Equals("询千百度", Str
         new[]
         {
             InlineKeyboardButton.WithCallbackData("联系作者", "contactAdmin"),
-            InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/Yifanfu_newbot")
+            InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/BuyTrxbot")
         }
     });
 
@@ -21165,7 +21193,7 @@ if (messageText.Contains("代开") || messageText.Contains("Premium"))
 3个月：<b>24.99 u </b>
 6个月：<b>39.99 u </b>
 1年度：<b>70.99 u </b>
-<tg-spoiler><a href='https://t.me/Yifanfu_newbot?start=provip'>已是 FF Pro会员？降价为：20u/35u/65u</a></tg-spoiler>
+<tg-spoiler><a href='https://t.me/BuyTrxbot?start=provip'>已是 FF Pro会员？降价为：20u/35u/65u</a></tg-spoiler>
 
 开通电报会员的好处：
 <blockquote expandable>1：会员看片秒开-不卡
@@ -21263,7 +21291,7 @@ if (messageText.Equals("/about", StringComparison.OrdinalIgnoreCase) ||
         {
             new[]
             {
-                InlineKeyboardButton.WithUrl("开始使用", "https://t.me/Yifanfu_newbot")
+                InlineKeyboardButton.WithUrl("开始使用", "https://t.me/BuyTrxbot")
             }
         });
     }
@@ -22675,7 +22703,7 @@ reply += $"<b>↘️历史最低：</b>{historicalLowDate}   {formattedHistorica
                     reply += priceInfo;
 
 // 创建内联键盘按钮
-    string botUsername = "Yifanfu_newbot"; // 替换为你的机器人的用户名
+    string botUsername = "BuyTrxbot"; // 替换为你的机器人的用户名
     string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
     string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
                     
@@ -24824,7 +24852,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
 
         // 发送欢迎消息和键盘
         string username = message.From.FirstName;
-        string botUsername = "Yifanfu_newbot"; // 替换为你的机器人的用户名
+        string botUsername = "BuyTrxbot"; // 替换为你的机器人的用户名
         string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
         string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
         string groupFunctionText = $"<a href=\"{shareLink}\">⚠️ 点击拉我进群，有人修改资料将播报提醒！</a>";
@@ -24902,7 +24930,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
 var inlineKeyboard = new InlineKeyboardMarkup(new[]
 {
     InlineKeyboardButton.WithCallbackData("简体中文", "中文"),
-    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/Yifanfu_newbot")
+    InlineKeyboardButton.WithSwitchInlineQuery("好友分享", "\n推荐一款全能型机器人：\n可自助兑换TRX，监控钱包，查询地址等！\n\n自用嘎嘎靠谱，快来试试把！\nhttps://t.me/BuyTrxbot")
 });
 
 // 发送分享按钮消息
@@ -24954,7 +24982,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
 
         // 发送欢迎消息和键盘
         string username = message.From.FirstName;
-        string botUsername = "Yifanfu_newbot"; // 替换为你的机器人的用户名
+        string botUsername = "BuyTrxbot"; // 替换为你的机器人的用户名
         string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
         string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
         string groupFunctionText = $"<a href=\"{shareLink}\">⚠️ 点击拉我进群，有人修改资料将播报提醒！</a>";
