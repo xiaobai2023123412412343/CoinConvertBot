@@ -24596,7 +24596,7 @@ async Task<Message> UnBindAddress(ITelegramBotClient botClient, Message message)
     // 发送主消息（带图片或纯文本）
     try
     {
-        const string photoUrl = "https://i.postimg.cc/kG0q6fvf/TBYDJif_Stae1h_Zpzx_Crxd_Q8uw_Wdoqwe829.png";
+        const string photoUrl = "https://i.postimg.cc/y8XPdTBP/TBYDJif_Stae1h_Zpzx_Crxd_Q8uw_Wdoqwe829.png";
         await botClient.SendPhotoAsync(
             chatId: message.Chat.Id,
             photo: new InputOnlineFile(photoUrl),
