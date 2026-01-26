@@ -14,6 +14,7 @@ using Telegram.CoinConvertBot.Domains.Tables;
 using Telegram.CoinConvertBot.Helper;
 using Telegram.CoinConvertBot.Models;
 using TronNet;
+using System.Security.Cryptography;
 using TronNet.Contracts;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -5893,9 +5894,9 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                               $"对方余额：<b>{counterUsdtBalance.ToString("#,##0.##")} USDT</b><b>  |  </b><b>{counterTrxBalance.ToString("#,##0.##")} TRX</b>\n" +   
                               $"{riskMessage}\n\n" +
                               $"<a href=\"{transactionUrl}\">交易详情：</a><b>{transactionFee.ToString("#,##0.######")} TRX    {feePayer}</b>\n\n" +
-                              $"<a href=\"https://t.me/lianghaonet/8\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
-                              $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
-                              $"<a href=\"https://t.me/BuyTrxbot?start=tron\">3️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n";
+                              $"<a href=\"https://t.me/GasFree8/14\">1️⃣一个独特的靓号地址是您个性与财富的象征！</a>\n" +
+                              //$"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">2️⃣USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n" +
+                              $"<a href=\"https://t.me/BuyTrxbot?start=tron\">2️⃣提前租赁能量，交易费用即刻降至 {TransactionFee} TRX！</a>\n";
 
                 var inlineKeyboard = new InlineKeyboardMarkup(new[]
                 {
@@ -5909,7 +5910,7 @@ private static async Task CheckForNewTransactions(ITelegramBotClient botClient, 
                     {
                         InlineKeyboardButton.WithCallbackData("消费U卡", "energy_introo"),
                         InlineKeyboardButton.WithCallbackData("租赁能量", "energy_intro"),
-                        InlineKeyboardButton.WithUrl("靓号地址", "https://t.me/lianghaonet/8")
+                        InlineKeyboardButton.WithUrl("靓号地址", "https://t.me/GasFree8/14")
                     }
                 });
 
@@ -8492,9 +8493,22 @@ private static async Task<bool> IsValidTronAddress(string tronAddress)
 // 获取波场地址的TRX余额
 private static async Task<decimal> GetTronBalanceAsync(string tronAddress)
 {
+    // 第一步：优先使用免费稳定节点（publicnode RPC + Tronscan fallback）
+    // 这个方法已经包含了重试、fallback 和详细日志
+    var (usdtBalance, trxBalance, isError) = await GetBalancesAsync(tronAddress);
+
+    if (!isError)
+    {
+        Console.WriteLine($"监控查询成功（免费节点优先）：地址 {tronAddress} TRX 余额 {trxBalance}");
+        return trxBalance; // 成功直接返回（即使 USDT 没拿到也没关系，监控只关心 TRX）
+    }
+
+    Console.WriteLine($"免费节点查询失败（IsError=true），退回到官方 Trongrid API（6个Key轮换）查询地址 {tronAddress}");
+
+    // 第二步：免费方式完全失败，才走原来的官方 Trongrid 方式（6个Key轮换）
     using (var httpClient = new HttpClient())
     {
-        // 复制密钥列表并打乱顺序
+        // 复制密钥列表并打乱顺序（避免固定顺序被限流）
         var shuffledKeys = apiKeys.OrderBy(_ => random.Next()).ToList();
         int keyIndex = 0;
         int retryCount = 0;
@@ -8521,6 +8535,7 @@ private static async Task<decimal> GetTronBalanceAsync(string tronAddress)
                     {
                         var balanceInSun = long.Parse(match.Groups[1].Value);
                         var balanceInTrx = balanceInSun / 1_000_000.0m;
+                        Console.WriteLine($"官方Trongrid查询成功（Key: {apiKey}）：地址 {tronAddress} TRX 余额 {balanceInTrx}");
                         return balanceInTrx;
                     }
                     else
@@ -8553,8 +8568,8 @@ private static async Task<decimal> GetTronBalanceAsync(string tronAddress)
         }
 
         // 所有密钥都失败
-        Console.WriteLine($"All API keys failed to get Tron balance for address {tronAddress}");
-        return 0;
+        Console.WriteLine($"所有方式（免费节点 + 官方6个Key）均失败，地址 {tronAddress} 返回余额 0");
+        return 0m;
     }
 }
 //升级管理员提醒    
@@ -11216,14 +11231,18 @@ public static async Task<(DateTime CreationTime, bool IsError)> GetAccountCreati
    
 public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)> GetBalancesAsync(string address)
 {
-    // 验证地址格式
+    // 验证地址格式（波场地址以T开头，共34位）
     if (!Regex.IsMatch(address, @"^T[A-Za-z0-9]{33}$"))
     {
         Console.WriteLine($"无效的波场地址: {address}");
         return (0m, 0m, true);
     }
 
-    // Tronscan API 密钥列表
+    // 更换为2026年最稳定的免费公共节点（publicnode，支持传统wallet端点，极稳）
+    const string RpcBaseUrl = "https://tron-rpc.publicnode.com";
+    // 正确的主网USDT合约地址（官方确认）
+    const string UsdtContract = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+
     string[] apiKeys = new string[]
     {
         "837fbad2-6cab-4478-94bc-431eac16e8a0",
@@ -11231,96 +11250,233 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
         "378c51e9-e8c9-4b4b-b63e-bc153dcbaf22"
     };
 
-    // 初始化日志变量
-    string tronscanJson = string.Empty;
+    string debugJson = string.Empty;
 
     try
     {
         using var httpClient = new HttpClient();
-        decimal trxBalance = 0m, usdtBalance = 0m;
-        bool isError = true;
 
-        // 尝试每个 API 密钥，直到成功或全部失败
+        decimal trxBalance = 0m, usdtBalance = 0m;
+
+        bool rpcSuccess = false;
+        for (int rpcRetry = 0; rpcRetry < 3; rpcRetry++)
+        {
+            try
+            {
+                Console.WriteLine($"--- RPC 第 {rpcRetry + 1} 次尝试，查询地址: {address} ---");
+
+                // 查询TRX余额
+                var trxBody = new { address = address, visible = true };
+                var trxContent = new StringContent(JsonSerializer.Serialize(trxBody), Encoding.UTF8, "application/json");
+                var trxResponse = await httpClient.PostAsync($"{RpcBaseUrl}/wallet/getaccount", trxContent);
+                
+                Console.WriteLine($"TRX 请求状态码: {trxResponse.StatusCode}");
+                if (!trxResponse.IsSuccessStatusCode) throw new Exception($"TRX HTTP失败: {trxResponse.StatusCode}");
+
+                string trxJson = await trxResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"TRX RPC完整返回: {trxJson}");
+
+                var trxDoc = JsonDocument.Parse(trxJson);
+                long sun = trxDoc.RootElement.TryGetProperty("balance", out var balElem) ? balElem.GetInt64() : 0;
+                trxBalance = sun / 1000000m;
+                Console.WriteLine($"TRX 解析成功，余额(sun): {sun} → {trxBalance} TRX");
+
+                // 查询USDT余额（使用walletsolidity端点）
+                string parameter = GetTronAddressParameter(address);
+                Console.WriteLine($"USDT 生成的 parameter (64位hex): {parameter}");
+
+                var usdtBody = new
+                {
+                    owner_address = address,
+                    contract_address = UsdtContract,
+                    function_selector = "balanceOf(address)",
+                    parameter = parameter,
+                    visible = true
+                };
+
+                var usdtContent = new StringContent(JsonSerializer.Serialize(usdtBody), Encoding.UTF8, "application/json");
+                var usdtResponse = await httpClient.PostAsync($"{RpcBaseUrl}/walletsolidity/triggerconstantcontract", usdtContent);
+                
+                Console.WriteLine($"USDT 请求状态码: {usdtResponse.StatusCode}");
+                if (!usdtResponse.IsSuccessStatusCode) throw new Exception($"USDT HTTP失败: {usdtResponse.StatusCode}");
+
+                string usdtJson = await usdtResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"USDT RPC完整返回JSON: {usdtJson}");
+
+                var usdtDoc = JsonDocument.Parse(usdtJson);
+
+                string hexBal = "0";
+                if (usdtDoc.RootElement.TryGetProperty("constant_result", out var crElem) &&
+                    crElem.ValueKind == JsonValueKind.Array && crElem.GetArrayLength() > 0 &&
+                    crElem[0].ValueKind == JsonValueKind.String)
+                {
+                    hexBal = crElem[0].GetString() ?? "0";
+                    Console.WriteLine($"USDT constant_result 原始hex: {hexBal}");
+                    hexBal = hexBal.TrimStart('0');
+                    if (string.IsNullOrEmpty(hexBal)) hexBal = "0";
+                }
+                else
+                {
+                    Console.WriteLine("USDT 返回中没有 constant_result 或为空，余额视为0");
+                }
+
+                BigInteger bigUsdt = BigInteger.Parse(hexBal, NumberStyles.AllowHexSpecifier);
+                usdtBalance = (decimal)bigUsdt / 1000000m;
+                Console.WriteLine($"USDT 解析成功，余额(hex→decimal): {bigUsdt} → {usdtBalance} USDT");
+
+                rpcSuccess = true;
+                Console.WriteLine("--- RPC 查询全部成功 ---");
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"RPC第{rpcRetry + 1}次失败: {ex.Message}");
+                if (rpcRetry < 2) await Task.Delay(1000 + new Random().Next(0, 500));
+            }
+        }
+
+        if (rpcSuccess)
+        {
+            return (usdtBalance, trxBalance, false);
+        }
+
+        // fallback 到 Tronscan Pro API（分开查询TRX和TRC20，更稳定）
+        Console.WriteLine("RPC 失败，切换到 Tronscan Pro API fallback");
+        bool tronscanSuccess = false;
         foreach (var apiKey in apiKeys)
         {
             httpClient.DefaultRequestHeaders.Remove("TRON-PRO-API-KEY");
             httpClient.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKey);
 
-            int retryCount = 0;
-            do
+            // 先查询TRX（accountv2接口，直接拿balance字段）
+            bool gotTrx = false;
+            var trxResponse = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
+            string trxJson = await trxResponse.Content.ReadAsStringAsync();
+            if (trxResponse.IsSuccessStatusCode && !trxJson.Contains("error") && !trxJson.Contains("429"))
             {
-                // 调用 Tronscan API 查询账户信息
-                var response = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/accountv2?address={address}");
-                tronscanJson = await response.Content.ReadAsStringAsync();
-
-                // 检查 HTTP 状态码和常见错误（如速率限制）
-                if (!response.IsSuccessStatusCode || tronscanJson.Contains("error") || tronscanJson.Contains("429"))
-                {
-                    if (retryCount >= 2) break; // 每个密钥重试 2 次
-                    await Task.Delay(new Random().Next(1000, 1500)); // 随机延迟 1-1.5 秒
-                    retryCount++;
-                    continue;
-                }
-
-                // 解析 JSON 数据
                 try
                 {
-                    var jsonDoc = JsonDocument.Parse(tronscanJson);
-                    if (jsonDoc.RootElement.TryGetProperty("withPriceTokens", out var tokensElement))
+                    var jsonDoc = JsonDocument.Parse(trxJson);
+                    if (jsonDoc.RootElement.TryGetProperty("balance", out var balElem))
                     {
-                        foreach (var token in tokensElement.EnumerateArray())
-                        {
-                            // 查询 TRX 余额
-                            if (token.TryGetProperty("tokenName", out var tokenNameElement) && tokenNameElement.GetString() == "trx" &&
-                                token.TryGetProperty("balance", out var balanceElement))
-                            {
-                                string trxBalanceStr = balanceElement.GetString();
-                                trxBalance = decimal.Parse(trxBalanceStr) / 1000000m; // 单位：sun 转换为 TRX
-                                //Console.WriteLine($"TRX余额来自Tronscan API: {trxBalance}");
-                            }
+                        trxBalance = decimal.Parse(balElem.GetString() ?? "0") / 1000000m;
+                        gotTrx = true;
+                        Console.WriteLine($"Tronscan 解析 TRX 余额成功: {trxBalance}");
+                    }
+                }
+                catch { }
+            }
 
-                            // 查询 USDT 余额
-                            if (token.TryGetProperty("tokenId", out var tokenIdElement) && tokenIdElement.GetString() == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" &&
-                                token.TryGetProperty("tokenName", out var tokenNameElement2) && tokenNameElement2.GetString() == "Tether USD" &&
-                                token.TryGetProperty("balance", out var usdtBalanceElement))
+            // 再查询TRC20代币列表（专用接口，更可靠）
+            bool gotUsdt = false;
+            var tokenResponse = await httpClient.GetAsync($"https://apilist.tronscanapi.com/api/account/tokens?address={address}&token=trc20");
+            string tokenJson = await tokenResponse.Content.ReadAsStringAsync();
+            Console.WriteLine($"Tronscan tokens 请求状态码: {tokenResponse.StatusCode}");
+            Console.WriteLine($"Tronscan tokens 返回JSON（截取前1000字符）: {(tokenJson.Length > 1000 ? tokenJson.Substring(0, 1000) + "..." : tokenJson)}");
+
+            if (tokenResponse.IsSuccessStatusCode && !tokenJson.Contains("error") && !tokenJson.Contains("429"))
+            {
+                try
+                {
+                    var jsonDoc = JsonDocument.Parse(tokenJson);
+                    if (jsonDoc.RootElement.TryGetProperty("trc20token_balances", out var trc20Elem) && trc20Elem.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var token in trc20Elem.EnumerateArray())
+                        {
+                            string contract = token.TryGetProperty("token_id", out var tid) ? tid.GetString() ?? "" :
+                                             token.TryGetProperty("contract_address", out var ca) ? ca.GetString() ?? "" : "";
+
+                            if (string.Equals(contract, UsdtContract, StringComparison.OrdinalIgnoreCase))
                             {
-                                string usdtBalanceStr = usdtBalanceElement.GetString();
-                                usdtBalance = decimal.Parse(usdtBalanceStr) / 1000000m; // 单位：sun 转换为 USDT
-                               // Console.WriteLine($"USDT余额来自Tronscan API: {usdtBalance}");
+                                if (token.TryGetProperty("balance", out var balElem) && decimal.TryParse(balElem.GetString(), out decimal bal))
+                                {
+                                    usdtBalance = bal / 1000000m;
+                                    gotUsdt = true;
+                                    Console.WriteLine($"Tronscan 解析 USDT 余额成功: {usdtBalance}");
+                                }
                             }
                         }
-                        isError = false; // 成功解析，标记为无错误
-                    }
-                    else
-                    {
-                        Console.WriteLine("Tronscan API 未返回 withPriceTokens 字段");
                     }
                 }
-                catch (JsonException ex)
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"Tronscan JSON 解析失败: {ex.Message}");
+                    Console.WriteLine($"Tronscan tokens JSON解析失败: {ex.Message}");
                 }
-                break; // 成功获取数据或解析失败，退出重试循环
-            } while (true);
+            }
 
-            if (!isError) break; // 如果成功获取数据，退出密钥循环
+            if (gotTrx || gotUsdt)
+            {
+                tronscanSuccess = true;
+                Console.WriteLine("Tronscan 查询至少部分成功");
+                break;
+            }
+
+            Console.WriteLine($"当前API Key查询失败，切换下一个Key");
+            await Task.Delay(1000);
         }
 
-        // 如果所有密钥都失败，返回错误
-        if (isError)
+        if (tronscanSuccess)
         {
-            Console.WriteLine("所有 Tronscan API 密钥均无法获取有效数据");
-            return (0m, 0m, true);
+            return (usdtBalance, trxBalance, false);
         }
 
-        return (usdtBalance, trxBalance, false);
+        Console.WriteLine("所有查询方式（RPC + Tronscan Pro）均失败");
+        return (0m, 0m, true);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"方法 {nameof(GetBalancesAsync)} 出错: {ex.Message}");
-        Console.WriteLine($"Tronscan JSON: {(tronscanJson.Length > 1000 ? tronscanJson.Substring(0, 1000) + "..." : tronscanJson)}");
+        Console.WriteLine($"GetBalancesAsync 异常: {ex.Message}");
+        Console.WriteLine($"最后收到的JSON（截取前1000字符）: {(debugJson.Length > 1000 ? debugJson.Substring(0, 1000) + "..." : debugJson)}");
         return (0m, 0m, true);
     }
+}
+
+private static string GetTronAddressParameter(string base58Address)
+{
+    // （保持原样，无需改动）
+    const string Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    BigInteger value = BigInteger.Zero;
+
+    foreach (char c in base58Address)
+    {
+        int idx = Alphabet.IndexOf(c);
+        if (idx == -1) throw new FormatException($"无效Base58字符: {c}");
+        value = BigInteger.Multiply(value, 58) + idx;
+    }
+
+    List<byte> bytes = new List<byte>();
+    BigInteger zero = BigInteger.Zero;
+    while (value > zero)
+    {
+        bytes.Add((byte)(value % 256));
+        value = BigInteger.Divide(value, 256);
+    }
+    bytes.Reverse();
+
+    byte[] fullBytes = bytes.ToArray();
+    if (fullBytes.Length != 25)
+    {
+        Console.WriteLine($"警告：地址解码字节长度异常: {fullBytes.Length}（预期25）");
+        throw new FormatException("地址解码长度不为25字节");
+    }
+
+    byte[] payloadWithVersion = new byte[21];
+    Array.Copy(fullBytes, 0, payloadWithVersion, 0, 21);
+    byte[] checksum = new byte[4];
+    Array.Copy(fullBytes, 21, checksum, 0, 4);
+
+    using var sha256 = SHA256.Create();
+    byte[] hash1 = sha256.ComputeHash(payloadWithVersion);
+    byte[] hash2 = sha256.ComputeHash(hash1);
+    for (int i = 0; i < 4; i++)
+        if (hash2[i] != checksum[i]) throw new FormatException("checksum校验失败");
+
+    byte[] addressBytes = new byte[20];
+    Array.Copy(payloadWithVersion, 1, addressBytes, 0, 20);
+
+    string hex = BitConverter.ToString(addressBytes).Replace("-", "").ToLowerInvariant();
+    Console.WriteLine($"调试：地址哈希20字节hex（不带41）: {hex}");
+    return hex.PadLeft(64, '0');
 }
 public static async Task<(double remainingBandwidth, double totalBandwidth, double netRemaining, double netLimit, double energyRemaining, double energyLimit, int transactions, int transactionsIn, int transactionsOut, bool isError)> GetBandwidthAsync(string address)
 {
@@ -12455,7 +12611,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
 
     // 当连续相同字符数量大于等于4时，添加“靓号”信息
     string fireEmoji = "\uD83D\uDD25";
-    string buyLink = "https://t.me/lianghaonet/8";
+    string buyLink = "https://t.me/GasFree8/14";
     string userLabelSuffix = $" <a href=\"{buyLink}\">购买靓号</a>";
 
     if (maxConsecutiveIdenticalCharsCount >= 4)
@@ -12543,7 +12699,7 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
     string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
     string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
     string groupExclusiveText = $"<a href=\"{shareLink}\">欢迎将 bot 拉进任意群组使用，大家一起查！</a>\n";
-    string uxiaofeikaText = $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n";
+    //string uxiaofeikaText = $"<a href=\"https://dupay.one/web-app/register-h5?invitCode=625174&lang=zh-cn\">USDT消费卡,无需实名即可使用,免冻卡风险！</a>\n";
 
     // 添加授权列表的信息
     string usdtAuthorizedListText = "";
@@ -12607,8 +12763,8 @@ public static async Task HandleQueryCommandAsync(ITelegramBotClient botClient, M
                  usdtAuthorizedListText +
                  (shouldQueryFullData ? lastFiveTransactions : "") + "\n" +
                  incomeOutcomeText +
-                 (isPrivateChat ? groupExclusiveText : "") +
-                 uxiaofeikaText;
+                 (isPrivateChat ? groupExclusiveText : "") ;
+                 
 
     // 创建内联键盘
     InlineKeyboardMarkup inlineKeyboard;
@@ -24856,7 +25012,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
         string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
         string groupFunctionText = $"<a href=\"{shareLink}\">⚠️ 点击拉我进群，有人修改资料将播报提醒！</a>";
-        string uCardText = $"\U0001F4B3 免实名USDT消费卡-享全球消费\U0001F449 /ucard ";
+        //string uCardText = $"\U0001F4B3 免实名USDT消费卡-享全球消费\U0001F449 /ucard ";
 	    
         // 检查用户是否已经在关注列表中
         var user = Followers.FirstOrDefault(u => u.Id == message.From.Id);
@@ -24885,7 +25041,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
    如需了解机器人功能介绍，直接点击：/help
 
 {groupFunctionText}
-{uCardText}
+
 ";
 
         // 创建包含三行，每行4个按钮的虚拟键盘
@@ -24986,7 +25142,7 @@ static async Task<Message> Start(ITelegramBotClient botClient, Message message)
         string startParameter = ""; // 如果你希望机器人在被添加到群组时收到一个特定的消息，可以设置这个参数
         string shareLink = $"https://t.me/{botUsername}?startgroup={startParameter}";
         string groupFunctionText = $"<a href=\"{shareLink}\">⚠️ 点击拉我进群，有人修改资料将播报提醒！</a>";
-        string uCardText = $"\U0001F4B3 免实名USDT消费卡-享全球消费\U0001F449 /ucard ";
+        //string uCardText = $"\U0001F4B3 免实名USDT消费卡-享全球消费\U0001F449 /ucard ";
 
         string usage = @$"<b>{username}</b> 你好，欢迎使用TRX自助兑换机器人！
 
