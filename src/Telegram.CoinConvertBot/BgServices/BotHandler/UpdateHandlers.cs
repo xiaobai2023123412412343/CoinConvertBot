@@ -11305,6 +11305,7 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
 
                 var usdtDoc = JsonDocument.Parse(usdtJson);
 
+                // === 关键修复部分开始 ===
                 string hexBal = "0";
                 if (usdtDoc.RootElement.TryGetProperty("constant_result", out var crElem) &&
                     crElem.ValueKind == JsonValueKind.Array && crElem.GetArrayLength() > 0 &&
@@ -11312,17 +11313,27 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
                 {
                     hexBal = crElem[0].GetString() ?? "0";
                     Console.WriteLine($"USDT constant_result 原始hex: {hexBal}");
-                    hexBal = hexBal.TrimStart('0');
-                    if (string.IsNullOrEmpty(hexBal)) hexBal = "0";
                 }
                 else
                 {
                     Console.WriteLine("USDT 返回中没有 constant_result 或为空，余额视为0");
                 }
 
+                // 强制补齐到64位hex（uint256标准长度）
+                hexBal = hexBal.PadLeft(64, '0');
+
+                // 解析为BigInteger
                 BigInteger bigUsdt = BigInteger.Parse(hexBal, NumberStyles.AllowHexSpecifier);
+
+                // 处理可能的符号位问题（当最高字节≥0x80时BigInteger会变成负数）
+                if (bigUsdt < BigInteger.Zero)
+                {
+                    bigUsdt += BigInteger.One << 256;  // 等价于 +2^256
+                }
+
                 usdtBalance = (decimal)bigUsdt / 1000000m;
-                Console.WriteLine($"USDT 解析成功，余额(hex→decimal): {bigUsdt} → {usdtBalance} USDT");
+                Console.WriteLine($"USDT 解析成功，余额(raw): {bigUsdt} → {usdtBalance} USDT");
+                // === 关键修复部分结束 ===
 
                 rpcSuccess = true;
                 Console.WriteLine("--- RPC 查询全部成功 ---");
