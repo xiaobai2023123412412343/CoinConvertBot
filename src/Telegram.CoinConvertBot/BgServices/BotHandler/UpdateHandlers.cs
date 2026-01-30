@@ -19682,6 +19682,26 @@ else if (messageText.StartsWith("/xiaohao"))
         replyMarkup: replyMarkup
     ).ConfigureAwait(false); // 保持异步调用的非阻塞性
 }
+// 新增：加密货币 → 显示 TOP1-10（完全模仿原有 /feixiaohao 和 /xiaohao 的写法）
+else if (messageText.Trim() == "加密货币")
+{
+    await CoinDataCache.EnsureCacheInitializedAsync(); // 确保缓存已初始化
+    
+    var cryptoData = CryptoDataFetcher.FetchAndFormatCryptoDataAsync(1, 10); // 完全模仿原有，不使用 await
+    
+    var replyMarkup = new InlineKeyboardMarkup(new[]
+    {
+        InlineKeyboardButton.WithCallbackData("TOP1-50数据", "feixiaohao"),
+        InlineKeyboardButton.WithCallbackData("TOP51-100数据", "xiaohao")
+    });
+
+    _ = botClient.SendTextMessageAsync(
+        chatId: message.Chat.Id,
+        text: cryptoData,
+        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+        replyMarkup: replyMarkup
+    ).ConfigureAwait(false); // 保持与原有相同的非阻塞方式
+}
 // 在处理消息的地方，当机器人收到 /caifu 消息或者 "财富密码" 文本时
 if (messageText.StartsWith("/caifu") || messageText.Equals("财富密码"))
 {
@@ -21855,7 +21875,7 @@ if (messageText.Trim().StartsWith("退群"))
     }
 }
 // 加密指令
-if (messageText.StartsWith("加密"))
+if (messageText.StartsWith("加密") && messageText.Trim() != "加密货币")
 {
     string content = messageText.Substring(2).Trim();
     if (string.IsNullOrWhiteSpace(content))
@@ -23788,7 +23808,7 @@ if (message.From.Id == 8229576774L && Regex.IsMatch(message.Text, @"^\d+$"))
     }
 }
 // 添加这部分代码以处理 /crypto 和 /btc 指令 计算器
-if (messageText.StartsWith("加密货币", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
+if (messageText.StartsWith("加密zuofei货币", StringComparison.OrdinalIgnoreCase) || messageText.StartsWith("/btc", StringComparison.OrdinalIgnoreCase))
 {
     await SendCryptoPricesAsync(botClient, message, 1, false);
 }
