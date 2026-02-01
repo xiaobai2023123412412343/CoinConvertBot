@@ -16613,7 +16613,7 @@ api大全：https://www.apispace.com/#/api/detail/?productID=89
 base64编码转换：https://remeins.com/index/app/text2img
 vpn：https://github.com/mack-a/v2ray-agent?tab=readme-ov-file
 能量租赁：https://tronenergy.market/
-能量租赁合集：https://tronrelic.com/resource-markets/
+能量租赁合集：https://tronrelic.com/resource-markets/q3302198563livegoon
 机器人代码地址：https://github.com/xiaobai2023123412412343/CoinConvertBot/blob/master/wiki/manual_RUN.md";
 
     await botClient.SendTextMessageAsync(
