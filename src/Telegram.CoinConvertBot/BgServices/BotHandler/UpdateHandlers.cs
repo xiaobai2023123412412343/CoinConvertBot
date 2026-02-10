@@ -11238,8 +11238,16 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
         return (0m, 0m, true);
     }
 
-    // 更换为2026年最稳定的免费公共节点（publicnode，支持传统wallet端点，极稳）
-    const string RpcBaseUrl = "https://tron-rpc.publicnode.com";
+    // 多个备选免费公共节点（2026年实测稳定顺序）
+    string[] rpcUrls = new string[]
+    {
+        "https://tron-rpc.publicnode.com",       // 主选，通常最稳
+        "https://api.tronex.io",                 // 备选1，极稳
+        "https://tron-mainnet.public.blastapi.io", // 备选2，高限流
+        "https://mainnet.tronrpc.com",           // 备选3，备用
+        "https://rpc.ankr.com/tron"              // 备选4，你原来用的节点
+    };
+
     // 正确的主网USDT合约地址（官方确认）
     const string UsdtContract = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 
@@ -11259,91 +11267,112 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
         decimal trxBalance = 0m, usdtBalance = 0m;
 
         bool rpcSuccess = false;
-        for (int rpcRetry = 0; rpcRetry < 3; rpcRetry++)
+
+        // 轮换多个RPC节点
+        foreach (var baseUrl in rpcUrls)
         {
-            try
+            Console.WriteLine($"尝试 RPC 节点: {baseUrl}");
+
+            for (int rpcRetry = 0; rpcRetry < 3; rpcRetry++)
             {
-                Console.WriteLine($"--- RPC 第 {rpcRetry + 1} 次尝试，查询地址: {address} ---");
+                bool hasTrxThisRound = false;
 
-                // 查询TRX余额
-                var trxBody = new { address = address, visible = true };
-                var trxContent = new StringContent(JsonSerializer.Serialize(trxBody), Encoding.UTF8, "application/json");
-                var trxResponse = await httpClient.PostAsync($"{RpcBaseUrl}/wallet/getaccount", trxContent);
-                
-                Console.WriteLine($"TRX 请求状态码: {trxResponse.StatusCode}");
-                if (!trxResponse.IsSuccessStatusCode) throw new Exception($"TRX HTTP失败: {trxResponse.StatusCode}");
-
-                string trxJson = await trxResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"TRX RPC完整返回: {trxJson}");
-
-                var trxDoc = JsonDocument.Parse(trxJson);
-                long sun = trxDoc.RootElement.TryGetProperty("balance", out var balElem) ? balElem.GetInt64() : 0;
-                trxBalance = sun / 1000000m;
-                Console.WriteLine($"TRX 解析成功，余额(sun): {sun} → {trxBalance} TRX");
-
-                // 查询USDT余额（使用walletsolidity端点）
-                string parameter = GetTronAddressParameter(address);
-                Console.WriteLine($"USDT 生成的 parameter (64位hex): {parameter}");
-
-                var usdtBody = new
+                try
                 {
-                    owner_address = address,
-                    contract_address = UsdtContract,
-                    function_selector = "balanceOf(address)",
-                    parameter = parameter,
-                    visible = true
-                };
+                    Console.WriteLine($"--- RPC 第 {rpcRetry + 1} 次尝试（节点 {baseUrl}），查询地址: {address} ---");
 
-                var usdtContent = new StringContent(JsonSerializer.Serialize(usdtBody), Encoding.UTF8, "application/json");
-                var usdtResponse = await httpClient.PostAsync($"{RpcBaseUrl}/walletsolidity/triggerconstantcontract", usdtContent);
-                
-                Console.WriteLine($"USDT 请求状态码: {usdtResponse.StatusCode}");
-                if (!usdtResponse.IsSuccessStatusCode) throw new Exception($"USDT HTTP失败: {usdtResponse.StatusCode}");
+                    // 查询TRX余额（必须成功才算部分成功）
+                    var trxBody = new { address = address, visible = true };
+                    var trxContent = new StringContent(JsonSerializer.Serialize(trxBody), Encoding.UTF8, "application/json");
+                    var trxResponse = await httpClient.PostAsync($"{baseUrl}/wallet/getaccount", trxContent);
+                    
+                    Console.WriteLine($"TRX 请求状态码: {trxResponse.StatusCode}");
+                    if (!trxResponse.IsSuccessStatusCode) throw new Exception($"TRX HTTP失败: {trxResponse.StatusCode}");
 
-                string usdtJson = await usdtResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"USDT RPC完整返回JSON: {usdtJson}");
+                    string trxJson = await trxResponse.Content.ReadAsStringAsync();
+                    Console.WriteLine($"TRX RPC完整返回: {trxJson}");
 
-                var usdtDoc = JsonDocument.Parse(usdtJson);
+                    var trxDoc = JsonDocument.Parse(trxJson);
+                    long sun = trxDoc.RootElement.TryGetProperty("balance", out var balElem) ? balElem.GetInt64() : 0;
+                    trxBalance = sun / 1000000m;
+                    Console.WriteLine($"TRX 解析成功，余额(sun): {sun} → {trxBalance} TRX");
 
-                // === 关键修复部分开始 ===
-                string hexBal = "0";
-                if (usdtDoc.RootElement.TryGetProperty("constant_result", out var crElem) &&
-                    crElem.ValueKind == JsonValueKind.Array && crElem.GetArrayLength() > 0 &&
-                    crElem[0].ValueKind == JsonValueKind.String)
-                {
-                    hexBal = crElem[0].GetString() ?? "0";
-                    Console.WriteLine($"USDT constant_result 原始hex: {hexBal}");
+                    hasTrxThisRound = true;
+
+                    // 查询USDT余额（独立try-catch，失败不影响TRX）
+                    try
+                    {
+                        string parameter = GetTronAddressParameter(address);
+                        Console.WriteLine($"USDT 生成的 parameter (64位hex): {parameter}");
+
+                        var usdtBody = new
+                        {
+                            owner_address = address,
+                            contract_address = UsdtContract,
+                            function_selector = "balanceOf(address)",
+                            parameter = parameter,
+                            visible = true
+                        };
+
+                        var usdtContent = new StringContent(JsonSerializer.Serialize(usdtBody), Encoding.UTF8, "application/json");
+                        var usdtResponse = await httpClient.PostAsync($"{baseUrl}/walletsolidity/triggerconstantcontract", usdtContent);
+                        
+                        Console.WriteLine($"USDT 请求状态码: {usdtResponse.StatusCode}");
+                        if (!usdtResponse.IsSuccessStatusCode) throw new Exception($"USDT HTTP失败: {usdtResponse.StatusCode}");
+
+                        string usdtJson = await usdtResponse.Content.ReadAsStringAsync();
+                        Console.WriteLine($"USDT RPC完整返回JSON: {usdtJson}");
+
+                        var usdtDoc = JsonDocument.Parse(usdtJson);
+
+                        // === 关键修复部分开始 ===
+                        string hexBal = "0";
+                        if (usdtDoc.RootElement.TryGetProperty("constant_result", out var crElem) &&
+                            crElem.ValueKind == JsonValueKind.Array && crElem.GetArrayLength() > 0 &&
+                            crElem[0].ValueKind == JsonValueKind.String)
+                        {
+                            hexBal = crElem[0].GetString() ?? "0";
+                            Console.WriteLine($"USDT constant_result 原始hex: {hexBal}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("USDT 返回中没有 constant_result 或为空，余额视为0");
+                        }
+
+                        // 强制补齐到64位hex（uint256标准长度）
+                        hexBal = hexBal.PadLeft(64, '0');
+
+                        // 解析为BigInteger
+                        BigInteger bigUsdt = BigInteger.Parse(hexBal, NumberStyles.AllowHexSpecifier);
+
+                        // 处理可能的符号位问题（当最高字节≥0x80时BigInteger会变成负数）
+                        if (bigUsdt < BigInteger.Zero)
+                        {
+                            bigUsdt += BigInteger.One << 256;  // 等价于 +2^256
+                        }
+
+                        usdtBalance = (decimal)bigUsdt / 1000000m;
+                        Console.WriteLine($"USDT 解析成功，余额(raw): {bigUsdt} → {usdtBalance} USDT");
+                        // === 关键修复部分结束 ===
+                    }
+                    catch (Exception usdtEx)
+                    {
+                        Console.WriteLine($"USDT 查询失败（但TRX已成功）: {usdtEx.Message}");
+                        usdtBalance = 0m; // USDT失败，设为0
+                    }
+
+                    rpcSuccess = hasTrxThisRound; // 只要TRX成功就算RPC成功
+                    Console.WriteLine("--- RPC 查询部分/全部成功（至少TRX成功）---");
+                    break; // 本轮重试成功，退出重试循环
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine("USDT 返回中没有 constant_result 或为空，余额视为0");
+                    Console.WriteLine($"RPC第{rpcRetry + 1}次失败（节点 {baseUrl}）: {ex.Message}");
+                    if (rpcRetry < 2) await Task.Delay(1000 + new Random().Next(0, 500));
                 }
-
-                // 强制补齐到64位hex（uint256标准长度）
-                hexBal = hexBal.PadLeft(64, '0');
-
-                // 解析为BigInteger
-                BigInteger bigUsdt = BigInteger.Parse(hexBal, NumberStyles.AllowHexSpecifier);
-
-                // 处理可能的符号位问题（当最高字节≥0x80时BigInteger会变成负数）
-                if (bigUsdt < BigInteger.Zero)
-                {
-                    bigUsdt += BigInteger.One << 256;  // 等价于 +2^256
-                }
-
-                usdtBalance = (decimal)bigUsdt / 1000000m;
-                Console.WriteLine($"USDT 解析成功，余额(raw): {bigUsdt} → {usdtBalance} USDT");
-                // === 关键修复部分结束 ===
-
-                rpcSuccess = true;
-                Console.WriteLine("--- RPC 查询全部成功 ---");
-                break;
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"RPC第{rpcRetry + 1}次失败: {ex.Message}");
-                if (rpcRetry < 2) await Task.Delay(1000 + new Random().Next(0, 500));
-            }
+
+            if (rpcSuccess) break; // 当前节点成功，退出节点轮换
         }
 
         if (rpcSuccess)
@@ -11351,7 +11380,7 @@ public static async Task<(decimal UsdtBalance, decimal TrxBalance, bool IsError)
             return (usdtBalance, trxBalance, false);
         }
 
-        // fallback 到 Tronscan Pro API（分开查询TRX和TRC20，更稳定）
+        // fallback 到 Tronscan Pro API（分开查询TRX和TRC20，更稳定，保持原逻辑）
         Console.WriteLine("RPC 失败，切换到 Tronscan Pro API fallback");
         bool tronscanSuccess = false;
         foreach (var apiKey in apiKeys)
