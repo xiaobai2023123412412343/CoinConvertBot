@@ -68,7 +68,14 @@ dotnet build
 ```
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
 ```
-
+<b>12。1 一键启动在C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish 创建个 。ps1文件夹 ：</u>
+```
+cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
+# 设置 PowerShell 解码程序输出为 UTF-8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+# 运行程序并写入文件（覆盖模式，重启机器人日志清零）
+.\Telegram.CoinConvertBot.exe 2>&1 | Out-File -FilePath .\日志.txt -Encoding UTF8
+```
 <b>13  打开文件目录（示例）终端 ： </u>
 ```
 cd C:\Users\Administrator\Downloads\CoinConvertBot-master\CoinConvertBot-master\src\Telegram.CoinConvertBot\publish
